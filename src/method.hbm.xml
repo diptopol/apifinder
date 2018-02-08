@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+	<class name="ca.concordia.jaranalyzer.model.Method" table="method">
+		<id name="id" type="int" column="id">
+			<generator class="increment" />
+		</id>
+		<property name="name">
+			<column name="name" />
+		</property>
+		<property name="arguments" type="int">
+			<column name="arguments" />
+		</property>
+		<property name="returnType">
+			<column name="returntype" />
+		</property>
+		<property name="jar" type="int">
+			<column name="jar" />
+		</property>
+		<property name="ArgumentTypes">
+			<column name="argumenttypes" />
+		</property>
+	</class>
+</hibernate-mapping>
