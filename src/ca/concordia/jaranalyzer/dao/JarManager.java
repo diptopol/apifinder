@@ -3,9 +3,7 @@ package ca.concordia.jaranalyzer.dao;
 import ca.concordia.jaranalyzer.model.Jar;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
 import org.hibernate.Query;
 
 import java.util.ArrayList;
@@ -19,15 +17,32 @@ public class JarManager {
 	}
 
 	public void setup() {
-		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure() // configures
+//		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure().build(); // configures
 																									// settings
 																									// from
 																									// hibernate.cfg.xml
-				.build();
+				
 		try {
-			sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
+//			Configuration configuration = new Configuration().configure();
+//            ServiceRegistry serviceRegistry
+//                = new StandardServiceRegistryBuilder()
+//                    .applySettings(configuration.getProperties()).build();
+            // builds a session factory from the service registry
+//            SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+
+			sessionFactory = new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
+//			sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
+			
+//			MetadataSources sources = new MetadataSources(registry);
+//
+//	        // Create Metadata
+//	        Metadata metadata = sources.getMetadataBuilder().build();
+//
+//	        // Create SessionFactory
+//	        sessionFactory = metadata.getSessionFactoryBuilder().build();
 		} catch (Exception ex) {
-			StandardServiceRegistryBuilder.destroy(registry);
+			System.out.println(ex);
+//			StandardServiceRegistryBuilder.destroy(registry);
 		}
 	}
 
@@ -82,7 +97,7 @@ public class JarManager {
 
 	protected Jar read(long id) {
 		Session session = sessionFactory.openSession();
-		Jar jar = session.get(Jar.class, id);
+		Jar jar = (Jar) session.get(Jar.class, id);
 		session.close();
 		return jar;
 	}

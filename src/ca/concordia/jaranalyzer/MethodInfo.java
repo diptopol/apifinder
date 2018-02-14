@@ -136,13 +136,13 @@ public class MethodInfo {
 	public String getParameterTypes() {
 		String parameters = "";
 		for (Type type : argumentTypes) {
-			parameters += type.getClassName().substring(type.getClassName().lastIndexOf('.') + 1) + " ";
+			parameters += type.getClassName();//.substring(type.getClassName().lastIndexOf('.') + 1) + " ";
 		}
 		return parameters;
 	}
 
 	public String getReturnType() {
-		return returnType.getClassName().substring(returnType.getClassName().lastIndexOf('.') + 1);
+		return returnType.getClassName();//.substring(returnType.getClassName().lastIndexOf('.') + 1);
 	}
 
 	public List<String> getThrownInternalClassNames() {

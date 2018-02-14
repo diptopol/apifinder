@@ -14,6 +14,10 @@ public class Jar {
 	private String name;
 	private String Version;
 	
+	public Jar(){
+		
+	}
+	
 	@Id
 	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

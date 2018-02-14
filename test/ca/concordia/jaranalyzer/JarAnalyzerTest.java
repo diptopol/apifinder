@@ -1,6 +1,5 @@
 package ca.concordia.jaranalyzer;
 
-//import ca.concordia.jaranalyzer.util.Utility;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -71,6 +70,7 @@ public class JarAnalyzerTest {
 		JarInfo jarInfo = jarAnalyzer.findAndAnalyzeJar("org.specs.runner.JUnit");
 		if(jarInfo == null)
 			fail("Exception Thrown");
+		jarAnalyzer.SaveToDb(jarInfo);
 	}
 
 	@Test

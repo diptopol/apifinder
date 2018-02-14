@@ -85,7 +85,7 @@ public class JarAnalyzer {
 		return jarInfo;
 	}
 
-	private void addToDb(JarInfo jarInfo) {
+	public void SaveToDb(JarInfo jarInfo) {
 		Jar jar = new Jar();
 		jar.setName(jarInfo.getName());
 		JarManager manager = new JarManager();

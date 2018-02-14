@@ -1,15 +1,14 @@
 package ca.concordia.jaranalyzer.dao;
 
-import ca.concordia.jaranalyzer.model.Method;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.Query;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+
+import ca.concordia.jaranalyzer.model.Method;
 
 public class MethodManager {
 	protected SessionFactory sessionFactory;
@@ -19,14 +18,15 @@ public class MethodManager {
 	}
 	
     public void setup() {
-    	final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
-    	        .configure() // configures settings from hibernate.cfg.xml
-    	        .build();
-    	try {
-    	    sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
-    	} catch (Exception ex) {
-    	    StandardServiceRegistryBuilder.destroy(registry);
-    	}
+//    	final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
+//    	        .configure() // configures settings from hibernate.cfg.xml
+//    	        .build();
+//    	try {
+//    	    sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
+//    	} catch (Exception ex) {
+//    	    StandardServiceRegistryBuilder.destroy(registry);
+//    	}
+    	sessionFactory = new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
     }
  
     public void exit() {
@@ -55,7 +55,7 @@ public class MethodManager {
  
     protected Method read(long id) {
     	Session session = sessionFactory.openSession();
-    	Method method = session.get(Method.class, id);     
+    	Method method = (Method) session.get(Method.class, id);     
         session.close();
         return method;
     }
