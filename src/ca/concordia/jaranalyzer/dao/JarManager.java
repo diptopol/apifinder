@@ -1,64 +1,58 @@
 package ca.concordia.jaranalyzer.dao;
 
-import ca.concordia.jaranalyzer.model.Jar;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.Query;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+
+import ca.concordia.jaranalyzer.ClassInfo;
+import ca.concordia.jaranalyzer.JarInfo;
+import ca.concordia.jaranalyzer.MethodInfo;
+import ca.concordia.jaranalyzer.PackageInfo;
+import ca.concordia.jaranalyzer.model.Jar;
+import ca.concordia.jaranalyzer.model.Package;
+import ca.concordia.jaranalyzer.model.Class;
+import ca.concordia.jaranalyzer.model.Method;
+import ca.concordia.jaranalyzer.util.HibernateUtil;
 
 public class JarManager {
 	protected SessionFactory sessionFactory;
 
 	public JarManager() {
-		setup();
-	}
-
-	public void setup() {
-//		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure().build(); // configures
-																									// settings
-																									// from
-																									// hibernate.cfg.xml
-				
-		try {
-//			Configuration configuration = new Configuration().configure();
-//            ServiceRegistry serviceRegistry
-//                = new StandardServiceRegistryBuilder()
-//                    .applySettings(configuration.getProperties()).build();
-            // builds a session factory from the service registry
-//            SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
-
-			sessionFactory = new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
-//			sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
-			
-//			MetadataSources sources = new MetadataSources(registry);
-//
-//	        // Create Metadata
-//	        Metadata metadata = sources.getMetadataBuilder().build();
-//
-//	        // Create SessionFactory
-//	        sessionFactory = metadata.getSessionFactoryBuilder().build();
-		} catch (Exception ex) {
-			System.out.println(ex);
-//			StandardServiceRegistryBuilder.destroy(registry);
-		}
+		this.sessionFactory = HibernateUtil.getSessionFactory();
 	}
 
 	public void exit() {
 		sessionFactory.close();
 	}
 
-	public Jar create(Jar jar) {
+	public Jar create(JarInfo jarInfo) {
+		Jar jar = new Jar(jarInfo);
 		if (!exists(jar.getName())) {
 			Session session = sessionFactory.openSession();
 			session.beginTransaction();
 			session.save(jar);
+			for (PackageInfo packageInfo: jarInfo.getPackages()) {
+				Package pack = new Package(packageInfo);
+				pack.setJarId(jar.getId());
+				session.save(pack);
+				for (ClassInfo classInfo : packageInfo.getClasses()) {
+					Class cl = new Class(classInfo);
+					cl.setPackageId(pack.getId());
+					session.save(cl);
+					for (MethodInfo methodInfo : classInfo.getPublicMethods()) {
+						Method method = new Method(methodInfo);
+						method.setClassId(cl.getId());
+						session.save(method);
+					}
+				}
+			}
 			session.getTransaction().commit();
 			session.close();
 		}
-		return read(jar.getName());
+		return read(jarInfo.getName());
 	}
 
 	public boolean exists(String name) {

@@ -2,18 +2,29 @@ package ca.concordia.jaranalyzer.model;
 
 import javax.persistence.*;
 
+import ca.concordia.jaranalyzer.MethodInfo;
+
 @Entity
 @Table(name = "method")
 public class Method {
 	private int id;
-	private int jar;
+	private int classId;
 	private String name;
 	private int arguments;
 	private String returnType;
 	private String argumentTypes;
+
+	public Method() {
+	}
+	
+	public Method(MethodInfo methodInfo) {
+		this.name = methodInfo.getName();
+		this.arguments = methodInfo.getArgumentTypes().length;
+		this.argumentTypes = methodInfo.getParameterTypes();
+		this.returnType = methodInfo.getReturnType();
+	}
 	
 	@Id
-	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public int getId() {
 		return id;
@@ -22,14 +33,12 @@ public class Method {
 		this.id = id;
 	}
 	
-	@Column(name = "jar")
-	public int getJar() {
-		return jar;
+	public int getClassId() {
+		return classId;
 	}
-	public void setJar(int jar) {
-		this.jar = jar;
+	public void setClassId(int classId) {
+		this.classId = classId;
 	}
-	@Column(name = "name")
 	public String getName() {
 		return name;
 	}
@@ -37,7 +46,6 @@ public class Method {
 		this.name = name;
 	}
 	
-	@Column(name = "arguments")
 	public int getArguments() {
 		return arguments;
 	}
@@ -45,7 +53,6 @@ public class Method {
 		this.arguments = arguments;
 	}
 	
-	@Column(name = "returntype")
 	public String getReturnType() {
 		return returnType;
 	}
@@ -53,7 +60,6 @@ public class Method {
 		this.returnType = returnType;
 	}
 	
-	@Column(name = "argumenttypes")
 	public String getArgumentTypes() {
 		return argumentTypes;
 	}

@@ -10,8 +10,7 @@ public class Test {
 	public static void main(String[] args) {
 		JarAnalyzer jarAnalyzer = new JarAnalyzer();
 		JarInfo jarInfo = jarAnalyzer.findAndAnalyzeJar("org.specs.runner.JUnit");
-		if(jarInfo == null)
-			fail("Exception Thrown");
+		if(jarInfo != null)
 		jarAnalyzer.SaveToDb(jarInfo);
 	}
 

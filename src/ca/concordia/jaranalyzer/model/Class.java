@@ -1,11 +1,12 @@
 package ca.concordia.jaranalyzer.model;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+
+import ca.concordia.jaranalyzer.ClassInfo;
 
 @Entity
 @Table(name = "class")
@@ -14,8 +15,15 @@ public class Class {
 	private String name;
 	private int packageId;
 	
+	public Class(){
+		
+	}
+	
+	public Class(ClassInfo classInfo) {
+		this.name = classInfo.getSignature();
+	}
+
 	@Id
-	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public int getId() {
 		return id;
@@ -25,7 +33,6 @@ public class Class {
 		this.id = id;
 	}
 
-	@Column(name = "name")
 	public String getName() {
 		return name;
 	}
@@ -34,7 +41,6 @@ public class Class {
 		this.name = name;
 	}
 
-	@Column(name = "packageid")
 	public int getPackageId() {
 		return packageId;
 	}

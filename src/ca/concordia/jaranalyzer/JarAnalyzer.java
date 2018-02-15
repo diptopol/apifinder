@@ -4,8 +4,10 @@ import ca.concordia.jaranalyzer.dao.JarManager;
 import ca.concordia.jaranalyzer.dao.MethodManager;
 import ca.concordia.jaranalyzer.model.Jar;
 import ca.concordia.jaranalyzer.model.Method;
+import ca.concordia.jaranalyzer.util.HibernateUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 
+import org.hibernate.SessionFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.objectweb.asm.Type;
@@ -24,31 +26,31 @@ public class JarAnalyzer {
 		jarsPath = file.getAbsolutePath();
 	}
 
-	public JarInfo AnalyzeJar(String group, String artifactId, String version) {
+	public JarInfo AnalyzeJar(String groupId, String artifactId, String version) {
 		version = version.replaceAll("[^0-9.]", "");
 		JarInfo jarInfo;
-		String url = "http://central.maven.org/maven2/" + group + "/" + artifactId + "/" + version + "/" + artifactId
+		String url = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
 				+ "-" + version + ".jar";
-		jarInfo = AnalyzeJar(url);
+		jarInfo = AnalyzeJar(url, groupId, artifactId, version);
 
 		if (jarInfo == null) {
-			url = "http://central.maven.org/maven2/org/" + group + "/" + artifactId + "/" + version + "/" + artifactId
+			url = "http://central.maven.org/maven2/org/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
 					+ "-" + version + ".jar";
-			jarInfo = AnalyzeJar(url);
+			jarInfo = AnalyzeJar(url, groupId, artifactId, version);
 		}
 		
 		if (jarInfo == null) {
-			url = "http://central.maven.org/maven2/" + group.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId
+			url = "http://central.maven.org/maven2/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId
 					+ "-" + version + ".jar";
-			jarInfo = AnalyzeJar(url);
+			jarInfo = AnalyzeJar(url, groupId, artifactId, version);
 		}
 
 		return jarInfo;
 	}
 
-	public JarInfo AnalyzeJar(String url) {
+	public JarInfo AnalyzeJar(String url, String groupId, String artifactId, String version) {
 		JarFile jarFile = DownloadJar(url);
-		return AnalyzeJar(jarFile);
+		return AnalyzeJar(jarFile, groupId, artifactId, version);
 	}
 
 	public JarFile DownloadJar(String jarUrl) {
@@ -78,24 +80,20 @@ public class JarAnalyzer {
 		return jarFile;
 	}
 
-	public JarInfo AnalyzeJar(JarFile jarFile) {
+	public JarInfo AnalyzeJar(JarFile jarFile, String groupId, String artifactId, String version) {
 		if (jarFile == null)
 			return null;
-		JarInfo jarInfo = new JarInfo(jarFile);
+		JarInfo jarInfo = new JarInfo(jarFile, groupId, artifactId, version);
 		return jarInfo;
 	}
 
 	public void SaveToDb(JarInfo jarInfo) {
-		Jar jar = new Jar();
-		jar.setName(jarInfo.getName());
-		JarManager manager = new JarManager();
-		if (manager.exists(jar.getName()))
-			return;
-		jar = manager.create(jar);
-		manager.readAll();
-		manager.exit();
 
-		MethodManager oldMethodManager = new MethodManager();
+		JarManager manager = new JarManager();
+		Jar jar = manager.create(jarInfo);
+
+		HibernateUtil.getSessionFactory().close();
+		/*MethodManager oldMethodManager = new MethodManager(HibernateUtil.getSessionFactory());
 		for (MethodInfo methodInfo : jarInfo.getAllPublicMethods()) {
 			methodInfo.setJar(jar.getId());
 
@@ -110,8 +108,7 @@ public class JarAnalyzer {
 			}
 			method.setArgumentTypes(parameters);
 			oldMethodManager.create(method);
-		}
-		manager.exit();
+		}*/
 	}
 
 	

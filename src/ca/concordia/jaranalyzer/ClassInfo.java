@@ -78,9 +78,29 @@ public class ClassInfo {
 		return methods;
 	}
 
+	public ArrayList<MethodInfo> getPublicMethods() {
+		ArrayList<MethodInfo> publicMethods = new ArrayList<MethodInfo>();
+		for (MethodInfo methodInfo : getMethods()) {
+			if (methodInfo.isPublic())
+				publicMethods.add(methodInfo);
+		}
+		return publicMethods;
+	}
+
 	public String toString() {
 		StringBuilder classDescription = new StringBuilder();
 
+		classDescription.append(getSignature());
+
+		for (MethodInfo method : methods) {
+			classDescription.append("\n\t" + method.toString());
+		}
+
+		return classDescription.toString();
+	}
+
+	public String getSignature() {
+		StringBuilder classDescription = new StringBuilder();
 		if (isPublic) {
 			classDescription.append("public ");
 		} else if (isProtected) {
@@ -100,10 +120,6 @@ public class ClassInfo {
 		}
 
 		classDescription.append(type.getClassName());
-
-		for (MethodInfo method : methods) {
-			classDescription.append("\n\t" + method.toString());
-		}
 
 		return classDescription.toString();
 	}

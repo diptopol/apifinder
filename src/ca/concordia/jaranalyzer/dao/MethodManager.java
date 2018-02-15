@@ -13,8 +13,9 @@ import ca.concordia.jaranalyzer.model.Method;
 public class MethodManager {
 	protected SessionFactory sessionFactory;
 	 
-	public MethodManager(){   
-    	setup();
+	public MethodManager(SessionFactory sessionFactory){   
+    	//setup();
+		this.sessionFactory = sessionFactory;
 	}
 	
     public void setup() {
@@ -37,12 +38,12 @@ public class MethodManager {
         Session session = sessionFactory.openSession();
         
         List<Method> methods = new ArrayList<Method>();
-//        try {
-//			Query query = session.createQuery("from Method where name = '" + method.getName() + "' AND argumenttypes = '" + method.getArgumentTypes() + "' AND jar ='" + method.getJar() + "'");
-//			methods = query.list();
-//		} catch (RuntimeException e) {
-//			e.printStackTrace();
-//		}
+        try {
+			Query query = session.createQuery("from Method where name = '" + method.getName() + "' AND argumenttypes = '" + method.getArgumentTypes() + "' AND jar ='" + method.getClassId() + "'");
+			methods = query.list();
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+		}
         
         if(!methods.isEmpty())
         	return;
@@ -72,7 +73,6 @@ public class MethodManager {
 		return methods;
 	}
 
- 
     protected void update(Method method) {     
         Session session = sessionFactory.openSession();
         session.beginTransaction();

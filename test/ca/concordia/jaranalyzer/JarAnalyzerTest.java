@@ -46,7 +46,7 @@ public class JarAnalyzerTest {
 			String jarLocation = "C:/jars/" + jarName;
 			JarFile jarFile = new JarFile(new File(jarLocation));
 
-			jarAnalyzer.AnalyzeJar(jarFile);
+			jarAnalyzer.AnalyzeJar(jarFile, "", "", "");
 			assertEquals(true, true);
 
 		} catch (IOException e) {
@@ -60,7 +60,7 @@ public class JarAnalyzerTest {
 	public void analyzeJarFromUrl() {
 		String jarUrl = "http://repository.grepcode.com/java/eclipse.org/4.4.1/plugins/org.eclipse.jface_3.10.1.v20140813-1009.jar";
 		JarAnalyzer jarAnalyzer = new JarAnalyzer();
-		jarAnalyzer.AnalyzeJar(jarUrl);
+		jarAnalyzer.AnalyzeJar(jarUrl, "", "", "");
 		assertEquals(true, true);
 	}
 	
@@ -81,7 +81,7 @@ public class JarAnalyzerTest {
 			List<String> jarFiles = Utility.getFiles(location, ".jar");
 			for (String jarLocation : jarFiles) {
 				JarFile jarFile = new JarFile(new File(jarLocation));
-				jarProfiler.AnalyzeJar(jarFile);
+				jarProfiler.AnalyzeJar(jarFile, "", "", "");
 				System.out.println(jarLocation);
 			}
 			assertEquals(true, true);
@@ -125,7 +125,8 @@ public class JarAnalyzerTest {
 								System.out.println("version : " + version);
 								String jarUrl = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/"
 										+ version + "/" + artifactId + "-" + version + ".jar";
-								jarProfiler.AnalyzeJar(jarUrl);
+								JarInfo jarInfo = jarProfiler.AnalyzeJar(jarUrl, groupId, artifactId, version);
+								jarProfiler.SaveToDb(jarInfo);
 							}
 						} catch (Exception e) {
 

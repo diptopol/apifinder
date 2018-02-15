@@ -8,7 +8,7 @@ public class PackageInfo {
 	private int jarId;
 	private ArrayList<ClassInfo> classes;
 
-	public PackageInfo(int jarId, String packageName) {
+	public PackageInfo(String packageName) {
 		this.classes = new ArrayList<ClassInfo>();
 		this.jarId = jarId;
 		this.name = packageName;

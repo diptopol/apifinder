@@ -7,8 +7,6 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.List;
 
 public class MethodInfo {
-
-	private int id;
 	private String name;
 	private String className;
 	private int jar;
@@ -112,11 +110,7 @@ public class MethodInfo {
 	public void setName(String name) {
 		this.name = name;
 	}
-
-	public int getId() {
-		return id;
-	}
-
+	
 	public String getName() {
 		return name;
 	}

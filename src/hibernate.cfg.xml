@@ -1,34 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE hibernate-configuration PUBLIC
- "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
- "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" 
+"http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+ 
 <hibernate-configuration>
-<!-- 	<session-factory>
-		<property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
-		<property name="hibernate.connection.url">jdbc:mysql://localhost:3306/jardb</property>
-		<property name="hibernate.connection.username">root</property>
-		<property name="hibernate.connection.password">tahmiid</property>
-		<property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
-	</session-factory> -->
-	<session-factory>
-		<property name="connection.driver_class">com.mysql.jdbc.Driver</property>
-		<property name="connection.url">jdbc:mysql://127.0.0.1:3306/jardb</property>
-		<property name="connection.username">root</property>
-		<property name="connection.password">tahmiid</property>
-		<property name="connection.pool_size">1</property>
-
-		<property name="dialect">org.hibernate.dialect.MySQLDialect</property>
-
-		<property name="current_session_context_class">thread</property>
-
-		<property name="cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
-
-		<property name="show_sql">true</property>
-
-		<property name="hbm2ddl.auto">update</property>
-
-		<mapping resource="jar.hbm.xml" />
-<!-- 		<mapping resource="method.hbm.xml" /> -->
-
-	</session-factory>
+    <session-factory>
+        <property name="show_sql">true</property>
+        <property name="format_sql">true</property>
+        <property name="dialect">org.hibernate.dialect.SQLiteDialect</property>
+        <property name="connection.driver_class">org.sqlite.JDBC</property>
+        <property name="connection.url">jdbc:sqlite:mydb.db</property>
+        <property name="connection.username"></property>
+        <property name="connection.password"></property>
+         
+        <property name="hibernate.hbm2ddl.auto">validate</property>
+         
+        <mapping class="ca.concordia.jaranalyzer.model.Jar"/>
+        <mapping class="ca.concordia.jaranalyzer.model.Package"/>
+        <mapping class="ca.concordia.jaranalyzer.model.Class"/>
+        <mapping class="ca.concordia.jaranalyzer.model.Method"/>
+    </session-factory>
 </hibernate-configuration>

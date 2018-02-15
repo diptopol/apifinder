@@ -11,18 +11,18 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class JarInfo {
-	private int id;
 	private String name;
-	private String group;
-	private String artifact;
+	private String groupId;
+	private String artifactId;
 	private String version;
 
-//	private ArrayList<ClassInfo> classes;
 	private ArrayList<PackageInfo> packages;
 
-	public JarInfo(JarFile jarFile) {
+	public JarInfo(JarFile jarFile, String groupId, String artifactId, String version) {
+		this.artifactId = artifactId;
+		this.groupId = groupId;
+		this.version = version;
 		this.name = Utility.getJarName(jarFile.getName());
-//		this.classes = new ArrayList<ClassNodesInfo>();
 		this.packages = new ArrayList<PackageInfo>();
 		
 		Enumeration<JarEntry> entries = jarFile.entries();
@@ -51,7 +51,6 @@ public class JarInfo {
 				String packageName = newClass.getName().substring(0, newClass.getName().lastIndexOf('.'));
 				PackageInfo packageInfo = getPackageInfo(packageName);
 				packageInfo.addClass(newClass);
-//				classes.add(newClass);
 			}
 		}
 	}
@@ -62,7 +61,7 @@ public class JarInfo {
 				return packageInfo;
 			}
 		}
-		PackageInfo packageInfo = new PackageInfo(id, packageName);
+		PackageInfo packageInfo = new PackageInfo(packageName);
 		packages.add(packageInfo);
 		return packageInfo;
 	}
@@ -97,37 +96,20 @@ public class JarInfo {
 	public ArrayList<PackageInfo> getPackages() {
 		return packages;
 	}
-
-	public int getId(){
-		return id;
-	}
 	
 	public String getName() {
 		return name;
 	}
 
-	public String getGroup() {
-		return group;
+	public String getGroupId() {
+		return groupId;
 	}
 
-//	public void setGroup(String group) {
-//		this.group = group;
-//	}
-
-	public String getArtifact() {
-		return artifact;
+	public String getArtifactId() {
+		return artifactId;
 	}
-
-//	public void setArtifact(String artifact) {
-//		this.artifact = artifact;
-//	}
 
 	public String getVersion() {
 		return version;
 	}
-
-//	public void setVersion(String version) {
-//		this.version = version;
-//	}
-
 }

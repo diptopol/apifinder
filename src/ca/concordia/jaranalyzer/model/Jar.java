@@ -7,19 +7,28 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import ca.concordia.jaranalyzer.JarInfo;
+
 @Entity
 @Table(name = "jar")
 public class Jar {
 	private int id;
 	private String name;
-	private String Version;
+	private String artifactId;
+	private String version;
+	private String groupId;
 	
-	public Jar(){
-		
+	public Jar() {
 	}
 	
+	public Jar(JarInfo jarInfo) {
+		this.name = jarInfo.getName();
+		this.groupId = jarInfo.getGroupId();
+		this.artifactId = jarInfo.getArtifactId();
+		this.version = jarInfo.getVersion();
+	}
+
 	@Id
-	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public int getId() {
 		return id;
@@ -29,7 +38,6 @@ public class Jar {
 		this.id = id;
 	}
 
-	@Column(name = "name")
 	public String getName() {
 		return name;
 	}
@@ -38,12 +46,27 @@ public class Jar {
 		this.name = name;
 	}
 
-	@Column(name = "version")
+	public String getGroupId() {
+		return groupId;
+	}
+
+	public void setGroupId(String groupId) {
+		this.groupId = groupId;
+	}
+
+	public String getArtifactId() {
+		return artifactId;
+	}
+
+	public void setArtifactId(String artifactId) {
+		this.artifactId = artifactId;
+	}
+
 	public String getVersion() {
-		return Version;
+		return version;
 	}
 
 	public void setVersion(String version) {
-		Version = version;
+		this.version = version;
 	}
 }
