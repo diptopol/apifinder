@@ -12,6 +12,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
 
@@ -73,6 +74,17 @@ public class JarAnalyzerTest {
 		jarAnalyzer.SaveToDb(jarInfo);
 	}
 
+	@Test
+	public void findMethod() {
+		MethodFinder mf = new MethodFinderImpl();
+		ArrayList<String> imports = new ArrayList<String>();
+		imports.add("org.specs.runner.JUnit");
+		imports.add("org.objectweb.asm.ClassReader");
+		imports.add("org.objectweb.asm.tree.ClassNode");
+		ArrayList<MethodInfo> matches = mf.findAll(imports, "initialize", 0);
+		System.out.println(matches);
+	}
+	
 	@Test
 	public void analyzeJarsInFolder() {
 		try {

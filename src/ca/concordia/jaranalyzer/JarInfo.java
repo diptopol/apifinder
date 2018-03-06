@@ -74,11 +74,11 @@ public class JarInfo {
 		return jarString;
 	}
 
-	public ArrayList<MethodInfo> getAllPublicMethods() {
+	public ArrayList<MethodInfo> getAllMethods() {
 		ArrayList<MethodInfo> publicMethods = new ArrayList<MethodInfo>();
 		for (ClassInfo classInfo : getClasses()) {
 			for (MethodInfo methodInfo : classInfo.getMethods()) {
-				if (methodInfo.isPublic())
+//				if (methodInfo.isPublic())
 					publicMethods.add(methodInfo);
 			}
 		}

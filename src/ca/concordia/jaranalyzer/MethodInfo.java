@@ -130,7 +130,7 @@ public class MethodInfo {
 	public String getParameterTypes() {
 		String parameters = "";
 		for (Type type : argumentTypes) {
-			parameters += type.getClassName();//.substring(type.getClassName().lastIndexOf('.') + 1) + " ";
+			parameters += type.getClassName() + ",";//.substring(type.getClassName().lastIndexOf('.') + 1) + " ";
 		}
 		return parameters;
 	}

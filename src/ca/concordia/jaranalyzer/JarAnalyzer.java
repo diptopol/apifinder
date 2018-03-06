@@ -1,26 +1,25 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.dao.JarManager;
-import ca.concordia.jaranalyzer.dao.MethodManager;
-import ca.concordia.jaranalyzer.model.Jar;
-import ca.concordia.jaranalyzer.model.Method;
-import ca.concordia.jaranalyzer.util.HibernateUtil;
-import ca.concordia.jaranalyzer.util.Utility;
-
-import org.hibernate.SessionFactory;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.objectweb.asm.Type;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.jar.JarFile;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import ca.concordia.jaranalyzer.dao.JarManager;
+import ca.concordia.jaranalyzer.model.Jar;
+import ca.concordia.jaranalyzer.util.HibernateUtil;
+import ca.concordia.jaranalyzer.util.Utility;
 
 public class JarAnalyzer {
 
 	private String jarsPath;
 
+	JarManager manager;
+
 	public JarAnalyzer() {
+		manager = new JarManager();
 		File file = new File("C:\\jars");
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
@@ -89,10 +88,10 @@ public class JarAnalyzer {
 
 	public void SaveToDb(JarInfo jarInfo) {
 
-		JarManager manager = new JarManager();
+		
 		Jar jar = manager.create(jarInfo);
 
-		HibernateUtil.getSessionFactory().close();
+//		HibernateUtil.getSessionFactory().close();
 		/*MethodManager oldMethodManager = new MethodManager(HibernateUtil.getSessionFactory());
 		for (MethodInfo methodInfo : jarInfo.getAllPublicMethods()) {
 			methodInfo.setJar(jar.getId());
@@ -111,9 +110,8 @@ public class JarAnalyzer {
 		}*/
 	}
 
-	
 	public JarInfo findAndAnalyzeJar(String importDeclarationName) {
-		String requestUrl = "http://search.maven.org/solrsearch/select?q=fc:%22" + importDeclarationName + "%22&rows=1&wt=json";  
+		String requestUrl = "http://search.maven.org/solrsearch/select?q=fc:%22" + importDeclarationName + "%22&rows=10&wt=json";  
 		String response = "";
 		try {
 			response = Utility.getHTML(requestUrl);
@@ -122,13 +120,27 @@ public class JarAnalyzer {
 			JSONObject responseObject = object.getJSONObject("response");
 			JSONArray responseDocs = responseObject.getJSONArray("docs");
 
-			if(responseDocs.length() > 0){
+			for(int i=0; i<responseDocs.length(); i++) {
+				JSONObject jarDetail = (JSONObject) responseDocs.get(i);	
+				String group = jarDetail.getString("g");
+				String artifact = jarDetail.getString("a");
+				String version = jarDetail.getString("v");
+				JarInfo jarInfo = AnalyzeJar(group, artifact, version);
+				
+				if(jarInfo != null){
+					SaveToDb(jarInfo);
+					return jarInfo;
+				}
+			}
+			/*if(responseDocs.length() > 0){
 				JSONObject jarDetail = (JSONObject) responseDocs.get(0);	
 				String group = jarDetail.getString("g");
 				String artifact = jarDetail.getString("a");
 				String version = jarDetail.getString("v");
-				return AnalyzeJar(group, artifact, version);
-			}
+				JarInfo jarInfo = AnalyzeJar(group, artifact, version);
+				SaveToDb(jarInfo);
+				return jarInfo;
+			}*/
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
