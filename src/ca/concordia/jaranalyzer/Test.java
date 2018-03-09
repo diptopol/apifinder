@@ -11,7 +11,7 @@ public class Test {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		MethodFinder mf = new MethodFinderImpl(new HashSet<String>(), new HashSet<String>());
+		MethodFinder mf = new MethodFinderImpl("");
 		ArrayList<String> imports = new ArrayList<String>();
 		imports.add("org.specs.runner.JUnit");
 		ArrayList<MethodInfo> matches = mf.findAll(imports, "initialize", 0);

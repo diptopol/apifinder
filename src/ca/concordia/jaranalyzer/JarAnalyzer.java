@@ -29,13 +29,23 @@ public class JarAnalyzer {
 
 	private String jarsPath;
 
-	JarManager manager;
+//	JarManager manager;
 
 	public JarAnalyzer() {
-		manager = new JarManager();
 		File file = new File("C:\\jars");
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
+		try {
+/*			File db = new File("mydb.db");
+			if (!db.exists()) {
+				File emptyDb = new File("empty.db");
+				Utility.copyFileUsingChannel(emptyDb, db);
+			}*/
+//			manager = new JarManager();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public List<JarInfo> analyzeJarsFromPOM(Set<String> pomFiles) {
@@ -75,23 +85,14 @@ public class JarAnalyzer {
 								System.out
 										.println("artifactId : " + artifactId);
 								System.out.println("version : " + version);
-								String jarUrl = "http://central.maven.org/maven2/"
-										+ groupId
-										+ "/"
-										+ artifactId
-										+ "/"
-										+ version
-										+ "/"
-										+ artifactId
-										+ "-"
-										+ version + ".jar";
-								JarInfo jarInfo = AnalyzeJar(
-										jarUrl, groupId, artifactId, version);
+								
+								JarInfo jarInfo = AnalyzeJar(groupId,
+										artifactId, version);
 								jarInfos.add(jarInfo);
 								SaveToDb(jarInfo);
 							}
 						} catch (Exception e) {
-
+							e.printStackTrace();
 						}
 					}
 				} catch (Exception e) {
@@ -173,7 +174,7 @@ public class JarAnalyzer {
 
 	public void SaveToDb(JarInfo jarInfo) {
 
-		Jar jar = manager.create(jarInfo);
+//		Jar jar = manager.create(jarInfo);
 
 		// HibernateUtil.getSessionFactory().close();
 		/*

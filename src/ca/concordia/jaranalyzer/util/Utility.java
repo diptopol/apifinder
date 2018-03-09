@@ -3,11 +3,13 @@ package ca.concordia.jaranalyzer.util;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +33,19 @@ public class Utility {
 		url = url.replace('\\', '/');
 		return url.substring(url.lastIndexOf('/') + 1);
     }
+	
+	public static void copyFileUsingChannel(File source, File dest) throws IOException {
+	    FileChannel sourceChannel = null;
+	    FileChannel destChannel = null;
+	    try {
+	        sourceChannel = new FileInputStream(source).getChannel();
+	        destChannel = new FileOutputStream(dest).getChannel();
+	        destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
+	       }finally{
+	           sourceChannel.close();
+	           destChannel.close();
+	   }
+	}
 	
 	public static List<String> getFiles(String directory, String type) {
 		List<String> jarFiles = new ArrayList<String>();

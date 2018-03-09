@@ -77,16 +77,8 @@ public class JarAnalyzerTest {
 	}
 
 	@Test
-	public void findMethod() {
-		Set<String> jars = new HashSet<String>();
-		List<String> locations = Utility.getFiles("A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.19\\lib", "jar");
-		jars.addAll(locations);
-		
-		Set<String> poms = new HashSet<String>();
-		locations = Utility.getFiles("A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.19", "pom.xml");
-		poms.addAll(locations);
-		
-		MethodFinder mf = new MethodFinderImpl(jars, poms);
+	public void findMethod() {	
+		MethodFinder mf = new MethodFinderImpl("A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.19");
 		ArrayList<String> imports = new ArrayList<String>();
 		imports.add("org.junit.Assert");
 		ArrayList<MethodInfo> matches = mf.findAll(imports, "assertEquals", 2);
