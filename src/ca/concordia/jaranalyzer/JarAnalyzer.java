@@ -36,12 +36,12 @@ public class JarAnalyzer {
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
 		try {
-/*			File db = new File("mydb.db");
+/*		File db = new File("mydb.db");
 			if (!db.exists()) {
 				File emptyDb = new File("empty.db");
 				Utility.copyFileUsingChannel(emptyDb, db);
-			}*/
-//			manager = new JarManager();
+			}
+			manager = new JarManager();*/
 			
 		} catch (Exception e) {
 			e.printStackTrace();

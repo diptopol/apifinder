@@ -24,7 +24,7 @@ public class MethodInfo {
 	public MethodInfo(MethodNode methodNode, String className) {
 		this.name = methodNode.name;
 		if (name.equals("<init>"))
-			name = className;
+			name = extractClassNameFromQualifiedName(className);
 		this.className = className;
 		this.returnType = Type.getReturnType(methodNode.desc);
 		this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
@@ -49,6 +49,14 @@ public class MethodInfo {
 		if ((methodNode.access & Opcodes.ACC_SYNCHRONIZED) != 0) {
 			isSynchronized = true;
 		}
+	}
+
+	private String extractClassNameFromQualifiedName(String className) {
+		if(className.contains("."))
+		{
+			return className.substring(className.lastIndexOf('.')+1, className.length());
+		}
+		return className;
 	}
 
 	public String toString() {
