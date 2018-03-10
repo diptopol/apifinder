@@ -34,7 +34,6 @@ public class MethodFinderImpl implements MethodFinder {
 		}
 	}
 
-	@Override
 	public ArrayList<MethodInfo> findAll(ArrayList<String> imports,
 			String methodName, int numberOfParameters) {
 		JarAnalyzer analyzer = new JarAnalyzer();
@@ -85,7 +84,6 @@ public class MethodFinderImpl implements MethodFinder {
 		return matchedMethods;
 	}
 
-	@Override
 	public ArrayList<MethodInfo> findAll(ArrayList<String> imports,
 			String methodCall) {
 		// TODO Auto-generated method stub
