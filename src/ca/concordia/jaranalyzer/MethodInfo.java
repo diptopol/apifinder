@@ -8,6 +8,7 @@ import java.util.List;
 
 public class MethodInfo {
 	private String name;
+	private String qualifiedClassName;
 	private String className;
 	private int jar;
 	private Type[] argumentTypes;
@@ -21,10 +22,11 @@ public class MethodInfo {
 	private boolean isSynchronized;
 
 	@SuppressWarnings("unchecked")
-	public MethodInfo(MethodNode methodNode, String className) {
+	public MethodInfo(MethodNode methodNode, String qualifiedClassName, String className) {
 		this.name = methodNode.name;
 		if (name.equals("<init>"))
-			name = extractClassNameFromQualifiedName(className);
+			name = className;
+		this.qualifiedClassName = qualifiedClassName;
 		this.className = className;
 		this.returnType = Type.getReturnType(methodNode.desc);
 		this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
@@ -49,14 +51,6 @@ public class MethodInfo {
 		if ((methodNode.access & Opcodes.ACC_SYNCHRONIZED) != 0) {
 			isSynchronized = true;
 		}
-	}
-
-	private String extractClassNameFromQualifiedName(String className) {
-		if(className.contains("."))
-		{
-			return className.substring(className.lastIndexOf('.')+1, className.length());
-		}
-		return className;
 	}
 
 	public String toString() {
@@ -123,6 +117,10 @@ public class MethodInfo {
 		return name;
 	}
 
+	public String getQualifiedClassName() {
+		return qualifiedClassName;
+	}
+	
 	public String getClassName() {
 		return className;
 	}

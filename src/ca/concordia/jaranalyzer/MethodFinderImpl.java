@@ -8,17 +8,34 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import ca.concordia.jaranalyzer.util.Utility;
+
 public class MethodFinderImpl implements MethodFinder {
 
 	private List<JarInfo> jarInfosFromPom;
 	private List<JarInfo> jarInfosFromRepository;
+	private List<JarInfo> jarInfosFromJdk;
 
 	public MethodFinderImpl(String projLocation) {
+		JarAnalyzer analyzer = new JarAnalyzer();
+		jarInfosFromJdk = new ArrayList<JarInfo>();
 		jarInfosFromRepository = new ArrayList<JarInfo>();
 		jarInfosFromPom = new ArrayList<JarInfo>();
 		
+		String javaHome = System.getProperty("java.home");
+		String javaVersion = System.getProperty("java.version");
+		List<String> jarFiles = Utility.getFiles(javaHome, ".jar");
+		for (String jarLocation : jarFiles) {
+			try {
+				JarFile jarFile = new JarFile(new File(jarLocation));
+				JarInfo jarInfo = analyzer.AnalyzeJar(jarFile, "JAVA", jarFile.getName(), javaVersion);
+				jarInfosFromJdk.add(jarInfo);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		if (!projLocation.isEmpty()) {
-			JarAnalyzer analyzer = new JarAnalyzer();
 			jarInfosFromPom = analyzer
 					.analyzeJarsFromPOM(getAllPoms(projLocation));
 			for (String jarPath : getAllJars(projLocation)) {
@@ -44,7 +61,7 @@ public class MethodFinderImpl implements MethodFinder {
 				if (jarInfo == null)
 					continue;
 				for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-					if (methodInfo.getClassName().contains(importedPackage)) {
+					if (methodInfo.getQualifiedClassName().contains(importedPackage)) {
 						if (methodInfo.getName().equals(methodName)
 								&& methodInfo.getArgumentTypes().length == numberOfParameters)
 							matchedMethods.add(methodInfo);
@@ -58,7 +75,7 @@ public class MethodFinderImpl implements MethodFinder {
 				if (jarInfo == null)
 					continue;
 				for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-					if (methodInfo.getClassName().contains(importedPackage)) {
+					if (methodInfo.getQualifiedClassName().contains(importedPackage)) {
 						if (methodInfo.getName().equals(methodName)
 								&& methodInfo.getArgumentTypes().length == numberOfParameters)
 							matchedMethods.add(methodInfo);
@@ -73,7 +90,7 @@ public class MethodFinderImpl implements MethodFinder {
 				continue;
 
 			for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-				if (methodInfo.getClassName().contains(importedPackage)) {
+				if (methodInfo.getQualifiedClassName().contains(importedPackage)) {
 					if (methodInfo.getName().equals(methodName)
 							&& methodInfo.getArgumentTypes().length == numberOfParameters)
 						matchedMethods.add(methodInfo);

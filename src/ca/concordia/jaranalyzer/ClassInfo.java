@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClassInfo {
+	private String qualifiedName;
 	private String name;
 	private Type type;
 	private boolean isPublic;
@@ -20,7 +21,12 @@ public class ClassInfo {
 
 	public ClassInfo(ClassNode classNode) {
 		this.methods = new ArrayList<MethodInfo>();
-		this.name = classNode.name.replace('/', '.');
+		this.qualifiedName = classNode.name.replace('/', '.');
+		if(!classNode.name.contains("/")) {
+			this.name = classNode.name;
+		} else {
+			this.name = classNode.name.substring(classNode.name.lastIndexOf('/')+1, classNode.name.length());
+		}
 		this.type = Type.getObjectType(classNode.name);
 
 		if ((classNode.access & Opcodes.ACC_PUBLIC) != 0) {
@@ -42,10 +48,14 @@ public class ClassInfo {
 		@SuppressWarnings("unchecked")
 		List<MethodNode> methodNodes = classNode.methods;
 		for (MethodNode methodNode : methodNodes) {
-			methods.add(new MethodInfo(methodNode, name));
+			methods.add(new MethodInfo(methodNode, qualifiedName, name));
 		}
 	}
 
+	public String getQualifiedName() {
+		return qualifiedName;
+	}
+	
 	public String getName() {
 		return name;
 	}

@@ -73,7 +73,6 @@ public class JarAnalyzerTest {
 		JarInfo jarInfo = jarAnalyzer.findAndAnalyzeJar("org.specs.runner.JUnit");
 		if(jarInfo == null)
 			fail("Exception Thrown");
-		jarAnalyzer.SaveToDb(jarInfo);
 	}
 
 	@Test
@@ -88,12 +87,12 @@ public class JarAnalyzerTest {
 	@Test
 	public void analyzeJarsInFolder() {
 		try {
-			String location = "lib\\";
+			String location = "C:\\Program Files\\Java\\jdk1.8.0_112";
 			JarAnalyzer jarProfiler = new JarAnalyzer();
 			List<String> jarFiles = Utility.getFiles(location, ".jar");
 			for (String jarLocation : jarFiles) {
 				JarFile jarFile = new JarFile(new File(jarLocation));
-				jarProfiler.AnalyzeJar(jarFile, "", "", "");
+				jarProfiler.AnalyzeJar(jarFile, "JAVA", jarFile.getName(), "1.8.0_112");
 				System.out.println(jarLocation);
 			}
 			assertEquals(true, true);
@@ -138,7 +137,6 @@ public class JarAnalyzerTest {
 								String jarUrl = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/"
 										+ version + "/" + artifactId + "-" + version + ".jar";
 								JarInfo jarInfo = jarProfiler.AnalyzeJar(jarUrl, groupId, artifactId, version);
-								jarProfiler.SaveToDb(jarInfo);
 							}
 						} catch (Exception e) {
 

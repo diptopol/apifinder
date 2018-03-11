@@ -1,8 +1,5 @@
 package ca.concordia.jaranalyzer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,21 +19,20 @@ import org.w3c.dom.NodeList;
 
 import ca.concordia.jaranalyzer.dao.JarManager;
 import ca.concordia.jaranalyzer.model.Jar;
-import ca.concordia.jaranalyzer.util.HibernateUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 
 public class JarAnalyzer {
 
 	private String jarsPath;
 
-//	JarManager manager;
+	JarManager manager;
 
 	public JarAnalyzer() {
 		File file = new File("C:\\jars");
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
 		try {
-/*		File db = new File("mydb.db");
+		/*File db = new File("mydb.db");
 			if (!db.exists()) {
 				File emptyDb = new File("empty.db");
 				Utility.copyFileUsingChannel(emptyDb, db);
@@ -89,7 +85,6 @@ public class JarAnalyzer {
 								JarInfo jarInfo = AnalyzeJar(groupId,
 										artifactId, version);
 								jarInfos.add(jarInfo);
-								SaveToDb(jarInfo);
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -128,7 +123,7 @@ public class JarAnalyzer {
 					+ version + "/" + artifactId + "-" + version + ".jar";
 			jarInfo = AnalyzeJar(url, groupId, artifactId, version);
 		}
-
+		
 		return jarInfo;
 	}
 
@@ -169,10 +164,12 @@ public class JarAnalyzer {
 		if (jarFile == null)
 			return null;
 		JarInfo jarInfo = new JarInfo(jarFile, groupId, artifactId, version);
+//		if(jarInfo != null && groupId != "" && artifactId != "" && version != "")
+//			SaveToDb(jarInfo);
 		return jarInfo;
 	}
 
-	public void SaveToDb(JarInfo jarInfo) {
+	private void SaveToDb(JarInfo jarInfo) {
 
 //		Jar jar = manager.create(jarInfo);
 
@@ -214,7 +211,6 @@ public class JarAnalyzer {
 				JarInfo jarInfo = AnalyzeJar(group, artifact, version);
 
 				if (jarInfo != null) {
-					SaveToDb(jarInfo);
 					return jarInfo;
 				}
 			}
