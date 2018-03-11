@@ -14,11 +14,9 @@ public class MethodFinderImpl implements MethodFinder {
 
 	private List<JarInfo> jarInfosFromPom;
 	private List<JarInfo> jarInfosFromRepository;
-	private List<JarInfo> jarInfosFromJdk;
 
 	public MethodFinderImpl(String projLocation) {
 		JarAnalyzer analyzer = new JarAnalyzer();
-		jarInfosFromJdk = new ArrayList<JarInfo>();
 		jarInfosFromRepository = new ArrayList<JarInfo>();
 		jarInfosFromPom = new ArrayList<JarInfo>();
 
@@ -59,33 +57,13 @@ public class MethodFinderImpl implements MethodFinder {
 		ArrayList<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
 
 		for (String importedPackage : imports) {
-			for (JarInfo jarInfo : jarInfosFromPom) {
-				if (jarInfo == null)
-					continue;
-				for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-					if (methodInfo.getQualifiedClassName().contains(
-							importedPackage)) {
-						if (methodInfo.getName().equals(methodName)
-								&& methodInfo.getArgumentTypes().length == numberOfParameters)
-							matchedMethods.add(methodInfo);
-					}
-				}
-			}
+			findMatchingMethods(jarInfosFromRepository, matchedMethods, importedPackage,
+					methodName, numberOfParameters);
 			if (matchedMethods.size() > 0)
 				return matchedMethods;
-
-			for (JarInfo jarInfo : jarInfosFromRepository) {
-				if (jarInfo == null)
-					continue;
-				for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-					if (methodInfo.getQualifiedClassName().contains(
-							importedPackage)) {
-						if (methodInfo.getName().equals(methodName)
-								&& methodInfo.getArgumentTypes().length == numberOfParameters)
-							matchedMethods.add(methodInfo);
-					}
-				}
-			}
+			
+			findMatchingMethods(jarInfosFromPom, matchedMethods, importedPackage,
+					methodName, numberOfParameters);
 			if (matchedMethods.size() > 0)
 				return matchedMethods;
 
@@ -93,23 +71,35 @@ public class MethodFinderImpl implements MethodFinder {
 			if (jarInfo == null)
 				continue;
 
-			for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-				if (methodInfo.getQualifiedClassName()
-						.contains(importedPackage)) {
-					if (methodInfo.getName().equals(methodName)
-							&& methodInfo.getArgumentTypes().length == numberOfParameters)
-						matchedMethods.add(methodInfo);
-				}
-			}
+			findMatchingMethod(jarInfo, matchedMethods, importedPackage,
+					methodName, numberOfParameters);
 
 		}
 		return matchedMethods;
 	}
 
-	public ArrayList<MethodInfo> findAll(ArrayList<String> imports,
-			String methodCall) {
-		// TODO Auto-generated method stub
-		return null;
+	private void findMatchingMethods(List<JarInfo> jarInfos,
+			ArrayList<MethodInfo> matchedMethods, String importedPackage,
+			String methodName, int numberOfParameters) {
+		for (JarInfo jarInfo : jarInfos) {
+			if (jarInfo == null)
+				continue;
+			findMatchingMethod(jarInfo, matchedMethods, importedPackage,
+					methodName, numberOfParameters);
+		}
+	}
+
+	private void findMatchingMethod(JarInfo jarInfo,
+			ArrayList<MethodInfo> matchedMethods, String importedPackage,
+			String methodName, int numberOfParameters) {
+		for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
+			if (methodInfo.getQualifiedClassName().contains(
+					importedPackage)) {
+				if (methodInfo.getName().equals(methodName)
+						&& methodInfo.getArgumentTypes().length == numberOfParameters)
+					matchedMethods.add(methodInfo);
+			}
+		}
 	}
 
 	private Set<String> getAllPoms(String projname) {
