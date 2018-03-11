@@ -16,9 +16,24 @@ public class MethodFinderImpl implements MethodFinder {
 	public MethodFinderImpl(String projLocation) {
 		jarInfosFromRepository = new ArrayList<JarInfo>();
 		jarInfosFromPom = new ArrayList<JarInfo>();
+		JarAnalyzer analyzer = new JarAnalyzer();
+		
+		String javaHome = System.getProperty("java.home");
+		if (javaHome != null) {
+			Set<String> jdkLibs = getAllJars(javaHome + File.separator + "lib");
+			for (String jarPath : jdkLibs) {
+				JarFile jarFile;
+				try {
+					jarFile = new JarFile(new File(jarPath));
+					jarInfosFromRepository.add(analyzer.AnalyzeJar(jarFile, "",
+							"", ""));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 		
 		if (!projLocation.isEmpty()) {
-			JarAnalyzer analyzer = new JarAnalyzer();
 			jarInfosFromPom = analyzer
 					.analyzeJarsFromPOM(getAllPoms(projLocation));
 			for (String jarPath : getAllJars(projLocation)) {
