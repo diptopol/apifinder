@@ -21,36 +21,22 @@ public class MethodFinderImpl implements MethodFinder {
 		jarInfosFromJdk = new ArrayList<JarInfo>();
 		jarInfosFromRepository = new ArrayList<JarInfo>();
 		jarInfosFromPom = new ArrayList<JarInfo>();
-		JarAnalyzer analyzer = new JarAnalyzer();
-		
+
 		String javaHome = System.getProperty("java.home");
+		String javaVersion = System.getProperty("java.version");
 		if (javaHome != null) {
-			Set<String> jdkLibs = getAllJars(javaHome + File.separator + "lib");
-			for (String jarPath : jdkLibs) {
-				JarFile jarFile;
+			List<String> jarFiles = Utility.getFiles(javaHome, ".jar");
+			for (String jarLocation : jarFiles) {
 				try {
-					jarFile = new JarFile(new File(jarPath));
-					jarInfosFromRepository.add(analyzer.AnalyzeJar(jarFile, "",
-							"", ""));
+					JarFile jarFile = new JarFile(new File(jarLocation));
+					JarInfo jarInfo = analyzer.AnalyzeJar(jarFile, "JAVA",
+							jarFile.getName(), javaVersion);
+					jarInfosFromRepository.add(jarInfo);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}
-		
-		String javaHome = System.getProperty("java.home");
-		String javaVersion = System.getProperty("java.version");
-		List<String> jarFiles = Utility.getFiles(javaHome, ".jar");
-		for (String jarLocation : jarFiles) {
-			try {
-				JarFile jarFile = new JarFile(new File(jarLocation));
-				JarInfo jarInfo = analyzer.AnalyzeJar(jarFile, "JAVA", jarFile.getName(), javaVersion);
-				jarInfosFromJdk.add(jarInfo);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
 		if (!projLocation.isEmpty()) {
 			jarInfosFromPom = analyzer
 					.analyzeJarsFromPOM(getAllPoms(projLocation));
@@ -77,7 +63,8 @@ public class MethodFinderImpl implements MethodFinder {
 				if (jarInfo == null)
 					continue;
 				for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-					if (methodInfo.getQualifiedClassName().contains(importedPackage)) {
+					if (methodInfo.getQualifiedClassName().contains(
+							importedPackage)) {
 						if (methodInfo.getName().equals(methodName)
 								&& methodInfo.getArgumentTypes().length == numberOfParameters)
 							matchedMethods.add(methodInfo);
@@ -91,7 +78,8 @@ public class MethodFinderImpl implements MethodFinder {
 				if (jarInfo == null)
 					continue;
 				for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-					if (methodInfo.getQualifiedClassName().contains(importedPackage)) {
+					if (methodInfo.getQualifiedClassName().contains(
+							importedPackage)) {
 						if (methodInfo.getName().equals(methodName)
 								&& methodInfo.getArgumentTypes().length == numberOfParameters)
 							matchedMethods.add(methodInfo);
@@ -106,7 +94,8 @@ public class MethodFinderImpl implements MethodFinder {
 				continue;
 
 			for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-				if (methodInfo.getQualifiedClassName().contains(importedPackage)) {
+				if (methodInfo.getQualifiedClassName()
+						.contains(importedPackage)) {
 					if (methodInfo.getName().equals(methodName)
 							&& methodInfo.getArgumentTypes().length == numberOfParameters)
 						matchedMethods.add(methodInfo);
