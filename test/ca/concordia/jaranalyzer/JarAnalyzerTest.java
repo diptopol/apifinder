@@ -13,9 +13,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.jar.JarFile;
 
 import static org.junit.Assert.assertEquals;
@@ -77,10 +75,10 @@ public class JarAnalyzerTest {
 
 	@Test
 	public void findMethod() {	
-		MethodFinder mf = new MethodFinderImpl("A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.19");
+		APIFinder mf = new APIFinderImpl("A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.19");
 		List<String> imports = new ArrayList<String>();
 		imports.add("org.junit.Assert");
-		List<MethodInfo> matches = mf.findAll(imports, "assertEquals", 2);
+		List<MethodInfo> matches = mf.findAllMethods(imports, "assertEquals", 2);
 		System.out.println(matches);
 	}
 	

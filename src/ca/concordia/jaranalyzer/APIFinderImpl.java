@@ -10,12 +10,12 @@ import java.util.jar.JarFile;
 
 import ca.concordia.jaranalyzer.util.Utility;
 
-public class MethodFinderImpl implements MethodFinder {
+public class APIFinderImpl implements APIFinder {
 
 	private List<JarInfo> jarInfosFromPom;
 	private List<JarInfo> jarInfosFromRepository;
 
-	public MethodFinderImpl(String projLocation) {
+	public APIFinderImpl(String projLocation) {
 		JarAnalyzer analyzer = new JarAnalyzer();
 		jarInfosFromRepository = new ArrayList<JarInfo>();
 		jarInfosFromPom = new ArrayList<JarInfo>();
@@ -51,10 +51,10 @@ public class MethodFinderImpl implements MethodFinder {
 		}
 	}
 
-	public ArrayList<MethodInfo> findAll(List<String> imports,
+	public List<MethodInfo> findAllMethods(List<String> imports,
 			String methodName, int numberOfParameters) {
 		JarAnalyzer analyzer = new JarAnalyzer();
-		ArrayList<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
+		List<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
 
 		for (String importedPackage : imports) {
 			findMatchingMethods(jarInfosFromRepository, matchedMethods, importedPackage,
@@ -79,7 +79,7 @@ public class MethodFinderImpl implements MethodFinder {
 	}
 
 	private void findMatchingMethods(List<JarInfo> jarInfos,
-			ArrayList<MethodInfo> matchedMethods, String importedPackage,
+			List<MethodInfo> matchedMethods, String importedPackage,
 			String methodName, int numberOfParameters) {
 		for (JarInfo jarInfo : jarInfos) {
 			if (jarInfo == null)
@@ -90,7 +90,7 @@ public class MethodFinderImpl implements MethodFinder {
 	}
 
 	private void findMatchingMethod(JarInfo jarInfo,
-			ArrayList<MethodInfo> matchedMethods, String importedPackage,
+			List<MethodInfo> matchedMethods, String importedPackage,
 			String methodName, int numberOfParameters) {
 		for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
 			if (methodInfo.getQualifiedClassName().contains(
@@ -129,5 +129,48 @@ public class MethodFinderImpl implements MethodFinder {
 				}
 			}
 		return jarFiles;
+	}
+
+	public List<ClassInfo> findAllTypes(List<String> imports, String typeName) {
+		JarAnalyzer analyzer = new JarAnalyzer();
+		List<ClassInfo> matchedTypes = new ArrayList<ClassInfo>();
+		for (String importedPackage : imports) {
+			findMatchingTypes(jarInfosFromRepository, matchedTypes, importedPackage, typeName);
+			if (matchedTypes.size() > 0)
+				return matchedTypes;
+			
+			findMatchingTypes(jarInfosFromPom, matchedTypes, importedPackage, typeName);
+			if (matchedTypes.size() > 0)
+				return matchedTypes;
+
+			JarInfo jarInfo = analyzer.findAndAnalyzeJar(importedPackage);
+			if (jarInfo == null)
+				continue;
+
+			findMatchingType(jarInfo, matchedTypes, importedPackage, typeName);
+		}
+		return matchedTypes;
+	}
+	
+	private void findMatchingTypes(List<JarInfo> jarInfos,
+			List<ClassInfo> matchedTypes, String importedPackage, String typeName) {
+		for (JarInfo jarInfo : jarInfos) {
+			if (jarInfo == null)
+				continue;
+			findMatchingType(jarInfo, matchedTypes, importedPackage, typeName);
+		}
+	}
+
+	private void findMatchingType(JarInfo jarInfo,
+			List<ClassInfo> matchedTypes, String importedPackage, String typeName) {
+		for (ClassInfo classInfo : jarInfo.getClasses()) {
+			if (classInfo.getQualifiedName().contains(
+					importedPackage)) {
+				if (classInfo.getName().equals(typeName)) {
+					matchedTypes.add(classInfo);
+				}
+			}
+		}
+		
 	}
 }
