@@ -1,7 +1,7 @@
 package ca.concordia.jaranalyzer;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public interface MethodFinder {
-	ArrayList<MethodInfo> findAll (ArrayList<String> imports, String methodName, int numberOfParameters);
+	List<MethodInfo> findAll (List<String> imports, String methodName, int numberOfParameters);
 }

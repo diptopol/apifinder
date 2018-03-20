@@ -1,9 +1,7 @@
 package ca.concordia.jaranalyzer;
 
-import static org.junit.Assert.fail;
-
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.List;
 
 public class Test {
 
@@ -12,9 +10,9 @@ public class Test {
 	 */
 	public static void main(String[] args) {
 		MethodFinder mf = new MethodFinderImpl("");
-		ArrayList<String> imports = new ArrayList<String>();
+		List<String> imports = new ArrayList<String>();
 		imports.add("org.specs.runner.JUnit");
-		ArrayList<MethodInfo> matches = mf.findAll(imports, "initialize", 0);
+		List<MethodInfo> matches = mf.findAll(imports, "initialize", 0);
 		System.out.println(matches);
 	}
 

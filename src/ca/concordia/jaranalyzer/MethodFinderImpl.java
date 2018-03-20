@@ -51,7 +51,7 @@ public class MethodFinderImpl implements MethodFinder {
 		}
 	}
 
-	public ArrayList<MethodInfo> findAll(ArrayList<String> imports,
+	public ArrayList<MethodInfo> findAll(List<String> imports,
 			String methodName, int numberOfParameters) {
 		JarAnalyzer analyzer = new JarAnalyzer();
 		ArrayList<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();

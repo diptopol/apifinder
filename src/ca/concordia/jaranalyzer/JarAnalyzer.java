@@ -18,7 +18,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import ca.concordia.jaranalyzer.dao.JarManager;
-import ca.concordia.jaranalyzer.model.Jar;
 import ca.concordia.jaranalyzer.util.Utility;
 
 public class JarAnalyzer {
