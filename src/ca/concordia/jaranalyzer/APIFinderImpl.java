@@ -176,7 +176,6 @@ public class APIFinderImpl implements APIFinder {
 
 	}
 
-	@Override
 	public List<FieldInfo> findAllFields(List<String> imports, String fieldName) {
 		JarAnalyzer analyzer = new JarAnalyzer();
 		List<FieldInfo> matchedFields = new ArrayList<FieldInfo>();
