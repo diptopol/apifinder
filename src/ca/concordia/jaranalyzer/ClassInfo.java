@@ -3,6 +3,7 @@ package ca.concordia.jaranalyzer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
@@ -18,9 +19,12 @@ public class ClassInfo {
 	private boolean isAbstract;
 	private boolean isInterface;
 	private ArrayList<MethodInfo> methods;
+	private ArrayList<FieldInfo> fields;
 
 	public ClassInfo(ClassNode classNode) {
 		this.methods = new ArrayList<MethodInfo>();
+		this.fields = new ArrayList<FieldInfo>();
+		
 		this.qualifiedName = classNode.name.replace('/', '.');
 		if(!classNode.name.contains("/")) {
 			this.name = classNode.name;
@@ -49,6 +53,11 @@ public class ClassInfo {
 		List<MethodNode> methodNodes = classNode.methods;
 		for (MethodNode methodNode : methodNodes) {
 			methods.add(new MethodInfo(methodNode, qualifiedName, name));
+		}
+		
+		List<FieldNode> fieldNodes = classNode.fields;
+		for (FieldNode fieldNode : fieldNodes) {
+			fields.add(new FieldInfo(fieldNode, qualifiedName, name));
 		}
 	}
 
@@ -132,5 +141,15 @@ public class ClassInfo {
 		classDescription.append(type.getClassName());
 
 		return classDescription.toString();
+	}
+
+	public List<FieldInfo> getFieldsByName(String fieldName) {
+		List<FieldInfo> matchedFields = new ArrayList<FieldInfo>();
+		for (FieldInfo fieldInfo : fields) {
+			if(fieldInfo.getName().equals(fieldName)){
+				matchedFields.add(fieldInfo);
+			}
+		}
+		return matchedFields;		
 	}
 }

@@ -5,4 +5,5 @@ import java.util.List;
 public interface APIFinder {
 	List<MethodInfo> findAllMethods (List<String> imports, String methodName, int numberOfParameters);
 	List<ClassInfo> findAllTypes (List<String> imports, String typeName);
+	List<FieldInfo> findAllFields (List<String> imports, String fieldName);
 }
