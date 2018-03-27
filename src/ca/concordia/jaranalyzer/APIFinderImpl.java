@@ -49,6 +49,26 @@ public class APIFinderImpl implements APIFinder {
 				}
 			}
 		}
+
+		ArrayList<JarInfo> allJars = new ArrayList<JarInfo>();
+		allJars.addAll(jarInfosFromRepository);
+		allJars.addAll(jarInfosFromPom);
+		for (JarInfo jarInfo : allJars) {
+			for (ClassInfo classInfo : jarInfo.getClasses()) {
+				if (classInfo.getSuperClassInfo() != null
+						&& !classInfo.getSuperClassName().equals(
+								"java/lang/Object")) {
+					for (JarInfo jar : allJars) {
+						for (ClassInfo cls : jar.getClasses()) {
+							if (cls.getQualifiedName().equals(
+									classInfo.getSuperClassName())) {
+								classInfo.setSuperClassInfo(cls);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	public List<MethodInfo> findAllMethods(List<String> imports,
@@ -89,23 +109,23 @@ public class APIFinderImpl implements APIFinder {
 		}
 	}
 
-/*	private void findMatchingMethod(JarInfo jarInfo,
-			List<MethodInfo> matchedMethods, String importedPackage,
-			String methodName, int numberOfParameters) {
-		for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
-			if (methodInfo.getQualifiedClassName().contains(importedPackage)) {
-				if (methodInfo.getName().equals(methodName)
-						&& methodInfo.getArgumentTypes().length == numberOfParameters)
-					matchedMethods.add(methodInfo);
-			}
-		}
-	}*/
-	
+	/*
+	 * private void findMatchingMethod(JarInfo jarInfo, List<MethodInfo>
+	 * matchedMethods, String importedPackage, String methodName, int
+	 * numberOfParameters) { for (MethodInfo methodInfo :
+	 * jarInfo.getAllMethods()) { if
+	 * (methodInfo.getQualifiedClassName().contains(importedPackage)) { if
+	 * (methodInfo.getName().equals(methodName) &&
+	 * methodInfo.getArgumentTypes().length == numberOfParameters)
+	 * matchedMethods.add(methodInfo); } } }
+	 */
+
 	private void findMatchingMethod(JarInfo jarInfo,
 			List<MethodInfo> matchedMethods, String importedPackage,
 			String methodName, int numberOfParameters) {
 		for (ClassInfo classInfo : jarInfo.getClasses(importedPackage)) {
-			matchedMethods.addAll(classInfo.getMethods(methodName, numberOfParameters));		
+			matchedMethods.addAll(classInfo.getMethods(methodName,
+					numberOfParameters));
 		}
 	}
 
@@ -214,7 +234,8 @@ public class APIFinderImpl implements APIFinder {
 		for (JarInfo jarInfo : jarInfos) {
 			if (jarInfo == null)
 				continue;
-			findMatchingField(jarInfo, matchedFields, importedPackage, fieldName);
+			findMatchingField(jarInfo, matchedFields, importedPackage,
+					fieldName);
 		}
 	}
 
@@ -225,6 +246,6 @@ public class APIFinderImpl implements APIFinder {
 			if (classInfo.getQualifiedName().contains(importedPackage)) {
 				matchedFields.addAll(classInfo.getFieldsByName(fieldName));
 			}
-		}		
+		}
 	}
 }

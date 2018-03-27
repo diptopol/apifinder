@@ -201,7 +201,7 @@ public class ClassInfo {
 		}
 
 		if (matchedMethods.size() == 0 && superClassInfo != null) {
-			superClassInfo.getMethods(methodName, numberOfParameters);
+			matchedMethods.addAll(superClassInfo.getMethods(methodName, numberOfParameters));
 		}
 		return matchedMethods;
 	}

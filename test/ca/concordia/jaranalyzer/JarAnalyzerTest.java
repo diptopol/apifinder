@@ -13,6 +13,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
 
@@ -64,25 +65,33 @@ public class JarAnalyzerTest {
 		jarAnalyzer.AnalyzeJar(jarUrl, "", "", "");
 		assertEquals(true, true);
 	}
-	
+
 	@Test
 	public void findJarByClassName() {
 		JarAnalyzer jarAnalyzer = new JarAnalyzer();
-		JarInfo jarInfo = jarAnalyzer.findAndAnalyzeJar("org.specs.runner.JUnit");
-		if(jarInfo == null)
+		JarInfo jarInfo = jarAnalyzer
+				.findAndAnalyzeJar("org.specs.runner.JUnit");
+		if (jarInfo == null)
 			fail("Exception Thrown");
 	}
 
 	@Test
-	public void findMethod() {	
-		APIFinder mf = new APIFinderImpl("A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.13");
-		List<String> imports = new ArrayList<String>();
-		imports.add("org.jfree.chart.title.Title");
-//		List<MethodInfo> matches = mf.findAllMethods(imports, "assertEquals", 2);
-		List<FieldInfo> Fieldmatches = mf.findAllFields(imports, "DEFAULT_HORIZONTAL_ALIGNMENT");
-		System.out.println(Fieldmatches);
+	public void findMethod() {
+		APIFinder mf = new APIFinderImpl(
+				"A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.13");
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang",
+				"org.jfree.chart.needle", 
+				"java.awt.Graphics2D",
+				"java.awt.geom.GeneralPath", "java.awt.geom.Point2D",
+				"java.awt.geom.Rectangle2D", "java.io.Serializable"
+				});
+		List<MethodInfo> matches = mf.findAllMethods(imports, "getMinX", 0);
+		// List<FieldInfo> Fieldmatches = mf.findAllFields(imports,
+		// "DEFAULT_HORIZONTAL_ALIGNMENT");
+		System.out.println(matches);
 	}
-	
+
 	@Test
 	public void analyzeJarsInFolder() {
 		try {
@@ -91,7 +100,8 @@ public class JarAnalyzerTest {
 			List<String> jarFiles = Utility.getFiles(location, ".jar");
 			for (String jarLocation : jarFiles) {
 				JarFile jarFile = new JarFile(new File(jarLocation));
-				jarProfiler.AnalyzeJar(jarFile, "JAVA", jarFile.getName(), "1.8.0_112");
+				jarProfiler.AnalyzeJar(jarFile, "JAVA", jarFile.getName(),
+						"1.8.0_112");
 				System.out.println(jarLocation);
 			}
 			assertEquals(true, true);
@@ -114,11 +124,13 @@ public class JarAnalyzerTest {
 					String artifactId;
 					String version;
 					File inputFile = new File(pomLocation);
-					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+					DocumentBuilderFactory dbFactory = DocumentBuilderFactory
+							.newInstance();
 					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 					Document doc = dBuilder.parse(inputFile);
 					doc.getDocumentElement().normalize();
-					System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+					System.out.println("Root element :"
+							+ doc.getDocumentElement().getNodeName());
 					NodeList nList = doc.getElementsByTagName("dependency");
 					System.out.println("----------------------------");
 					for (int temp = 0; temp < nList.getLength(); temp++) {
@@ -127,15 +139,31 @@ public class JarAnalyzerTest {
 
 							if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 								Element eElement = (Element) nNode;
-								groupId = eElement.getElementsByTagName("groupId").item(0).getTextContent();
-								artifactId = eElement.getElementsByTagName("artifactId").item(0).getTextContent();
-								version = eElement.getElementsByTagName("version").item(0).getTextContent();
+								groupId = eElement
+										.getElementsByTagName("groupId")
+										.item(0).getTextContent();
+								artifactId = eElement
+										.getElementsByTagName("artifactId")
+										.item(0).getTextContent();
+								version = eElement
+										.getElementsByTagName("version")
+										.item(0).getTextContent();
 								System.out.println("groupId : " + groupId);
-								System.out.println("artifactId : " + artifactId);
+								System.out
+										.println("artifactId : " + artifactId);
 								System.out.println("version : " + version);
-								String jarUrl = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/"
-										+ version + "/" + artifactId + "-" + version + ".jar";
-								JarInfo jarInfo = jarProfiler.AnalyzeJar(jarUrl, groupId, artifactId, version);
+								String jarUrl = "http://central.maven.org/maven2/"
+										+ groupId
+										+ "/"
+										+ artifactId
+										+ "/"
+										+ version
+										+ "/"
+										+ artifactId
+										+ "-"
+										+ version + ".jar";
+								JarInfo jarInfo = jarProfiler.AnalyzeJar(
+										jarUrl, groupId, artifactId, version);
 							}
 						} catch (Exception e) {
 
