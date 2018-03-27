@@ -18,16 +18,19 @@ public class JarInfo {
 
 	private ArrayList<PackageInfo> packages;
 
-	public JarInfo(JarFile jarFile, String groupId, String artifactId, String version) {
+	public JarInfo(JarFile jarFile, String groupId, String artifactId,
+			String version) {
 		this.artifactId = artifactId;
 		this.groupId = groupId;
 		this.version = version;
 		this.name = Utility.getJarName(jarFile.getName());
 		this.packages = new ArrayList<PackageInfo>();
-		
+
 		Enumeration<JarEntry> entries = jarFile.entries();
 		while (entries.hasMoreElements()) {
+
 			JarEntry entry = entries.nextElement();
+
 			String entryName = entry.getName();
 			if (entryName.endsWith(".class")) {
 				ClassNode classNode = new ClassNode();
@@ -35,7 +38,8 @@ public class JarInfo {
 				try {
 					classFileInputStream = jarFile.getInputStream(entry);
 					try {
-						ClassReader classReader = new ClassReader(classFileInputStream);
+						ClassReader classReader = new ClassReader(
+								classFileInputStream);
 						classReader.accept(classNode, 0);
 					} catch (Exception e) {
 						System.out.println("Could not read class file");
@@ -48,26 +52,30 @@ public class JarInfo {
 					e.printStackTrace();
 				}
 				ClassInfo newClass = new ClassInfo(classNode);
-				String packageName = newClass.getQualifiedName().substring(0, newClass.getQualifiedName().lastIndexOf('.'));
+				String packageName = newClass.getQualifiedName().substring(0,
+						newClass.getQualifiedName().lastIndexOf('.'));
 				PackageInfo packageInfo = getPackageInfo(packageName);
 				packageInfo.addClass(newClass);
+
 			}
 		}
-		
+
 		for (ClassInfo classInfo : getClasses()) {
-			if(!classInfo.getSuperClassName().equals("java/lang/Object")){
+			if (!classInfo.getSuperClassName().equals("java/lang/Object")) {
 				for (ClassInfo cls : getClasses()) {
-					if(cls.getQualifiedName().equals(classInfo.getSuperClassName())){
+					if (cls.getQualifiedName().equals(
+							classInfo.getSuperClassName())) {
 						classInfo.setSuperClassInfo(cls);
 					}
 				}
 			}
 		}
+
 	}
 
 	private PackageInfo getPackageInfo(String packageName) {
 		for (PackageInfo packageInfo : packages) {
-			if(packageInfo.getName().equals(packageName)){
+			if (packageInfo.getName().equals(packageName)) {
 				return packageInfo;
 			}
 		}
@@ -78,7 +86,7 @@ public class JarInfo {
 
 	public String toString() {
 		String jarString = name;
-		for (PackageInfo packageInfo: packages) {
+		for (PackageInfo packageInfo : packages) {
 			jarString += "\n\n" + packageInfo.toString();
 		}
 		return jarString;
@@ -88,8 +96,8 @@ public class JarInfo {
 		ArrayList<MethodInfo> publicMethods = new ArrayList<MethodInfo>();
 		for (ClassInfo classInfo : getClasses()) {
 			for (MethodInfo methodInfo : classInfo.getMethods()) {
-//				if (methodInfo.isPublic())
-					publicMethods.add(methodInfo);
+				// if (methodInfo.isPublic())
+				publicMethods.add(methodInfo);
 			}
 		}
 		return publicMethods;
@@ -102,11 +110,11 @@ public class JarInfo {
 		}
 		return classes;
 	}
-	
+
 	public ArrayList<PackageInfo> getPackages() {
 		return packages;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
@@ -125,9 +133,9 @@ public class JarInfo {
 
 	public ArrayList<ClassInfo> getClasses(String importedPackage) {
 		ArrayList<ClassInfo> matchedClasses = new ArrayList<ClassInfo>();
-		
+
 		for (ClassInfo classInfo : getClasses()) {
-			if(classInfo.getQualifiedName().startsWith(importedPackage)){
+			if (classInfo.getQualifiedName().startsWith(importedPackage)) {
 				matchedClasses.add(classInfo);
 			}
 		}

@@ -28,51 +28,62 @@ public class ClassInfo {
 	private ClassInfo superClassInfo;
 
 	public ClassInfo(ClassNode classNode) {
-		this.methods = new ArrayList<MethodInfo>();
-		this.fields = new ArrayList<FieldInfo>();
-		
-		this.qualifiedName = classNode.name.replace('/', '.');
-		if(!classNode.name.contains("/")) {
-			this.name = classNode.name;
-		} else {
-			this.name = classNode.name.substring(classNode.name.lastIndexOf('/')+1, classNode.name.length());
-		}
-		this.superClassName = classNode.superName.replace('/', '.');
-		
-		this.type = Type.getObjectType(classNode.name);
+		try {
+			this.methods = new ArrayList<MethodInfo>();
+			this.fields = new ArrayList<FieldInfo>();
 
-		if ((classNode.access & Opcodes.ACC_PUBLIC) != 0) {
-			isPublic = true;
-		} else if ((classNode.access & Opcodes.ACC_PROTECTED) != 0) {
-			isProtected = true;
-		} else if ((classNode.access & Opcodes.ACC_PRIVATE) != 0) {
-			isPrivate = true;
-		}
+			this.qualifiedName = classNode.name.replace('/', '.');
+			if (!classNode.name.contains("/")) {
+				this.name = classNode.name;
+			} else {
+				this.name = classNode.name.substring(
+						classNode.name.lastIndexOf('/') + 1,
+						classNode.name.length());
+			}
 
-		if ((classNode.access & Opcodes.ACC_ABSTRACT) != 0) {
-			isAbstract = true;
-		}
+			if (classNode.superName != null) {
+				this.superClassName = classNode.superName.replace('/', '.');
+			} else {
+				this.superClassName = "";
+			}
 
-		if ((classNode.access & Opcodes.ACC_INTERFACE) != 0) {
-			isInterface = true;
-		}
+			this.type = Type.getObjectType(classNode.name);
 
-		@SuppressWarnings("unchecked")
-		List<MethodNode> methodNodes = classNode.methods;
-		for (MethodNode methodNode : methodNodes) {
-			methods.add(new MethodInfo(methodNode, qualifiedName, name));
-		}
-		
-		List<FieldNode> fieldNodes = classNode.fields;
-		for (FieldNode fieldNode : fieldNodes) {
-			fields.add(new FieldInfo(fieldNode, qualifiedName, name));
+			if ((classNode.access & Opcodes.ACC_PUBLIC) != 0) {
+				isPublic = true;
+			} else if ((classNode.access & Opcodes.ACC_PROTECTED) != 0) {
+				isProtected = true;
+			} else if ((classNode.access & Opcodes.ACC_PRIVATE) != 0) {
+				isPrivate = true;
+			}
+
+			if ((classNode.access & Opcodes.ACC_ABSTRACT) != 0) {
+				isAbstract = true;
+			}
+
+			if ((classNode.access & Opcodes.ACC_INTERFACE) != 0) {
+				isInterface = true;
+			}
+
+			@SuppressWarnings("unchecked")
+			List<MethodNode> methodNodes = classNode.methods;
+			for (MethodNode methodNode : methodNodes) {
+				methods.add(new MethodInfo(methodNode, qualifiedName, name));
+			}
+
+			List<FieldNode> fieldNodes = classNode.fields;
+			for (FieldNode fieldNode : fieldNodes) {
+				fields.add(new FieldInfo(fieldNode, qualifiedName, name));
+			}
+		} catch (Exception e) {
+			System.out.println(e);
 		}
 	}
 
 	public String getQualifiedName() {
 		return qualifiedName;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
@@ -166,28 +177,30 @@ public class ClassInfo {
 	public List<FieldInfo> getFieldsByName(String fieldName) {
 		List<FieldInfo> matchedFields = new ArrayList<FieldInfo>();
 		for (FieldInfo fieldInfo : fields) {
-			if(fieldInfo.getName().equals(fieldName)){
+			if (fieldInfo.getName().equals(fieldName)) {
 				matchedFields.add(fieldInfo);
 			}
 		}
-		
-		if(matchedFields.size() == 0 && superClassInfo != null) {
+
+		if (matchedFields.size() == 0 && superClassInfo != null) {
 			superClassInfo.getFieldsByName(fieldName);
 		}
-			
-		return matchedFields;		
+
+		return matchedFields;
 	}
 
-	public ArrayList<MethodInfo> getMethods(String methodName, int numberOfParameters) {
+	public ArrayList<MethodInfo> getMethods(String methodName,
+			int numberOfParameters) {
 		ArrayList<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
-		
+
 		for (MethodInfo method : getMethods()) {
-			if (method.getName().equals(methodName) && method.getArgumentTypes().length == numberOfParameters){
+			if (method.getName().equals(methodName)
+					&& method.getArgumentTypes().length == numberOfParameters) {
 				matchedMethods.add(method);
 			}
 		}
-		
-		if(matchedMethods.size() == 0 && superClassInfo != null) {
+
+		if (matchedMethods.size() == 0 && superClassInfo != null) {
 			superClassInfo.getMethods(methodName, numberOfParameters);
 		}
 		return matchedMethods;

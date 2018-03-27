@@ -75,12 +75,12 @@ public class JarAnalyzerTest {
 
 	@Test
 	public void findMethod() {	
-		APIFinder mf = new APIFinderImpl("A:\\JarAnalyzer");
+		APIFinder mf = new APIFinderImpl("A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.13");
 		List<String> imports = new ArrayList<String>();
 		imports.add("org.jfree.chart.title.Title");
-		List<MethodInfo> matches = mf.findAllMethods(imports, "assertEquals", 2);
-//		List<FieldInfo> Fieldmatches = mf.findAllFields(imports, "DEFAULT_HORIZONTAL_ALIGNMENT");
-		System.out.println(matches);
+//		List<MethodInfo> matches = mf.findAllMethods(imports, "assertEquals", 2);
+		List<FieldInfo> Fieldmatches = mf.findAllFields(imports, "DEFAULT_HORIZONTAL_ALIGNMENT");
+		System.out.println(Fieldmatches);
 	}
 	
 	@Test
