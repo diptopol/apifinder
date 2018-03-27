@@ -89,7 +89,7 @@ public class APIFinderImpl implements APIFinder {
 		}
 	}
 
-	private void findMatchingMethod(JarInfo jarInfo,
+/*	private void findMatchingMethod(JarInfo jarInfo,
 			List<MethodInfo> matchedMethods, String importedPackage,
 			String methodName, int numberOfParameters) {
 		for (MethodInfo methodInfo : jarInfo.getAllMethods()) {
@@ -98,6 +98,14 @@ public class APIFinderImpl implements APIFinder {
 						&& methodInfo.getArgumentTypes().length == numberOfParameters)
 					matchedMethods.add(methodInfo);
 			}
+		}
+	}*/
+	
+	private void findMatchingMethod(JarInfo jarInfo,
+			List<MethodInfo> matchedMethods, String importedPackage,
+			String methodName, int numberOfParameters) {
+		for (ClassInfo classInfo : jarInfo.getClasses(importedPackage)) {
+			matchedMethods.addAll(classInfo.getMethods(methodName, numberOfParameters));		
 		}
 	}
 

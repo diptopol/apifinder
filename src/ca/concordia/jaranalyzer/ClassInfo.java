@@ -7,7 +7,11 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ClassInfo {
 	private String qualifiedName;
@@ -20,6 +24,8 @@ public class ClassInfo {
 	private boolean isInterface;
 	private ArrayList<MethodInfo> methods;
 	private ArrayList<FieldInfo> fields;
+	private String superClassName;
+	private ClassInfo superClassInfo;
 
 	public ClassInfo(ClassNode classNode) {
 		this.methods = new ArrayList<MethodInfo>();
@@ -31,6 +37,8 @@ public class ClassInfo {
 		} else {
 			this.name = classNode.name.substring(classNode.name.lastIndexOf('/')+1, classNode.name.length());
 		}
+		this.superClassName = classNode.superName.replace('/', '.');
+		
 		this.type = Type.getObjectType(classNode.name);
 
 		if ((classNode.access & Opcodes.ACC_PUBLIC) != 0) {
@@ -97,6 +105,18 @@ public class ClassInfo {
 		return methods;
 	}
 
+	public String getSuperClassName() {
+		return superClassName;
+	}
+
+	public ClassInfo getSuperClassInfo() {
+		return superClassInfo;
+	}
+
+	public void setSuperClassInfo(ClassInfo superClassInfo) {
+		this.superClassInfo = superClassInfo;
+	}
+
 	public ArrayList<MethodInfo> getPublicMethods() {
 		ArrayList<MethodInfo> publicMethods = new ArrayList<MethodInfo>();
 		for (MethodInfo methodInfo : getMethods()) {
@@ -150,6 +170,26 @@ public class ClassInfo {
 				matchedFields.add(fieldInfo);
 			}
 		}
+		
+		if(matchedFields.size() == 0 && superClassInfo != null) {
+			superClassInfo.getFieldsByName(fieldName);
+		}
+			
 		return matchedFields;		
+	}
+
+	public ArrayList<MethodInfo> getMethods(String methodName, int numberOfParameters) {
+		ArrayList<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
+		
+		for (MethodInfo method : getMethods()) {
+			if (method.getName().equals(methodName) && method.getArgumentTypes().length == numberOfParameters){
+				matchedMethods.add(method);
+			}
+		}
+		
+		if(matchedMethods.size() == 0 && superClassInfo != null) {
+			superClassInfo.getMethods(methodName, numberOfParameters);
+		}
+		return matchedMethods;
 	}
 }
