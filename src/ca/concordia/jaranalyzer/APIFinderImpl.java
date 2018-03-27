@@ -55,7 +55,7 @@ public class APIFinderImpl implements APIFinder {
 		allJars.addAll(jarInfosFromPom);
 		for (JarInfo jarInfo : allJars) {
 			for (ClassInfo classInfo : jarInfo.getClasses()) {
-				if (classInfo.getSuperClassInfo() != null
+				if (classInfo.getSuperClassInfo() == null
 						&& !classInfo.getSuperClassName().equals(
 								"java/lang/Object")) {
 					for (JarInfo jar : allJars) {
