@@ -69,6 +69,14 @@ public class JarInfo {
 					}
 				}
 			}
+			for (String superInterface : classInfo.getSuperInterfaceNames()) {
+				for (ClassInfo cls : getClasses()) {
+					if (cls.getQualifiedName().equals(
+							superInterface)) {
+						classInfo.putSuperInterfaceInfo(superInterface, cls);
+					}
+				}
+			}
 		}
 
 	}

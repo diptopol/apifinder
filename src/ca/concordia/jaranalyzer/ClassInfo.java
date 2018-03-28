@@ -7,10 +7,9 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ClassInfo {
@@ -22,15 +21,17 @@ public class ClassInfo {
 	private boolean isProtected;
 	private boolean isAbstract;
 	private boolean isInterface;
-	private ArrayList<MethodInfo> methods;
-	private ArrayList<FieldInfo> fields;
+	private List<MethodInfo> methods;
+	private List<FieldInfo> fields;
 	private String superClassName;
 	private ClassInfo superClassInfo;
+	private Map<String, ClassInfo> superInterfaceMap;
 
 	public ClassInfo(ClassNode classNode) {
 		try {
 			this.methods = new ArrayList<MethodInfo>();
 			this.fields = new ArrayList<FieldInfo>();
+			this.superInterfaceMap = new LinkedHashMap<String, ClassInfo>();
 
 			this.qualifiedName = classNode.name.replace('/', '.');
 			if (!classNode.name.contains("/")) {
@@ -66,11 +67,18 @@ public class ClassInfo {
 			}
 
 			@SuppressWarnings("unchecked")
+			List<String> implementedInterfaces = classNode.interfaces;
+			for (String interfaceName : implementedInterfaces) {
+				superInterfaceMap.put(interfaceName.replace('/', '.'), null);
+			}
+			
+			@SuppressWarnings("unchecked")
 			List<MethodNode> methodNodes = classNode.methods;
 			for (MethodNode methodNode : methodNodes) {
 				methods.add(new MethodInfo(methodNode, qualifiedName, name));
 			}
 
+			@SuppressWarnings("unchecked")
 			List<FieldNode> fieldNodes = classNode.fields;
 			for (FieldNode fieldNode : fieldNodes) {
 				fields.add(new FieldInfo(fieldNode, qualifiedName, name));
@@ -112,7 +120,7 @@ public class ClassInfo {
 		return isInterface;
 	}
 
-	public ArrayList<MethodInfo> getMethods() {
+	public List<MethodInfo> getMethods() {
 		return methods;
 	}
 
@@ -126,6 +134,14 @@ public class ClassInfo {
 
 	public void setSuperClassInfo(ClassInfo superClassInfo) {
 		this.superClassInfo = superClassInfo;
+	}
+
+	public Set<String> getSuperInterfaceNames() {
+		return superInterfaceMap.keySet();
+	}
+
+	public void putSuperInterfaceInfo(String interfaceName, ClassInfo interfaceInfo) {
+		superInterfaceMap.put(interfaceName, interfaceInfo);
 	}
 
 	public ArrayList<MethodInfo> getPublicMethods() {
@@ -183,15 +199,23 @@ public class ClassInfo {
 		}
 
 		if (matchedFields.size() == 0 && superClassInfo != null) {
-			superClassInfo.getFieldsByName(fieldName);
+			matchedFields.addAll(superClassInfo.getFieldsByName(fieldName));
 		}
 
+		if (matchedFields.size() == 0) {
+			for (String superInterfaceName : superInterfaceMap.keySet()) {
+				ClassInfo interfaceInfo = superInterfaceMap.get(superInterfaceName);
+				if (interfaceInfo != null) {
+					matchedFields.addAll(interfaceInfo.getFieldsByName(fieldName));
+				}
+			}
+		}
 		return matchedFields;
 	}
 
-	public ArrayList<MethodInfo> getMethods(String methodName,
+	public List<MethodInfo> getMethods(String methodName,
 			int numberOfParameters) {
-		ArrayList<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
+		List<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
 
 		for (MethodInfo method : getMethods()) {
 			if (method.matches(methodName, numberOfParameters)) {
@@ -201,6 +225,15 @@ public class ClassInfo {
 
 		if (matchedMethods.size() == 0 && superClassInfo != null) {
 			matchedMethods.addAll(superClassInfo.getMethods(methodName, numberOfParameters));
+		}
+		
+		if (matchedMethods.size() == 0) {
+			for (String superInterfaceName : superInterfaceMap.keySet()) {
+				ClassInfo interfaceInfo = superInterfaceMap.get(superInterfaceName);
+				if (interfaceInfo != null) {
+					matchedMethods.addAll(interfaceInfo.getMethods(methodName, numberOfParameters));
+				}
+			}
 		}
 		return matchedMethods;
 	}

@@ -77,9 +77,9 @@ public class JarAnalyzerTest {
 	}
 
 	@Test
-	public void findMethod() {
+	public void findMethodInSuperclassOfImport() {
 		APIFinder mf = new APIFinderImpl(
-				"A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.13");
+				"C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13");
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang",
 				"org.jfree.chart.needle", 
@@ -90,6 +90,60 @@ public class JarAnalyzerTest {
 		Set<MethodInfo> matches = mf.findAllMethods(imports, "getMinX", 0);
 		// List<FieldInfo> Fieldmatches = mf.findAllFields(imports,
 		// "DEFAULT_HORIZONTAL_ALIGNMENT");
+		System.out.println(matches);
+	}
+	
+	@Test
+	public void findMethod() {
+		APIFinder mf = new APIFinderImpl(
+				"C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13");
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang", "org.jfree.chart.block", 
+				"java.awt.Graphics2D", "java.awt.geom.Rectangle2D", 
+				"java.io.Serializable", "java.util.List", 
+				"org.jfree.ui.Size2D",
+				"org.jfree.data.Range"
+				// this is the return type of method
+				// org.jfree.chart.block.RectangleConstraint.getHeightRange()
+				// and is supplied externally
+				});
+		Set<MethodInfo> matches = mf.findAllMethods(imports, "constrain", 1);
+		System.out.println(matches);
+	}
+
+	@Test
+	public void findMethodInSuperInterfaceOfImport() {
+		APIFinder mf = new APIFinderImpl(
+				"C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13");
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang", 
+				"org.jfree.chart.renderer.category",
+				"java.awt.Graphics2D", 
+				"java.awt.Paint", 
+				"java.awt.Shape",
+				"java.awt.Stroke", 
+				"java.awt.geom.Line2D", 
+				"java.awt.geom.Rectangle2D",
+				"java.io.IOException", 
+				"java.io.ObjectInputStream", 
+				"java.io.ObjectOutputStream",
+				"java.io.Serializable", 
+				"java.util.List",
+				"org.jfree.chart.LegendItem",
+				"org.jfree.chart.axis.CategoryAxis",
+				"org.jfree.chart.axis.ValueAxis",
+				"org.jfree.chart.event.RendererChangeEvent",
+				"org.jfree.chart.plot.CategoryPlot",
+				"org.jfree.chart.plot.PlotOrientation",
+				"org.jfree.data.category.CategoryDataset",
+				"org.jfree.data.statistics.MultiValueCategoryDataset",
+				"org.jfree.util.BooleanList",
+				"org.jfree.util.BooleanUtilities",
+				"org.jfree.util.ObjectUtilities", 
+				"org.jfree.util.PublicCloneable",
+				"org.jfree.util.ShapeUtilities"
+				});
+		Set<MethodInfo> matches = mf.findAllMethods(imports, "getRowKey", 1);
 		System.out.println(matches);
 	}
 
