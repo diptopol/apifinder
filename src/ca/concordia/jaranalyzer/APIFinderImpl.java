@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -56,17 +57,16 @@ public class APIFinderImpl implements APIFinder {
 		 * allJars.addAll(jarInfosFromPom); for (JarInfo jarInfo : allJars) {
 		 * for (ClassInfo classInfo : jarInfo.getClasses()) { if
 		 * (classInfo.getSuperClassInfo() == null &&
-		 * !classInfo.getSuperClassName().isEmpty()) { for (JarInfo jar :
+		 * !classInfo.getSuperClassName().equals("java.lang.Object")) { for (JarInfo jar :
 		 * allJars) { for (ClassInfo cls : jar.getClasses()) { if
 		 * (cls.getQualifiedName().equals( classInfo.getSuperClassName())) {
 		 * classInfo.setSuperClassInfo(cls); } } } } } }
 		 */
 	}
 
-	public List<MethodInfo> findAllMethods(List<String> imports,
+	public Set<MethodInfo> findAllMethods(List<String> imports,
 			String methodName, int numberOfParameters) {
-		JarAnalyzer analyzer = new JarAnalyzer();
-		List<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
+		Set<MethodInfo> matchedMethods = new LinkedHashSet<MethodInfo>();
 		List<String> importStatements = new ArrayList<String>(imports);
 
 		if (methodName.contains(".")) {
@@ -97,7 +97,7 @@ public class APIFinderImpl implements APIFinder {
 	}
 
 	private void findMatchingMethods(List<JarInfo> jarInfos,
-			List<MethodInfo> matchedMethods, String importedPackage,
+			Set<MethodInfo> matchedMethods, String importedPackage,
 			String methodName, int numberOfParameters) {
 		for (JarInfo jarInfo : jarInfos) {
 			if (jarInfo == null)
@@ -119,7 +119,7 @@ public class APIFinderImpl implements APIFinder {
 	 */
 
 	private void findMatchingMethod(JarInfo jarInfo,
-			List<MethodInfo> matchedMethods, String importedPackage,
+			Set<MethodInfo> matchedMethods, String importedPackage,
 			String methodName, int numberOfParameters) {
 		for (ClassInfo classInfo : jarInfo.getClasses(importedPackage)) {
 			matchedMethods.addAll(classInfo.getMethods(methodName,
@@ -156,9 +156,8 @@ public class APIFinderImpl implements APIFinder {
 		return jarFiles;
 	}
 
-	public List<ClassInfo> findAllTypes(List<String> imports, String typeName) {
-		JarAnalyzer analyzer = new JarAnalyzer();
-		List<ClassInfo> matchedTypes = new ArrayList<ClassInfo>();
+	public Set<ClassInfo> findAllTypes(List<String> imports, String typeName) {
+		Set<ClassInfo> matchedTypes = new LinkedHashSet<ClassInfo>();
 
 		List<String> importStatements = new ArrayList<String>(imports);
 
@@ -189,7 +188,7 @@ public class APIFinderImpl implements APIFinder {
 	}
 
 	private void findMatchingTypes(List<JarInfo> jarInfos,
-			List<ClassInfo> matchedTypes, String importedPackage,
+			Set<ClassInfo> matchedTypes, String importedPackage,
 			String typeName) {
 		for (JarInfo jarInfo : jarInfos) {
 			if (jarInfo == null)
@@ -199,7 +198,7 @@ public class APIFinderImpl implements APIFinder {
 	}
 
 	private void findMatchingType(JarInfo jarInfo,
-			List<ClassInfo> matchedTypes, String importedPackage,
+			Set<ClassInfo> matchedTypes, String importedPackage,
 			String typeName) {
 		for (ClassInfo classInfo : jarInfo.getClasses()) {
 			if (classInfo.getQualifiedName().contains(importedPackage)) {
@@ -211,9 +210,8 @@ public class APIFinderImpl implements APIFinder {
 
 	}
 
-	public List<FieldInfo> findAllFields(List<String> imports, String fieldName) {
-		JarAnalyzer analyzer = new JarAnalyzer();
-		List<FieldInfo> matchedFields = new ArrayList<FieldInfo>();
+	public Set<FieldInfo> findAllFields(List<String> imports, String fieldName) {
+		Set<FieldInfo> matchedFields = new LinkedHashSet<FieldInfo>();
 		
 		List<String> importStatements = new ArrayList<String>(imports);
 
@@ -245,7 +243,7 @@ public class APIFinderImpl implements APIFinder {
 	}
 
 	private void findMatchingFields(List<JarInfo> jarInfos,
-			List<FieldInfo> matchedFields, String importedPackage,
+			Set<FieldInfo> matchedFields, String importedPackage,
 			String fieldName) {
 		for (JarInfo jarInfo : jarInfos) {
 			if (jarInfo == null)
@@ -256,7 +254,7 @@ public class APIFinderImpl implements APIFinder {
 	}
 
 	private void findMatchingField(JarInfo jarInfo,
-			List<FieldInfo> matchedFields, String importedPackage,
+			Set<FieldInfo> matchedFields, String importedPackage,
 			String fieldName) {
 		for (ClassInfo classInfo : jarInfo.getClasses()) {
 			if (classInfo.getQualifiedName().contains(importedPackage)) {

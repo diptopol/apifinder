@@ -61,7 +61,7 @@ public class JarInfo {
 		}
 
 		for (ClassInfo classInfo : getClasses()) {
-			if (!classInfo.getSuperClassName().equals("java/lang/Object")) {
+			if (!classInfo.getSuperClassName().equals("java.lang.Object")) {
 				for (ClassInfo cls : getClasses()) {
 					if (cls.getQualifiedName().equals(
 							classInfo.getSuperClassName())) {

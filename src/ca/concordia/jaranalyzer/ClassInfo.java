@@ -46,9 +46,6 @@ public class ClassInfo {
 			} else {
 				this.superClassName = "";
 			}
-			
-			if(this.superClassName.equals("java/lang/Object"))
-				this.superClassName = "";
 
 			this.type = Type.getObjectType(classNode.name);
 
