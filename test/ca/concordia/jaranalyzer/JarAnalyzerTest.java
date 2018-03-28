@@ -81,12 +81,12 @@ public class JarAnalyzerTest {
 				"A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.13");
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang",
-				"org.jfree.chart.needle", 
-				"java.awt.Graphics2D",
-				"java.awt.geom.GeneralPath", "java.awt.geom.Point2D",
-				"java.awt.geom.Rectangle2D", "java.io.Serializable"
+//				"org.jfree.chart.needle", 
+//				"java.awt.Graphics2D",
+//				"java.awt.geom.GeneralPath", "java.awt.geom.Point2D",
+//				"java.awt.geom.Rectangle2D", "java.io.Serializable"
 				});
-		List<MethodInfo> matches = mf.findAllMethods(imports, "getMinX", 0);
+		List<MethodInfo> matches = mf.findAllMethods(imports, "java.util.ArrayList", 0);
 		// List<FieldInfo> Fieldmatches = mf.findAllFields(imports,
 		// "DEFAULT_HORIZONTAL_ALIGNMENT");
 		System.out.println(matches);

@@ -50,33 +50,30 @@ public class APIFinderImpl implements APIFinder {
 			}
 		}
 
-		ArrayList<JarInfo> allJars = new ArrayList<JarInfo>();
-		allJars.addAll(jarInfosFromRepository);
-		allJars.addAll(jarInfosFromPom);
-		for (JarInfo jarInfo : allJars) {
-			for (ClassInfo classInfo : jarInfo.getClasses()) {
-				if (classInfo.getSuperClassInfo() == null
-						&& !classInfo.getSuperClassName().equals(
-								"java/lang/Object")) {
-					for (JarInfo jar : allJars) {
-						for (ClassInfo cls : jar.getClasses()) {
-							if (cls.getQualifiedName().equals(
-									classInfo.getSuperClassName())) {
-								classInfo.setSuperClassInfo(cls);
-							}
-						}
-					}
-				}
-			}
-		}
+		/*
+		 * ArrayList<JarInfo> allJars = new ArrayList<JarInfo>();
+		 * allJars.addAll(jarInfosFromRepository);
+		 * allJars.addAll(jarInfosFromPom); for (JarInfo jarInfo : allJars) {
+		 * for (ClassInfo classInfo : jarInfo.getClasses()) { if
+		 * (classInfo.getSuperClassInfo() == null &&
+		 * !classInfo.getSuperClassName().isEmpty()) { for (JarInfo jar :
+		 * allJars) { for (ClassInfo cls : jar.getClasses()) { if
+		 * (cls.getQualifiedName().equals( classInfo.getSuperClassName())) {
+		 * classInfo.setSuperClassInfo(cls); } } } } } }
+		 */
 	}
 
 	public List<MethodInfo> findAllMethods(List<String> imports,
 			String methodName, int numberOfParameters) {
 		JarAnalyzer analyzer = new JarAnalyzer();
 		List<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
+		List<String> importStatements = new ArrayList<String>(imports);
 
-		for (String importedPackage : imports) {
+		if (methodName.contains(".")) {
+			importStatements.add(methodName);
+		}
+
+		for (String importedPackage : importStatements) {
 			findMatchingMethods(jarInfosFromRepository, matchedMethods,
 					importedPackage, methodName, numberOfParameters);
 			if (matchedMethods.size() > 0)
@@ -87,12 +84,13 @@ public class APIFinderImpl implements APIFinder {
 			if (matchedMethods.size() > 0)
 				return matchedMethods;
 
-			JarInfo jarInfo = analyzer.findAndAnalyzeJar(importedPackage);
-			if (jarInfo == null)
-				continue;
-
-			findMatchingMethod(jarInfo, matchedMethods, importedPackage,
-					methodName, numberOfParameters);
+			/*
+			 * JarInfo jarInfo = analyzer.findAndAnalyzeJar(importedPackage); if
+			 * (jarInfo == null) continue;
+			 * 
+			 * findMatchingMethod(jarInfo, matchedMethods, importedPackage,
+			 * methodName, numberOfParameters);
+			 */
 
 		}
 		return matchedMethods;
@@ -161,7 +159,14 @@ public class APIFinderImpl implements APIFinder {
 	public List<ClassInfo> findAllTypes(List<String> imports, String typeName) {
 		JarAnalyzer analyzer = new JarAnalyzer();
 		List<ClassInfo> matchedTypes = new ArrayList<ClassInfo>();
-		for (String importedPackage : imports) {
+
+		List<String> importStatements = new ArrayList<String>(imports);
+
+		if (typeName.contains(".")) {
+			importStatements.add(typeName);
+		}
+
+		for (String importedPackage : importStatements) {
 			findMatchingTypes(jarInfosFromRepository, matchedTypes,
 					importedPackage, typeName);
 			if (matchedTypes.size() > 0)
@@ -172,11 +177,13 @@ public class APIFinderImpl implements APIFinder {
 			if (matchedTypes.size() > 0)
 				return matchedTypes;
 
-			JarInfo jarInfo = analyzer.findAndAnalyzeJar(importedPackage);
-			if (jarInfo == null)
-				continue;
-
-			findMatchingType(jarInfo, matchedTypes, importedPackage, typeName);
+			/*
+			 * JarInfo jarInfo = analyzer.findAndAnalyzeJar(importedPackage); if
+			 * (jarInfo == null) continue;
+			 * 
+			 * findMatchingType(jarInfo, matchedTypes, importedPackage,
+			 * typeName);
+			 */
 		}
 		return matchedTypes;
 	}
@@ -207,7 +214,15 @@ public class APIFinderImpl implements APIFinder {
 	public List<FieldInfo> findAllFields(List<String> imports, String fieldName) {
 		JarAnalyzer analyzer = new JarAnalyzer();
 		List<FieldInfo> matchedFields = new ArrayList<FieldInfo>();
-		for (String importedPackage : imports) {
+		
+		List<String> importStatements = new ArrayList<String>(imports);
+
+		if (fieldName.contains(".")) {
+			importStatements.add(fieldName);
+		}
+
+		
+		for (String importedPackage : importStatements) {
 			findMatchingFields(jarInfosFromRepository, matchedFields,
 					importedPackage, fieldName);
 			if (matchedFields.size() > 0)
@@ -218,12 +233,13 @@ public class APIFinderImpl implements APIFinder {
 			if (matchedFields.size() > 0)
 				return matchedFields;
 
-			JarInfo jarInfo = analyzer.findAndAnalyzeJar(importedPackage);
-			if (jarInfo == null)
-				continue;
-
-			findMatchingField(jarInfo, matchedFields, importedPackage,
-					fieldName);
+			/*
+			 * JarInfo jarInfo = analyzer.findAndAnalyzeJar(importedPackage); if
+			 * (jarInfo == null) continue;
+			 * 
+			 * findMatchingField(jarInfo, matchedFields, importedPackage,
+			 * fieldName);
+			 */
 		}
 		return matchedFields;
 	}

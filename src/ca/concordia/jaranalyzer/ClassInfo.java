@@ -46,6 +46,9 @@ public class ClassInfo {
 			} else {
 				this.superClassName = "";
 			}
+			
+			if(this.superClassName.equals("java/lang/Object"))
+				this.superClassName = "";
 
 			this.type = Type.getObjectType(classNode.name);
 
@@ -194,8 +197,7 @@ public class ClassInfo {
 		ArrayList<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
 
 		for (MethodInfo method : getMethods()) {
-			if (method.getName().equals(methodName)
-					&& method.getArgumentTypes().length == numberOfParameters) {
+			if (method.matches(methodName, numberOfParameters)) {
 				matchedMethods.add(method);
 			}
 		}
@@ -204,5 +206,14 @@ public class ClassInfo {
 			matchedMethods.addAll(superClassInfo.getMethods(methodName, numberOfParameters));
 		}
 		return matchedMethods;
+	}
+
+	public boolean matchesImportStatement(String importedPackage) {
+		if(qualifiedName.replace('$', '.').startsWith(importedPackage)){
+			return true;
+		} else {
+			return false;
+		}
+		
 	}
 }

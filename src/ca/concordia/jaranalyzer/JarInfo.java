@@ -135,7 +135,7 @@ public class JarInfo {
 		ArrayList<ClassInfo> matchedClasses = new ArrayList<ClassInfo>();
 
 		for (ClassInfo classInfo : getClasses()) {
-			if (classInfo.getQualifiedName().startsWith(importedPackage)) {
+			if (classInfo.matchesImportStatement(importedPackage)) {
 				matchedClasses.add(classInfo);
 			}
 		}

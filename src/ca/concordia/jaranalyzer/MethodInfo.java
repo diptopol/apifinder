@@ -20,14 +20,21 @@ public class MethodInfo {
 	private boolean isAbstract;
 	private boolean isStatic;
 	private boolean isSynchronized;
+	private boolean isConstructor;
 
 	@SuppressWarnings("unchecked")
-	public MethodInfo(MethodNode methodNode, String qualifiedClassName, String className) {
+	public MethodInfo(MethodNode methodNode, String qualifiedClassName,
+			String className) {
 		this.name = methodNode.name;
 		if (name.equals("<init>"))
 			name = className;
 		this.qualifiedClassName = qualifiedClassName;
 		this.className = className;
+		
+		if(name.equals(className)){
+			isConstructor = true;
+		}
+		
 		this.returnType = Type.getReturnType(methodNode.desc);
 		this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
 		this.thrownInternalClassNames = methodNode.exceptions;
@@ -96,7 +103,8 @@ public class MethodInfo {
 				if (i > 0) {
 					methodDescription.append(", ");
 				}
-				methodDescription.append(Type.getObjectType(thrownInternalClassName).getClassName());
+				methodDescription.append(Type.getObjectType(
+						thrownInternalClassName).getClassName());
 				i++;
 			}
 		}
@@ -112,7 +120,7 @@ public class MethodInfo {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
@@ -120,7 +128,7 @@ public class MethodInfo {
 	public String getQualifiedClassName() {
 		return qualifiedClassName;
 	}
-	
+
 	public String getClassName() {
 		return className;
 	}
@@ -133,16 +141,22 @@ public class MethodInfo {
 		return argumentTypes;
 	}
 
+	public boolean isConstructor() {
+		return isConstructor;
+	}
+
 	public String getParameterTypes() {
 		String parameters = "";
 		for (Type type : argumentTypes) {
-			parameters += type.getClassName() + ",";//.substring(type.getClassName().lastIndexOf('.') + 1) + " ";
+			parameters += type.getClassName() + ",";// .substring(type.getClassName().lastIndexOf('.')
+													// + 1) + " ";
 		}
 		return parameters;
 	}
 
 	public String getReturnType() {
-		return returnType.getClassName();//.substring(returnType.getClassName().lastIndexOf('.') + 1);
+		return returnType.getClassName();// .substring(returnType.getClassName().lastIndexOf('.')
+											// + 1);
 	}
 
 	public List<String> getThrownInternalClassNames() {
@@ -171,6 +185,28 @@ public class MethodInfo {
 
 	public boolean isSynchronized() {
 		return isSynchronized;
+	}
+
+	public boolean matches(String methodName, int numberOfParameters) {
+		boolean isMatched = false;
+		
+		if (name.replace('$', '.').equals(methodName)
+				&& argumentTypes.length == numberOfParameters) {
+			isMatched = true;
+		} else if ((className + name).replace('$', '.').equals(methodName)
+				&& argumentTypes.length == numberOfParameters){
+			isMatched = true;
+		} else if ((qualifiedClassName + name).replace('$', '.').equals(methodName)
+				&& argumentTypes.length == numberOfParameters){
+			isMatched = true;
+		} else if (isConstructor) {
+			if(qualifiedClassName.replace('$', '.').equals(methodName)
+					&& argumentTypes.length == numberOfParameters) {
+				isMatched = true;
+			}
+		}
+		
+		return isMatched;
 	}
 
 }
