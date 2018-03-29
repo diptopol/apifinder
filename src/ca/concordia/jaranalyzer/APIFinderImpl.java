@@ -51,17 +51,23 @@ public class APIFinderImpl implements APIFinder {
 			}
 		}
 
-		/*
-		 * ArrayList<JarInfo> allJars = new ArrayList<JarInfo>();
-		 * allJars.addAll(jarInfosFromRepository);
-		 * allJars.addAll(jarInfosFromPom); for (JarInfo jarInfo : allJars) {
-		 * for (ClassInfo classInfo : jarInfo.getClasses()) { if
-		 * (classInfo.getSuperClassInfo() == null &&
-		 * !classInfo.getSuperClassName().equals("java.lang.Object")) { for (JarInfo jar :
-		 * allJars) { for (ClassInfo cls : jar.getClasses()) { if
-		 * (cls.getQualifiedName().equals( classInfo.getSuperClassName())) {
-		 * classInfo.setSuperClassInfo(cls); } } } } } }
-		 */
+		ArrayList<JarInfo> allJars = new ArrayList<JarInfo>();
+		allJars.addAll(jarInfosFromRepository);
+		allJars.addAll(jarInfosFromPom);
+		for (JarInfo jarInfo : allJars) {
+			for (ClassInfo classInfo : jarInfo.getClasses()) {
+				if (classInfo.getSuperClassInfo() == null &&
+						!classInfo.getSuperClassName().equals("java.lang.Object")) {
+					for (JarInfo jar : allJars) {
+						for (ClassInfo cls : jar.getClasses()) {
+							if (cls.getQualifiedName().equals( classInfo.getSuperClassName())) {
+								classInfo.setSuperClassInfo(cls);
+							}
+						}
+					}
+				}
+			}
+		} 
 	}
 
 	public Set<MethodInfo> findAllMethods(List<String> imports,

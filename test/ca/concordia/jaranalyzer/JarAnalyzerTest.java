@@ -92,7 +92,34 @@ public class JarAnalyzerTest {
 		// "DEFAULT_HORIZONTAL_ALIGNMENT");
 		System.out.println(matches);
 	}
-	
+
+	@Test
+	public void findMethodInSuperclassOfImportLocatedInAnotherJar() {
+		APIFinder mf = new APIFinderImpl(
+				"C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13");
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang",
+				"org.jfree.chart.demo",
+				"java.awt.Color", "java.awt.Dimension",
+				"java.awt.GradientPaint",
+				"org.jfree.chart.ChartFactory",
+				"org.jfree.chart.ChartPanel",
+				"org.jfree.chart.JFreeChart",
+				"org.jfree.chart.axis.CategoryAxis",
+				"org.jfree.chart.axis.CategoryLabelPositions",
+				"org.jfree.chart.axis.NumberAxis",
+				"org.jfree.chart.plot.CategoryPlot",
+				"org.jfree.chart.plot.PlotOrientation",
+				"org.jfree.chart.renderer.category.BarRenderer",
+				"org.jfree.data.category.CategoryDataset",
+				"org.jfree.data.category.DefaultCategoryDataset",
+				"org.jfree.ui.ApplicationFrame",
+				"org.jfree.ui.RefineryUtilities"
+				});
+		Set<MethodInfo> matches = mf.findAllMethods(imports, "setPreferredSize", 1);
+		System.out.println(matches);
+	}
+
 	@Test
 	public void findMethod() {
 		APIFinder mf = new APIFinderImpl(
