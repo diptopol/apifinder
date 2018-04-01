@@ -5,9 +5,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class MethodInfo {
 	private String name;
@@ -36,7 +34,19 @@ public class MethodInfo {
 		this.qualifiedClassName = qualifiedClassName;
 		this.className = className;
 		this.returnType = Type.getReturnType(methodNode.desc);
-		this.argumentTypes = Type.getArgumentTypes(methodNode.desc);	
+		if (isConstructor && name.contains("$")) {
+			List<Type> types = new ArrayList<Type>();
+			for (Type type : Type.getArgumentTypes(methodNode.desc)) {
+				if (!qualifiedClassName.startsWith(type.getClassName() + "$")) {
+					types.add(type);
+				}
+			}
+			this.argumentTypes = new Type[types.size()];
+			this.argumentTypes = types.toArray(this.argumentTypes);
+		}
+		else {
+			this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
+		}
 		
 		this.thrownInternalClassNames = methodNode.exceptions;
 
@@ -207,10 +217,8 @@ public class MethodInfo {
 			if (qualifiedClassName.replace('$', '.').equals(methodName)) {
 				return true;
 			}
-			if(name.contains("$")) {
-				if( name.subSequence(name.indexOf('$') + 1, name.length() ).equals(methodName)){
-					return true;
-				}
+			if(name.contains("$") && name.endsWith("$" + methodName)) {
+				return true;
 			}
 		}
 

@@ -1,5 +1,6 @@
 package ca.concordia.jaranalyzer;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -12,7 +13,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +22,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class JarAnalyzerTest {
+
+	private static final String PROJECT_LOCATION = "C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13";
+	private static APIFinder apiFinder;
+
+	@BeforeClass
+	public static void oneTimeSetUp() {
+		apiFinder = new APIFinderImpl(PROJECT_LOCATION);
+	}
 
 	@Test
 	public void downloaderJar() {
@@ -78,8 +86,7 @@ public class JarAnalyzerTest {
 
 	@Test
 	public void findMethodInSuperclassOfImport() {
-		APIFinder mf = new APIFinderImpl(
-				"C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13");
+		
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang",
 				"org.jfree.chart.needle", 
@@ -87,7 +94,7 @@ public class JarAnalyzerTest {
 				"java.awt.geom.GeneralPath", "java.awt.geom.Point2D",
 				"java.awt.geom.Rectangle2D", "java.io.Serializable"
 				});
-		Set<MethodInfo> matches = mf.findAllMethods(imports, "getMinX", 0);
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "getMinX", 0);
 		// List<FieldInfo> Fieldmatches = mf.findAllFields(imports,
 		// "DEFAULT_HORIZONTAL_ALIGNMENT");
 		System.out.println(matches);
@@ -95,8 +102,6 @@ public class JarAnalyzerTest {
 
 	@Test
 	public void findMethodInSuperclassOfImportLocatedInAnotherJar() {
-		APIFinder mf = new APIFinderImpl(
-				"C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13");
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang",
 				"org.jfree.chart.demo",
@@ -116,25 +121,51 @@ public class JarAnalyzerTest {
 				"org.jfree.ui.ApplicationFrame",
 				"org.jfree.ui.RefineryUtilities"
 				});
-		Set<MethodInfo> matches = mf.findAllMethods(imports, "setPreferredSize", 1);
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "setPreferredSize", 1);
 		System.out.println(matches);
 	}
-	
+
+	@Test
+	public void findMethodInNestedType() {
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang", 
+				"org.jfree.chart.axis",
+				"java.io.Serializable",
+				"java.util.ArrayList",
+				"java.util.Calendar",
+				"java.util.Collections",
+				"java.util.Date",
+				"java.util.GregorianCalendar",
+				"java.util.Iterator",
+				"java.util.List",
+				"java.util.Locale",
+				"java.util.SimpleTimeZone",
+				"java.util.TimeZone"
+				});
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "Segment", 1);
+		System.out.println(matches);
+	}
+
+	@Test
+	public void findClassConstructorWithQualifiedName() {
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang",
+				});
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "java.util.ArrayList", 0);
+		System.out.println(matches);
+	}
+
 	@Test
 	public void findInnerClassConstructorWithoutQualifiedName() {
-		APIFinder mf = new APIFinderImpl(
-				"A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.13");
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang", "org.jfree.chart.axis"
 				});
-		Set<MethodInfo> matches = mf.findAllMethods(imports, "BaseTimelineSegmentRange", 2);
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "BaseTimelineSegmentRange", 2);
 		System.out.println(matches);
 	}
 
 	@Test
 	public void findMethod() {
-		APIFinder mf = new APIFinderImpl(
-				"C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13");
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang", "org.jfree.chart.block", 
 				"java.awt.Graphics2D", "java.awt.geom.Rectangle2D", 
@@ -145,14 +176,12 @@ public class JarAnalyzerTest {
 				// org.jfree.chart.block.RectangleConstraint.getHeightRange()
 				// and is supplied externally
 				});
-		Set<MethodInfo> matches = mf.findAllMethods(imports, "constrain", 1);
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "constrain", 1);
 		System.out.println(matches);
 	}
 
 	@Test
 	public void findMethodInSuperInterfaceOfImport() {
-		APIFinder mf = new APIFinderImpl(
-				"C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13");
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang", 
 				"org.jfree.chart.renderer.category",
@@ -181,7 +210,7 @@ public class JarAnalyzerTest {
 				"org.jfree.util.PublicCloneable",
 				"org.jfree.util.ShapeUtilities"
 				});
-		Set<MethodInfo> matches = mf.findAllMethods(imports, "getRowKey", 1);
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "getRowKey", 1);
 		System.out.println(matches);
 	}
 
