@@ -119,6 +119,17 @@ public class JarAnalyzerTest {
 		Set<MethodInfo> matches = mf.findAllMethods(imports, "setPreferredSize", 1);
 		System.out.println(matches);
 	}
+	
+	@Test
+	public void findInnerClassConstructorWithoutQualifiedName() {
+		APIFinder mf = new APIFinderImpl(
+				"A:\\Ref-Finder Experiment Projects\\jfreechart\\jfreechart-1.0.13");
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang", "org.jfree.chart.axis"
+				});
+		Set<MethodInfo> matches = mf.findAllMethods(imports, "BaseTimelineSegmentRange", 2);
+		System.out.println(matches);
+	}
 
 	@Test
 	public void findMethod() {

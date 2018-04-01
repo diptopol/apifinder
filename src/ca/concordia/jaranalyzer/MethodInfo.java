@@ -4,7 +4,10 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MethodInfo {
 	private String name;
@@ -26,17 +29,15 @@ public class MethodInfo {
 	public MethodInfo(MethodNode methodNode, String qualifiedClassName,
 			String className) {
 		this.name = methodNode.name;
-		if (name.equals("<init>"))
+		if (name.equals("<init>")) {
+			isConstructor = true;
 			name = className;
+		}
 		this.qualifiedClassName = qualifiedClassName;
 		this.className = className;
-		
-		if(name.equals(className)){
-			isConstructor = true;
-		}
-		
 		this.returnType = Type.getReturnType(methodNode.desc);
-		this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
+		this.argumentTypes = Type.getArgumentTypes(methodNode.desc);	
+		
 		this.thrownInternalClassNames = methodNode.exceptions;
 
 		if ((methodNode.access & Opcodes.ACC_PUBLIC) != 0) {
@@ -187,26 +188,32 @@ public class MethodInfo {
 		return isSynchronized;
 	}
 
-	public boolean matches(String methodName, int numberOfParameters) {
-		boolean isMatched = false;
-		
-		if (name.replace('$', '.').equals(methodName)
-				&& argumentTypes.length == numberOfParameters) {
-			isMatched = true;
-		} else if ((className + name).replace('$', '.').equals(methodName)
-				&& argumentTypes.length == numberOfParameters){
-			isMatched = true;
-		} else if ((qualifiedClassName + name).replace('$', '.').equals(methodName)
-				&& argumentTypes.length == numberOfParameters){
-			isMatched = true;
-		} else if (isConstructor) {
-			if(qualifiedClassName.replace('$', '.').equals(methodName)
-					&& argumentTypes.length == numberOfParameters) {
-				isMatched = true;
-			}
-		}
-		
-		return isMatched;
+	public String getQualifiedName() {
+		return qualifiedClassName + "." + name;
 	}
 
+	public boolean matches(String methodName, int numberOfParameters) {
+		if (argumentTypes.length != numberOfParameters)
+			return false;
+
+		if (name.replace('$', '.').equals(methodName)) {
+			return true;
+		} else if ((className + "." + name).replace('$', '.').equals(methodName)) {
+			return true;
+		} else if ((qualifiedClassName + "." + name).replace('$', '.').equals(
+				methodName)) {
+			return true;
+		} else if (isConstructor) {
+			if (qualifiedClassName.replace('$', '.').equals(methodName)) {
+				return true;
+			}
+			if(name.contains("$")) {
+				if( name.subSequence(name.indexOf('$') + 1, name.length() ).equals(methodName)){
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
 }
