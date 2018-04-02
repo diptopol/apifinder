@@ -208,7 +208,8 @@ public class APIFinderImpl implements APIFinder {
 			String typeName) {
 		for (ClassInfo classInfo : jarInfo.getClasses()) {
 			if (classInfo.getQualifiedName().contains(importedPackage)) {
-				if (classInfo.getName().equals(typeName)) {
+				if (classInfo.getName().equals(typeName)
+						|| classInfo.getQualifiedName().equals(typeName)) {
 					matchedTypes.add(classInfo);
 				}
 			}

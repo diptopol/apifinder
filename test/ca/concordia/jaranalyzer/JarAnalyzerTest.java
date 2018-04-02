@@ -156,6 +156,15 @@ public class JarAnalyzerTest {
 	}
 
 	@Test
+	public void findTypeWithQualifiedName() {
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang",
+				});
+		Set<ClassInfo> matches = apiFinder.findAllTypes(imports, "java.net.URL");
+		System.out.println(matches);
+	}
+
+	@Test
 	public void findInnerClassConstructorWithoutQualifiedName() {
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang", "org.jfree.chart.axis"
