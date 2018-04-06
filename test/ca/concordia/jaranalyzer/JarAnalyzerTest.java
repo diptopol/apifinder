@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 public class JarAnalyzerTest {
 
 	private static final String PROJECT_LOCATION = "C:\\Users\\tsantalis\\runtime-EclipseApplication\\jfreechart-1.0.13";
+	//private static final String PROJECT_LOCATION = "C:\\Users\\tsantalis\\runtime-EclipseApplication\\JHotDraw5.2";
 	private static APIFinder apiFinder;
 
 	@BeforeClass
@@ -95,6 +96,7 @@ public class JarAnalyzerTest {
 				"java.awt.geom.Rectangle2D", "java.io.Serializable"
 				});
 		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "getMinX", 0);
+		assertEquals("[public double getMinX()]", matches.toString());
 		// List<FieldInfo> Fieldmatches = mf.findAllFields(imports,
 		// "DEFAULT_HORIZONTAL_ALIGNMENT");
 		System.out.println(matches);
@@ -122,6 +124,7 @@ public class JarAnalyzerTest {
 				"org.jfree.ui.RefineryUtilities"
 				});
 		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "setPreferredSize", 1);
+		assertEquals("[public void setPreferredSize(java.awt.Dimension), public void setPreferredSize(java.awt.Dimension)]", matches.toString());
 		System.out.println(matches);
 	}
 
@@ -143,6 +146,7 @@ public class JarAnalyzerTest {
 				"java.util.TimeZone"
 				});
 		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "Segment", 1);
+		assertEquals("[protected void SegmentedTimeline$Segment(long)]", matches.toString());
 		System.out.println(matches);
 	}
 
@@ -152,6 +156,7 @@ public class JarAnalyzerTest {
 				"java.lang",
 				});
 		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "java.util.ArrayList", 0);
+		assertEquals("[public void ArrayList()]", matches.toString());
 		System.out.println(matches);
 	}
 
@@ -161,6 +166,7 @@ public class JarAnalyzerTest {
 				"java.lang",
 				});
 		Set<ClassInfo> matches = apiFinder.findAllTypes(imports, "java.net.URL");
+		assertEquals("[public class java.net.URL]", matches.toString());
 		System.out.println(matches);
 	}
 
@@ -170,6 +176,7 @@ public class JarAnalyzerTest {
 				"java.lang", "org.jfree.chart.axis"
 				});
 		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "BaseTimelineSegmentRange", 2);
+		assertEquals("[public void SegmentedTimeline$BaseTimelineSegmentRange(long, long)]", matches.toString());
 		System.out.println(matches);
 	}
 
@@ -186,6 +193,7 @@ public class JarAnalyzerTest {
 				// and is supplied externally
 				});
 		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "constrain", 1);
+		assertEquals("[public double constrain(double)]", matches.toString());
 		System.out.println(matches);
 	}
 
@@ -220,6 +228,21 @@ public class JarAnalyzerTest {
 				"org.jfree.util.ShapeUtilities"
 				});
 		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "getRowKey", 1);
+		assertEquals("[public abstract java.lang.Comparable getRowKey(int)]", matches.toString());
+		System.out.println(matches);
+	}
+
+	@Test
+	public void findMethodInGrandSuperclassOfImport() {
+		List<String> imports = Arrays.asList(new String[] {
+				//"java.lang", 
+				"CH.ifa.draw.contrib", 
+				//"java.awt", "java.awt.event.MouseEvent", 
+				//"java.util", "java.io.IOException", 
+				"CH.ifa.draw.framework", "CH.ifa.draw.util",
+				"CH.ifa.draw.standard"
+				});
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "size", 0);
 		System.out.println(matches);
 	}
 

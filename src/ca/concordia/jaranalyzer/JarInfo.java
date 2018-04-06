@@ -6,7 +6,10 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -16,7 +19,7 @@ public class JarInfo {
 	private String artifactId;
 	private String version;
 
-	private ArrayList<PackageInfo> packages;
+	private Map<String, PackageInfo> packages;
 
 	public JarInfo(JarFile jarFile, String groupId, String artifactId,
 			String version) {
@@ -24,7 +27,7 @@ public class JarInfo {
 		this.groupId = groupId;
 		this.version = version;
 		this.name = Utility.getJarName(jarFile.getName());
-		this.packages = new ArrayList<PackageInfo>();
+		this.packages = new HashMap<String, PackageInfo>();
 
 		Enumeration<JarEntry> entries = jarFile.entries();
 		while (entries.hasMoreElements()) {
@@ -82,45 +85,32 @@ public class JarInfo {
 	}
 
 	private PackageInfo getPackageInfo(String packageName) {
-		for (PackageInfo packageInfo : packages) {
-			if (packageInfo.getName().equals(packageName)) {
-				return packageInfo;
-			}
+		if (packages.containsKey(packageName)) {
+			return packages.get(packageName);
 		}
 		PackageInfo packageInfo = new PackageInfo(packageName);
-		packages.add(packageInfo);
+		packages.put(packageName, packageInfo);
 		return packageInfo;
 	}
 
 	public String toString() {
 		String jarString = name;
-		for (PackageInfo packageInfo : packages) {
+		for (PackageInfo packageInfo : packages.values()) {
 			jarString += "\n\n" + packageInfo.toString();
 		}
 		return jarString;
 	}
 
-	public ArrayList<MethodInfo> getAllMethods() {
-		ArrayList<MethodInfo> publicMethods = new ArrayList<MethodInfo>();
-		for (ClassInfo classInfo : getClasses()) {
-			for (MethodInfo methodInfo : classInfo.getMethods()) {
-				// if (methodInfo.isPublic())
-				publicMethods.add(methodInfo);
-			}
-		}
-		return publicMethods;
-	}
-
 	public ArrayList<ClassInfo> getClasses() {
 		ArrayList<ClassInfo> classes = new ArrayList<ClassInfo>();
-		for (PackageInfo packageInfo : packages) {
+		for (PackageInfo packageInfo : packages.values()) {
 			classes.addAll(packageInfo.getClasses());
 		}
 		return classes;
 	}
 
-	public ArrayList<PackageInfo> getPackages() {
-		return packages;
+	public Collection<PackageInfo> getPackages() {
+		return packages.values();
 	}
 
 	public String getName() {
@@ -141,10 +131,18 @@ public class JarInfo {
 
 	public ArrayList<ClassInfo> getClasses(String importedPackage) {
 		ArrayList<ClassInfo> matchedClasses = new ArrayList<ClassInfo>();
-
-		for (ClassInfo classInfo : getClasses()) {
-			if (classInfo.matchesImportStatement(importedPackage)) {
-				matchedClasses.add(classInfo);
+		for (PackageInfo packageInfo : packages.values()) {
+			if (packageInfo.matchesImportStatement(importedPackage)) {
+				if (packageInfo.getName().equals(importedPackage)) {
+					matchedClasses.addAll(packageInfo.getClasses());
+				}
+				else {
+					for (ClassInfo classInfo : packageInfo.getClasses()) {
+						if (classInfo.matchesImportStatement(importedPackage)) {
+							matchedClasses.add(classInfo);
+						}
+					}
+				}
 			}
 		}
 		return matchedClasses;

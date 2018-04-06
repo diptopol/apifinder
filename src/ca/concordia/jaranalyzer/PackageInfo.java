@@ -10,7 +10,6 @@ public class PackageInfo {
 
 	public PackageInfo(String packageName) {
 		this.classes = new ArrayList<ClassInfo>();
-		this.jarId = jarId;
 		this.name = packageName;
 	}
 
@@ -34,7 +33,11 @@ public class PackageInfo {
 		classes.add(classInfo);
 		return true;
 	}
-	
+
+	public boolean matchesImportStatement(String importedPackage) {
+		return importedPackage.startsWith(name);
+	}
+
 	public String toString() {
 		String packageString = "PACKAGE: " + name;
 		for (ClassInfo classFile : classes) {

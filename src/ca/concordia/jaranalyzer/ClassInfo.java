@@ -158,9 +158,9 @@ public class ClassInfo {
 
 		classDescription.append(getSignature());
 
-		for (MethodInfo method : methods) {
+		/*for (MethodInfo method : methods) {
 			classDescription.append("\n\t" + method.toString());
-		}
+		}*/
 
 		return classDescription.toString();
 	}
