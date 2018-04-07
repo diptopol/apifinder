@@ -6,8 +6,7 @@ import org.objectweb.asm.tree.FieldNode;
 
 public class FieldInfo {
 	private String name;
-	private String qualifiedClassName;
-	private String className;
+	private ClassInfo classInfo;
 	private Type type;
 	private boolean isPublic;
 	private boolean isPrivate;
@@ -15,10 +14,8 @@ public class FieldInfo {
 	private boolean isStatic;
 	private String signature;
 
-	public FieldInfo(FieldNode fieldNode, String qualifiedClassName,
-			String className) {
-		this.className = className;
-		this.qualifiedClassName = qualifiedClassName;
+	public FieldInfo(FieldNode fieldNode, ClassInfo classInfo) {
+		this.classInfo = classInfo;
 		this.name = fieldNode.name;
 		this.type = Type.getType(fieldNode.desc);
 
@@ -67,11 +64,15 @@ public class FieldInfo {
 	}
 
 	public String getQualifiedClassName() {
-		return qualifiedClassName;
+		return classInfo.getQualifiedName();
 	}
 
 	public String getClassName() {
-		return className;
+		return classInfo.getName();
+	}
+
+	public String getPackageName() {
+		return classInfo.getPackageName();
 	}
 
 	public Type getType() {

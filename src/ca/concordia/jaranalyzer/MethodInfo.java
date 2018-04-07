@@ -9,8 +9,7 @@ import java.util.List;
 
 public class MethodInfo {
 	private String name;
-	private String qualifiedClassName;
-	private String className;
+	private ClassInfo classInfo;
 	private int jar;
 	private Type[] argumentTypes;
 	private Type returnType;
@@ -24,20 +23,18 @@ public class MethodInfo {
 	private boolean isConstructor;
 
 	@SuppressWarnings("unchecked")
-	public MethodInfo(MethodNode methodNode, String qualifiedClassName,
-			String className) {
+	public MethodInfo(MethodNode methodNode, ClassInfo classInfo) {
 		this.name = methodNode.name;
 		if (name.equals("<init>")) {
 			isConstructor = true;
-			name = className;
+			name = classInfo.getName();
 		}
-		this.qualifiedClassName = qualifiedClassName;
-		this.className = className;
+		this.classInfo = classInfo;
 		this.returnType = Type.getReturnType(methodNode.desc);
 		if (isConstructor && name.contains("$")) {
 			List<Type> types = new ArrayList<Type>();
 			for (Type type : Type.getArgumentTypes(methodNode.desc)) {
-				if (!qualifiedClassName.startsWith(type.getClassName() + "$")) {
+				if (!classInfo.getQualifiedName().startsWith(type.getClassName() + "$")) {
 					types.add(type);
 				}
 			}
@@ -137,11 +134,15 @@ public class MethodInfo {
 	}
 
 	public String getQualifiedClassName() {
-		return qualifiedClassName;
+		return classInfo.getQualifiedName();
 	}
 
 	public String getClassName() {
-		return className;
+		return classInfo.getName();
+	}
+
+	public String getPackageName() {
+		return classInfo.getPackageName();
 	}
 
 	public int getJar() {
@@ -198,30 +199,25 @@ public class MethodInfo {
 		return isSynchronized;
 	}
 
-	public String getQualifiedName() {
-		return qualifiedClassName + "." + name;
-	}
-
 	public boolean matches(String methodName, int numberOfParameters) {
 		if (argumentTypes.length != numberOfParameters)
 			return false;
 
 		if (name.replace('$', '.').equals(methodName)) {
 			return true;
-		} else if ((className + "." + name).replace('$', '.').equals(methodName)) {
+		} else if ((getClassName() + "." + name).replace('$', '.').equals(methodName)) {
 			return true;
-		} else if ((qualifiedClassName + "." + name).replace('$', '.').equals(
+		} else if ((getQualifiedClassName() + "." + name).replace('$', '.').equals(
 				methodName)) {
 			return true;
 		} else if (isConstructor) {
-			if (qualifiedClassName.replace('$', '.').equals(methodName)) {
+			if (getQualifiedClassName().replace('$', '.').equals(methodName)) {
 				return true;
 			}
 			if(name.contains("$") && name.endsWith("$" + methodName)) {
 				return true;
 			}
 		}
-
 		return false;
 	}
 }

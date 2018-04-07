@@ -15,6 +15,7 @@ import java.util.Set;
 public class ClassInfo {
 	private String qualifiedName;
 	private String name;
+	private String packageName;
 	private Type type;
 	private boolean isPublic;
 	private boolean isPrivate;
@@ -36,10 +37,12 @@ public class ClassInfo {
 			this.qualifiedName = classNode.name.replace('/', '.');
 			if (!classNode.name.contains("/")) {
 				this.name = classNode.name;
+				this.packageName = "";
 			} else {
 				this.name = classNode.name.substring(
 						classNode.name.lastIndexOf('/') + 1,
 						classNode.name.length());
+				this.packageName = classNode.name.substring(0, classNode.name.lastIndexOf('/')).replace('/', '.');
 			}
 
 			if (classNode.superName != null) {
@@ -75,13 +78,13 @@ public class ClassInfo {
 			@SuppressWarnings("unchecked")
 			List<MethodNode> methodNodes = classNode.methods;
 			for (MethodNode methodNode : methodNodes) {
-				methods.add(new MethodInfo(methodNode, qualifiedName, name));
+				methods.add(new MethodInfo(methodNode, this));
 			}
 
 			@SuppressWarnings("unchecked")
 			List<FieldNode> fieldNodes = classNode.fields;
 			for (FieldNode fieldNode : fieldNodes) {
-				fields.add(new FieldInfo(fieldNode, qualifiedName, name));
+				fields.add(new FieldInfo(fieldNode, this));
 			}
 		} catch (Exception e) {
 			System.out.println(e);
@@ -94,6 +97,10 @@ public class ClassInfo {
 
 	public String getName() {
 		return name;
+	}
+
+	public String getPackageName() {
+		return packageName;
 	}
 
 	public Type getType() {
