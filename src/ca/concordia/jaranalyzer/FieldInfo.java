@@ -63,6 +63,10 @@ public class FieldInfo {
 		return name;
 	}
 
+	public ClassInfo getClassInfo() {
+		return classInfo;
+	}
+
 	public String getQualifiedClassName() {
 		return classInfo.getQualifiedName();
 	}

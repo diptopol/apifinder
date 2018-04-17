@@ -10,7 +10,6 @@ import java.util.List;
 public class MethodInfo {
 	private String name;
 	private ClassInfo classInfo;
-	private int jar;
 	private Type[] argumentTypes;
 	private Type returnType;
 	private List<String> thrownInternalClassNames;
@@ -120,17 +119,12 @@ public class MethodInfo {
 		return methodDescription.toString();
 	}
 
-	public void setJar(int jar) {
-		this.jar = jar;
-
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
 	public String getName() {
 		return name;
+	}
+
+	public ClassInfo getClassInfo() {
+		return classInfo;
 	}
 
 	public String getQualifiedClassName() {
@@ -143,10 +137,6 @@ public class MethodInfo {
 
 	public String getPackageName() {
 		return classInfo.getPackageName();
-	}
-
-	public int getJar() {
-		return jar;
 	}
 
 	public Type[] getArgumentTypes() {
