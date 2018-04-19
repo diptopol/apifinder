@@ -181,6 +181,20 @@ public class JarAnalyzerTest {
 	}
 
 	@Test
+	public void findInnerClassConstructorWithOuterClassConcatenated() {
+		List<String> imports = Arrays.asList(new String[] {
+				"java.lang",
+				"org.jfree.data.time", "java.util.Calendar", "java.util.TimeZone",
+				"org.jfree.data.DomainInfo", "org.jfree.data.Range", "org.jfree.data.RangeInfo",
+				"org.jfree.data.general.SeriesChangeEvent", "org.jfree.data.xy.AbstractIntervalXYDataset", 
+				"org.jfree.data.xy.IntervalXYDataset"
+				});
+		Set<MethodInfo> matches = apiFinder.findAllMethods(imports, "DynamicTimeSeriesCollection.ValueSequence", 1);
+		assertEquals("[public void DynamicTimeSeriesCollection$ValueSequence(int)]", matches.toString());
+		System.out.println(matches);
+	}
+
+	@Test
 	public void findMethod() {
 		List<String> imports = Arrays.asList(new String[] {
 				"java.lang", "org.jfree.chart.block", 
