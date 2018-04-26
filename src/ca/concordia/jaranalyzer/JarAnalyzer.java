@@ -31,13 +31,12 @@ public class JarAnalyzer {
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
 		try {
-		/*File db = new File("mydb.db");
-			if (!db.exists()) {
-				File emptyDb = new File("empty.db");
-				Utility.copyFileUsingChannel(emptyDb, db);
-			}
-			manager = new JarManager();*/
-			
+			/*
+			 * File db = new File("mydb.db"); if (!db.exists()) { File emptyDb =
+			 * new File("empty.db"); Utility.copyFileUsingChannel(emptyDb, db);
+			 * } manager = new JarManager();
+			 */
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -52,42 +51,23 @@ public class JarAnalyzer {
 					String artifactId;
 					String version;
 					File inputFile = new File(pomLocation);
-					DocumentBuilderFactory dbFactory = DocumentBuilderFactory
-							.newInstance();
+					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 					Document doc = dBuilder.parse(inputFile);
 					doc.getDocumentElement().normalize();
-					System.out.println("Root element :"
-							+ doc.getDocumentElement().getNodeName());
+					System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+					NodeList project = doc.getElementsByTagName("project");
+					for (int temp = 0; temp < project.getLength(); temp++) {
+						JarInfo foundJar = getJarInfoFromDependency(project.item(temp));
+						if (foundJar != null)
+							jarInfos.add(foundJar);
+					}
 					NodeList nList = doc.getElementsByTagName("dependency");
 					System.out.println("----------------------------");
 					for (int temp = 0; temp < nList.getLength(); temp++) {
-						try {
-							Node nNode = nList.item(temp);
-
-							if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-								Element eElement = (Element) nNode;
-								groupId = eElement
-										.getElementsByTagName("groupId")
-										.item(0).getTextContent();
-								artifactId = eElement
-										.getElementsByTagName("artifactId")
-										.item(0).getTextContent();
-								version = eElement
-										.getElementsByTagName("version")
-										.item(0).getTextContent();
-								System.out.println("groupId : " + groupId);
-								System.out
-										.println("artifactId : " + artifactId);
-								System.out.println("version : " + version);
-								
-								JarInfo jarInfo = AnalyzeJar(groupId,
-										artifactId, version);
-								jarInfos.add(jarInfo);
-							}
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
+						JarInfo foundJar = getJarInfoFromDependency(nList.item(temp));
+						if (foundJar != null)
+							jarInfos.add(foundJar);
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -101,33 +81,52 @@ public class JarAnalyzer {
 		return jarInfos;
 	}
 
+	public JarInfo getJarInfoFromDependency(Node nNode) {
+		String groupId;
+		String artifactId;
+		String version;
+		try {
+			if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+				Element eElement = (Element) nNode;
+				groupId = eElement.getElementsByTagName("groupId").item(0).getTextContent();
+				artifactId = eElement.getElementsByTagName("artifactId").item(0).getTextContent();
+				version = eElement.getElementsByTagName("version").item(0).getTextContent();
+				System.out.println("groupId : " + groupId);
+				System.out.println("artifactId : " + artifactId);
+				System.out.println("version : " + version);
+
+				JarInfo jarInfo = AnalyzeJar(groupId, artifactId, version);
+				return jarInfo;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	public JarInfo AnalyzeJar(String groupId, String artifactId, String version) {
 		version = version.replaceAll("[^0-9.]", "");
 		JarInfo jarInfo;
-		String url = "http://central.maven.org/maven2/" + groupId + "/"
-				+ artifactId + "/" + version + "/" + artifactId + "-" + version
-				+ ".jar";
+		String url = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
+				+ "-" + version + ".jar";
 		jarInfo = AnalyzeJar(url, groupId, artifactId, version);
 
 		if (jarInfo == null) {
-			url = "http://central.maven.org/maven2/org/" + groupId + "/"
-					+ artifactId + "/" + version + "/" + artifactId + "-"
-					+ version + ".jar";
+			url = "http://central.maven.org/maven2/org/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
+					+ "-" + version + ".jar";
 			jarInfo = AnalyzeJar(url, groupId, artifactId, version);
 		}
 
 		if (jarInfo == null) {
-			url = "http://central.maven.org/maven2/"
-					+ groupId.replace('.', '/') + "/" + artifactId + "/"
-					+ version + "/" + artifactId + "-" + version + ".jar";
+			url = "http://central.maven.org/maven2/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version
+					+ "/" + artifactId + "-" + version + ".jar";
 			jarInfo = AnalyzeJar(url, groupId, artifactId, version);
 		}
-		
+
 		return jarInfo;
 	}
 
-	public JarInfo AnalyzeJar(String url, String groupId, String artifactId,
-			String version) {
+	public JarInfo AnalyzeJar(String url, String groupId, String artifactId, String version) {
 		JarFile jarFile = DownloadJar(url);
 		return AnalyzeJar(jarFile, groupId, artifactId, version);
 	}
@@ -158,19 +157,19 @@ public class JarAnalyzer {
 		return jarFile;
 	}
 
-	public JarInfo AnalyzeJar(JarFile jarFile, String groupId,
-			String artifactId, String version) {
+	public JarInfo AnalyzeJar(JarFile jarFile, String groupId, String artifactId, String version) {
 		if (jarFile == null)
 			return null;
 		JarInfo jarInfo = new JarInfo(jarFile, groupId, artifactId, version);
-//		if(jarInfo != null && groupId != "" && artifactId != "" && version != "")
-//			SaveToDb(jarInfo);
+		// if(jarInfo != null && groupId != "" && artifactId != "" && version !=
+		// "")
+		// SaveToDb(jarInfo);
 		return jarInfo;
 	}
 
 	private void SaveToDb(JarInfo jarInfo) {
 
-//		Jar jar = manager.create(jarInfo);
+		// Jar jar = manager.create(jarInfo);
 
 		// HibernateUtil.getSessionFactory().close();
 		/*
@@ -192,8 +191,8 @@ public class JarAnalyzer {
 	}
 
 	public JarInfo findAndAnalyzeJar(String importDeclarationName) {
-		String requestUrl = "http://search.maven.org/solrsearch/select?q=fc:%22"
-				+ importDeclarationName + "%22&rows=10&wt=json";
+		String requestUrl = "http://search.maven.org/solrsearch/select?q=fc:%22" + importDeclarationName
+				+ "%22&rows=10&wt=json";
 		String response = "";
 		try {
 			response = Utility.getHTML(requestUrl);

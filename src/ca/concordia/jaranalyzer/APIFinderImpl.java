@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import org.eclipse.jgit.lib.Repository;
+
+import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 
 public class APIFinderImpl implements APIFinder {
@@ -20,6 +23,18 @@ public class APIFinderImpl implements APIFinder {
 		JarAnalyzer analyzer = new JarAnalyzer();
 		jarInfosFromRepository = new ArrayList<JarInfo>();
 		jarInfosFromPom = new ArrayList<JarInfo>();
+		
+		
+/*		try {
+			GitUtil gitUtil = new GitUtil();
+			Repository repo = gitUtil.openRepository(projLocation);
+			String release = gitUtil.getNearestTag(repo);
+			String releaseFolder = gitUtil.getRelease(repo, release);
+			System.out.println(release);
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}*/
 
 		String javaHome = System.getProperty("java.home");
 		String javaVersion = System.getProperty("java.version");
@@ -36,6 +51,7 @@ public class APIFinderImpl implements APIFinder {
 				}
 			}
 		}
+		
 		if (!projLocation.isEmpty()) {
 			jarInfosFromPom = analyzer
 					.analyzeJarsFromPOM(getAllPoms(projLocation));
