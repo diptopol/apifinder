@@ -1,6 +1,5 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.util.Utility;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -12,6 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import ca.concordia.jaranalyzer.util.Utility;
 
 public class JarInfo {
 	private String name;
@@ -94,11 +95,11 @@ public class JarInfo {
 	}
 
 	public String toString() {
-		String jarString = name;
+		StringBuilder jarString = new StringBuilder(name);
 		for (PackageInfo packageInfo : packages.values()) {
-			jarString += "\n\n" + packageInfo.toString();
+			jarString.append("\n\n").append(packageInfo.toString());
 		}
-		return jarString;
+		return jarString.toString();
 	}
 
 	public ArrayList<ClassInfo> getClasses() {
