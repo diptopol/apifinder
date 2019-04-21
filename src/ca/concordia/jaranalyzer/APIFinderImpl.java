@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 
-import org.eclipse.jgit.lib.Repository;
-
-import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 
 public class APIFinderImpl implements APIFinder {
@@ -86,8 +83,13 @@ public class APIFinderImpl implements APIFinder {
 		} 
 	}
 
+
+	public List<JarInfo> getJarInfosFromPom() {
+		return jarInfosFromPom;
+	}
+
 	public Set<MethodInfo> findAllMethods(List<String> imports,
-			String methodName, int numberOfParameters) {
+										  String methodName, int numberOfParameters) {
 		Set<MethodInfo> matchedMethods = new LinkedHashSet<MethodInfo>();
 		List<String> importStatements = new ArrayList<String>(imports);
 

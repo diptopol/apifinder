@@ -1,14 +1,6 @@
 package ca.concordia.jaranalyzer;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.jar.JarFile;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import static java.util.stream.Collectors.toMap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -16,6 +8,22 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BinaryOperator;
+import java.util.jar.JarFile;
+import java.util.stream.IntStream;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import ca.concordia.jaranalyzer.dao.JarManager;
 import ca.concordia.jaranalyzer.util.Utility;
@@ -27,7 +35,7 @@ public class JarAnalyzer {
 	JarManager manager;
 
 	public JarAnalyzer() {
-		File file = new File("C:\\jars");
+		File file = new File("/Users/ameya/FinalResults/diffTools/jars/");
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
 		try {
@@ -44,44 +52,70 @@ public class JarAnalyzer {
 
 	public List<JarInfo> analyzeJarsFromPOM(Set<String> pomFiles) {
 		List<JarInfo> jarInfos = new ArrayList<JarInfo>();
+
+		Map<String, String> properties = pomFiles.stream()
+				.map(p -> getDocument(new File(p)))
+				.filter(Optional::isPresent)
+				.flatMap(x -> getProperties(x.get()).entrySet().stream())
+				.collect(toMap(Entry::getKey,Entry::getValue,mergeProperties));
 		try {
 			for (String pomLocation : pomFiles) {
-				try {
-					String groupId;
-					String artifactId;
-					String version;
 					File inputFile = new File(pomLocation);
-					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-					Document doc = dBuilder.parse(inputFile);
-					doc.getDocumentElement().normalize();
-					System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-					NodeList project = doc.getElementsByTagName("project");
-					for (int temp = 0; temp < project.getLength(); temp++) {
-						JarInfo foundJar = getJarInfoFromDependency(project.item(temp));
-						if (foundJar != null)
-							jarInfos.add(foundJar);
+					Optional<Document> doc = getDocument(inputFile);
+					if(doc.isPresent()) {
+						System.out.println("Root element :" + doc.get().getDocumentElement().getNodeName());
+						NodeList project = doc.get().getElementsByTagName("project");
+						for (int temp = 0; temp < project.getLength(); temp++) {
+							JarInfo foundJar = getJarInfoFromDependency(project.item(temp), properties);
+							if (foundJar != null)
+								jarInfos.add(foundJar);
+						}
+						NodeList nList = doc.get().getElementsByTagName("dependency");
+						System.out.println("----------------------------");
+						for (int temp = 0; temp < nList.getLength(); temp++) {
+							JarInfo foundJar = getJarInfoFromDependency(nList.item(temp), properties);
+							if (foundJar != null)
+								jarInfos.add(foundJar);
+						}
 					}
-					NodeList nList = doc.getElementsByTagName("dependency");
-					System.out.println("----------------------------");
-					for (int temp = 0; temp < nList.getLength(); temp++) {
-						JarInfo foundJar = getJarInfoFromDependency(nList.item(temp));
-						if (foundJar != null)
-							jarInfos.add(foundJar);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
 				System.out.println(pomLocation);
+				}
 			}
-		} catch (Exception e) {
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 		return jarInfos;
 	}
 
-	public JarInfo getJarInfoFromDependency(Node nNode) {
+	private Optional<Document> getDocument(File inputFile)  {
+		try {
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			Document doc = dBuilder.parse(inputFile);
+			doc.getDocumentElement().normalize();
+			return Optional.ofNullable(doc);
+		}catch (Exception e){
+			e.printStackTrace();
+			return Optional.empty();
+		}
+	}
+
+	private Map<String, String> getProperties(Document doc){
+
+		return Optional.ofNullable(doc.getElementsByTagName("properties"))
+				.map(p -> p.item(0))
+				.map(Node::getChildNodes)
+				.filter(p->p.getLength()>0)
+				.map(c -> IntStream.range(0, c.getLength()).boxed()
+						.filter(i -> !c.item(i).getTextContent().trim().isEmpty() )
+						.collect(toMap(i -> c.item(i).getNodeName(), i -> c.item(i).getTextContent(),
+								mergeProperties)))
+				.orElse(new HashMap<>());
+	}
+
+	private BinaryOperator<String> mergeProperties = (s1, s2) -> s1.equals(s2)? s1 : s1+"||"+s2;
+
+	public JarInfo getJarInfoFromDependency(Node nNode, Map<String,String> properties) {
 		String groupId;
 		String artifactId;
 		String version;
@@ -90,7 +124,12 @@ public class JarAnalyzer {
 				Element eElement = (Element) nNode;
 				groupId = eElement.getElementsByTagName("groupId").item(0).getTextContent();
 				artifactId = eElement.getElementsByTagName("artifactId").item(0).getTextContent();
-				version = eElement.getElementsByTagName("version").item(0).getTextContent();
+				version = Optional.ofNullable(eElement.getElementsByTagName("version"))
+						.map(x -> x.item(0))
+						.map(Node::getTextContent)
+						.map(x -> properties.entrySet().stream().filter(e ->x.contains( e.getKey()))
+								.map(Entry::getValue).findAny().orElse(x))
+						.orElse("");
 				System.out.println("groupId : " + groupId);
 				System.out.println("artifactId : " + artifactId);
 				System.out.println("version : " + version);
