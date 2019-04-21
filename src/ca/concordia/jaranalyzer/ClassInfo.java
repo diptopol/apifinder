@@ -30,9 +30,9 @@ public class ClassInfo {
 
 	public ClassInfo(ClassNode classNode) {
 		try {
-			this.methods = new ArrayList<MethodInfo>();
-			this.fields = new ArrayList<FieldInfo>();
-			this.superInterfaceMap = new LinkedHashMap<String, ClassInfo>();
+			this.methods = new ArrayList<>();
+			this.fields = new ArrayList<>();
+			this.superInterfaceMap = new LinkedHashMap<>();
 
 			this.qualifiedName = classNode.name.replace('/', '.');
 			if (!classNode.name.contains("/")) {
@@ -40,8 +40,7 @@ public class ClassInfo {
 				this.packageName = "";
 			} else {
 				this.name = classNode.name.substring(
-						classNode.name.lastIndexOf('/') + 1,
-						classNode.name.length());
+						classNode.name.lastIndexOf('/') + 1);
 				this.packageName = classNode.name.substring(0, classNode.name.lastIndexOf('/')).replace('/', '.');
 			}
 
@@ -152,7 +151,7 @@ public class ClassInfo {
 	}
 
 	public ArrayList<MethodInfo> getPublicMethods() {
-		ArrayList<MethodInfo> publicMethods = new ArrayList<MethodInfo>();
+		ArrayList<MethodInfo> publicMethods = new ArrayList<>();
 		for (MethodInfo methodInfo : getMethods()) {
 			if (methodInfo.isPublic())
 				publicMethods.add(methodInfo);
@@ -198,7 +197,7 @@ public class ClassInfo {
 	}
 
 	public List<FieldInfo> getFieldsByName(String fieldName) {
-		List<FieldInfo> matchedFields = new ArrayList<FieldInfo>();
+		List<FieldInfo> matchedFields = new ArrayList<>();
 		for (FieldInfo fieldInfo : fields) {
 			if (fieldInfo.getName().equals(fieldName)) {
 				matchedFields.add(fieldInfo);
@@ -222,7 +221,7 @@ public class ClassInfo {
 
 	public List<MethodInfo> getMethods(String methodName,
 			int numberOfParameters) {
-		List<MethodInfo> matchedMethods = new ArrayList<MethodInfo>();
+		List<MethodInfo> matchedMethods = new ArrayList<>();
 
 		for (MethodInfo method : getMethods()) {
 			if (method.matches(methodName, numberOfParameters)) {

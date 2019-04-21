@@ -18,8 +18,8 @@ public class APIFinderImpl implements APIFinder {
 
 	public APIFinderImpl(String projLocation) {
 		JarAnalyzer analyzer = new JarAnalyzer();
-		jarInfosFromRepository = new ArrayList<JarInfo>();
-		jarInfosFromPom = new ArrayList<JarInfo>();
+		jarInfosFromRepository = new ArrayList<>();
+		jarInfosFromPom = new ArrayList<>();
 		
 		
 /*		try {
