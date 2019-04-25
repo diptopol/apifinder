@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MethodInfo {
+public class MethodInfo implements Info {
 	private String name;
 	private ClassInfo classInfo;
 	private Type[] argumentTypes;
@@ -28,6 +28,7 @@ public class MethodInfo {
 			isConstructor = true;
 			name = classInfo.getName();
 		}
+
 		this.classInfo = classInfo;
 		this.returnType = Type.getReturnType(methodNode.desc);
 		if (isConstructor && name.contains("$")) {
@@ -123,6 +124,12 @@ public class MethodInfo {
 		return name;
 	}
 
+
+
+
+
+
+
 	public ClassInfo getClassInfo() {
 		return classInfo;
 	}
@@ -159,6 +166,11 @@ public class MethodInfo {
 	public String getReturnType() {
 		return returnType.getClassName();// .substring(returnType.getClassName().lastIndexOf('.')
 											// + 1);
+	}
+
+	public Type getReturnTypeAsType() {
+		return returnType;// .substring(returnType.getClassName().lastIndexOf('.')
+		// + 1);
 	}
 
 	public List<String> getThrownInternalClassNames() {
@@ -210,4 +222,31 @@ public class MethodInfo {
 		}
 		return false;
 	}
+
+
+//	public Identification getID(Identification owner){
+//		TypeSignature typeSign = TypeSignature.newBuilder()
+//				.setMthdSign(MethodSign.newBuilder()
+//						.setReturnType(getTypeInfo(returnType))
+//						.addAllParam(Arrays.stream(argumentTypes).map(this::getTypeInfo).collect(toList())))
+//				.build();
+//
+//		return Identification.newBuilder()
+//				.setName(getName())
+//				.setType(typeSign)
+//				.setKind(isConstructor ? "CONSTRUCTOR" : "METHOD")
+//				.setOwner(owner).build();
+//	}
+//
+//
+//
+//	public TypeFactGraph<Identification> getTFG(Identification owner) {
+//		Identification mid = getID(owner);
+//		Identification am = Identification.newBuilder()
+//				.setName(isPrivate ? "PRIVATE" : (isPublic ? "PUBLIC" : (isProtected ? "PROTECTED" : "DEFAULT")))
+//				.setKind("MODIFIER").setOwner(mid).build();
+//		return TypeFactGraph.<Identification>emptyTFG()
+//				.map(addNode(mid))
+//				.map(u_v(mid, am, "MODIFIER"));
+//	}
 }

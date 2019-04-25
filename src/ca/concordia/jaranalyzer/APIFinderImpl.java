@@ -8,18 +8,27 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
+import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
+import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationBuilder;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
 import ca.concordia.jaranalyzer.util.Utility;
 
 public class APIFinderImpl implements APIFinder {
 
 	private List<JarInfo> jarInfosFromPom;
 	private List<JarInfo> jarInfosFromRepository;
+	private List<Integer> jarIDs ;
+
 
 	public APIFinderImpl(String projLocation) {
 		JarAnalyzer analyzer = new JarAnalyzer();
 		jarInfosFromRepository = new ArrayList<>();
 		jarInfosFromPom = new ArrayList<>();
+
+		JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();
+		JarInformationManager jm = app.getOrThrow(JarInformationManager.class);
 		
 		
 /*		try {
@@ -50,8 +59,9 @@ public class APIFinderImpl implements APIFinder {
 		}
 		
 		if (!projLocation.isEmpty()) {
-			jarInfosFromPom = analyzer
-					.analyzeJarsFromPOM(getAllPoms(projLocation));
+			Set<String> poms = getAllPoms(projLocation);
+
+			jarInfosFromPom = new ArrayList<>(analyzer.analyzeJarsFromPOM(poms));
 			for (String jarPath : getAllJars(projLocation)) {
 				JarFile jarFile;
 				try {
@@ -80,12 +90,20 @@ public class APIFinderImpl implements APIFinder {
 					}
 				}
 			}
-		} 
+		}
+
+		jarIDs = jarInfosFromPom.stream().map(d -> analyzer.persistJarInfo(d,jm))
+				.collect(Collectors.toList());
 	}
 
 
 	public List<JarInfo> getJarInfosFromPom() {
 		return jarInfosFromPom;
+	}
+
+
+	public List<Integer> getJarIDs() {
+		return jarIDs;
 	}
 
 	public Set<MethodInfo> findAllMethods(List<String> imports,

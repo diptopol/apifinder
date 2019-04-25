@@ -36,6 +36,25 @@
                     <target>8</target>
                 </configuration>
             </plugin>
+			<plugin>
+				<groupId>com.speedment</groupId>
+				<artifactId>speedment-maven-plugin</artifactId>
+				<version>3.1.13</version>
+
+				<configuration>
+					<appName>${project.artifactId}</appName>
+					<packageName>${project.groupId}</packageName>
+				</configuration>
+
+				<dependencies>
+					<dependency>
+						<groupId>mysql</groupId>
+						<artifactId>mysql-connector-java</artifactId>
+						<version>8.0.13</version>
+						<scope>runtime</scope>
+					</dependency>
+				</dependencies>
+			</plugin>
         </plugins>
 	</build>
 	<dependencies>
@@ -69,6 +88,29 @@
 			<groupId>org.eclipse.jgit</groupId>
 			<artifactId>org.eclipse.jgit</artifactId>
 			<version>3.7.1.201504261725-r</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jason-goodwin</groupId>
+			<artifactId>better-monads</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.T2R</groupId>
+			<artifactId>T2R</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.13</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.speedment</groupId>
+			<artifactId>runtime</artifactId>
+			<version>3.1.13</version>
+			<type>pom</type>
 		</dependency>
 	</dependencies>
 </project>

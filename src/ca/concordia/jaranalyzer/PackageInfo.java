@@ -2,14 +2,14 @@ package ca.concordia.jaranalyzer;
 
 import java.util.ArrayList;
 
-public class PackageInfo {
+public class PackageInfo implements Info {
 	private int id;
 	private String name;
 	private int jarId;
 	private ArrayList<ClassInfo> classes;
 
 	public PackageInfo(String packageName) {
-		this.classes = new ArrayList<ClassInfo>();
+		this.classes = new ArrayList<>();
 		this.name = packageName;
 	}
 
@@ -17,9 +17,12 @@ public class PackageInfo {
 		return id;
 	}
 
+
 	public String getName() {
 		return name;
 	}
+
+
 
 	public int getJarId() {
 		return jarId;
@@ -45,4 +48,24 @@ public class PackageInfo {
 		}
 		return packageString;
 	}
+
+//	public Identification getID(){
+//		return Identification.newBuilder()
+//				.setName(getName())
+//				.setType(TypeSignatureOuterClass.TypeSignature.newBuilder().setNoType(true).build())
+//				.setKind("PACKAGE").build();
+//	}
+//
+//
+//	public TypeFactGraph<Identification> getTFG(Identification owner) {
+//
+//		Identification pkgId = getID();
+//		TypeFactGraph<Identification> tfg = TypeFactGraph.<Identification>emptyTFG()
+//				.mergeMap(classes.parallelStream()
+//						.map(c -> u_v(pkgId, c.getID(pkgId), "DECLARES"))
+//						.collect(toList()));
+//		return mergeGraphs(tfg, classes.stream()
+//				.map(c -> c.getTFG(pkgId))
+//				.reduce(TypeFactGraph.emptyTFG(), TypeFactGraph::mergeGraphs));
+//	}
 }

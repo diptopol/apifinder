@@ -14,7 +14,7 @@ import java.util.jar.JarFile;
 
 import ca.concordia.jaranalyzer.util.Utility;
 
-public class JarInfo {
+public class JarInfo implements Info {
 	private String name;
 	private String groupId;
 	private String artifactId;
@@ -22,13 +22,14 @@ public class JarInfo {
 
 	private Map<String, PackageInfo> packages;
 
+
 	public JarInfo(JarFile jarFile, String groupId, String artifactId,
 			String version) {
 		this.artifactId = artifactId;
 		this.groupId = groupId;
 		this.version = version;
 		this.name = Utility.getJarName(jarFile.getName());
-		this.packages = new HashMap<String, PackageInfo>();
+		this.packages = new HashMap<>();
 
 		Enumeration<JarEntry> entries = jarFile.entries();
 		while (entries.hasMoreElements()) {
@@ -83,7 +84,11 @@ public class JarInfo {
 			}
 		}
 
+
+
 	}
+
+
 
 	private PackageInfo getPackageInfo(String packageName) {
 		if (packages.containsKey(packageName)) {
@@ -114,9 +119,12 @@ public class JarInfo {
 		return packages.values();
 	}
 
+
 	public String getName() {
 		return name;
 	}
+
+
 
 	public String getGroupId() {
 		return groupId;
@@ -147,5 +155,16 @@ public class JarInfo {
 			}
 		}
 		return matchedClasses;
+	}
+
+	@Override
+	public boolean equals(Object o){
+		if(o instanceof JarInfo){
+			JarInfo j = (JarInfo) o;
+			return j.getArtifactId().equals(artifactId)
+					&& j.getVersion().equals(version)
+					&& j.getGroupId().equals(groupId);
+		}
+		return false;
 	}
 }

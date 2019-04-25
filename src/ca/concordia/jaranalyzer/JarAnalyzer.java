@@ -25,6 +25,9 @@ import java.util.stream.IntStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
 import ca.concordia.jaranalyzer.dao.JarManager;
 import ca.concordia.jaranalyzer.util.Utility;
 
@@ -51,7 +54,7 @@ public class JarAnalyzer {
 	}
 
 	public List<JarInfo> analyzeJarsFromPOM(Set<String> pomFiles) {
-		List<JarInfo> jarInfos = new ArrayList<JarInfo>();
+		List<JarInfo> jarInfos = new ArrayList<>();
 
 		Map<String, String> properties = pomFiles.stream()
 				.map(p -> getDocument(new File(p)))
@@ -141,6 +144,19 @@ public class JarAnalyzer {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+
+	public Integer persistJarInfo(JarInfo j, JarInformationManager jm) {
+
+		JarInformation ji = new JarInformationImpl()
+				.setArtifactId(j.getArtifactId()).setGroupId(j.getGroupId())
+				.setVersion(j.getVersion());
+
+		ji = jm.persist(ji);
+
+		System.out.println(ji.getId());
+		return ji.getId();
 	}
 
 	public JarInfo AnalyzeJar(String groupId, String artifactId, String version) {
