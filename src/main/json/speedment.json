@@ -16,8 +16,11 @@
         "port" : 3306,
         "schemas" : [
           {
+            "nameProtected" : true,
+            "expanded" : true,
             "tables" : [
               {
+                "expanded" : true,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
@@ -38,7 +41,6 @@
                     "enabled" : true
                   }
                 ],
-                "expanded" : true,
                 "primaryKeyColumns" : [
                   {
                     "expanded" : true,
@@ -86,8 +88,8 @@
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Long",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "autoIncrement" : true,
                     "name" : "ID",
@@ -97,8 +99,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Long",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "PackageID",
                     "id" : "PackageID",
@@ -161,8 +163,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "isInterface",
                     "id" : "isInterface",
@@ -171,8 +173,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "isAbstract",
                     "id" : "isAbstract",
@@ -185,6 +187,170 @@
                 "enabled" : true
               },
               {
+                "expanded" : true,
+                "foreignKeys" : [
+                  {
+                    "expanded" : false,
+                    "foreignKeyColumns" : [
+                      {
+                        "foreignDatabaseName" : "JarAnalysis",
+                        "foreignSchemaName" : "JarAnalysis",
+                        "expanded" : true,
+                        "name" : "ProjectID",
+                        "foreignColumnName" : "Id",
+                        "id" : "ProjectID",
+                        "foreignTableName" : "Projects",
+                        "ordinalPosition" : 1
+                      }
+                    ],
+                    "name" : "commits_ibfk_1",
+                    "id" : "commits_ibfk_1"
+                  }
+                ],
+                "primaryKeyColumns" : [
+                  {
+                    "expanded" : true,
+                    "name" : "SHA",
+                    "id" : "SHA",
+                    "ordinalPosition" : 1
+                  }
+                ],
+                "indexes" : [
+                  {
+                    "expanded" : false,
+                    "unique" : true,
+                    "name" : "PRIMARY",
+                    "indexColumns" : [
+                      {
+                        "orderType" : "ASC",
+                        "expanded" : true,
+                        "name" : "SHA",
+                        "id" : "SHA",
+                        "ordinalPosition" : 1
+                      }
+                    ],
+                    "id" : "PRIMARY"
+                  },
+                  {
+                    "expanded" : false,
+                    "unique" : false,
+                    "name" : "ProjectID",
+                    "indexColumns" : [
+                      {
+                        "orderType" : "ASC",
+                        "expanded" : true,
+                        "name" : "ProjectID",
+                        "id" : "ProjectID",
+                        "ordinalPosition" : 1
+                      }
+                    ],
+                    "id" : "ProjectID"
+                  }
+                ],
+                "isView" : false,
+                "columns" : [
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "SHA",
+                    "id" : "SHA",
+                    "ordinalPosition" : 1,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.sql.Timestamp",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "Time",
+                    "id" : "Time",
+                    "ordinalPosition" : 2,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.Integer",
+                    "expanded" : true,
+                    "nullable" : true,
+                    "name" : "Files_Added",
+                    "id" : "Files_Added",
+                    "ordinalPosition" : 3,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.Integer",
+                    "expanded" : true,
+                    "nullable" : true,
+                    "name" : "Files_Removed",
+                    "id" : "Files_Removed",
+                    "ordinalPosition" : 4,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.Integer",
+                    "expanded" : true,
+                    "nullable" : true,
+                    "name" : "Files_Modified",
+                    "id" : "Files_Modified",
+                    "ordinalPosition" : 5,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : true,
+                    "name" : "Tag",
+                    "id" : "Tag",
+                    "ordinalPosition" : 6
+                  },
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : true,
+                    "name" : "isRelease",
+                    "id" : "isRelease",
+                    "ordinalPosition" : 7
+                  },
+                  {
+                    "databaseType" : "java.lang.Integer",
+                    "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
+                    "nullable" : false,
+                    "name" : "ProjectID",
+                    "id" : "ProjectID",
+                    "ordinalPosition" : 8
+                  }
+                ],
+                "name" : "Commits",
+                "id" : "Commits",
+                "enabled" : true
+              },
+              {
+                "expanded" : true,
+                "isView" : false,
+                "columns" : [
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "SHA",
+                    "id" : "SHA",
+                    "ordinalPosition" : 1
+                  },
+                  {
+                    "databaseType" : "java.lang.Integer",
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "JarID",
+                    "id" : "JarID",
+                    "ordinalPosition" : 2
+                  }
+                ],
+                "name" : "CommitsJar",
+                "id" : "CommitsJar"
+              },
+              {
+                "expanded" : true,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
@@ -205,7 +371,6 @@
                     "enabled" : true
                   }
                 ],
-                "expanded" : true,
                 "primaryKeyColumns" : [
                   {
                     "expanded" : true,
@@ -253,8 +418,8 @@
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Integer",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "autoIncrement" : true,
                     "name" : "ID",
@@ -264,8 +429,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Long",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "ClassID",
                     "id" : "ClassID",
@@ -292,8 +457,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "isStatic",
                     "id" : "isStatic",
@@ -338,8 +503,8 @@
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Integer",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "autoIncrement" : true,
                     "name" : "ID",
@@ -380,6 +545,7 @@
                 "enabled" : true
               },
               {
+                "expanded" : true,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
@@ -400,7 +566,6 @@
                     "enabled" : true
                   }
                 ],
-                "expanded" : true,
                 "indexes" : [
                   {
                     "expanded" : false,
@@ -445,6 +610,7 @@
                 "enabled" : true
               },
               {
+                "expanded" : true,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
@@ -465,7 +631,6 @@
                     "enabled" : true
                   }
                 ],
-                "expanded" : true,
                 "primaryKeyColumns" : [
                   {
                     "expanded" : true,
@@ -513,8 +678,8 @@
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Long",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "autoIncrement" : true,
                     "name" : "ID",
@@ -524,8 +689,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Long",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "ClassID",
                     "id" : "ClassID",
@@ -561,8 +726,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "isAbstract",
                     "id" : "isAbstract",
@@ -571,8 +736,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "isStatic",
                     "id" : "isStatic",
@@ -581,8 +746,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "isSynchronized",
                     "id" : "isSynchronized",
@@ -591,8 +756,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "isConstructor",
                     "id" : "isConstructor",
@@ -605,6 +770,7 @@
                 "enabled" : true
               },
               {
+                "expanded" : true,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
@@ -625,7 +791,6 @@
                     "enabled" : true
                   }
                 ],
-                "expanded" : true,
                 "primaryKeyColumns" : [
                   {
                     "expanded" : true,
@@ -673,8 +838,8 @@
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Long",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "autoIncrement" : true,
                     "name" : "ID",
@@ -684,8 +849,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Integer",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "JarID",
                     "id" : "JarID",
@@ -705,9 +870,84 @@
                 "name" : "PackageInformation",
                 "id" : "PackageInformation",
                 "enabled" : true
+              },
+              {
+                "expanded" : true,
+                "primaryKeyColumns" : [
+                  {
+                    "expanded" : true,
+                    "name" : "Id",
+                    "id" : "Id",
+                    "ordinalPosition" : 1
+                  }
+                ],
+                "indexes" : [
+                  {
+                    "expanded" : false,
+                    "unique" : true,
+                    "name" : "PRIMARY",
+                    "indexColumns" : [
+                      {
+                        "orderType" : "ASC",
+                        "expanded" : true,
+                        "name" : "Id",
+                        "id" : "Id",
+                        "ordinalPosition" : 1
+                      }
+                    ],
+                    "id" : "PRIMARY"
+                  }
+                ],
+                "isView" : false,
+                "columns" : [
+                  {
+                    "databaseType" : "java.lang.Integer",
+                    "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
+                    "nullable" : false,
+                    "autoIncrement" : true,
+                    "name" : "Id",
+                    "id" : "Id",
+                    "ordinalPosition" : 1
+                  },
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "Name",
+                    "id" : "Name",
+                    "ordinalPosition" : 2
+                  },
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "GitCloneLink",
+                    "id" : "GitCloneLink",
+                    "ordinalPosition" : 3
+                  },
+                  {
+                    "databaseType" : "java.lang.Integer",
+                    "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
+                    "nullable" : false,
+                    "name" : "NoOfCommit",
+                    "id" : "NoOfCommit",
+                    "ordinalPosition" : 4
+                  },
+                  {
+                    "databaseType" : "java.lang.Integer",
+                    "expanded" : true,
+                    "nullable" : true,
+                    "name" : "NoOfReleases",
+                    "id" : "NoOfReleases",
+                    "ordinalPosition" : 5
+                  }
+                ],
+                "name" : "Projects",
+                "id" : "Projects"
               }
             ],
-            "expanded" : true,
             "name" : "JarAnalysis",
             "id" : "JarAnalysis",
             "enabled" : true

@@ -6,12 +6,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
-import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationBuilder;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
 import ca.concordia.jaranalyzer.util.Utility;
 
@@ -22,52 +23,43 @@ public class APIFinderImpl implements APIFinder {
 	private List<Integer> jarIDs ;
 
 
-	public APIFinderImpl(String projLocation) {
-		JarAnalyzer analyzer = new JarAnalyzer();
+	public APIFinderImpl(String pr){}
+
+
+	public APIFinderImpl(String projLocation, JarAnalyzer analyzer, String sha, String prjct) {
+
 		jarInfosFromRepository = new ArrayList<>();
 		jarInfosFromPom = new ArrayList<>();
-
-		JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();
-		JarInformationManager jm = app.getOrThrow(JarInformationManager.class);
-		
-		
-/*		try {
-			GitUtil gitUtil = new GitUtil();
-			Repository repo = gitUtil.openRepository(projLocation);
-			String release = gitUtil.getNearestTag(repo);
-			String releaseFolder = gitUtil.getRelease(repo, release);
-			System.out.println(release);
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}*/
 
 		String javaHome = System.getProperty("java.home");
 		String javaVersion = System.getProperty("java.version");
 		if (javaHome != null) {
 			List<String> jarFiles = Utility.getFiles(javaHome, ".jar");
+
 			for (String jarLocation : jarFiles) {
 				try {
 					JarFile jarFile = new JarFile(new File(jarLocation));
-					JarInfo jarInfo = analyzer.AnalyzeJar(jarFile, "JAVA",
+					Optional<JarInfo> jarInfo = analyzer.analyzeJar(jarFile, "JAVA",
 							jarFile.getName(), javaVersion);
-					jarInfosFromRepository.add(jarInfo);
+					jarInfo.ifPresent(j -> jarInfosFromRepository.add(j));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}
-		
+
 		if (!projLocation.isEmpty()) {
 			Set<String> poms = getAllPoms(projLocation);
+			jarInfosFromPom = analyzer.tryGenerateEffectivePom(projLocation, sha, prjct)
+					? analyzer.analyzeJarsFromEffectivePom(projLocation+prjct + "effectivePom.xml")
+					: new ArrayList<>(analyzer.analyzeJarsFromPOM(poms));
 
-			jarInfosFromPom = new ArrayList<>(analyzer.analyzeJarsFromPOM(poms));
-			for (String jarPath : getAllJars(projLocation)) {
+			for (String jarPath : getAllJars(projLocation + prjct)) {
 				JarFile jarFile;
 				try {
 					jarFile = new JarFile(new File(jarPath));
-					jarInfosFromRepository.add(analyzer.AnalyzeJar(jarFile, "",
-							"", ""));
+					analyzer.analyzeJar(jarFile, "", jarFile.getName(), "master")
+							.ifPresent( j -> jarInfosFromRepository.add(j));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -91,10 +83,28 @@ public class APIFinderImpl implements APIFinder {
 				}
 			}
 		}
+		//List<JarInformation> jarInfs = analyzer.getJarInformationFromPom(new HashSet<>(getAllPoms(projLocation)));
+		CommitsJarManager cjM = analyzer.app.getOrThrow(CommitsJarManager.class);
+		jarIDs = analyzer.app.getOrThrow(JarInformationManager.class)
+				.stream()
+//				.filter(x -> jarInfs.stream()
+//						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
+//									&& jr.getGroupId().equals(x.getGroupId())
+//									&& jr.getVersion().equals(x.getVersion())))
+				.map(j -> j.getId()).collect(Collectors.toList());
 
-		jarIDs = jarInfosFromPom.stream().map(d -> analyzer.persistJarInfo(d,jm))
-				.collect(Collectors.toList());
+		jarIDs.forEach(i -> cjM.persist(new CommitsJarImpl().setJarId(i).setSha(sha)));
+
+
+
+
+
+//		jarIDs = app.stream().map(GeneratedJarInformation::getId)
+//				//jarInfosFromPom.stream().map(d -> analyzer.persistJarInfo(d,app))
+//				.collect(Collectors.toList());
 	}
+
+
 
 
 	public List<JarInfo> getJarInfosFromPom() {
@@ -145,21 +155,16 @@ public class APIFinderImpl implements APIFinder {
 		}
 	}
 
-	private Set<String> getAllPoms(String projname) {
-		Set<String> poms = new HashSet<String>();
-		poms = getFiles(projname, "pom.xml");
-
-		return poms;
+	public Set<String> getAllPoms(String projname) {
+		return getFiles(projname, "pom.xml");
 	}
+
 
 	private Set<String> getAllJars(String projname) {
-		Set<String> jars = new HashSet<String>();
-		jars = getFiles(projname, "jar");
-
-		return jars;
+		return  getFiles(projname, "jar");
 	}
 
-	private static Set<String> getFiles(String directory, String type) {
+	public static Set<String> getFiles(String directory, String type) {
 		Set<String> jarFiles = new HashSet<String>();
 		File dir = new File(directory);
 		if (dir.listFiles() != null)

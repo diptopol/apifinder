@@ -57,10 +57,12 @@ public class JarInfo implements Info {
 					e.printStackTrace();
 				}
 				ClassInfo newClass = new ClassInfo(classNode);
-				String packageName = newClass.getQualifiedName().substring(0,
-						newClass.getQualifiedName().lastIndexOf('.'));
-				PackageInfo packageInfo = getPackageInfo(packageName);
-				packageInfo.addClass(newClass);
+				if(newClass.getQualifiedName()!=null) {
+					String packageName = newClass.getQualifiedName().substring(0,
+							newClass.getQualifiedName().lastIndexOf('.'));
+					PackageInfo packageInfo = getPackageInfo(packageName);
+					packageInfo.addClass(newClass);
+				}
 
 			}
 		}

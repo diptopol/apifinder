@@ -5,6 +5,10 @@ import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationBuilder;
 import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationManagerImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationSqlAdapter;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.CommitsManagerImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.CommitsSqlAdapter;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarManagerImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarSqlAdapter;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationManagerImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationSqlAdapter;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManagerImpl;
@@ -15,6 +19,8 @@ import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformati
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationSqlAdapter;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationManagerImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationSqlAdapter;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.ProjectsManagerImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.ProjectsSqlAdapter;
 import com.speedment.common.annotation.GeneratedCode;
 import com.speedment.common.injector.Injector;
 import com.speedment.runtime.application.AbstractApplicationBuilder;
@@ -35,17 +41,23 @@ public abstract class GeneratedJarAnalysisApplicationBuilder extends AbstractApp
     protected GeneratedJarAnalysisApplicationBuilder() {
         super(JarAnalysisApplicationImpl.class, GeneratedJarAnalysisMetadata.class);
         withManager(ClassInformationManagerImpl.class);
+        withManager(CommitsManagerImpl.class);
+        withManager(CommitsJarManagerImpl.class);
         withManager(FieldInformationManagerImpl.class);
         withManager(JarInformationManagerImpl.class);
         withManager(MethodArgTypeInformationManagerImpl.class);
         withManager(MethodInformationManagerImpl.class);
         withManager(PackageInformationManagerImpl.class);
+        withManager(ProjectsManagerImpl.class);
         withComponent(ClassInformationSqlAdapter.class);
+        withComponent(CommitsSqlAdapter.class);
+        withComponent(CommitsJarSqlAdapter.class);
         withComponent(FieldInformationSqlAdapter.class);
         withComponent(JarInformationSqlAdapter.class);
         withComponent(MethodArgTypeInformationSqlAdapter.class);
         withComponent(MethodInformationSqlAdapter.class);
         withComponent(PackageInformationSqlAdapter.class);
+        withComponent(ProjectsSqlAdapter.class);
     }
     
     @Override

@@ -9,10 +9,12 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -42,17 +44,21 @@ public class Util {
         }
     }
 
-    static List<RevCommit> getCommits(Try<Git> gitRepo, RevSort order) {
-        return gitRepo.map(git -> {
+    static List<RevCommit> getCommits(Git git, RevSort order) {
+        SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd");
+        String input = "2016-08-08" ;
+        return Try.ofFailable(() -> {
             RevWalk walk = new RevWalk(git.getRepository());
             walk.markStart(walk.parseCommit(git.getRepository().resolve("HEAD")));
             walk.sort(order);
+            walk.setRevFilter(CommitTimeRevFilter.after(ft.parse(input)));
             return walk;
         })
                 .map(walk -> {
                     Iterator<RevCommit> iter = walk.iterator();
                     List<RevCommit> l = new ArrayList<>();
-                    while(iter.hasNext()){ l.add(iter.next()); }
+                    while(iter.hasNext()){
+                        l.add(iter.next()); }
                     walk.dispose();
                     return l;
                 })
