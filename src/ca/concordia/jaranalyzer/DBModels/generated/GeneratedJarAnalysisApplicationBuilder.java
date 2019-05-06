@@ -7,6 +7,8 @@ import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformatio
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationSqlAdapter;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.CommitsManagerImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.CommitsSqlAdapter;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomManagerImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomSqlAdapter;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarManagerImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarSqlAdapter;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationManagerImpl;
@@ -42,6 +44,7 @@ public abstract class GeneratedJarAnalysisApplicationBuilder extends AbstractApp
         super(JarAnalysisApplicationImpl.class, GeneratedJarAnalysisMetadata.class);
         withManager(ClassInformationManagerImpl.class);
         withManager(CommitsManagerImpl.class);
+        withManager(CommitsEffectivePomManagerImpl.class);
         withManager(CommitsJarManagerImpl.class);
         withManager(FieldInformationManagerImpl.class);
         withManager(JarInformationManagerImpl.class);
@@ -51,6 +54,7 @@ public abstract class GeneratedJarAnalysisApplicationBuilder extends AbstractApp
         withManager(ProjectsManagerImpl.class);
         withComponent(ClassInformationSqlAdapter.class);
         withComponent(CommitsSqlAdapter.class);
+        withComponent(CommitsEffectivePomSqlAdapter.class);
         withComponent(CommitsJarSqlAdapter.class);
         withComponent(FieldInformationSqlAdapter.class);
         withComponent(JarInformationSqlAdapter.class);

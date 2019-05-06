@@ -33,7 +33,10 @@ public interface GeneratedCommitsManager extends Manager<Commits> {
         Commits.FILES_MODIFIED,
         Commits.TAG,
         Commits.IS_RELEASE,
-        Commits.PROJECT_ID
+        Commits.PROJECT_ID,
+        Commits.CONTAINS_JAVA,
+        Commits.COULD_CHECKOUT,
+        Commits.EFFECTIVE_POM
     ));
     
     @Override

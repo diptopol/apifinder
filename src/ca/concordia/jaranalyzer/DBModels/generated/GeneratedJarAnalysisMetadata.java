@@ -33,6 +33,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
         initPart7(sb);
         initPart8(sb);
         initPart9(sb);
+        initPart10(sb);
         return sb.toString();
     }
     
@@ -240,26 +241,32 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "              {",
             "                \"columns\" : [",
             "                  {",
+            "                    \"autoIncrement\" : false,",
             "                    \"databaseType\" : \"java.lang.String\",",
             "                    \"enabled\" : true,",
             "                    \"expanded\" : true,",
             "                    \"id\" : \"SHA\",",
             "                    \"name\" : \"SHA\",",
+            "                    \"nameProtected\" : true,",
             "                    \"nullable\" : false,",
-            "                    \"ordinalPosition\" : 1",
-            "                  },",
-            "                  {",
-            "                    \"databaseType\" : \"java.sql.Timestamp\","
+            "                    \"nullableImplementation\" : \"OPTIONAL\",",
+            "                    \"ordinalPosition\" : 1"
         ).forEachOrdered(sb::append);
     }
     
     private static void initPart2(StringBuilder sb) {
         Stream.of(
+            "                  },",
+            "                  {",
+            "                    \"autoIncrement\" : false,",
+            "                    \"databaseType\" : \"java.sql.Timestamp\",",
             "                    \"enabled\" : true,",
             "                    \"expanded\" : true,",
             "                    \"id\" : \"Time\",",
             "                    \"name\" : \"Time\",",
+            "                    \"nameProtected\" : true,",
             "                    \"nullable\" : false,",
+            "                    \"nullableImplementation\" : \"OPTIONAL\",",
             "                    \"ordinalPosition\" : 2",
             "                  },",
             "                  {",
@@ -291,6 +298,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                  },",
             "                  {",
             "                    \"databaseType\" : \"java.lang.String\",",
+            "                    \"enabled\" : true,",
             "                    \"expanded\" : true,",
             "                    \"id\" : \"Tag\",",
             "                    \"name\" : \"Tag\",",
@@ -299,6 +307,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                  },",
             "                  {",
             "                    \"databaseType\" : \"java.lang.String\",",
+            "                    \"enabled\" : true,",
             "                    \"expanded\" : true,",
             "                    \"id\" : \"isRelease\",",
             "                    \"name\" : \"isRelease\",",
@@ -307,18 +316,58 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                  },",
             "                  {",
             "                    \"databaseType\" : \"java.lang.Integer\",",
+            "                    \"enabled\" : true,",
             "                    \"expanded\" : true,",
             "                    \"id\" : \"ProjectID\",",
             "                    \"name\" : \"ProjectID\",",
             "                    \"nullable\" : false,",
             "                    \"ordinalPosition\" : 8,",
             "                    \"typeMapper\" : \"com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper\"",
-            "                  }",
+            "                  },",
+            "                  {",
+            "                    \"databaseType\" : \"java.lang.Boolean\",",
+            "                    \"enabled\" : true,",
+            "                    \"expanded\" : true,",
+            "                    \"id\" : \"containsJava\",",
+            "                    \"name\" : \"containsJava\",",
+            "                    \"nullable\" : true,",
+            "                    \"ordinalPosition\" : 9",
+            "                  },",
+            "                  {",
+            "                    \"autoIncrement\" : false,",
+            "                    \"databaseType\" : \"java.lang.Boolean\",",
+            "                    \"enabled\" : true,",
+            "                    \"expanded\" : true,",
+            "                    \"id\" : \"couldCheckout\",",
+            "                    \"name\" : \"couldCheckout\",",
+            "                    \"nameProtected\" : true,",
+            "                    \"nullable\" : true,",
+            "                    \"nullableImplementation\" : \"OPTIONAL\",",
+            "                    \"ordinalPosition\" : 10",
+            "                  },",
+            "                  {",
+            "                    \"autoIncrement\" : false,",
+            "                    \"databaseType\" : \"java.lang.Boolean\",",
+            "                    \"enabled\" : true,",
+            "                    \"expanded\" : true,",
+            "                    \"id\" : \"EffectivePom\",",
+            "                    \"name\" : \"EffectivePom\",",
+            "                    \"nameProtected\" : true,",
+            "                    \"nullable\" : true,",
+            "                    \"nullableImplementation\" : \"OPTIONAL\",",
+            "                    \"ordinalPosition\" : 11",
+            "                  }"
+        ).forEachOrdered(sb::append);
+    }
+    
+    private static void initPart3(StringBuilder sb) {
+        Stream.of(
             "                ],",
             "                \"enabled\" : true,",
             "                \"expanded\" : true,",
             "                \"foreignKeys\" : [",
             "                  {",
+            "                    \"enabled\" : true,",
             "                    \"expanded\" : false,",
             "                    \"foreignKeyColumns\" : [",
             "                      {",
@@ -339,6 +388,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                \"id\" : \"Commits\",",
             "                \"indexes\" : [",
             "                  {",
+            "                    \"enabled\" : true,",
             "                    \"expanded\" : false,",
             "                    \"id\" : \"PRIMARY\",",
             "                    \"indexColumns\" : [",
@@ -354,13 +404,9 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"unique\" : true",
             "                  },",
             "                  {",
+            "                    \"enabled\" : true,",
             "                    \"expanded\" : false,",
-            "                    \"id\" : \"ProjectID\","
-        ).forEachOrdered(sb::append);
-    }
-    
-    private static void initPart3(StringBuilder sb) {
-        Stream.of(
+            "                    \"id\" : \"ProjectID\",",
             "                    \"indexColumns\" : [",
             "                      {",
             "                        \"expanded\" : true,",
@@ -376,6 +422,67 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                ],",
             "                \"isView\" : false,",
             "                \"name\" : \"Commits\",",
+            "                \"nameProtected\" : true,",
+            "                \"primaryKeyColumns\" : [",
+            "                  {",
+            "                    \"enabled\" : true,",
+            "                    \"expanded\" : true,",
+            "                    \"id\" : \"SHA\",",
+            "                    \"name\" : \"SHA\",",
+            "                    \"ordinalPosition\" : 1",
+            "                  }",
+            "                ]",
+            "              },",
+            "              {",
+            "                \"columns\" : [",
+            "                  {",
+            "                    \"databaseType\" : \"java.lang.String\",",
+            "                    \"enabled\" : true,",
+            "                    \"expanded\" : true,",
+            "                    \"id\" : \"SHA\",",
+            "                    \"name\" : \"SHA\",",
+            "                    \"nullable\" : false,",
+            "                    \"ordinalPosition\" : 1",
+            "                  },",
+            "                  {",
+            "                    \"databaseType\" : \"java.lang.Boolean\",",
+            "                    \"enabled\" : true,",
+            "                    \"expanded\" : true,",
+            "                    \"id\" : \"EffectivePom\",",
+            "                    \"name\" : \"EffectivePom\",",
+            "                    \"nullable\" : false,",
+            "                    \"ordinalPosition\" : 2,",
+            "                    \"typeMapper\" : \"com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper\"",
+            "                  }",
+            "                ],",
+            "                \"enabled\" : true,",
+            "                \"expanded\" : true,",
+            "                \"id\" : \"CommitsEffectivePom\",",
+            "                \"indexes\" : [",
+            "                  {",
+            "                    \"enabled\" : true,",
+            "                    \"expanded\" : false,",
+            "                    \"id\" : \"PRIMARY\","
+        ).forEachOrdered(sb::append);
+    }
+    
+    private static void initPart4(StringBuilder sb) {
+        Stream.of(
+            "                    \"indexColumns\" : [",
+            "                      {",
+            "                        \"expanded\" : true,",
+            "                        \"id\" : \"SHA\",",
+            "                        \"name\" : \"SHA\",",
+            "                        \"orderType\" : \"ASC\",",
+            "                        \"ordinalPosition\" : 1",
+            "                      }",
+            "                    ],",
+            "                    \"name\" : \"PRIMARY\",",
+            "                    \"unique\" : true",
+            "                  }",
+            "                ],",
+            "                \"isView\" : false,",
+            "                \"name\" : \"CommitsEffectivePom\",",
             "                \"primaryKeyColumns\" : [",
             "                  {",
             "                    \"expanded\" : true,",
@@ -460,13 +567,21 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"nullable\" : false,",
             "                    \"ordinalPosition\" : 5,",
             "                    \"typeMapper\" : \"com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper\"",
-            "                  }",
-            "                ],"
+            "                  },",
+            "                  {"
         ).forEachOrdered(sb::append);
     }
     
-    private static void initPart4(StringBuilder sb) {
+    private static void initPart5(StringBuilder sb) {
         Stream.of(
+            "                    \"databaseType\" : \"java.lang.String\",",
+            "                    \"expanded\" : true,",
+            "                    \"id\" : \"Name\",",
+            "                    \"name\" : \"Name\",",
+            "                    \"nullable\" : false,",
+            "                    \"ordinalPosition\" : 6",
+            "                  }",
+            "                ],",
             "                \"enabled\" : true,",
             "                \"expanded\" : true,",
             "                \"foreignKeys\" : [",
@@ -559,7 +674,12 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"ordinalPosition\" : 2",
             "                  },",
             "                  {",
-            "                    \"databaseType\" : \"java.lang.String\",",
+            "                    \"databaseType\" : \"java.lang.String\","
+        ).forEachOrdered(sb::append);
+    }
+    
+    private static void initPart6(StringBuilder sb) {
+        Stream.of(
             "                    \"enabled\" : true,",
             "                    \"expanded\" : true,",
             "                    \"id\" : \"GroupId\",",
@@ -567,12 +687,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"nullable\" : false,",
             "                    \"ordinalPosition\" : 3",
             "                  },",
-            "                  {"
-        ).forEachOrdered(sb::append);
-    }
-    
-    private static void initPart5(StringBuilder sb) {
-        Stream.of(
+            "                  {",
             "                    \"databaseType\" : \"java.lang.String\",",
             "                    \"enabled\" : true,",
             "                    \"expanded\" : true,",
@@ -580,6 +695,14 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"name\" : \"Version\",",
             "                    \"nullable\" : false,",
             "                    \"ordinalPosition\" : 4",
+            "                  },",
+            "                  {",
+            "                    \"databaseType\" : \"java.lang.Boolean\",",
+            "                    \"expanded\" : true,",
+            "                    \"id\" : \"CouldFetch\",",
+            "                    \"name\" : \"CouldFetch\",",
+            "                    \"nullable\" : true,",
+            "                    \"ordinalPosition\" : 5",
             "                  }",
             "                ],",
             "                \"enabled\" : true,",
@@ -657,7 +780,12 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"id\" : \"methodargtypeinformation_ibfk_1\",",
             "                    \"name\" : \"methodargtypeinformation_ibfk_1\"",
             "                  }",
-            "                ],",
+            "                ],"
+        ).forEachOrdered(sb::append);
+    }
+    
+    private static void initPart7(StringBuilder sb) {
+        Stream.of(
             "                \"id\" : \"MethodArgTypeInformation\",",
             "                \"indexes\" : [",
             "                  {",
@@ -673,12 +801,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                        \"ordinalPosition\" : 1",
             "                      }",
             "                    ],",
-            "                    \"name\" : \"MethodID\","
-        ).forEachOrdered(sb::append);
-    }
-    
-    private static void initPart6(StringBuilder sb) {
-        Stream.of(
+            "                    \"name\" : \"MethodID\",",
             "                    \"unique\" : false",
             "                  }",
             "                ],",
@@ -763,7 +886,12 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"name\" : \"isSynchronized\",",
             "                    \"nullable\" : false,",
             "                    \"ordinalPosition\" : 8,",
-            "                    \"typeMapper\" : \"com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper\"",
+            "                    \"typeMapper\" : \"com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper\""
+        ).forEachOrdered(sb::append);
+    }
+    
+    private static void initPart8(StringBuilder sb) {
+        Stream.of(
             "                  },",
             "                  {",
             "                    \"databaseType\" : \"java.lang.Boolean\",",
@@ -779,12 +907,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                \"enabled\" : true,",
             "                \"expanded\" : true,",
             "                \"foreignKeys\" : [",
-            "                  {"
-        ).forEachOrdered(sb::append);
-    }
-    
-    private static void initPart7(StringBuilder sb) {
-        Stream.of(
+            "                  {",
             "                    \"enabled\" : true,",
             "                    \"expanded\" : false,",
             "                    \"foreignKeyColumns\" : [",
@@ -869,7 +992,12 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"expanded\" : true,",
             "                    \"id\" : \"JarID\",",
             "                    \"name\" : \"JarID\",",
-            "                    \"nullable\" : false,",
+            "                    \"nullable\" : false,"
+        ).forEachOrdered(sb::append);
+    }
+    
+    private static void initPart9(StringBuilder sb) {
+        Stream.of(
             "                    \"ordinalPosition\" : 2,",
             "                    \"typeMapper\" : \"com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper\"",
             "                  },",
@@ -885,12 +1013,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                ],",
             "                \"enabled\" : true,",
             "                \"expanded\" : true,",
-            "                \"foreignKeys\" : ["
-        ).forEachOrdered(sb::append);
-    }
-    
-    private static void initPart8(StringBuilder sb) {
-        Stream.of(
+            "                \"foreignKeys\" : [",
             "                  {",
             "                    \"enabled\" : true,",
             "                    \"expanded\" : false,",
@@ -975,7 +1098,12 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"id\" : \"Name\",",
             "                    \"name\" : \"Name\",",
             "                    \"nullable\" : false,",
-            "                    \"ordinalPosition\" : 2",
+            "                    \"ordinalPosition\" : 2"
+        ).forEachOrdered(sb::append);
+    }
+    
+    private static void initPart10(StringBuilder sb) {
+        Stream.of(
             "                  },",
             "                  {",
             "                    \"databaseType\" : \"java.lang.String\",",
@@ -991,12 +1119,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "                    \"id\" : \"NoOfCommit\",",
             "                    \"name\" : \"NoOfCommit\",",
             "                    \"nullable\" : false,",
-            "                    \"ordinalPosition\" : 4,"
-        ).forEachOrdered(sb::append);
-    }
-    
-    private static void initPart9(StringBuilder sb) {
-        Stream.of(
+            "                    \"ordinalPosition\" : 4,",
             "                    \"typeMapper\" : \"com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper\"",
             "                  },",
             "                  {",

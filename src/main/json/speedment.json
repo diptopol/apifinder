@@ -187,6 +187,7 @@
                 "enabled" : true
               },
               {
+                "nameProtected" : true,
                 "expanded" : true,
                 "foreignKeys" : [
                   {
@@ -204,7 +205,8 @@
                       }
                     ],
                     "name" : "commits_ibfk_1",
-                    "id" : "commits_ibfk_1"
+                    "id" : "commits_ibfk_1",
+                    "enabled" : true
                   }
                 ],
                 "primaryKeyColumns" : [
@@ -212,7 +214,8 @@
                     "expanded" : true,
                     "name" : "SHA",
                     "id" : "SHA",
-                    "ordinalPosition" : 1
+                    "ordinalPosition" : 1,
+                    "enabled" : true
                   }
                 ],
                 "indexes" : [
@@ -229,7 +232,8 @@
                         "ordinalPosition" : 1
                       }
                     ],
-                    "id" : "PRIMARY"
+                    "id" : "PRIMARY",
+                    "enabled" : true
                   },
                   {
                     "expanded" : false,
@@ -244,25 +248,32 @@
                         "ordinalPosition" : 1
                       }
                     ],
-                    "id" : "ProjectID"
+                    "id" : "ProjectID",
+                    "enabled" : true
                   }
                 ],
                 "isView" : false,
                 "columns" : [
                   {
                     "databaseType" : "java.lang.String",
+                    "nameProtected" : true,
                     "expanded" : true,
                     "nullable" : false,
+                    "autoIncrement" : false,
                     "name" : "SHA",
+                    "nullableImplementation" : "OPTIONAL",
                     "id" : "SHA",
                     "ordinalPosition" : 1,
                     "enabled" : true
                   },
                   {
                     "databaseType" : "java.sql.Timestamp",
+                    "nameProtected" : true,
                     "expanded" : true,
                     "nullable" : false,
+                    "autoIncrement" : false,
                     "name" : "Time",
+                    "nullableImplementation" : "OPTIONAL",
                     "id" : "Time",
                     "ordinalPosition" : 2,
                     "enabled" : true
@@ -300,7 +311,8 @@
                     "nullable" : true,
                     "name" : "Tag",
                     "id" : "Tag",
-                    "ordinalPosition" : 6
+                    "ordinalPosition" : 6,
+                    "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.String",
@@ -308,7 +320,8 @@
                     "nullable" : true,
                     "name" : "isRelease",
                     "id" : "isRelease",
-                    "ordinalPosition" : 7
+                    "ordinalPosition" : 7,
+                    "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.Integer",
@@ -317,11 +330,99 @@
                     "nullable" : false,
                     "name" : "ProjectID",
                     "id" : "ProjectID",
-                    "ordinalPosition" : 8
+                    "ordinalPosition" : 8,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.Boolean",
+                    "expanded" : true,
+                    "nullable" : true,
+                    "name" : "containsJava",
+                    "id" : "containsJava",
+                    "ordinalPosition" : 9,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.Boolean",
+                    "nameProtected" : true,
+                    "expanded" : true,
+                    "nullable" : true,
+                    "autoIncrement" : false,
+                    "name" : "couldCheckout",
+                    "nullableImplementation" : "OPTIONAL",
+                    "id" : "couldCheckout",
+                    "ordinalPosition" : 10,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.Boolean",
+                    "nameProtected" : true,
+                    "expanded" : true,
+                    "nullable" : true,
+                    "autoIncrement" : false,
+                    "name" : "EffectivePom",
+                    "nullableImplementation" : "OPTIONAL",
+                    "id" : "EffectivePom",
+                    "ordinalPosition" : 11,
+                    "enabled" : true
                   }
                 ],
                 "name" : "Commits",
                 "id" : "Commits",
+                "enabled" : true
+              },
+              {
+                "expanded" : true,
+                "primaryKeyColumns" : [
+                  {
+                    "expanded" : true,
+                    "name" : "SHA",
+                    "id" : "SHA",
+                    "ordinalPosition" : 1
+                  }
+                ],
+                "indexes" : [
+                  {
+                    "expanded" : false,
+                    "unique" : true,
+                    "name" : "PRIMARY",
+                    "indexColumns" : [
+                      {
+                        "orderType" : "ASC",
+                        "expanded" : true,
+                        "name" : "SHA",
+                        "id" : "SHA",
+                        "ordinalPosition" : 1
+                      }
+                    ],
+                    "id" : "PRIMARY",
+                    "enabled" : true
+                  }
+                ],
+                "isView" : false,
+                "columns" : [
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "SHA",
+                    "id" : "SHA",
+                    "ordinalPosition" : 1,
+                    "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.Boolean",
+                    "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
+                    "nullable" : false,
+                    "name" : "EffectivePom",
+                    "id" : "EffectivePom",
+                    "ordinalPosition" : 2,
+                    "enabled" : true
+                  }
+                ],
+                "name" : "CommitsEffectivePom",
+                "id" : "CommitsEffectivePom",
                 "enabled" : true
               },
               {
@@ -338,8 +439,8 @@
                   },
                   {
                     "databaseType" : "java.lang.Integer",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "JarID",
                     "id" : "JarID",
@@ -464,6 +565,14 @@
                     "id" : "isStatic",
                     "ordinalPosition" : 5,
                     "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "Name",
+                    "id" : "Name",
+                    "ordinalPosition" : 6
                   }
                 ],
                 "name" : "FieldInformation",
@@ -538,6 +647,14 @@
                     "id" : "Version",
                     "ordinalPosition" : 4,
                     "enabled" : true
+                  },
+                  {
+                    "databaseType" : "java.lang.Boolean",
+                    "expanded" : true,
+                    "nullable" : true,
+                    "name" : "CouldFetch",
+                    "id" : "CouldFetch",
+                    "ordinalPosition" : 5
                   }
                 ],
                 "name" : "JarInformation",

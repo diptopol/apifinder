@@ -42,6 +42,9 @@ public abstract class GeneratedCommitsSqlAdapter implements SqlAdapter<Commits> 
             .setTag(           resultSet.getString(6 + offset))
             .setIsRelease(     resultSet.getString(7 + offset))
             .setProjectId(     resultSet.getInt(8 + offset))
+            .setContainsJava(  getBoolean(resultSet, 9 + offset))
+            .setCouldCheckout( getBoolean(resultSet, 10 + offset))
+            .setEffectivePom(  getBoolean(resultSet, 11 + offset))
             ;
     }
     

@@ -30,7 +30,8 @@ public interface GeneratedFieldInformationManager extends Manager<FieldInformati
         FieldInformation.CLASS_ID,
         FieldInformation.TYPE,
         FieldInformation.ACCESS_MODIFIER,
-        FieldInformation.IS_STATIC
+        FieldInformation.IS_STATIC,
+        FieldInformation.NAME
     ));
     
     @Override

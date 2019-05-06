@@ -3,6 +3,7 @@ package ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.genera
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.Commits;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.Projects;
 import com.speedment.common.annotation.GeneratedCode;
+import com.speedment.common.function.OptionalBoolean;
 import com.speedment.runtime.core.manager.Manager;
 import com.speedment.runtime.core.util.OptionalUtil;
 
@@ -32,6 +33,9 @@ public abstract class GeneratedCommitsImpl implements Commits {
     private String tag;
     private String isRelease;
     private int projectId;
+    private Boolean containsJava;
+    private Boolean couldCheckout;
+    private Boolean effectivePom;
     
     protected GeneratedCommitsImpl() {}
     
@@ -73,6 +77,21 @@ public abstract class GeneratedCommitsImpl implements Commits {
     @Override
     public int getProjectId() {
         return projectId;
+    }
+    
+    @Override
+    public OptionalBoolean getContainsJava() {
+        return OptionalUtil.ofNullable(containsJava);
+    }
+    
+    @Override
+    public OptionalBoolean getCouldCheckout() {
+        return OptionalUtil.ofNullable(couldCheckout);
+    }
+    
+    @Override
+    public OptionalBoolean getEffectivePom() {
+        return OptionalUtil.ofNullable(effectivePom);
     }
     
     @Override
@@ -124,6 +143,24 @@ public abstract class GeneratedCommitsImpl implements Commits {
     }
     
     @Override
+    public Commits setContainsJava(Boolean containsJava) {
+        this.containsJava = containsJava;
+        return this;
+    }
+    
+    @Override
+    public Commits setCouldCheckout(Boolean couldCheckout) {
+        this.couldCheckout = couldCheckout;
+        return this;
+    }
+    
+    @Override
+    public Commits setEffectivePom(Boolean effectivePom) {
+        this.effectivePom = effectivePom;
+        return this;
+    }
+    
+    @Override
     public Projects findProjectId(Manager<Projects> foreignManager) {
         return foreignManager.stream().filter(Projects.ID.equal(getProjectId())).findAny().orElse(null);
     }
@@ -139,6 +176,9 @@ public abstract class GeneratedCommitsImpl implements Commits {
         sj.add("tag = "           + Objects.toString(OptionalUtil.unwrap(getTag())));
         sj.add("isRelease = "     + Objects.toString(OptionalUtil.unwrap(getIsRelease())));
         sj.add("projectId = "     + Objects.toString(getProjectId()));
+        sj.add("containsJava = "  + Objects.toString(OptionalUtil.unwrap(getContainsJava())));
+        sj.add("couldCheckout = " + Objects.toString(OptionalUtil.unwrap(getCouldCheckout())));
+        sj.add("effectivePom = "  + Objects.toString(OptionalUtil.unwrap(getEffectivePom())));
         return "CommitsImpl " + sj.toString();
     }
     
@@ -155,6 +195,9 @@ public abstract class GeneratedCommitsImpl implements Commits {
         if (!Objects.equals(this.getTag(), thatCommits.getTag())) { return false; }
         if (!Objects.equals(this.getIsRelease(), thatCommits.getIsRelease())) { return false; }
         if (this.getProjectId() != thatCommits.getProjectId()) { return false; }
+        if (!Objects.equals(this.getContainsJava(), thatCommits.getContainsJava())) { return false; }
+        if (!Objects.equals(this.getCouldCheckout(), thatCommits.getCouldCheckout())) { return false; }
+        if (!Objects.equals(this.getEffectivePom(), thatCommits.getEffectivePom())) { return false; }
         return true;
     }
     
@@ -169,6 +212,9 @@ public abstract class GeneratedCommitsImpl implements Commits {
         hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getTag()));
         hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getIsRelease()));
         hash = 31 * hash + Integer.hashCode(getProjectId());
+        hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getContainsJava()));
+        hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getCouldCheckout()));
+        hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getEffectivePom()));
         return hash;
     }
 }

@@ -38,6 +38,7 @@ public abstract class GeneratedFieldInformationSqlAdapter implements SqlAdapter<
             .setType(           resultSet.getString(3 + offset))
             .setAccessModifier( resultSet.getString(4 + offset))
             .setIsStatic(       resultSet.getBoolean(5 + offset))
+            .setName(           resultSet.getString(6 + offset))
             ;
     }
     

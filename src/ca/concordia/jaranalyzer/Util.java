@@ -46,7 +46,7 @@ public class Util {
 
     static List<RevCommit> getCommits(Git git, RevSort order) {
         SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd");
-        String input = "2016-08-08" ;
+        String input = "2013-01-01" ;
         return Try.ofFailable(() -> {
             RevWalk walk = new RevWalk(git.getRepository());
             walk.markStart(walk.parseCommit(git.getRepository().resolve("HEAD")));

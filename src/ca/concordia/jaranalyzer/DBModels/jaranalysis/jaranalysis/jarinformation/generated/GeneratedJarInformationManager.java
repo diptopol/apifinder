@@ -29,7 +29,8 @@ public interface GeneratedJarInformationManager extends Manager<JarInformation> 
         JarInformation.ID,
         JarInformation.ARTIFACT_ID,
         JarInformation.GROUP_ID,
-        JarInformation.VERSION
+        JarInformation.VERSION,
+        JarInformation.COULD_FETCH
     ));
     
     @Override

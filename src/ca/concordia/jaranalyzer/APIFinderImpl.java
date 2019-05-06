@@ -1,5 +1,7 @@
 package ca.concordia.jaranalyzer;
 
+import static ca.concordia.jaranalyzer.Runner.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.stream.Collectors;
 
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
 import ca.concordia.jaranalyzer.util.Utility;
 
@@ -21,6 +24,7 @@ public class APIFinderImpl implements APIFinder {
 	private List<JarInfo> jarInfosFromPom;
 	private List<JarInfo> jarInfosFromRepository;
 	private List<Integer> jarIDs ;
+	private boolean couldGenerateEffectivePom = false;
 
 
 	public APIFinderImpl(String pr){}
@@ -33,32 +37,37 @@ public class APIFinderImpl implements APIFinder {
 
 		String javaHome = System.getProperty("java.home");
 		String javaVersion = System.getProperty("java.version");
-		if (javaHome != null) {
-			List<String> jarFiles = Utility.getFiles(javaHome, ".jar");
 
-			for (String jarLocation : jarFiles) {
-				try {
-					JarFile jarFile = new JarFile(new File(jarLocation));
-					Optional<JarInfo> jarInfo = analyzer.analyzeJar(jarFile, "JAVA",
-							jarFile.getName(), javaVersion);
-					jarInfo.ifPresent(j -> jarInfosFromRepository.add(j));
-				} catch (IOException e) {
-					e.printStackTrace();
+		if(jm.stream().noneMatch(j -> j.getGroupId().equals("JAVA")
+				&& j.getVersion().matches(javaVersion))) {
+			if (javaHome != null) {
+				List<String> jarFiles = Utility.getFiles(javaHome, ".jar");
+				for (String jarLocation : jarFiles) {
+					try {
+						JarFile jarFile = new JarFile(new File(jarLocation));
+						Optional<JarInfo> jarInfo = analyzer.analyzeJar(jarFile, "JAVA",
+								jarFile.getName(), javaVersion);
+						jarInfo.ifPresent(j -> jarInfosFromRepository.add(j));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
-
 		if (!projLocation.isEmpty()) {
-			Set<String> poms = getAllPoms(projLocation);
-			jarInfosFromPom = analyzer.tryGenerateEffectivePom(projLocation, sha, prjct)
-					? analyzer.analyzeJarsFromEffectivePom(projLocation+prjct + "effectivePom.xml")
-					: new ArrayList<>(analyzer.analyzeJarsFromPOM(poms));
+			Set<String> poms = getAllPoms(projLocation + prjct);
+			if(!poms.isEmpty()) {
+				couldGenerateEffectivePom = analyzer.tryGenerateEffectivePom(projLocation, sha, prjct);
+				if(couldGenerateEffectivePom){
+					jarInfosFromPom =analyzer.analyzeJarsFromEffectivePom(projLocation + prjct + "effectivePom.xml");
+				}
+			}
 
 			for (String jarPath : getAllJars(projLocation + prjct)) {
 				JarFile jarFile;
 				try {
 					jarFile = new JarFile(new File(jarPath));
-					analyzer.analyzeJar(jarFile, "", jarFile.getName(), "master")
+					analyzer.analyzeJar(jarFile, "", jarFile.getName(), sha)
 							.ifPresent( j -> jarInfosFromRepository.add(j));
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -83,14 +92,19 @@ public class APIFinderImpl implements APIFinder {
 				}
 			}
 		}
-		//List<JarInformation> jarInfs = analyzer.getJarInformationFromPom(new HashSet<>(getAllPoms(projLocation)));
-		CommitsJarManager cjM = analyzer.app.getOrThrow(CommitsJarManager.class);
-		jarIDs = analyzer.app.getOrThrow(JarInformationManager.class)
+		List<JarInformation> jarInfs = analyzer.getJarInformationFromPom(new HashSet<>(getAllPoms(projLocation + prjct)));
+		CommitsJarManager cjM = app.getOrThrow(CommitsJarManager.class);
+		jarIDs = app.getOrThrow(JarInformationManager.class)
 				.stream()
-//				.filter(x -> jarInfs.stream()
-//						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
-//									&& jr.getGroupId().equals(x.getGroupId())
-//									&& jr.getVersion().equals(x.getVersion())))
+				.filter(x -> (jarInfs.stream()
+						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
+									&& jr.getGroupId().equals(x.getGroupId())
+									&& jr.getVersion().equals(x.getVersion()))
+						|| jarInfosFromRepository.stream()
+						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
+								&& jr.getGroupId().equals(x.getGroupId())
+								&& jr.getVersion().equals(x.getVersion()))
+								))
 				.map(j -> j.getId()).collect(Collectors.toList());
 
 		jarIDs.forEach(i -> cjM.persist(new CommitsJarImpl().setJarId(i).setSha(sha)));
@@ -104,8 +118,9 @@ public class APIFinderImpl implements APIFinder {
 //				.collect(Collectors.toList());
 	}
 
-
-
+	public boolean couldGenerateEffectivePom() {
+		return couldGenerateEffectivePom;
+	}
 
 	public List<JarInfo> getJarInfosFromPom() {
 		return jarInfosFromPom;

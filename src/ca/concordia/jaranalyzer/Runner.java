@@ -5,301 +5,148 @@ import static ca.concordia.jaranalyzer.Util.getCommits;
 import com.jasongoodwin.monads.Try;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
-import org.w3c.dom.Document;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.util.Map.Entry;
 
 import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
 import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationBuilder;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.Commits;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.CommitsImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.CommitsManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodargtypeinformation.MethodArgTypeInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.Projects;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.ProjectsImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.ProjectsManager;
+import ca.concordia.jaranalyzer.SourceCodeAnalyzer.Analyze;
 
 public class Runner {
-    static String path = "/Users/ameya/FinalResults/diffTools/Corpus/";
-    public static void main(String args[]) {
+    public static final String path = "/Users/ameya/FinalResults/diffTools/Corpus/";
+    public static final String jars_path = "/Users/ameya/FinalResults/diffTools/jars/";
+    public static final JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();;
+    public static final JarInformationManager jm = app.getOrThrow(JarInformationManager.class);;
+    public static final PackageInformationManager pkgM = app.getOrThrow(PackageInformationManager.class);
+    public static final ClassInformationManager clsM = app.getOrThrow(ClassInformationManager.class);
+    public static final MethodInformationManager mthdM = app.getOrThrow(MethodInformationManager.class);
+    public static final FieldInformationManager fldM = app.getOrThrow(FieldInformationManager.class);
+    public static final MethodArgTypeInformationManager mthdArgM = app.getOrThrow(MethodArgTypeInformationManager.class);
+    public static final CommitsEffectivePomManager cmtEffM = app.getOrThrow(CommitsEffectivePomManager.class);
+    public static final ProjectsManager prjctM = app.getOrThrow(ProjectsManager.class);
+    public static final CommitsManager cmtM = app.getOrThrow(CommitsManager.class);
 
-
-        //getJarMavenId(path,"master");
-
+    public static void main(String args[]) throws Throwable {
         Map<String, String> ps = Util.readProjects(path + "projects.txt");
 
-        final JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();
-        final ProjectsManager prjctM = app.getOrThrow(ProjectsManager.class);
-        final CommitsManager cmtM = app.getOrThrow(CommitsManager.class);
-        File csvOutputFile = new File(path + "Status.csv");
-        try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
-            ps.entrySet().stream().forEach(p -> {
 
-                final Try<Git> gitRepo = Util.tryCloningRepo(p.getKey(), p.getValue(), path);
-                gitRepo.map(gr -> {
-                    List<RevCommit> cs = getCommits(gr, RevSort.COMMIT_TIME_DESC);
-                    //   Collections.reverse(cs);
-                    return cs;
-                })
-                        .onSuccess(cs -> {
-                                    final Projects pr = new ProjectsImpl().setName(p.getKey())
-                                            .setGitCloneLink(p.getValue())
-                                            .setNoOfCommit(cs.size());
-                                    prjctM.persist(pr);
-                                    cs.forEach(c -> {
-                                        final Commits cm = new CommitsImpl().setSha(c.getId().getName())
-                                                .setProjectId(pr.getId())
-                                                .setTime(new Timestamp(c.getCommitterIdent().getWhen().getTime()));
-                                        cmtM.persist(cm);
-                                        Try.ofFailable(() -> gitRepo.get().checkout().setName(c.getName()).call())
-                                                .onFailure(e -> {
-                                                    System.out.println("Could not checkout : " + cm.getSha());
-                                                    e.printStackTrace();
 
-                                                })
-                                                //.map(r -> getJarIds(path, app, c.getId().getName()))
-                                                .map(r -> getJarIds(path, app, c.getId().getName(), pr.getName() + "/"))
-                                               // .onSuccess(ref -> System.out.println(c.getId().getName() + "   " + c.getCommitterIdent().getWhen()))
-                                                //.onFailure(Throwable::printStackTrace)
-                                                .onSuccess(l ->
-                                                                pw.println(String.join(",", pr.getName(), cm.getSha(), "YAYYY!!!"))
-                                                )
-                                                .onFailure(e -> {
-                                                    e.printStackTrace();;
-                                                    pw.println(String.join(",", pr.getName(), cm.getSha(), "OW!!!"));
-                                                })
-                                                .orElse(new ArrayList<>());
-                                    });
-                                }
-                        );
-            });
-        }catch (Exception e){
-            System.out.println(e);
-            e.printStackTrace();
+
+        for (Entry<String, String> p : ps.entrySet()) {
+            final Try<Git> gitRepo = Util.tryCloningRepo(p.getKey(), p.getValue(), path)
+                    .onFailure(e -> e.printStackTrace());
+            if (gitRepo.isSuccess()) {
+                Git repo = gitRepo.get();
+                final List<RevCommit> cs =
+                        getCommits(repo, RevSort.COMMIT_TIME_DESC);
+//                                .stream().filter(x -> x.getId().getName().equals(""))
+//                        .collect(Collectors.toList());
+               // Collections.reverse(cs);
+
+                Projects pr = prjctM.stream().filter(x -> x.getName().equals(p.getKey())).findFirst()
+                        .orElseGet(()->prjctM.persist(new ProjectsImpl().setName(p.getKey())
+                                .setGitCloneLink(p.getValue())
+                                .setNoOfCommit(cs.size())));
+
+                for (RevCommit c : cs) {
+                    final Commits cm = new CommitsImpl().setSha(c.getId().getName())
+                            .setProjectId(pr.getId())
+                            .setTime(new Timestamp(c.getCommitterIdent().getWhen().getTime()))
+                            .setContainsJava(containsFilesOFType(path + p.getKey(), ".java"));
+
+                    boolean collectsJars = getDiffs(repo.getRepository(),repo,c)
+                            .stream().anyMatch(x -> x.getOldPath().contains("pom.xml") || x.getNewPath().contains("pom.xml"));
+
+                    if(collectsJars) {
+                        // All this dirtiness to recover from checkout exception
+                        if (!checkoutCommit(repo, c)) {
+                            boolean deleted = Files.deleteIfExists(Paths.get(path + p.getKey()));
+                            if (deleted) {
+                                repo = Util.tryCloningRepo(p.getKey(), p.getValue(), path)
+                                        .orElseThrow(() -> new RuntimeException("Could not clone again"));
+                                if (!checkoutCommit(repo, c))
+                                    cmtM.persist(cm.setCouldCheckout(false));
+                            } else {
+                                cmtM.persist(cm.setCouldCheckout(false));
+                            }
+                        }
+                        if (cmtM.stream().noneMatch(x -> c.getId().getName().equals(x.getSha())))
+                            cmtM.persist(cm.setCouldCheckout(true));
+                        if (cm.getContainsJava().isPresent() && cm.getContainsJava().getAsBoolean()) {
+                            //    new APIFinderImpl(path,new JarAnalyzer(app,jars_path), cm.getSha(), pr.getName() + "/");
+                            new Analyze(app, path, pr.getName(), c.getId().getName());
+                        }
+                    }
+                }
+            }
         }
     }
 
-
-
-    public static List<Integer> getJarIds(String projectPath, JarAnalysisApplication app, String sha, String prjct){
-        APIFinderImpl a = new APIFinderImpl(projectPath,new JarAnalyzer(app,"/Users/ameya/FinalResults/diffTools/jars/"), sha, prjct);
-        return a.getJarIDs();
+    private static List<DiffEntry> getDiffs(Repository repo, Git g, RevCommit c) throws GitAPIException, IOException {
+        return g.diff()
+                .setOldTree(prepareTreeParser(c.getParent(0).getId().getName(), repo))
+                .setNewTree(prepareTreeParser(c.getId().getName(), repo))
+                .call();
     }
 
-//    public static List<Integer> getJarMavenId(String projectPath, JarAnalysisApplication app,String commit) throws MavenInvocationException, IOException, XmlPullParserException {
-//
-//
-//
-//
-//        System.out.println(commit);
-//        final String prjct = "speedment/";
-//        if(Stream.of("pom.xml",".java").allMatch(t -> {
-//            try {
-//                return containsFilesOFType(path+prjct,t);
-//            } catch (IOException e) {
-//
-//                e.printStackTrace();
-//                return false;
-//            }
-//        })) {
-//            InvocationRequest request = new DefaultInvocationRequest();
-//            request.setPomFile(new File(projectPath + prjct + "pom.xml"));
-//            //mvn help:effective-pom -Doutput=/Users/ameya/FinalResults/diffTools/Corpus/efpom.xml
-//            request.setGoals(Arrays.asList("help:effective-pom", "-Doutput=" + path+prjct+"effectivePom.xml"));
-//            Invoker invoker = new DefaultInvoker();
-//            invoker.setMavenHome(new File("/usr/local/Cellar/maven/3.6.0/"));
-//            List<String> res = new ArrayList<>();
-//            InvocationResult result = invoker.execute(request);
-//            Path p = Paths.get(projectPath + "Status.csv");
-//            if (result.getExitCode() != 0) {
-//                System.out.println("Effective pom generation Failed");
-//                String str = String.join(",", prjct, commit, "OW!!!\n");
-//                Files.write(p, str.getBytes(), StandardOpenOption.APPEND);
-//                throw new MavenInvocationException("Could not generate effective pom");
-//
-//            } else {
-//                String str = String.join(",", prjct, commit, "YAYYY!!!\n");
-//                Files.write(p, str.getBytes(), StandardOpenOption.APPEND);
-//                //  pw.println();
-//                System.out.println(commit + "YAYYYYYYYYYYYYY");
-//                MavenXpp3Reader mavenreader = new MavenXpp3Reader();
-//
-//                File effectivePomfile = new File( path+prjct+"effectivePom.xml") ;
-//
-//                Optional<Document> dd = getDocument(effectivePomfile);
-//                Optional<NodeList> z = dd.map(d -> d.getElementsByTagName("project"));
-//                z.ifPresent(nodeList -> System.out.println(nodeList.getLength()));
-//                JarAnalyzer jarAnalyzer = new JarAnalyzer(app, "/Users/ameya/FinalResults/diffTools/jars/");
-//                List<JarInfo> ji = jarAnalyzer.analyzeJarsFromEffectivePom(path + prjct + "effectivePom.xml");
-//                ji.forEach(j -> {
-//                    System.out.println(j.getName() + " " + j.getArtifactId() + " " + j.getGroupId() + " " + j.getVersion());
-//                });
-////                System.out.println(ji.size());
-////                NodeList prjcts = z.get();
-////                List<String> internalGroupIds = new ArrayList<>();
-////                for(int i = 0 ; i < prjcts.getLength(); i++){
-////                    Node x = prjcts.item(i);
-////                    for(int j =0; j<x.getChildNodes().getLength(); j ++){
-////                        Node xx = x.getChildNodes().item(j);
-////                        if(xx.getNodeName().equals("groupId")){
-////                            internalGroupIds.add(xx.getTextContent());
-////                        }
-////
-////                    }
-////                }
-////                Map<String, Long> jiAnlys = ji.stream()
-////                        .map(j -> j.getArtifactId() + "--" + j.getGroupId() + "--" + j.getVersion())
-////                        .filter(j -> internalGroupIds.stream().noneMatch(j::contains))
-////                        .collect(groupingBy(j -> j, counting()));
-////
-////                jiAnlys.entrySet().forEach(jii -> {
-////                    System.out.println(jii.getKey() + " " + jii.getValue());
-////                });
-//
-////                IntStream.range(0,z.get().getLength())
-////                        .mapToObj(i -> z.get().item(i))
-////                        .forEach(pr -> {
-////                            System.out.println(pr.toString());
-////
-////                            System.out.println(pr.getTextContent());
-////                        });
-////
-////
-////
-////                Model model = mavenreader.read(new FileReader(effectivePomfile));
-////                List<Dependency> deps = model.getDependencies();
-////                deps.addAll(model.getDependencyManagement().getDependencies());
-////                System.out.println(commit);
-////                for (Dependency d: deps) {
-////                    System.out.println(d.getArtifactId() + "--" + d.getGroupId() + "--" + d.getVersion());
-////                }
-//
-//
-//
-//
-//
-//
-//
-//
-//            }
-//        }
-//
-//        return Arrays.asList(1);
-//
-//        }
-
-//            //mvn -o dependency:list dependency:copy-dependencies
-//            // -DoutputDirectory=/Users/ameya/FinalResults/diffTools/ -DexcludeArtifactIds=com.speedment
-//            // -DexcludeTransitive
-//            // -fn
-//            // | grep ":.*:.*:.*" | cut -d] -f2- | sed 's/:[a-z]*$//g' | sort -u
-//            //dependency:get -Dartifact=groupId:artifactId:version
-//            InvocationRequest request = new DefaultInvocationRequest();
-//            request.setPomFile(new File(projectPath + prjct + "pom.xml"));
-//            request.setGoals(Arrays.asList("dependency:copy-dependencies", "dependency:list",
-//                    "-DexcludeTransitive",
-//                    "-DoutputDirectory=/Users/ameya/FinalResults/diffTools/jarss/",
-//                    "-DoutputFile=" + path + "speedmentJarAnalysis/" + commit + ".txt",
-//                    "-DappendOutput=true", "-fn"));
-//            Invoker invoker = new DefaultInvoker();
-//            invoker.setMavenHome(new File("/usr/local/Cellar/maven/3.6.0/"));
-//            List<String> res = new ArrayList<>();
-//            invoker.setOutputHandler(res::add);
-//
-//            res.forEach(System.out::println);
-//            InvocationResult result = invoker.execute(request);
-//
-//
-//            Path p = Paths.get(projectPath + "Status.csv");
-//            if (result.getExitCode() != 0) {
-//                System.out.println("Build Failed");
-//                String str = String.join(",", prjct, commit, "OW!!!\n");
-//                //, result.getExecutionException().toString());
-//                Files.write(p, str.getBytes(), StandardOpenOption.APPEND);
-//                //pw.println();
-//                throw new MavenInvocationException("Could not build");
-//
-//            } else {
-//                String str = String.join(",", prjct, commit, "YAYYY!!!\n");
-//                Files.write(p, str.getBytes(), StandardOpenOption.APPEND);
-//                //  pw.println();
-//                System.out.println(commit + "YAYYYYYYYYYYYYY");
-//            }
-//        }else{
-
-
-
-
-
-    public static boolean containsFilesOFType(String direc, String type) throws IOException {
-        return Files.find(Paths.get(direc), Integer.MAX_VALUE,(p,a) -> a.isRegularFile() && p.toString().endsWith(type))
-                .findFirst().isPresent();
+    public static CanonicalTreeParser prepareTreeParser(String sha, Repository repository) throws IOException {
+        RevWalk walk = new RevWalk(repository) ;
+        RevCommit commit = walk.parseCommit(repository.resolve(sha));
+        RevTree tree = walk.parseTree(commit.getTree().getId());
+        CanonicalTreeParser treeParser = new CanonicalTreeParser();
+        ObjectReader reader = repository.newObjectReader();
+        treeParser.reset(reader, tree.getId());
+        walk.dispose();
+        return treeParser;
     }
 
 
-    private static Optional<Document> getDocument(File inputFile)  {
+    private static boolean checkoutCommit(Git g, RevCommit c) {
         try {
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(inputFile);
-            doc.getDocumentElement().normalize();
-            return Optional.ofNullable(doc);
-        }catch (Exception e){
+            g.checkout().setName(c.getId().getName()).call();
+            return true;
+        }catch(Exception e) {
             e.printStackTrace();
-            return Optional.empty();
+            return false;
         }
     }
 
+    private static boolean containsFilesOFType(String direc, String type)  {
+        try {
+            return Files.find(Paths.get(direc), Integer.MAX_VALUE, (p, a) -> a.isRegularFile() && p.toString().endsWith(type))
+                    .findFirst().isPresent();
+        }catch (Exception e){
+            throw new RuntimeException("could not find " + direc);
+        }
+    }
 
 }
 
-
-
-// Collections.reverse(commits);
-//        System.out.println(commits.size());
-//
-//        getJarIds(path + "guava/").forEach(System.out::println);
-//
-////        int i = 0;
-////        List<JarTFG> jars = new ArrayList<>();
-//////        for(RevCommit commit: commits){
-//////            System.out.println(commit.getId().getName());
-//////        }
-//
-//        gitRepo.onSuccess(Git::close);
-
-
-
-
-
-//    public static void foo(RevCommit c, Repository repo) throws IOException {
-//        DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
-//        df.setRepository(repo);
-//        df.setDiffComparator(RawTextComparator.DEFAULT);
-//        df.setDetectRenames(true);
-//        List<DiffEntry> diffs;
-//        if(c.getParentCount() > 0) {
-//            diffs = df.scan(c.getParent(0).getTree(), c.getTree());
-//            filesChanged = diffs.size();
-//            for (DiffEntry diff : diffs) {
-//
-//                for (Edit edit : df.toFileHeader(diff).toEditList()) {
-//                    linesDeleted += edit.getEndA() - edit.getBeginA();
-//                    linesAdded += edit.getEndB() - edit.getBeginB();
-//                }
-//            }
-//        }
-//    }

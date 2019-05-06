@@ -2,8 +2,11 @@ package ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation
 
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
 import com.speedment.common.annotation.GeneratedCode;
+import com.speedment.common.function.OptionalBoolean;
 import com.speedment.runtime.config.identifier.ColumnIdentifier;
 import com.speedment.runtime.config.identifier.TableIdentifier;
+import com.speedment.runtime.core.util.OptionalUtil;
+import com.speedment.runtime.field.ComparableField;
 import com.speedment.runtime.field.IntField;
 import com.speedment.runtime.field.StringField;
 import com.speedment.runtime.typemapper.TypeMapper;
@@ -65,6 +68,17 @@ public interface GeneratedJarInformation {
         TypeMapper.identity(),
         false
     );
+    /**
+     * This Field corresponds to the {@link JarInformation} field that can be
+     * obtained using the {@link JarInformation#getCouldFetch()} method.
+     */
+    ComparableField<JarInformation, Boolean, Boolean> COULD_FETCH = ComparableField.create(
+        Identifier.COULD_FETCH,
+        o -> OptionalUtil.unwrap(o.getCouldFetch()),
+        JarInformation::setCouldFetch,
+        TypeMapper.identity(),
+        false
+    );
     
     /**
      * Returns the id of this JarInformation. The id field corresponds to the
@@ -98,6 +112,15 @@ public interface GeneratedJarInformation {
      * @return the version of this JarInformation
      */
     String getVersion();
+    
+    /**
+     * Returns the couldFetch of this JarInformation. The couldFetch field
+     * corresponds to the database column
+     * JarAnalysis.JarAnalysis.JarInformation.CouldFetch.
+     * 
+     * @return the couldFetch of this JarInformation
+     */
+    OptionalBoolean getCouldFetch();
     
     /**
      * Sets the id of this JarInformation. The id field corresponds to the
@@ -136,12 +159,23 @@ public interface GeneratedJarInformation {
      */
     JarInformation setVersion(String version);
     
+    /**
+     * Sets the couldFetch of this JarInformation. The couldFetch field
+     * corresponds to the database column
+     * JarAnalysis.JarAnalysis.JarInformation.CouldFetch.
+     * 
+     * @param couldFetch to set of this JarInformation
+     * @return           this JarInformation instance
+     */
+    JarInformation setCouldFetch(Boolean couldFetch);
+    
     enum Identifier implements ColumnIdentifier<JarInformation> {
         
         ID          ("ID"),
         ARTIFACT_ID ("ArtifactId"),
         GROUP_ID    ("GroupId"),
-        VERSION     ("Version");
+        VERSION     ("Version"),
+        COULD_FETCH ("CouldFetch");
         
         private final String columnId;
         private final TableIdentifier<JarInformation> tableIdentifier;
