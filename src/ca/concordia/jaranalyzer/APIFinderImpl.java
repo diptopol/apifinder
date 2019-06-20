@@ -1,7 +1,5 @@
 package ca.concordia.jaranalyzer;
 
-import static ca.concordia.jaranalyzer.Runner.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,12 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
 import ca.concordia.jaranalyzer.util.Utility;
 
 public class APIFinderImpl implements APIFinder {
@@ -30,6 +24,33 @@ public class APIFinderImpl implements APIFinder {
 	public APIFinderImpl(String pr){}
 
 
+	public APIFinderImpl(JarAnalyzer analyzer){
+		jarInfosFromRepository = new ArrayList<>();
+		String javaHome = "/Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/";
+//				System.getProperty("java.home");
+		String javaVersion = "1.8";
+				//System.getProperty("java.version");
+		System.out.println(javaHome);
+
+//		if(jm.stream().noneMatch(j -> j.getGroupId().equals("JAVA")
+//				&& j.getVersion().matches(javaVersion))) {
+			if (javaHome != null) {
+				List<String> jarFiles = Utility.getFiles(javaHome, "jar");
+				System.out.println(jarFiles.size());
+				for (String jarLocation : jarFiles) {
+					try {
+						JarFile jarFile = new JarFile(new File(jarLocation));
+						Optional<JarInfo> jarInfo = analyzer.analyzeJar(jarFile, "JAVA",
+								jarFile.getName(), javaVersion);
+						jarInfo.ifPresent(j -> jarInfosFromRepository.add(j));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		//}
+	}
+
 	public APIFinderImpl(String projLocation, JarAnalyzer analyzer, String sha, String prjct) {
 
 		jarInfosFromRepository = new ArrayList<>();
@@ -38,8 +59,8 @@ public class APIFinderImpl implements APIFinder {
 		String javaHome = System.getProperty("java.home");
 		String javaVersion = System.getProperty("java.version");
 
-		if(jm.stream().noneMatch(j -> j.getGroupId().equals("JAVA")
-				&& j.getVersion().matches(javaVersion))) {
+//		if(jm.stream().noneMatch(j -> j.getGroupId().equals("JAVA")
+//				&& j.getVersion().matches(javaVersion))) {
 			if (javaHome != null) {
 				List<String> jarFiles = Utility.getFiles(javaHome, ".jar");
 				for (String jarLocation : jarFiles) {
@@ -53,7 +74,7 @@ public class APIFinderImpl implements APIFinder {
 					}
 				}
 			}
-		}
+		//}
 		if (!projLocation.isEmpty()) {
 			Set<String> poms = getAllPoms(projLocation + prjct);
 			if(!poms.isEmpty()) {
@@ -93,21 +114,21 @@ public class APIFinderImpl implements APIFinder {
 			}
 		}
 		List<JarInformation> jarInfs = analyzer.getJarInformationFromPom(new HashSet<>(getAllPoms(projLocation + prjct)));
-		CommitsJarManager cjM = app.getOrThrow(CommitsJarManager.class);
-		jarIDs = app.getOrThrow(JarInformationManager.class)
-				.stream()
-				.filter(x -> (jarInfs.stream()
-						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
-									&& jr.getGroupId().equals(x.getGroupId())
-									&& jr.getVersion().equals(x.getVersion()))
-						|| jarInfosFromRepository.stream()
-						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
-								&& jr.getGroupId().equals(x.getGroupId())
-								&& jr.getVersion().equals(x.getVersion()))
-								))
-				.map(j -> j.getId()).collect(Collectors.toList());
+//		CommitsJarManager cjM = app.getOrThrow(CommitsJarManager.class);
+//		jarIDs = app.getOrThrow(JarInformationManager.class)
+//				.stream()
+//				.filter(x -> (jarInfs.stream()
+//						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
+//									&& jr.getGroupId().equals(x.getGroupId())
+//									&& jr.getVersion().equals(x.getVersion()))
+//						|| jarInfosFromRepository.stream()
+//						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
+//								&& jr.getGroupId().equals(x.getGroupId())
+//								&& jr.getVersion().equals(x.getVersion()))
+//								))
+//				.map(j -> j.getId()).collect(Collectors.toList());
 
-		jarIDs.forEach(i -> cjM.persist(new CommitsJarImpl().setJarId(i).setSha(sha)));
+		//jarIDs.forEach(i -> cjM.persist(new CommitsJarImpl().setJarId(i).setSha(sha)));
 
 
 

@@ -7,7 +7,7 @@ import com.speedment.runtime.core.manager.Manager;
 import com.speedment.runtime.core.util.OptionalUtil;
 
 import java.util.Objects;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 /**
@@ -28,8 +28,7 @@ public abstract class GeneratedClassInformationImpl implements ClassInformation 
     private String qualifiedName;
     private String type;
     private String accessModifiers;
-    private Long superClassId;
-    private Long superInterfaceId;
+    private String superClass;
     private boolean isInterface;
     private boolean isAbstract;
     
@@ -66,13 +65,8 @@ public abstract class GeneratedClassInformationImpl implements ClassInformation 
     }
     
     @Override
-    public OptionalLong getSuperClassId() {
-        return OptionalUtil.ofNullable(superClassId);
-    }
-    
-    @Override
-    public OptionalLong getSuperInterfaceId() {
-        return OptionalUtil.ofNullable(superInterfaceId);
+    public Optional<String> getSuperClass() {
+        return Optional.ofNullable(superClass);
     }
     
     @Override
@@ -122,14 +116,8 @@ public abstract class GeneratedClassInformationImpl implements ClassInformation 
     }
     
     @Override
-    public ClassInformation setSuperClassId(Long superClassId) {
-        this.superClassId = superClassId;
-        return this;
-    }
-    
-    @Override
-    public ClassInformation setSuperInterfaceId(Long superInterfaceId) {
-        this.superInterfaceId = superInterfaceId;
+    public ClassInformation setSuperClass(String superClass) {
+        this.superClass = superClass;
         return this;
     }
     
@@ -153,16 +141,15 @@ public abstract class GeneratedClassInformationImpl implements ClassInformation 
     @Override
     public String toString() {
         final StringJoiner sj = new StringJoiner(", ", "{ ", " }");
-        sj.add("id = "               + Objects.toString(getId()));
-        sj.add("packageId = "        + Objects.toString(getPackageId()));
-        sj.add("name = "             + Objects.toString(getName()));
-        sj.add("qualifiedName = "    + Objects.toString(getQualifiedName()));
-        sj.add("type = "             + Objects.toString(getType()));
-        sj.add("accessModifiers = "  + Objects.toString(getAccessModifiers()));
-        sj.add("superClassId = "     + Objects.toString(OptionalUtil.unwrap(getSuperClassId())));
-        sj.add("superInterfaceId = " + Objects.toString(OptionalUtil.unwrap(getSuperInterfaceId())));
-        sj.add("isInterface = "      + Objects.toString(getIsInterface()));
-        sj.add("isAbstract = "       + Objects.toString(getIsAbstract()));
+        sj.add("id = "              + Objects.toString(getId()));
+        sj.add("packageId = "       + Objects.toString(getPackageId()));
+        sj.add("name = "            + Objects.toString(getName()));
+        sj.add("qualifiedName = "   + Objects.toString(getQualifiedName()));
+        sj.add("type = "            + Objects.toString(getType()));
+        sj.add("accessModifiers = " + Objects.toString(getAccessModifiers()));
+        sj.add("superClass = "      + Objects.toString(OptionalUtil.unwrap(getSuperClass())));
+        sj.add("isInterface = "     + Objects.toString(getIsInterface()));
+        sj.add("isAbstract = "      + Objects.toString(getIsAbstract()));
         return "ClassInformationImpl " + sj.toString();
     }
     
@@ -177,8 +164,7 @@ public abstract class GeneratedClassInformationImpl implements ClassInformation 
         if (!Objects.equals(this.getQualifiedName(), thatClassInformation.getQualifiedName())) { return false; }
         if (!Objects.equals(this.getType(), thatClassInformation.getType())) { return false; }
         if (!Objects.equals(this.getAccessModifiers(), thatClassInformation.getAccessModifiers())) { return false; }
-        if (!Objects.equals(this.getSuperClassId(), thatClassInformation.getSuperClassId())) { return false; }
-        if (!Objects.equals(this.getSuperInterfaceId(), thatClassInformation.getSuperInterfaceId())) { return false; }
+        if (!Objects.equals(this.getSuperClass(), thatClassInformation.getSuperClass())) { return false; }
         if (this.getIsInterface() != thatClassInformation.getIsInterface()) { return false; }
         if (this.getIsAbstract() != thatClassInformation.getIsAbstract()) { return false; }
         return true;
@@ -193,8 +179,7 @@ public abstract class GeneratedClassInformationImpl implements ClassInformation 
         hash = 31 * hash + Objects.hashCode(getQualifiedName());
         hash = 31 * hash + Objects.hashCode(getType());
         hash = 31 * hash + Objects.hashCode(getAccessModifiers());
-        hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getSuperClassId()));
-        hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getSuperInterfaceId()));
+        hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getSuperClass()));
         hash = 31 * hash + Boolean.hashCode(getIsInterface());
         hash = 31 * hash + Boolean.hashCode(getIsAbstract());
         return hash;

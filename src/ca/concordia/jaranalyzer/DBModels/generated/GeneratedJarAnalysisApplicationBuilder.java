@@ -23,6 +23,8 @@ import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformat
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationSqlAdapter;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.ProjectsManagerImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.ProjectsSqlAdapter;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.superinterfaceclass.SuperInterfaceClassManagerImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.superinterfaceclass.SuperInterfaceClassSqlAdapter;
 import com.speedment.common.annotation.GeneratedCode;
 import com.speedment.common.injector.Injector;
 import com.speedment.runtime.application.AbstractApplicationBuilder;
@@ -52,6 +54,7 @@ public abstract class GeneratedJarAnalysisApplicationBuilder extends AbstractApp
         withManager(MethodInformationManagerImpl.class);
         withManager(PackageInformationManagerImpl.class);
         withManager(ProjectsManagerImpl.class);
+        withManager(SuperInterfaceClassManagerImpl.class);
         withComponent(ClassInformationSqlAdapter.class);
         withComponent(CommitsSqlAdapter.class);
         withComponent(CommitsEffectivePomSqlAdapter.class);
@@ -62,6 +65,7 @@ public abstract class GeneratedJarAnalysisApplicationBuilder extends AbstractApp
         withComponent(MethodInformationSqlAdapter.class);
         withComponent(PackageInformationSqlAdapter.class);
         withComponent(ProjectsSqlAdapter.class);
+        withComponent(SuperInterfaceClassSqlAdapter.class);
     }
     
     @Override

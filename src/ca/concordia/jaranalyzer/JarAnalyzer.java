@@ -1,13 +1,6 @@
 package ca.concordia.jaranalyzer;
 
-import static ca.concordia.jaranalyzer.Runner.app;
-import static ca.concordia.jaranalyzer.Runner.clsM;
-import static ca.concordia.jaranalyzer.Runner.cmtEffM;
-import static ca.concordia.jaranalyzer.Runner.fldM;
-import static ca.concordia.jaranalyzer.Runner.jm;
-import static ca.concordia.jaranalyzer.Runner.mthdArgM;
-import static ca.concordia.jaranalyzer.Runner.mthdM;
-import static ca.concordia.jaranalyzer.Runner.pkgM;
+
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -19,7 +12,6 @@ import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.objectweb.asm.Type;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -47,16 +39,23 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformation;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodargtypeinformation.MethodArgTypeInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodargtypeinformation.MethodArgTypeInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformation;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformation;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.superinterfaceclass.SuperInterfaceClassImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.superinterfaceclass.SuperInterfaceClassManager;
 import ca.concordia.jaranalyzer.util.Utility;
 
 
@@ -64,8 +63,15 @@ public class JarAnalyzer {
 
 
 	private String jarsPath;
-
-
+	private JarAnalysisApplication app;
+	private JarInformationManager jm;
+	private PackageInformationManager pkgM;
+	private ClassInformationManager clsM;
+	private MethodInformationManager mthdM;
+	private FieldInformationManager fldM;
+	private CommitsEffectivePomManager cmtEffM;
+	private MethodArgTypeInformationManager mthdArgM;
+	private SuperInterfaceClassManager sic;
 
 	public JarAnalyzer(){}
 
@@ -73,6 +79,18 @@ public class JarAnalyzer {
 		File file = new File(jarPath);
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
+		this.app = app;
+		jm = this.app.getOrThrow(JarInformationManager.class);
+		pkgM = app.getOrThrow(PackageInformationManager.class);
+		clsM = app.getOrThrow(ClassInformationManager.class);
+		mthdM = app.getOrThrow(MethodInformationManager.class);
+		fldM = app.getOrThrow(FieldInformationManager.class);
+		cmtEffM = app.getOrThrow(CommitsEffectivePomManager.class);
+	//	mthdArgM =  app.getOrThrow(MethodArgTypeInformationManager.class);
+		sic = app.getOrThrow(SuperInterfaceClassManager.class);
+//
+//    public static final ProjectsManager prjctM = app.getOrThrow(ProjectsManager.class);
+//    public static final CommitsManager cmtM = app.getOrThrow(CommitsManager.class);
 
 
 	}
@@ -125,7 +143,6 @@ public class JarAnalyzer {
 						}
 					}
 					List<JarInformation> jiAnlys = ji.stream()
-							//.map(j -> j.getArtifactId() + "--" + j.getGroupId() + "--" + j.getVersion())
 							.filter(j -> internalGroupIds.stream().noneMatch(g -> j.getGroupId().contains(g)))
 							.distinct()
 							.collect(toList());
@@ -287,8 +304,13 @@ public class JarAnalyzer {
 						.setIsAbstract(c.isAbstract())
 						.setIsInterface(c.isInterface())
 						.setName(c.getName())
+						.setSuperClass(c.getSuperClassName())
 						.setPackageId(pi.getId())
 						.setType(c.getType().toString()));
+
+					for(String s: c.getSuperInterfaceNames()){
+						sic.persist(new SuperInterfaceClassImpl().setClassId(ci.getId()).setSuperInterface(s));
+					}
 					for(MethodInfo m : c.getMethods()){
 						MethodInformation mi = mthdM.persist(new MethodInformationImpl()
 								.setAccessModifiers(m.isPublic()?"PUBLIC":(m.isPrivate() ? "PRIVATE" : (m.isProtected() ? "PROTECTED" : "DEFAULT")))
@@ -300,10 +322,10 @@ public class JarAnalyzer {
 								.setName(m.getName())
 								.setReturnType(m.getReturnType()));
 
-						for(Type t : Arrays.asList(m.getArgumentTypes()))
-							mthdArgM.persist(new MethodArgTypeInformationImpl()
-									.setMethodId(mi.getId())
-									.setType(t.getClassName()));
+//						for(Type t : Arrays.asList(m.getArgumentTypes()))
+//							mthdArgM.persist(new MethodArgTypeInformationImpl()
+//									.setMethodId(mi.getId())
+//									.setType(t.getClassName()));
 					}
 
 					for(FieldInfo f : c.getFields()){
@@ -472,9 +494,6 @@ public class JarAnalyzer {
 			return null;
 
 		JarInfo jarInfo = new JarInfo(jarFile, groupId, artifactId, version);
-		// if(jarInfo != null && groupId != "" && artifactId != "" && version !=
-		// "")
-		// SaveToDb(jarInfo);
 		return jarInfo;
 	}
 

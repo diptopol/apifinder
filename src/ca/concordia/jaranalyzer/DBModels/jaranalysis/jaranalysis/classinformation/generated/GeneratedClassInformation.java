@@ -8,13 +8,12 @@ import com.speedment.runtime.config.identifier.TableIdentifier;
 import com.speedment.runtime.core.manager.Manager;
 import com.speedment.runtime.core.util.OptionalUtil;
 import com.speedment.runtime.field.BooleanField;
-import com.speedment.runtime.field.ComparableField;
 import com.speedment.runtime.field.LongField;
 import com.speedment.runtime.field.LongForeignKeyField;
 import com.speedment.runtime.field.StringField;
 import com.speedment.runtime.typemapper.TypeMapper;
 
-import java.util.OptionalLong;
+import java.util.Optional;
 
 /**
  * The generated base for the {@link
@@ -98,23 +97,12 @@ public interface GeneratedClassInformation {
     );
     /**
      * This Field corresponds to the {@link ClassInformation} field that can be
-     * obtained using the {@link ClassInformation#getSuperClassId()} method.
+     * obtained using the {@link ClassInformation#getSuperClass()} method.
      */
-    ComparableField<ClassInformation, Long, Long> SUPER_CLASS_ID = ComparableField.create(
-        Identifier.SUPER_CLASS_ID,
-        o -> OptionalUtil.unwrap(o.getSuperClassId()),
-        ClassInformation::setSuperClassId,
-        TypeMapper.identity(),
-        false
-    );
-    /**
-     * This Field corresponds to the {@link ClassInformation} field that can be
-     * obtained using the {@link ClassInformation#getSuperInterfaceId()} method.
-     */
-    ComparableField<ClassInformation, Long, Long> SUPER_INTERFACE_ID = ComparableField.create(
-        Identifier.SUPER_INTERFACE_ID,
-        o -> OptionalUtil.unwrap(o.getSuperInterfaceId()),
-        ClassInformation::setSuperInterfaceId,
+    StringField<ClassInformation, String> SUPER_CLASS = StringField.create(
+        Identifier.SUPER_CLASS,
+        o -> OptionalUtil.unwrap(o.getSuperClass()),
+        ClassInformation::setSuperClass,
         TypeMapper.identity(),
         false
     );
@@ -193,22 +181,13 @@ public interface GeneratedClassInformation {
     String getAccessModifiers();
     
     /**
-     * Returns the superClassId of this ClassInformation. The superClassId field
+     * Returns the superClass of this ClassInformation. The superClass field
      * corresponds to the database column
-     * JarAnalysis.JarAnalysis.ClassInformation.SuperClassId.
+     * JarAnalysis.JarAnalysis.ClassInformation.SuperClass.
      * 
-     * @return the superClassId of this ClassInformation
+     * @return the superClass of this ClassInformation
      */
-    OptionalLong getSuperClassId();
-    
-    /**
-     * Returns the superInterfaceId of this ClassInformation. The
-     * superInterfaceId field corresponds to the database column
-     * JarAnalysis.JarAnalysis.ClassInformation.SuperInterfaceID.
-     * 
-     * @return the superInterfaceId of this ClassInformation
-     */
-    OptionalLong getSuperInterfaceId();
+    Optional<String> getSuperClass();
     
     /**
      * Returns the isInterface of this ClassInformation. The isInterface field
@@ -286,24 +265,14 @@ public interface GeneratedClassInformation {
     ClassInformation setAccessModifiers(String accessModifiers);
     
     /**
-     * Sets the superClassId of this ClassInformation. The superClassId field
+     * Sets the superClass of this ClassInformation. The superClass field
      * corresponds to the database column
-     * JarAnalysis.JarAnalysis.ClassInformation.SuperClassId.
+     * JarAnalysis.JarAnalysis.ClassInformation.SuperClass.
      * 
-     * @param superClassId to set of this ClassInformation
-     * @return             this ClassInformation instance
+     * @param superClass to set of this ClassInformation
+     * @return           this ClassInformation instance
      */
-    ClassInformation setSuperClassId(Long superClassId);
-    
-    /**
-     * Sets the superInterfaceId of this ClassInformation. The superInterfaceId
-     * field corresponds to the database column
-     * JarAnalysis.JarAnalysis.ClassInformation.SuperInterfaceID.
-     * 
-     * @param superInterfaceId to set of this ClassInformation
-     * @return                 this ClassInformation instance
-     */
-    ClassInformation setSuperInterfaceId(Long superInterfaceId);
+    ClassInformation setSuperClass(String superClass);
     
     /**
      * Sets the isInterface of this ClassInformation. The isInterface field
@@ -337,16 +306,15 @@ public interface GeneratedClassInformation {
     
     enum Identifier implements ColumnIdentifier<ClassInformation> {
         
-        ID                 ("ID"),
-        PACKAGE_ID         ("PackageID"),
-        NAME               ("Name"),
-        QUALIFIED_NAME     ("QualifiedName"),
-        TYPE               ("Type"),
-        ACCESS_MODIFIERS   ("AccessModifiers"),
-        SUPER_CLASS_ID     ("SuperClassId"),
-        SUPER_INTERFACE_ID ("SuperInterfaceID"),
-        IS_INTERFACE       ("isInterface"),
-        IS_ABSTRACT        ("isAbstract");
+        ID               ("ID"),
+        PACKAGE_ID       ("PackageID"),
+        NAME             ("Name"),
+        QUALIFIED_NAME   ("QualifiedName"),
+        TYPE             ("Type"),
+        ACCESS_MODIFIERS ("AccessModifiers"),
+        SUPER_CLASS      ("SuperClass"),
+        IS_INTERFACE     ("isInterface"),
+        IS_ABSTRACT      ("isAbstract");
         
         private final String columnId;
         private final TableIdentifier<ClassInformation> tableIdentifier;

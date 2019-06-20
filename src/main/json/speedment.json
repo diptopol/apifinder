@@ -20,6 +20,7 @@
             "expanded" : true,
             "tables" : [
               {
+                "nameProtected" : true,
                 "expanded" : true,
                 "foreignKeys" : [
                   {
@@ -88,11 +89,37 @@
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Long",
+                    "nameProtected" : true,
+                    "expanded" : true,
+                    "nullable" : true,
+                    "autoIncrement" : false,
+                    "name" : "SuperClassId",
+                    "nullableImplementation" : "OPTIONAL",
+                    "id" : "SuperClassId",
+                    "ordinalPosition" : 7,
+                    "enabled" : false
+                  },
+                  {
+                    "databaseType" : "java.lang.Long",
+                    "nameProtected" : true,
+                    "expanded" : true,
+                    "nullable" : true,
+                    "autoIncrement" : false,
+                    "name" : "SuperInterfaceID",
+                    "nullableImplementation" : "OPTIONAL",
+                    "id" : "SuperInterfaceID",
+                    "ordinalPosition" : 8,
+                    "enabled" : false
+                  },
+                  {
+                    "databaseType" : "java.lang.Long",
+                    "nameProtected" : true,
                     "expanded" : true,
                     "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "autoIncrement" : true,
                     "name" : "ID",
+                    "nullableImplementation" : "OPTIONAL",
                     "id" : "ID",
                     "ordinalPosition" : 1,
                     "enabled" : true
@@ -144,21 +171,12 @@
                     "enabled" : true
                   },
                   {
-                    "databaseType" : "java.lang.Long",
+                    "databaseType" : "java.lang.String",
                     "expanded" : true,
                     "nullable" : true,
-                    "name" : "SuperClassId",
-                    "id" : "SuperClassId",
+                    "name" : "SuperClass",
+                    "id" : "SuperClass",
                     "ordinalPosition" : 7,
-                    "enabled" : true
-                  },
-                  {
-                    "databaseType" : "java.lang.Long",
-                    "expanded" : true,
-                    "nullable" : true,
-                    "name" : "SuperInterfaceID",
-                    "id" : "SuperInterfaceID",
-                    "ordinalPosition" : 8,
                     "enabled" : true
                   },
                   {
@@ -168,7 +186,7 @@
                     "nullable" : false,
                     "name" : "isInterface",
                     "id" : "isInterface",
-                    "ordinalPosition" : 9,
+                    "ordinalPosition" : 8,
                     "enabled" : true
                   },
                   {
@@ -178,7 +196,7 @@
                     "nullable" : false,
                     "name" : "isAbstract",
                     "id" : "isAbstract",
-                    "ordinalPosition" : 10,
+                    "ordinalPosition" : 9,
                     "enabled" : true
                   }
                 ],
@@ -378,7 +396,8 @@
                     "expanded" : true,
                     "name" : "SHA",
                     "id" : "SHA",
-                    "ordinalPosition" : 1
+                    "ordinalPosition" : 1,
+                    "enabled" : true
                   }
                 ],
                 "indexes" : [
@@ -435,7 +454,8 @@
                     "nullable" : false,
                     "name" : "SHA",
                     "id" : "SHA",
-                    "ordinalPosition" : 1
+                    "ordinalPosition" : 1,
+                    "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.Integer",
@@ -444,11 +464,13 @@
                     "nullable" : false,
                     "name" : "JarID",
                     "id" : "JarID",
-                    "ordinalPosition" : 2
+                    "ordinalPosition" : 2,
+                    "enabled" : true
                   }
                 ],
                 "name" : "CommitsJar",
-                "id" : "CommitsJar"
+                "id" : "CommitsJar",
+                "enabled" : true
               },
               {
                 "expanded" : true,
@@ -572,7 +594,8 @@
                     "nullable" : false,
                     "name" : "Name",
                     "id" : "Name",
-                    "ordinalPosition" : 6
+                    "ordinalPosition" : 6,
+                    "enabled" : true
                   }
                 ],
                 "name" : "FieldInformation",
@@ -654,7 +677,8 @@
                     "nullable" : true,
                     "name" : "CouldFetch",
                     "id" : "CouldFetch",
-                    "ordinalPosition" : 5
+                    "ordinalPosition" : 5,
+                    "enabled" : true
                   }
                 ],
                 "name" : "JarInformation",
@@ -995,7 +1019,8 @@
                     "expanded" : true,
                     "name" : "Id",
                     "id" : "Id",
-                    "ordinalPosition" : 1
+                    "ordinalPosition" : 1,
+                    "enabled" : true
                   }
                 ],
                 "indexes" : [
@@ -1012,7 +1037,8 @@
                         "ordinalPosition" : 1
                       }
                     ],
-                    "id" : "PRIMARY"
+                    "id" : "PRIMARY",
+                    "enabled" : true
                   }
                 ],
                 "isView" : false,
@@ -1025,7 +1051,8 @@
                     "autoIncrement" : true,
                     "name" : "Id",
                     "id" : "Id",
-                    "ordinalPosition" : 1
+                    "ordinalPosition" : 1,
+                    "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.String",
@@ -1033,7 +1060,8 @@
                     "nullable" : false,
                     "name" : "Name",
                     "id" : "Name",
-                    "ordinalPosition" : 2
+                    "ordinalPosition" : 2,
+                    "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.String",
@@ -1041,7 +1069,8 @@
                     "nullable" : false,
                     "name" : "GitCloneLink",
                     "id" : "GitCloneLink",
-                    "ordinalPosition" : 3
+                    "ordinalPosition" : 3,
+                    "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.Integer",
@@ -1050,7 +1079,8 @@
                     "nullable" : false,
                     "name" : "NoOfCommit",
                     "id" : "NoOfCommit",
-                    "ordinalPosition" : 4
+                    "ordinalPosition" : 4,
+                    "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.Integer",
@@ -1058,11 +1088,38 @@
                     "nullable" : true,
                     "name" : "NoOfReleases",
                     "id" : "NoOfReleases",
-                    "ordinalPosition" : 5
+                    "ordinalPosition" : 5,
+                    "enabled" : true
                   }
                 ],
                 "name" : "Projects",
-                "id" : "Projects"
+                "id" : "Projects",
+                "enabled" : true
+              },
+              {
+                "expanded" : true,
+                "isView" : false,
+                "columns" : [
+                  {
+                    "databaseType" : "java.lang.Long",
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "ClassId",
+                    "id" : "ClassId",
+                    "ordinalPosition" : 1
+                  },
+                  {
+                    "databaseType" : "java.lang.String",
+                    "expanded" : true,
+                    "nullable" : false,
+                    "name" : "SuperInterface",
+                    "id" : "SuperInterface",
+                    "ordinalPosition" : 2
+                  }
+                ],
+                "name" : "SuperInterfaceClass",
+                "id" : "SuperInterfaceClass"
               }
             ],
             "name" : "JarAnalysis",

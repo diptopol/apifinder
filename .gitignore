@@ -144,3 +144,5 @@ target/classes/ca/concordia/jaranalyzer/DBModels/jaranalysis/jaranalysis/commits
 target/JarAnalyzer-0.0.1-SNAPSHOT-Ameya.jar
 target/maven-archiver/pom.properties
 .idea/uiDesigner.xml
+*.md5
+*.md5

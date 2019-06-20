@@ -1,11 +1,6 @@
 package ca.concordia.jaranalyzer.SourceCodeAnalyzer;
 
 
-import static ca.concordia.jaranalyzer.Runner.clsM;
-import static ca.concordia.jaranalyzer.Runner.fldM;
-import static ca.concordia.jaranalyzer.Runner.mthdArgM;
-import static ca.concordia.jaranalyzer.Runner.mthdM;
-
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree.Kind;
@@ -16,19 +11,33 @@ import java.util.Set;
 
 import javax.lang.model.element.Modifier;
 
+import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformation;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodargtypeinformation.MethodArgTypeInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodargtypeinformation.MethodArgTypeInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformation;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationManager;
 
 public class ClassScanner extends TreeScanner<Void, Integer> {
 
     private String packageNAme ;
+    private ClassInformationManager clsM;
+    private MethodInformationManager mthdM;
+    private FieldInformationManager fldM;
+    private MethodArgTypeInformationManager mthdArgM;
 
-    public ClassScanner(String packageName){
+
+    public ClassScanner(String packageName, JarAnalysisApplication app){
         this.packageNAme = packageName;
+        clsM = app.getOrThrow(ClassInformationManager.class);
+        mthdM = app.getOrThrow(MethodInformationManager.class);
+        fldM = app.getOrThrow(FieldInformationManager.class);
+        mthdArgM =  app.getOrThrow(MethodArgTypeInformationManager.class);
     }
 
     public Void visitClass(ClassTree ct, Integer state){

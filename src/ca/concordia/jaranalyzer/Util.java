@@ -24,7 +24,7 @@ public class Util {
 
 
 
-    static Try<Git> tryCloningRepo(String projectName, String cloneLink, String path) {
+    public static Try<Git> tryCloningRepo(String projectName, String cloneLink, String path) {
         return Try.ofFailable(() -> Git.open(new File(path + projectName)))
                 .onFailure(e -> System.out.println("Did not find " + projectName + " at" + path))
                 .orElseTry(() ->
@@ -33,7 +33,7 @@ public class Util {
 
     }
 
-    static Map<String, String> readProjects(String path){
+    public static Map<String, String> readProjects(String path){
         try {
             return Files.readAllLines(Paths.get(path)).parallelStream()
                     .map(e -> Pair.P(e.split(",")[0], e.split(",")[1]))
@@ -44,7 +44,7 @@ public class Util {
         }
     }
 
-    static List<RevCommit> getCommits(Git git, RevSort order) {
+    public static List<RevCommit> getCommits(Git git, RevSort order) {
         SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd");
         String input = "2013-01-01" ;
         return Try.ofFailable(() -> {
