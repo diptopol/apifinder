@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
+import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationBuilder;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
 import ca.concordia.jaranalyzer.util.Utility;
 
@@ -19,37 +20,60 @@ public class APIFinderImpl implements APIFinder {
 	private List<JarInfo> jarInfosFromRepository;
 	private List<Integer> jarIDs ;
 	private boolean couldGenerateEffectivePom = false;
+	public static final JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();
 
 
 	public APIFinderImpl(String pr){}
 
 
-	public APIFinderImpl(JarAnalyzer analyzer){
-		jarInfosFromRepository = new ArrayList<>();
-		String javaHome = "/Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/";
-//				System.getProperty("java.home");
-		String javaVersion = "1.8";
-				//System.getProperty("java.version");
-		System.out.println(javaHome);
+	public static void analyzeJavaJars(JarAnalyzer ja){
+		new APIFinderImpl(ja);
+	}
 
-//		if(jm.stream().noneMatch(j -> j.getGroupId().equals("JAVA")
-//				&& j.getVersion().matches(javaVersion))) {
+	public static void analyzeJar( String groupId, String artifactID, String version, String path,String sha){
+		new APIFinderImpl(artifactID,groupId,version, path,sha);
+	}
+
+
+	public static void persistJarsCommit(String groupId, String artifactID, String version, String sha){
+		JarAnalyzer analyzer = new JarAnalyzer(app);
+		analyzer.getJarID(groupId, artifactID, version)
+				.ifPresent(i -> analyzer.persistCommitJar(sha,i));
+	}
+
+	public APIFinderImpl(JarAnalyzer analyzer){
+		String javaHome = "/Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/";
+		String javaVersion = "1.8";
+		System.out.println(javaHome);
 			if (javaHome != null) {
 				List<String> jarFiles = Utility.getFiles(javaHome, "jar");
 				System.out.println(jarFiles.size());
 				for (String jarLocation : jarFiles) {
 					try {
 						JarFile jarFile = new JarFile(new File(jarLocation));
-						Optional<JarInfo> jarInfo = analyzer.analyzeJar(jarFile, "JAVA",
-								jarFile.getName(), javaVersion);
-						jarInfo.ifPresent(j -> jarInfosFromRepository.add(j));
+						analyzer.analyzeJar(jarFile, "JAVA", jarFile.getName(), javaVersion);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
 			}
-		//}
 	}
+
+
+	public APIFinderImpl(String artifactID, String groupID, String version, String path, String commitID){
+		try {
+			JarAnalyzer analyzer = new JarAnalyzer(app);
+			JarFile jarFile = new JarFile(new File(path));
+			Integer jarID = analyzer.analyzeJar(jarFile, groupID, artifactID, version);
+			if(jarID!=null && jarID!=-1)
+				analyzer.persistCommitJar(commitID, jarID);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+
 
 	public APIFinderImpl(String projLocation, JarAnalyzer analyzer, String sha, String prjct) {
 
@@ -66,9 +90,9 @@ public class APIFinderImpl implements APIFinder {
 				for (String jarLocation : jarFiles) {
 					try {
 						JarFile jarFile = new JarFile(new File(jarLocation));
-						Optional<JarInfo> jarInfo = analyzer.analyzeJar(jarFile, "JAVA",
+						Integer jarInfo = analyzer.analyzeJar(jarFile, "JAVA",
 								jarFile.getName(), javaVersion);
-						jarInfo.ifPresent(j -> jarInfosFromRepository.add(j));
+						//jarInfo.ifPresent(j -> jarInfosFromRepository.add(j));
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -88,8 +112,8 @@ public class APIFinderImpl implements APIFinder {
 				JarFile jarFile;
 				try {
 					jarFile = new JarFile(new File(jarPath));
-					analyzer.analyzeJar(jarFile, "", jarFile.getName(), sha)
-							.ifPresent( j -> jarInfosFromRepository.add(j));
+//					analyzer.analyzeJar(jarFile, "", jarFile.getName(), sha)
+//							.ifPresent( j -> jarInfosFromRepository.add(j));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

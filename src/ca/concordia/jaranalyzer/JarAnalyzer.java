@@ -42,6 +42,8 @@ import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformatio
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
@@ -72,8 +74,19 @@ public class JarAnalyzer {
 	private CommitsEffectivePomManager cmtEffM;
 	private MethodArgTypeInformationManager mthdArgM;
 	private SuperInterfaceClassManager sic;
+	private CommitsJarManager cjm;
 
-	public JarAnalyzer(){}
+	public JarAnalyzer(JarAnalysisApplication app1){
+		this.app =  app1;
+		jm = app.getOrThrow(JarInformationManager.class);
+		pkgM = app.getOrThrow(PackageInformationManager.class);
+		clsM = app.getOrThrow(ClassInformationManager.class);
+		mthdM = app.getOrThrow(MethodInformationManager.class);
+		fldM = app.getOrThrow(FieldInformationManager.class);
+		cmtEffM = app.getOrThrow(CommitsEffectivePomManager.class);
+		sic = app.getOrThrow(SuperInterfaceClassManager.class);
+		cjm = app.getOrThrow(CommitsJarManager.class);
+	}
 
 	public JarAnalyzer(JarAnalysisApplication app, String jarPath) {
 		File file = new File(jarPath);
@@ -86,13 +99,19 @@ public class JarAnalyzer {
 		mthdM = app.getOrThrow(MethodInformationManager.class);
 		fldM = app.getOrThrow(FieldInformationManager.class);
 		cmtEffM = app.getOrThrow(CommitsEffectivePomManager.class);
-	//	mthdArgM =  app.getOrThrow(MethodArgTypeInformationManager.class);
+		//	mthdArgM =  app.getOrThrow(MethodArgTypeInformationManager.class);
 		sic = app.getOrThrow(SuperInterfaceClassManager.class);
+		cjm = app.getOrThrow(CommitsJarManager.class);
 //
 //    public static final ProjectsManager prjctM = app.getOrThrow(ProjectsManager.class);
 //    public static final CommitsManager cmtM = app.getOrThrow(CommitsManager.class);
 
 
+	}
+
+
+	public void persistCommitJar(String sha, int jarID){
+		cjm.persist(new CommitsJarImpl().setJarId(jarID).setSha(sha));
 	}
 
 	public List<JarInfo> analyzeJarsFromPOM(Set<String> pomFiles) {
@@ -289,60 +308,64 @@ public class JarAnalyzer {
 		Optional<JarInformation> o_jr = jm.stream().filter(jr -> jr.getGroupId().equals(j.getGroupId())
 				&& jr.getArtifactId().equals(j.getArtifactId()) && jr.getVersion().equals(j.getVersion()))
 				.findAny();
-		if(!o_jr.isPresent()) {
-			JarInformation jr = jm.persist(new JarInformationImpl().setArtifactId(j.getArtifactId()).setGroupId(j.getGroupId())
-					.setVersion(j.getVersion())
-					.setCouldFetch(couldFetch));
+		try {
+			if (!o_jr.isPresent()) {
+				JarInformation jr = jm.persist(new JarInformationImpl().setArtifactId(j.getArtifactId()).setGroupId(j.getGroupId())
+						.setVersion(j.getVersion())
+						.setCouldFetch(couldFetch));
 
-			for(PackageInfo p : j.getPackages()){
-				PackageInformation pi =pkgM.persist(new PackageInformationImpl().setJarId(jr.getId()).setName(p.getName()));
+				for (PackageInfo p : j.getPackages()) {
+					PackageInformation pi = pkgM.persist(new PackageInformationImpl().setJarId(jr.getId()).setName(p.getName()));
 
-				//for(ClassInfo c : p.getClasses()){
-				p.getClasses().parallelStream().forEach( c -> {
+					//for(ClassInfo c : p.getClasses()){
+					p.getClasses().parallelStream().forEach(c -> {
 						ClassInformation ci = clsM.persist(new ClassInformationImpl().setQualifiedName(c.getQualifiedName())
-						.setAccessModifiers(c.isPublic()?"PUBLIC":(c.isPrivate() ? "PRIVATE" : (c.isProtected() ? "PROTECTED" : "DEFAULT")))
-						.setIsAbstract(c.isAbstract())
-						.setIsInterface(c.isInterface())
-						.setName(c.getName())
-						.setSuperClass(c.getSuperClassName())
-						.setPackageId(pi.getId())
-						.setType(c.getType().toString()));
+								.setAccessModifiers(c.isPublic() ? "PUBLIC" : (c.isPrivate() ? "PRIVATE" : (c.isProtected() ? "PROTECTED" : "DEFAULT")))
+								.setIsAbstract(c.isAbstract())
+								.setIsInterface(c.isInterface())
+								.setName(c.getName())
+								.setSuperClass(c.getSuperClassName())
+								.setPackageId(pi.getId())
+								.setType(c.getType().toString()));
 
-					for(String s: c.getSuperInterfaceNames()){
-						sic.persist(new SuperInterfaceClassImpl().setClassId(ci.getId()).setSuperInterface(s));
-					}
-					for(MethodInfo m : c.getMethods()){
-						MethodInformation mi = mthdM.persist(new MethodInformationImpl()
-								.setAccessModifiers(m.isPublic()?"PUBLIC":(m.isPrivate() ? "PRIVATE" : (m.isProtected() ? "PROTECTED" : "DEFAULT")))
-								.setClassId(ci.getId())
-								.setIsAbstract(m.isAbstract())
-								.setIsConstructor(m.isConstructor())
-								.setIsStatic(m.isStatic())
-								.setIsSynchronized(m.isSynchronized())
-								.setName(m.getName())
-								.setReturnType(m.getReturnType()));
+						for (String s : c.getSuperInterfaceNames()) {
+							sic.persist(new SuperInterfaceClassImpl().setClassId(ci.getId()).setSuperInterface(s));
+						}
+						for (MethodInfo m : c.getMethods()) {
+							MethodInformation mi = mthdM.persist(new MethodInformationImpl()
+									.setAccessModifiers(m.isPublic() ? "PUBLIC" : (m.isPrivate() ? "PRIVATE" : (m.isProtected() ? "PROTECTED" : "DEFAULT")))
+									.setClassId(ci.getId())
+									.setIsAbstract(m.isAbstract())
+									.setIsConstructor(m.isConstructor())
+									.setIsStatic(m.isStatic())
+									.setIsSynchronized(m.isSynchronized())
+									.setName(m.getName())
+									.setReturnType(m.getReturnType()));
 
 //						for(Type t : Arrays.asList(m.getArgumentTypes()))
 //							mthdArgM.persist(new MethodArgTypeInformationImpl()
 //									.setMethodId(mi.getId())
 //									.setType(t.getClassName()));
-					}
+						}
 
-					for(FieldInfo f : c.getFields()){
-						fldM.persist(new FieldInformationImpl()
-							.setAccessModifier(f.isPublic()?"PUBLIC":(f.isPrivate() ? "PRIVATE" : (f.isProtected() ? "PROTECTED" : "DEFAULT")))
-							.setClassId(ci.getId())
-							.setName(f.getName())
-							.setType(f.getType().getClassName()));
-					}
-				});
+						for (FieldInfo f : c.getFields()) {
+							fldM.persist(new FieldInformationImpl()
+									.setAccessModifier(f.isPublic() ? "PUBLIC" : (f.isPrivate() ? "PRIVATE" : (f.isProtected() ? "PROTECTED" : "DEFAULT")))
+									.setClassId(ci.getId())
+									.setName(f.getName())
+									.setType(f.getType().getClassName()));
+						}
+					});
 
+				}
+
+				return jr.getId();
+
+			} else {
+				return o_jr.get().getId();
 			}
-
-			return jr.getId();
-
-		}else{
-			return o_jr.get().getId();
+		}catch (Exception e){
+			return -1;
 		}
 	}
 
@@ -498,19 +521,23 @@ public class JarAnalyzer {
 	}
 
 
-	public Optional<JarInfo> analyzeJar(JarFile jarFile, String groupId, String artifactId, String version) {
-		try {
-			if (jarFile != null && jm.stream().noneMatch(j -> j.getArtifactId().equals(artifactId)
-					&& j.getGroupId().equals(groupId) && j.getVersion().equals(version))) {
-				JarInfo ji = new JarInfo(jarFile, groupId, artifactId, version);
-				persistJarInfo(ji, true);
-				return Optional.of(ji);
+	public Integer analyzeJar(JarFile jarFile, String groupId, String artifactId, String version) {
+		if(jarFile!=null) {
+			return jm.stream().filter(j -> j.getArtifactId().equals(artifactId)
+					&& j.getGroupId().equals(groupId) && j.getVersion().equals(version))
+					.findFirst().map(x->x.getId())
+					.orElseGet(() -> {
+						JarInfo ji = new JarInfo(jarFile, groupId, artifactId, version);
+						return persistJarInfo(ji, true);
+					});
 			}
-		}catch (Exception e){
-			System.out.println("Could not analyse: " + groupId + " " + artifactId + " " + version);
-			e.printStackTrace();
-		}
-		return Optional.empty();
+		return -1;
+	}
+
+	public Optional<Integer> getJarID(String groupId, String artifactId, String version){
+		return jm.stream().filter(j -> j.getArtifactId().equals(artifactId)
+				&& j.getGroupId().equals(groupId) && j.getVersion().equals(version))
+				.findFirst().map(x->x.getId());
 	}
 
 	private void SaveToDb(JarInfo jarInfo) {

@@ -22,7 +22,7 @@ import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationBuilder;
 public class Runner {
     public static final String path = "/Users/ameya/FinalResults/diffTools/Corpus/";
     public static final String jars_path = "/Users/ameya/FinalResults/diffTools/jars/";
-    public static final JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();;
+    public static final JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();
 //    public static final JarInformationManager jm = app.getOrThrow(JarInformationManager.class);;
 //    public static final PackageInformationManager pkgM = app.getOrThrow(PackageInformationManager.class);
 //    public static final ClassInformationManager clsM = app.getOrThrow(ClassInformationManager.class);
@@ -35,7 +35,6 @@ public class Runner {
 
     public static void main(String args[]) throws Throwable {
      //   Map<String, String> ps = Util.readProjects(path + "projects.txt");
-
 
 
 
@@ -91,6 +90,9 @@ public class Runner {
 
 
     }
+
+
+
 
     private static List<DiffEntry> getDiffs(Repository repo, Git g, RevCommit c) throws GitAPIException, IOException {
         return g.diff()
