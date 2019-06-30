@@ -6,7 +6,7 @@ FROM maven:3.6-jdk-11-slim
 WORKDIR /app
 COPY --from=0 /app/JarAnalyzer /app
 RUN mvn clean install -DskipTests
-#RUN  mvn exec:java -Dexec.mainClass="ca.concordia.jaranalyzer.Runner"
+RUN  mvn exec:java -Dexec.mainClass="ca.concordia.jaranalyzer.Runner"
 #
 #FROM openjdk:8-jre-alpine
 #WORKDIR /app
