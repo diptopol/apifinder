@@ -55,7 +55,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "        \"enabled\" : true,",
             "        \"expanded\" : true,",
             "        \"id\" : \"JarAnalysis\",",
-            "        \"ipAddress\" : \"127.0.0.1\",",
+            "        \"ipAddress\" : \"typefactdb\",",
             "        \"name\" : \"JarAnalysis\",",
             "        \"nameProtected\" : true,",
             "        \"port\" : 3306,",
