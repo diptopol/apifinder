@@ -51,7 +51,7 @@ public class GeneratedJarAnalysisMetadata extends AbstractApplicationMetadata {
             "    \"companyName\" : \"company\",",
             "    \"dbmses\" : [",
             "      {",
-            "        \"connectionUrl\" : \"jdbc:mysql://127.0.0.1:3306?useUnicode=true&characterEncoding=UTF-8&useServerPrepStmts=true&zeroDateTimeBehavior=CONVERT_TO_NULL&nullNamePatternMatchesAll=true&useLegacyDatetimeCode=true&serverTimezone=UTC&user=root&password=anjaneya\",",
+            "        \"connectionUrl\" : \"jdbc:mysql://TypeFactMiner:3306?useUnicode=true&characterEncoding=UTF-8&useServerPrepStmts=true&zeroDateTimeBehavior=CONVERT_TO_NULL&nullNamePatternMatchesAll=true&useLegacyDatetimeCode=true&serverTimezone=UTC&user=root&password=anjaneya\",",
             "        \"enabled\" : true,",
             "        \"expanded\" : true,",
             "        \"id\" : \"JarAnalysis\",",
