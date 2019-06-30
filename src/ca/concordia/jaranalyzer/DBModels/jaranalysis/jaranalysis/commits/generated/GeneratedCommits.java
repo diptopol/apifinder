@@ -3,6 +3,7 @@ package ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.genera
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commits.Commits;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.projects.Projects;
 import com.speedment.common.annotation.GeneratedCode;
+import com.speedment.common.function.OptionalBoolean;
 import com.speedment.runtime.config.identifier.ColumnIdentifier;
 import com.speedment.runtime.config.identifier.TableIdentifier;
 import com.speedment.runtime.core.manager.Manager;
@@ -118,6 +119,39 @@ public interface GeneratedCommits {
         TypeMapper.primitive(),
         false
     );
+    /**
+     * This Field corresponds to the {@link Commits} field that can be obtained
+     * using the {@link Commits#getContainsJava()} method.
+     */
+    ComparableField<Commits, Boolean, Boolean> CONTAINS_JAVA = ComparableField.create(
+        Identifier.CONTAINS_JAVA,
+        o -> OptionalUtil.unwrap(o.getContainsJava()),
+        Commits::setContainsJava,
+        TypeMapper.identity(),
+        false
+    );
+    /**
+     * This Field corresponds to the {@link Commits} field that can be obtained
+     * using the {@link Commits#getCouldCheckout()} method.
+     */
+    ComparableField<Commits, Boolean, Boolean> COULD_CHECKOUT = ComparableField.create(
+        Identifier.COULD_CHECKOUT,
+        o -> OptionalUtil.unwrap(o.getCouldCheckout()),
+        Commits::setCouldCheckout,
+        TypeMapper.identity(),
+        false
+    );
+    /**
+     * This Field corresponds to the {@link Commits} field that can be obtained
+     * using the {@link Commits#getEffectivePom()} method.
+     */
+    ComparableField<Commits, Boolean, Boolean> EFFECTIVE_POM = ComparableField.create(
+        Identifier.EFFECTIVE_POM,
+        o -> OptionalUtil.unwrap(o.getEffectivePom()),
+        Commits::setEffectivePom,
+        TypeMapper.identity(),
+        false
+    );
     
     /**
      * Returns the sha of this Commits. The sha field corresponds to the
@@ -184,6 +218,33 @@ public interface GeneratedCommits {
      * @return the projectId of this Commits
      */
     int getProjectId();
+    
+    /**
+     * Returns the containsJava of this Commits. The containsJava field
+     * corresponds to the database column
+     * JarAnalysis.JarAnalysis.Commits.containsJava.
+     * 
+     * @return the containsJava of this Commits
+     */
+    OptionalBoolean getContainsJava();
+    
+    /**
+     * Returns the couldCheckout of this Commits. The couldCheckout field
+     * corresponds to the database column
+     * JarAnalysis.JarAnalysis.Commits.couldCheckout.
+     * 
+     * @return the couldCheckout of this Commits
+     */
+    OptionalBoolean getCouldCheckout();
+    
+    /**
+     * Returns the effectivePom of this Commits. The effectivePom field
+     * corresponds to the database column
+     * JarAnalysis.JarAnalysis.Commits.EffectivePom.
+     * 
+     * @return the effectivePom of this Commits
+     */
+    OptionalBoolean getEffectivePom();
     
     /**
      * Sets the sha of this Commits. The sha field corresponds to the database
@@ -259,6 +320,34 @@ public interface GeneratedCommits {
     Commits setProjectId(int projectId);
     
     /**
+     * Sets the containsJava of this Commits. The containsJava field corresponds
+     * to the database column JarAnalysis.JarAnalysis.Commits.containsJava.
+     * 
+     * @param containsJava to set of this Commits
+     * @return             this Commits instance
+     */
+    Commits setContainsJava(Boolean containsJava);
+    
+    /**
+     * Sets the couldCheckout of this Commits. The couldCheckout field
+     * corresponds to the database column
+     * JarAnalysis.JarAnalysis.Commits.couldCheckout.
+     * 
+     * @param couldCheckout to set of this Commits
+     * @return              this Commits instance
+     */
+    Commits setCouldCheckout(Boolean couldCheckout);
+    
+    /**
+     * Sets the effectivePom of this Commits. The effectivePom field corresponds
+     * to the database column JarAnalysis.JarAnalysis.Commits.EffectivePom.
+     * 
+     * @param effectivePom to set of this Commits
+     * @return             this Commits instance
+     */
+    Commits setEffectivePom(Boolean effectivePom);
+    
+    /**
      * Queries the specified manager for the referenced Projects. If no such
      * Projects exists, an {@code NullPointerException} will be thrown.
      * 
@@ -276,7 +365,10 @@ public interface GeneratedCommits {
         FILES_MODIFIED ("Files_Modified"),
         TAG            ("Tag"),
         IS_RELEASE     ("isRelease"),
-        PROJECT_ID     ("ProjectID");
+        PROJECT_ID     ("ProjectID"),
+        CONTAINS_JAVA  ("containsJava"),
+        COULD_CHECKOUT ("couldCheckout"),
+        EFFECTIVE_POM  ("EffectivePom");
         
         private final String columnId;
         private final TableIdentifier<Commits> tableIdentifier;

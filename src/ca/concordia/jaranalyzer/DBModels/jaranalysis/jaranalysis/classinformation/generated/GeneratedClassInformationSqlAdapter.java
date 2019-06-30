@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static com.speedment.common.injector.State.RESOLVED;
-import static com.speedment.runtime.core.internal.util.sql.ResultSetUtil.*;
 
 /**
  * The generated Sql Adapter for a {@link
@@ -34,16 +33,15 @@ public abstract class GeneratedClassInformationSqlAdapter implements SqlAdapter<
     
     protected ClassInformation apply(ResultSet resultSet, int offset) throws SQLException {
         return createEntity()
-            .setId(               resultSet.getLong(1 + offset))
-            .setPackageId(        resultSet.getLong(2 + offset))
-            .setName(             resultSet.getString(3 + offset))
-            .setQualifiedName(    resultSet.getString(4 + offset))
-            .setType(             resultSet.getString(5 + offset))
-            .setAccessModifiers(  resultSet.getString(6 + offset))
-            .setSuperClassId(     getLong(resultSet, 7 + offset))
-            .setSuperInterfaceId( getLong(resultSet, 8 + offset))
-            .setIsInterface(      resultSet.getBoolean(9 + offset))
-            .setIsAbstract(       resultSet.getBoolean(10 + offset))
+            .setId(              resultSet.getLong(1 + offset))
+            .setPackageId(       resultSet.getLong(2 + offset))
+            .setName(            resultSet.getString(3 + offset))
+            .setQualifiedName(   resultSet.getString(4 + offset))
+            .setType(            resultSet.getString(5 + offset))
+            .setAccessModifiers( resultSet.getString(6 + offset))
+            .setSuperClass(      resultSet.getString(7 + offset))
+            .setIsInterface(     resultSet.getBoolean(8 + offset))
+            .setIsAbstract(      resultSet.getBoolean(9 + offset))
             ;
     }
     

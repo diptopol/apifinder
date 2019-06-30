@@ -2,6 +2,8 @@ package ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation
 
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
 import com.speedment.common.annotation.GeneratedCode;
+import com.speedment.common.function.OptionalBoolean;
+import com.speedment.runtime.core.util.OptionalUtil;
 
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -22,6 +24,7 @@ public abstract class GeneratedJarInformationImpl implements JarInformation {
     private String artifactId;
     private String groupId;
     private String version;
+    private Boolean couldFetch;
     
     protected GeneratedJarInformationImpl() {}
     
@@ -43,6 +46,11 @@ public abstract class GeneratedJarInformationImpl implements JarInformation {
     @Override
     public String getVersion() {
         return version;
+    }
+    
+    @Override
+    public OptionalBoolean getCouldFetch() {
+        return OptionalUtil.ofNullable(couldFetch);
     }
     
     @Override
@@ -70,12 +78,19 @@ public abstract class GeneratedJarInformationImpl implements JarInformation {
     }
     
     @Override
+    public JarInformation setCouldFetch(Boolean couldFetch) {
+        this.couldFetch = couldFetch;
+        return this;
+    }
+    
+    @Override
     public String toString() {
         final StringJoiner sj = new StringJoiner(", ", "{ ", " }");
         sj.add("id = "         + Objects.toString(getId()));
         sj.add("artifactId = " + Objects.toString(getArtifactId()));
         sj.add("groupId = "    + Objects.toString(getGroupId()));
         sj.add("version = "    + Objects.toString(getVersion()));
+        sj.add("couldFetch = " + Objects.toString(OptionalUtil.unwrap(getCouldFetch())));
         return "JarInformationImpl " + sj.toString();
     }
     
@@ -88,6 +103,7 @@ public abstract class GeneratedJarInformationImpl implements JarInformation {
         if (!Objects.equals(this.getArtifactId(), thatJarInformation.getArtifactId())) { return false; }
         if (!Objects.equals(this.getGroupId(), thatJarInformation.getGroupId())) { return false; }
         if (!Objects.equals(this.getVersion(), thatJarInformation.getVersion())) { return false; }
+        if (!Objects.equals(this.getCouldFetch(), thatJarInformation.getCouldFetch())) { return false; }
         return true;
     }
     
@@ -98,6 +114,7 @@ public abstract class GeneratedJarInformationImpl implements JarInformation {
         hash = 31 * hash + Objects.hashCode(getArtifactId());
         hash = 31 * hash + Objects.hashCode(getGroupId());
         hash = 31 * hash + Objects.hashCode(getVersion());
+        hash = 31 * hash + Objects.hashCode(OptionalUtil.unwrap(getCouldFetch()));
         return hash;
     }
 }

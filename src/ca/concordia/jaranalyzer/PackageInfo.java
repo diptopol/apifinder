@@ -2,7 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import java.util.ArrayList;
 
-public class PackageInfo implements Info {
+public class PackageInfo {
 	private int id;
 	private String name;
 	private int jarId;

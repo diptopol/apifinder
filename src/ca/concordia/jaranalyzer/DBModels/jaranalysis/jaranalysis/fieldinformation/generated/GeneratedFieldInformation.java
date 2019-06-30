@@ -81,6 +81,17 @@ public interface GeneratedFieldInformation {
         TypeMapper.primitive(),
         false
     );
+    /**
+     * This Field corresponds to the {@link FieldInformation} field that can be
+     * obtained using the {@link FieldInformation#getName()} method.
+     */
+    StringField<FieldInformation, String> NAME = StringField.create(
+        Identifier.NAME,
+        FieldInformation::getName,
+        FieldInformation::setName,
+        TypeMapper.identity(),
+        false
+    );
     
     /**
      * Returns the id of this FieldInformation. The id field corresponds to the
@@ -124,6 +135,14 @@ public interface GeneratedFieldInformation {
      * @return the isStatic of this FieldInformation
      */
     boolean getIsStatic();
+    
+    /**
+     * Returns the name of this FieldInformation. The name field corresponds to
+     * the database column JarAnalysis.JarAnalysis.FieldInformation.Name.
+     * 
+     * @return the name of this FieldInformation
+     */
+    String getName();
     
     /**
      * Sets the id of this FieldInformation. The id field corresponds to the
@@ -173,6 +192,15 @@ public interface GeneratedFieldInformation {
     FieldInformation setIsStatic(boolean isStatic);
     
     /**
+     * Sets the name of this FieldInformation. The name field corresponds to the
+     * database column JarAnalysis.JarAnalysis.FieldInformation.Name.
+     * 
+     * @param name to set of this FieldInformation
+     * @return     this FieldInformation instance
+     */
+    FieldInformation setName(String name);
+    
+    /**
      * Queries the specified manager for the referenced ClassInformation. If no
      * such ClassInformation exists, an {@code NullPointerException} will be
      * thrown.
@@ -188,7 +216,8 @@ public interface GeneratedFieldInformation {
         CLASS_ID        ("ClassID"),
         TYPE            ("Type"),
         ACCESS_MODIFIER ("AccessModifier"),
-        IS_STATIC       ("isStatic");
+        IS_STATIC       ("isStatic"),
+        NAME            ("Name");
         
         private final String columnId;
         private final TableIdentifier<FieldInformation> tableIdentifier;

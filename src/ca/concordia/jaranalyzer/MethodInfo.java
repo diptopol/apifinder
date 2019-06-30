@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MethodInfo implements Info {
+public class MethodInfo {
 	private String name;
 	private ClassInfo classInfo;
 	private Type[] argumentTypes;

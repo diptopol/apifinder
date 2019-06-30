@@ -32,8 +32,7 @@ public interface GeneratedClassInformationManager extends Manager<ClassInformati
         ClassInformation.QUALIFIED_NAME,
         ClassInformation.TYPE,
         ClassInformation.ACCESS_MODIFIERS,
-        ClassInformation.SUPER_CLASS_ID,
-        ClassInformation.SUPER_INTERFACE_ID,
+        ClassInformation.SUPER_CLASS,
         ClassInformation.IS_INTERFACE,
         ClassInformation.IS_ABSTRACT
     ));

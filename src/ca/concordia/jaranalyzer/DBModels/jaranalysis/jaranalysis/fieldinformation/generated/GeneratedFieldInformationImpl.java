@@ -25,6 +25,7 @@ public abstract class GeneratedFieldInformationImpl implements FieldInformation 
     private String type;
     private String accessModifier;
     private boolean isStatic;
+    private String name;
     
     protected GeneratedFieldInformationImpl() {}
     
@@ -51,6 +52,11 @@ public abstract class GeneratedFieldInformationImpl implements FieldInformation 
     @Override
     public boolean getIsStatic() {
         return isStatic;
+    }
+    
+    @Override
+    public String getName() {
+        return name;
     }
     
     @Override
@@ -84,6 +90,12 @@ public abstract class GeneratedFieldInformationImpl implements FieldInformation 
     }
     
     @Override
+    public FieldInformation setName(String name) {
+        this.name = name;
+        return this;
+    }
+    
+    @Override
     public ClassInformation findClassId(Manager<ClassInformation> foreignManager) {
         return foreignManager.stream().filter(ClassInformation.ID.equal(getClassId())).findAny().orElse(null);
     }
@@ -96,6 +108,7 @@ public abstract class GeneratedFieldInformationImpl implements FieldInformation 
         sj.add("type = "           + Objects.toString(getType()));
         sj.add("accessModifier = " + Objects.toString(getAccessModifier()));
         sj.add("isStatic = "       + Objects.toString(getIsStatic()));
+        sj.add("name = "           + Objects.toString(getName()));
         return "FieldInformationImpl " + sj.toString();
     }
     
@@ -109,6 +122,7 @@ public abstract class GeneratedFieldInformationImpl implements FieldInformation 
         if (!Objects.equals(this.getType(), thatFieldInformation.getType())) { return false; }
         if (!Objects.equals(this.getAccessModifier(), thatFieldInformation.getAccessModifier())) { return false; }
         if (this.getIsStatic() != thatFieldInformation.getIsStatic()) { return false; }
+        if (!Objects.equals(this.getName(), thatFieldInformation.getName())) { return false; }
         return true;
     }
     
@@ -120,6 +134,7 @@ public abstract class GeneratedFieldInformationImpl implements FieldInformation 
         hash = 31 * hash + Objects.hashCode(getType());
         hash = 31 * hash + Objects.hashCode(getAccessModifier());
         hash = 31 * hash + Boolean.hashCode(getIsStatic());
+        hash = 31 * hash + Objects.hashCode(getName());
         return hash;
     }
 }

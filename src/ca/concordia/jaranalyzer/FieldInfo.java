@@ -4,7 +4,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldNode;
 
-public class FieldInfo implements Info {
+public class FieldInfo {
 	private String name;
 	private ClassInfo classInfo;
 	private Type type;
@@ -106,23 +106,4 @@ public class FieldInfo implements Info {
 	}
 
 
-//	public Identification getID(Identification owner){
-//		return Identification.newBuilder()
-//				.setName(getName())
-//				.setType(TypeSignature.newBuilder().setTypeSign(getTypeInfo(type))
-//						.build())
-//				.setKind("FIELD")
-//				.setOwner(owner).build();
-//	}
-//
-//
-//	public TypeFactGraph<Identification> getTFG(Identification owner) {
-//		Identification fid = getID(owner);
-//		Identification am = Identification.newBuilder()
-//				.setName(isPrivate ? "PRIVATE" : (isPublic ? "PUBLIC" : (isProtected ? "PROTECTED" : "DEFAULT")))
-//				.setKind("MODIFIER").setOwner(fid).build();
-//		return TypeFactGraph.<Identification>emptyTFG()
-//				.map(addNode(fid))
-//				.map(u_v(fid,am,"MODIFIER"));
-//	}
 }

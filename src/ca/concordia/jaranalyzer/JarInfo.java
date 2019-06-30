@@ -14,7 +14,7 @@ import java.util.jar.JarFile;
 
 import ca.concordia.jaranalyzer.util.Utility;
 
-public class JarInfo implements Info {
+public class JarInfo {
 	private String name;
 	private String groupId;
 	private String artifactId;
@@ -35,7 +35,6 @@ public class JarInfo implements Info {
 		while (entries.hasMoreElements()) {
 
 			JarEntry entry = entries.nextElement();
-
 			String entryName = entry.getName();
 			if (entryName.endsWith(".class")) {
 				ClassNode classNode = new ClassNode();
@@ -86,10 +85,7 @@ public class JarInfo implements Info {
 			}
 		}
 
-
-
 	}
-
 
 
 	private PackageInfo getPackageInfo(String packageName) {

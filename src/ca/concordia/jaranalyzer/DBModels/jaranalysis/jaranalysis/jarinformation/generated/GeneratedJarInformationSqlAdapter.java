@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static com.speedment.common.injector.State.RESOLVED;
+import static com.speedment.runtime.core.internal.util.sql.ResultSetUtil.*;
 
 /**
  * The generated Sql Adapter for a {@link
@@ -37,6 +38,7 @@ public abstract class GeneratedJarInformationSqlAdapter implements SqlAdapter<Ja
             .setArtifactId( resultSet.getString(2 + offset))
             .setGroupId(    resultSet.getString(3 + offset))
             .setVersion(    resultSet.getString(4 + offset))
+            .setCouldFetch( getBoolean(resultSet, 5 + offset))
             ;
     }
     

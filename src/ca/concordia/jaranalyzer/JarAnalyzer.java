@@ -1,5 +1,6 @@
 package ca.concordia.jaranalyzer;
 
+
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -18,10 +19,6 @@ import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,41 +37,81 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformation;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodargtypeinformation.MethodArgTypeInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformation;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformation;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationImpl;
 import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationManager;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.superinterfaceclass.SuperInterfaceClassImpl;
+import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.superinterfaceclass.SuperInterfaceClassManager;
 import ca.concordia.jaranalyzer.util.Utility;
+
 
 public class JarAnalyzer {
 
+
 	private String jarsPath;
+	private JarAnalysisApplication app;
+	private JarInformationManager jm;
+	private PackageInformationManager pkgM;
+	private ClassInformationManager clsM;
+	private MethodInformationManager mthdM;
+	private FieldInformationManager fldM;
+	private CommitsEffectivePomManager cmtEffM;
+	private MethodArgTypeInformationManager mthdArgM;
+	private SuperInterfaceClassManager sic;
+	private CommitsJarManager cjm;
 
-	JarAnalysisApplication app;
-	JarInformationManager jm;
-	PackageInformationManager pkgM;
-	ClassInformationManager clsM;
-	MethodInformationManager mthdM;
-	FieldInformationManager fldM;
-	MethodArgTypeInformationManager mthdArgM;
-
-	public JarAnalyzer(){}
+	public JarAnalyzer(JarAnalysisApplication app1){
+		this.app =  app1;
+		jm = app.getOrThrow(JarInformationManager.class);
+		pkgM = app.getOrThrow(PackageInformationManager.class);
+		clsM = app.getOrThrow(ClassInformationManager.class);
+		mthdM = app.getOrThrow(MethodInformationManager.class);
+		fldM = app.getOrThrow(FieldInformationManager.class);
+		cmtEffM = app.getOrThrow(CommitsEffectivePomManager.class);
+		sic = app.getOrThrow(SuperInterfaceClassManager.class);
+		cjm = app.getOrThrow(CommitsJarManager.class);
+	}
 
 	public JarAnalyzer(JarAnalysisApplication app, String jarPath) {
 		File file = new File(jarPath);
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
 		this.app = app;
-		this.jm = app.getOrThrow(JarInformationManager.class);
-		this.pkgM = app.getOrThrow(PackageInformationManager.class);
-		this.clsM = app.getOrThrow(ClassInformationManager.class);
-		this.mthdM = app.getOrThrow(MethodInformationManager.class);
-		this.mthdArgM = app.getOrThrow(MethodArgTypeInformationManager.class);
-		this.fldM = app.getOrThrow(FieldInformationManager.class);
+		jm = this.app.getOrThrow(JarInformationManager.class);
+		pkgM = app.getOrThrow(PackageInformationManager.class);
+		clsM = app.getOrThrow(ClassInformationManager.class);
+		mthdM = app.getOrThrow(MethodInformationManager.class);
+		fldM = app.getOrThrow(FieldInformationManager.class);
+		cmtEffM = app.getOrThrow(CommitsEffectivePomManager.class);
+		//	mthdArgM =  app.getOrThrow(MethodArgTypeInformationManager.class);
+		sic = app.getOrThrow(SuperInterfaceClassManager.class);
+		cjm = app.getOrThrow(CommitsJarManager.class);
+//
+//    public static final ProjectsManager prjctM = app.getOrThrow(ProjectsManager.class);
+//    public static final CommitsManager cmtM = app.getOrThrow(CommitsManager.class);
+
+
+	}
+
+
+	public void persistCommitJar(String sha, int jarID){
+		cjm.persist(new CommitsJarImpl().setJarId(jarID).setSha(sha));
 	}
 
 	public List<JarInfo> analyzeJarsFromPOM(Set<String> pomFiles) {
@@ -109,12 +146,9 @@ public class JarAnalyzer {
 				File inputFile = new File(effectivePomFile);
 				Optional<Document> dd = getDocument(inputFile);
 				if (dd.isPresent()) {
-
 					Optional<NodeList> z = dd.map(d -> d.getElementsByTagName("project"));
-					z.ifPresent(nodeList -> System.out.println(nodeList.getLength()));
 					JarAnalyzer jarAnalyzer = new JarAnalyzer(app, "/Users/ameya/FinalResults/diffTools/jars/");
 					List<JarInformation> ji = jarAnalyzer.getJarInformationFromPom(Stream.of(effectivePomFile).collect(toSet()));
-					System.out.println(ji.size());
 					NodeList prjcts = z.get();
 					List<String> internalGroupIds = new ArrayList<>();
 					for(int i = 0 ; i < prjcts.getLength(); i++){
@@ -128,18 +162,10 @@ public class JarAnalyzer {
 						}
 					}
 					List<JarInformation> jiAnlys = ji.stream()
-							//.map(j -> j.getArtifactId() + "--" + j.getGroupId() + "--" + j.getVersion())
 							.filter(j -> internalGroupIds.stream().noneMatch(g -> j.getGroupId().contains(g)))
 							.distinct()
 							.collect(toList());
 					System.out.println(jiAnlys.size());
-
-					//System.out.println("Root element :" + doc.get().getDocumentElement().getNodeName());
-//					NodeList project = doc.get().getElementsByTagName("project");
-//					jarInfos.addAll(getJarInforFromNodeListEffectivePom(project, jm));
-//					NodeList nList = doc.get().getElementsByTagName("dependency");
-//					//System.out.println("----------------------------");
-//					jarInfos.addAll(getJarInforFromNodeListEffectivePom(nList, jm));
 					jarInfos = jiAnlys.stream()
 							.map(j -> getJarInfoFromDependencyEffectivePom(j,jm))
 							.filter(j -> j.isPresent())
@@ -167,14 +193,6 @@ public class JarAnalyzer {
 				.collect(Collectors.toList());
 	}
 
-//	private List<JarInfo> getJarInforFromNodeListEffectivePom(NodeList project,JarInformationManager jm ){
-//		return IntStream.range(0, project.getLength())
-//				.mapToObj(i -> getJarInfoFromDependencyEffectivePom(project.item(i), jm))
-//				.filter(x -> x!=null)
-//				.filter(Optional::isPresent)
-//				.map(Optional::get)
-//				.collect(Collectors.toList());
-//	}
 
 	private Map<String, String> getPropertiesInPom(Set<String> pomFiles) {
 		return pomFiles.stream()
@@ -190,7 +208,7 @@ public class JarAnalyzer {
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = dBuilder.parse(inputFile);
 			doc.getDocumentElement().normalize();
-			return Optional.ofNullable(doc);
+			return Optional.of(doc);
 		}catch (Exception e){
 			e.printStackTrace();
 			return Optional.empty();
@@ -270,28 +288,96 @@ public class JarAnalyzer {
 
 	public JarInformation getJarInformationForNode(Node nNode, Map<String, String> properties){
 		Element eElement = (Element) nNode;
+		if(eElement == null) return null;
 		return new JarInformationImpl()
-				.setGroupId(eElement.getElementsByTagName("groupId").item(0).getTextContent())
-				.setArtifactId(eElement.getElementsByTagName("artifactId").item(0).getTextContent())
+				.setGroupId(Optional.ofNullable(eElement.getElementsByTagName("groupId"))
+						.map(o -> o.item(0)).map(Node::getTextContent).orElse(""))
+				//.setArtifactId(eElement.getElementsByTagName("artifactId").item(0).getTextContent())
+				.setArtifactId(Optional.ofNullable(eElement.getElementsByTagName("artifactId"))
+						.map(o -> o.item(0)).map(Node::getTextContent).orElse(""))
 				.setVersion(Optional.ofNullable(eElement.getElementsByTagName("version"))
-						.map(x -> x.item(0))
-						.map(Node::getTextContent)
-						.map(x -> properties.entrySet().stream().filter(e ->x.contains( e.getKey()))
-								.map(Entry::getValue).findAny().orElse(x))
+						.map(x -> x.item(0)).map(Node::getTextContent)
+//						.map(x -> properties.entrySet().stream().filter(e ->x.contains( e.getKey()))
+//								.map(Entry::getValue).findAny().orElse(x))
 						.orElse(""))
 				.setId(-1);
 	}
 
 
-	public Integer persistJarInfo(JarInfo j, JarInformationManager jm) {
+	public Integer persistJarInfo(JarInfo j, boolean couldFetch) {
+		Optional<JarInformation> o_jr = jm.stream().filter(jr -> jr.getGroupId().equals(j.getGroupId())
+				&& jr.getArtifactId().equals(j.getArtifactId()) && jr.getVersion().equals(j.getVersion()))
+				.findAny();
+		try {
+			if (true || !o_jr.isPresent()) {
+				JarInformation jr = jm.persist(new JarInformationImpl().setArtifactId(j.getArtifactId()).setGroupId(j.getGroupId())
+						.setVersion(j.getVersion())
+						.setCouldFetch(couldFetch));
 
-		JarInformation ji = new JarInformationImpl()
-				.setArtifactId(j.getArtifactId()).setGroupId(j.getGroupId())
-				.setVersion(j.getVersion());
+				for (PackageInfo p : j.getPackages()) {
+					PackageInformation pi = pkgM.persist(new PackageInformationImpl().setJarId(jr.getId()).setName(p.getName()));
 
-		ji = jm.persist(ji);
+					//for(ClassInfo c : p.getClasses()){
+					p.getClasses().parallelStream().forEach(c -> {
+						ClassInformation ci = clsM.persist(new ClassInformationImpl().setQualifiedName(c.getQualifiedName())
+								.setAccessModifiers(c.isPublic() ? "PUBLIC" : (c.isPrivate() ? "PRIVATE" : (c.isProtected() ? "PROTECTED" : "DEFAULT")))
+								.setIsAbstract(c.isAbstract())
+								.setIsInterface(c.isInterface())
+								.setName(c.getName())
+								.setSuperClass(c.getSuperClassName())
+								.setPackageId(pi.getId())
+								.setType(c.getType().toString()));
 
-		//System.out.println(ji.getId());
+						for (String s : c.getSuperInterfaceNames()) {
+							sic.persist(new SuperInterfaceClassImpl().setClassId(ci.getId()).setSuperInterface(s));
+						}
+						for (MethodInfo m : c.getMethods()) {
+							MethodInformation mi = mthdM.persist(new MethodInformationImpl()
+									.setAccessModifiers(m.isPublic() ? "PUBLIC" : (m.isPrivate() ? "PRIVATE" : (m.isProtected() ? "PROTECTED" : "DEFAULT")))
+									.setClassId(ci.getId())
+									.setIsAbstract(m.isAbstract())
+									.setIsConstructor(m.isConstructor())
+									.setIsStatic(m.isStatic())
+									.setIsSynchronized(m.isSynchronized())
+									.setName(m.getName())
+									.setReturnType(m.getReturnType()));
+
+//						for(Type t : Arrays.asList(m.getArgumentTypes()))
+//							mthdArgM.persist(new MethodArgTypeInformationImpl()
+//									.setMethodId(mi.getId())
+//									.setType(t.getClassName()));
+						}
+
+						for (FieldInfo f : c.getFields()) {
+							fldM.persist(new FieldInformationImpl()
+									.setAccessModifier(f.isPublic() ? "PUBLIC" : (f.isPrivate() ? "PRIVATE" : (f.isProtected() ? "PROTECTED" : "DEFAULT")))
+									.setClassId(ci.getId())
+									.setName(f.getName())
+									.setType(f.getType().getClassName()));
+						}
+					});
+
+				}
+
+				return jr.getId();
+
+			} else {
+				return o_jr.get().getId();
+			}
+		}catch (Exception e){
+			return -1;
+		}
+	}
+
+	public Integer persistJarInfo(String groupId, String artifactId, String version , boolean couldFetch) {
+
+		JarInformation ji = jm.stream().filter(jr -> jr.getGroupId().equals(groupId)
+				&& jr.getArtifactId().equals(artifactId) && jr.getVersion().equals(version))
+				.findAny()
+				.orElseGet(() -> jm.persist(new JarInformationImpl().setArtifactId(artifactId).setGroupId(groupId)
+						.setVersion(version)
+						.setCouldFetch(couldFetch)));
+
 		return ji.getId();
 	}
 
@@ -332,6 +418,44 @@ public class JarAnalyzer {
 
 	public JarInfo AnalyzeJar(String groupId, String artifactId, String version) {
 		version = version.replaceAll("[^0-9.]", "");
+		JarInfo jarInfo = getJarInfo(groupId, artifactId, version);
+		return jarInfo;
+	}
+
+
+	public Optional<JarInfo> AnalyzeJar(String groupId, String artifactId, String vrsn, JarInformationManager jm) {
+
+		String version = vrsn.replaceAll("[^0-9.]", "");
+		Optional<JarInformation> j = queryDbForJar(groupId, artifactId, jm, version);
+
+		if(!j.isPresent()) {
+
+			JarInfo jarInfo;
+
+			if(groupId.contains("spring") || artifactId.contains("spring")){
+				System.out.println();
+			}
+
+			jarInfo = getJarInfo(groupId, artifactId, version);
+			if(jarInfo==null){
+				jarInfo = getJarInfo(groupId,artifactId,vrsn);
+			}
+			if (jarInfo != null) {
+				persistJarInfo(jarInfo,  true);
+			}
+			if(jarInfo == null) {
+				System.out.println("Could not fetch jar for " + groupId + " " + artifactId + " " + version);
+				persistJarInfo(groupId,artifactId,version, false);
+
+			}
+			return Optional.ofNullable(jarInfo);
+		}else{
+			System.out.println("Jar already analysed");
+		}
+		return Optional.empty();
+	}
+
+	private JarInfo getJarInfo(String groupId, String artifactId, String version) {
 		JarInfo jarInfo;
 		String url = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
 				+ "-" + version + ".jar";
@@ -348,49 +472,13 @@ public class JarAnalyzer {
 					+ "/" + artifactId + "-" + version + ".jar";
 			jarInfo = AnalyzeJar(url, groupId, artifactId, version);
 		}
-
-
-
 		return jarInfo;
 	}
 
-
-	public Optional<JarInfo> AnalyzeJar(String groupId, String artifactId, String vrsn, JarInformationManager jm) {
-
-		String version = vrsn.replaceAll("[^0-9.]", "");
-		Optional<JarInformation> j = jm.stream().filter(y -> y.getArtifactId().equals(artifactId)
+	private static Optional<JarInformation> queryDbForJar(String groupId, String artifactId, JarInformationManager jm, String version) {
+		return jm.stream().filter(y -> y.getArtifactId().equals(artifactId)
 				&& y.getGroupId().equals(groupId)
 				&& y.getVersion().equals(version)).findFirst();
-		if(!j.isPresent()) {
-
-			JarInfo jarInfo;
-
-			String url = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
-					+ "-" + version + ".jar";
-			jarInfo = AnalyzeJar(url, groupId, artifactId, version);
-
-			if (jarInfo == null) {
-				url = "http://central.maven.org/maven2/org/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
-						+ "-" + version + ".jar";
-				jarInfo = AnalyzeJar(url, groupId, artifactId, version);
-			}
-
-			if (jarInfo == null) {
-				url = "http://central.maven.org/maven2/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version
-						+ "/" + artifactId + "-" + version + ".jar";
-				jarInfo = AnalyzeJar(url, groupId, artifactId, version);
-			}
-			if (jarInfo != null) {
-				persistJarInfo(jarInfo, jm);
-			}
-			if(jarInfo == null)
-				System.out.println("Could not fetch jar for " + groupId + " " + artifactId + " " + version);
-
-			return Optional.ofNullable(jarInfo);
-		}else{
-			System.out.println("Jar already analysed");
-		}
-		return Optional.empty();
 	}
 
 	public JarInfo AnalyzeJar(String url, String groupId, String artifactId, String version) {
@@ -429,26 +517,28 @@ public class JarAnalyzer {
 			return null;
 
 		JarInfo jarInfo = new JarInfo(jarFile, groupId, artifactId, version);
-		// if(jarInfo != null && groupId != "" && artifactId != "" && version !=
-		// "")
-		// SaveToDb(jarInfo);
 		return jarInfo;
 	}
 
 
-	public Optional<JarInfo> analyzeJar(JarFile jarFile, String groupId, String artifactId, String version) {
-		try {
-			if (jarFile != null && jm.stream().noneMatch(j -> j.getArtifactId().equals(artifactId)
-					&& j.getGroupId().equals(groupId) && j.getVersion().equals(version))) {
-				JarInfo ji = new JarInfo(jarFile, groupId, artifactId, version);
-				persistJarInfo(ji, jm);
-				return Optional.of(ji);
+	public Integer analyzeJar(JarFile jarFile, String groupId, String artifactId, String version) {
+		if(jarFile!=null) {
+			return jm.stream().filter(j -> j.getArtifactId().equals(artifactId)
+					&& j.getGroupId().equals(groupId) && j.getVersion().equals(version))
+					.findFirst().map(x->x.getId())
+					.orElseGet(() -> {
+						JarInfo ji = new JarInfo(jarFile, groupId, artifactId, version);
+						return persistJarInfo(ji, true);
+					});
 			}
-		}catch (Exception e){
-			System.out.println("Could not analyse: " + groupId + " " + artifactId + " " + version);
-			e.printStackTrace();
-		}
-		return Optional.empty();
+		return -1;
+	}
+
+
+	public Optional<Integer> getJarID(String groupId, String artifactId, String version){
+		return jm.stream().filter(j -> j.getArtifactId().equals(artifactId)
+				&& j.getGroupId().equals(groupId) && j.getVersion().equals(version))
+				.findFirst().map(x->x.getId());
 	}
 
 	private void SaveToDb(JarInfo jarInfo) {
@@ -513,31 +603,23 @@ public class JarAnalyzer {
 
 
 	public boolean tryGenerateEffectivePom(String projLocation, String sha, String prjct) {
-		String projectPath = projLocation;
 		projLocation = projLocation + prjct;
 		InvocationRequest request = new DefaultInvocationRequest();
 		request.setPomFile(new File(projLocation + "pom.xml"));
 		request.setGoals(Arrays.asList("help:effective-pom", "-Doutput=" +projLocation+"effectivePom.xml"));
 		Invoker invoker = new DefaultInvoker();
 		invoker.setMavenHome(new File("/usr/local/Cellar/maven/3.6.0/"));
-		Path statusPath = Paths.get(projectPath + "Status.csv");
+		boolean isSuccess = false;
 		try {
 			InvocationResult result = invoker.execute(request);
-
-			if (result.getExitCode() != 0) {
-				System.out.println("Effective pom generation Failed");
-				String str = String.join(",", prjct, sha, "OW!!!\n");
-				Files.write(statusPath, str.getBytes(), StandardOpenOption.APPEND);
-				return false;
+			isSuccess =  result.getExitCode() == 0 && new File(projLocation+"effectivePom.xml").exists();
 			}
-			else{
-				
-				Files.write(statusPath, )
-			}
-		}catch (Exception e){
+		catch (Exception e){
 			System.out.println(e.toString());
 			e.printStackTrace();
 		}
-		return true;
+		if(cmtEffM.stream().noneMatch(x -> x.getSha().equals(sha)))
+			cmtEffM.persist(new CommitsEffectivePomImpl().setSha(sha).setEffectivePom(isSuccess));
+		return isSuccess;
 	}
 }
