@@ -2,7 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import static java.util.stream.Collectors.toMap;
 
-import com.T2R.common.Util.Pair;
+
 import com.jasongoodwin.monads.Try;
 
 import org.eclipse.jgit.api.Git;
@@ -15,6 +15,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,8 +37,8 @@ public class Util {
     public static Map<String, String> readProjects(String path){
         try {
             return Files.readAllLines(Paths.get(path)).parallelStream()
-                    .map(e -> Pair.P(e.split(",")[0], e.split(",")[1]))
-                    .collect(toMap(Pair::fst, Pair::snd));
+                    .map(e -> new SimpleImmutableEntry<>(e.split(",")[0], e.split(",")[1]))
+                    .collect(toMap(e -> e.getKey(), e -> e.getValue()));
         }catch (Exception e){
             System.out.println("Could not read projects");
             throw new RuntimeException("Could not read projects");

@@ -2,6 +2,8 @@ package ca.concordia.jaranalyzer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -50,10 +52,15 @@ public class APIFinderImpl implements APIFinder {
 				System.out.println(jarFiles.size());
 				for (String jarLocation : jarFiles) {
 					try {
-						JarFile jarFile = new JarFile(new File(jarLocation));
-						analyzer.analyzeJar(jarFile, "JAVA", jarFile.getName(), javaVersion);
+						if(Files.exists(Paths.get(jarLocation))) {
+							System.out.println(jarLocation);
+							JarFile jarFile = new JarFile(new File(jarLocation));
+							analyzer.analyzeJar(jarFile, "JAVA", jarFile.getName(), javaVersion);
+						}
 					} catch (IOException e) {
 						e.printStackTrace();
+						System.out.println(e.toString());
+						System.out.println("Could not open the JAR");
 					}
 				}
 			}
@@ -63,12 +70,16 @@ public class APIFinderImpl implements APIFinder {
 	public APIFinderImpl(String artifactID, String groupID, String version, String path, String commitID){
 		try {
 			JarAnalyzer analyzer = new JarAnalyzer(app);
-			JarFile jarFile = new JarFile(new File(path));
-			Integer jarID = analyzer.analyzeJar(jarFile, groupID, artifactID, version);
-			if(jarID!=null && jarID!=-1)
-				analyzer.persistCommitJar(commitID, jarID);
-		} catch (IOException e) {
-			e.printStackTrace();
+            if(Files.exists(Paths.get(path))) {
+                System.out.println(path);
+                JarFile jarFile = new JarFile(new File(path));
+                Integer jarID = analyzer.analyzeJar(jarFile, groupID, artifactID, version);
+                if (jarID != null && jarID != -1)
+                    analyzer.persistCommitJar(commitID, jarID);
+            }
+		}
+		catch (IOException e) {
+			System.out.println("Could not open the JAR");
 		}
 	}
 

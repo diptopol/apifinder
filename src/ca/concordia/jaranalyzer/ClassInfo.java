@@ -1,6 +1,5 @@
 package ca.concordia.jaranalyzer;
 
-import com.T2R.common.Models.TypeSignatureOuterClass.TypeSignature;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -14,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ClassInfo implements Info {
+public class ClassInfo  {
 	private String qualifiedName;
 	private String name;
 	private String packageName;
@@ -264,72 +263,6 @@ public class ClassInfo implements Info {
 		}
 		
 	}
-
-//	public Identification getID(){
-//		Identification pkgId =  Identification.newBuilder()
-//				.setName(getName())
-//				.setType(TypeSignatureOuterClass.TypeSignature.newBuilder().setNoType(true).build())
-//				.setKind("PACKAGE").build();
-//		return Identification.newBuilder()
-//				.setName(getName())
-//				.setType(TypeSignature.newBuilder().setTypeSign(getTypeInfo(type)).build())
-//				.setKind("CLASS").setOwner(pkgId).build();
-//	}
-//
-//	public Identification getID(Identification owner){
-//		return Identification.newBuilder()
-//				.setName(getName())
-//				.setType(TypeSignature.newBuilder().setTypeSign(getTypeInfo(type)).build())
-//				.setKind("CLASS").setOwner(owner).build();
-//	}
-//
-//
-//	public TypeFactGraph<Identification> getTFG(Identification owner) {
-//		Identification cid = getID(owner);
-//		Identification am = Identification.newBuilder()
-//				.setName(isPrivate ? "PRIVATE" : (isPublic ? "PUBLIC" : (isProtected ? "PROTECTED" : "DEFAULT")))
-//				.setKind("MODIFIER")
-//				.setOwner(cid).build();
-//		TypeFactGraph<Identification> tfg = TypeFactGraph.<Identification>emptyTFG()
-//				.map(addNode(cid))
-//				.mergeMap(methods.stream().map(x -> x.getID(cid))
-//						.map(m -> u_v(cid, m, "DECLARES"))
-//						.collect(toList()))
-//				.mergeMap(fields.stream().map(x -> x.getID(cid))
-//						.map(f -> u_v(cid, f, "DECLARES"))
-//						.collect(toList()))
-//				.map(u_v(cid, am, "MODIFIER"));
-//
-//		if(superClassInfo!=null) {
-//			tfg = tfg.map(u_v(cid, superClassInfo.getID(), "EXTENDS"));
-//		}
-////		try{
-////			if (superInterfaceMap != null && superInterfaceMap.values().size() > 0)
-////				tfg = tfg.mergeMap(superInterfaceMap.values().stream()
-////						.peek(i -> System.out.println(i.toString()))
-////						.map(i -> u_v(cid, i.getID(), "IMPLEMENTS"))
-////						.collect(toList()));
-////		}catch (Exception e){
-////			System.out.println(e);
-////			e.printStackTrace();
-////
-////		}
-//
-//
-//		if(isAbstract){
-//			tfg = tfg.map(addNode(Identification.newBuilder().setName("ABSTRACT").setOwner(cid).build()));
-//		}
-//
-//		return TypeFactGraph.mergeGraphs(tfg, Stream.concat(methods.stream().map(x -> x.getTFG(cid)),
-//				fields.stream().map(x -> x.getTFG(cid))).reduce(emptyTFG(),TypeFactGraph::mergeGraphs));
-//	}
-
-
-	public TypeSignature getTypeSign() {
-		return TypeSignature.newBuilder().setTypeSign(getTypeInfo(type))
-				.build();
-	}
-
 	public String getKind() {
 		return "CLASS";
 	}

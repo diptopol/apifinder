@@ -34,60 +34,9 @@ public class Runner {
 //    public static final CommitsManager cmtM = app.getOrThrow(CommitsManager.class);
 
     public static void main(String args[]) throws Throwable {
-     //   Map<String, String> ps = Util.readProjects(path + "projects.txt");
-
-
-
-//        for (Entry<String, String> p : ps.entrySet()) {
-//            final Try<Git> gitRepo = Util.tryCloningRepo(p.getKey(), p.getValue(), path)
-//                    .onFailure(e -> e.printStackTrace());
-//            if (gitRepo.isSuccess()) {
-//                Git repo = gitRepo.get();
-//                final List<RevCommit> cs =
-//                        getCommits(repo, RevSort.COMMIT_TIME_DESC);
-////                                .stream().filter(x -> x.getId().getName().equals(""))
-////                        .collect(Collectors.toList());
-//               // Collections.reverse(cs);
-//
-//                Projects pr = prjctM.stream().filter(x -> x.getName().equals(p.getKey())).findFirst()
-//                        .orElseGet(()->prjctM.persist(new ProjectsImpl().setName(p.getKey())
-//                                .setGitCloneLink(p.getValue())
-//                                .setNoOfCommit(cs.size())));
-//
-//                for (RevCommit c : cs) {
-//                    final Commits cm = new CommitsImpl().setSha(c.getId().getName())
-//                            .setProjectId(pr.getId())
-//                            .setTime(new Timestamp(c.getCommitterIdent().getWhen().getTime()))
-//                            .setContainsJava(containsFilesOFType(path + p.getKey(), ".java"));
-//
-//                    boolean collectsJars = getDiffs(repo.getRepository(),repo,c)
-//                            .stream().anyMatch(x -> x.getOldPath().contains("pom.xml") || x.getNewPath().contains("pom.xml"));
-//
-//                    if(collectsJars) {
-//                        // All this dirtiness to recover from checkout exception
-//                        if (!checkoutCommit(repo, c)) {
-//                            boolean deleted = Files.deleteIfExists(Paths.get(path + p.getKey()));
-//                            if (deleted) {
-//                                repo = Util.tryCloningRepo(p.getKey(), p.getValue(), path)
-//                                        .orElseThrow(() -> new RuntimeException("Could not clone again"));
-//                                if (!checkoutCommit(repo, c))
-//                                    cmtM.persist(cm.setCouldCheckout(false));
-//                            } else {
-//                                cmtM.persist(cm.setCouldCheckout(false));
-//                            }
-//                        }
-//                        if (cmtM.stream().noneMatch(x -> c.getId().getName().equals(x.getSha())))
-//                            cmtM.persist(cm.setCouldCheckout(true));
-//                        if (cm.getContainsJava().isPresent() && cm.getContainsJava().getAsBoolean()) {
-//                            //
-//                            new Analyze(app, path, pr.getName(), c.getId().getName());
-//                        }
-//                    }
-//                }
-//            }
-//        }
-        new APIFinderImpl(new JarAnalyzer(app,jars_path));
-
+        new APIFinderImpl("com.sun.ccoooooodemodel","codemodel","2.6"
+                , "/Users/ameya/FinalResults/diffTools/MigrationMiner/librariesClasses/jar/codemodel-2.6.zip"
+                ,"21a7a07b2dc634184fd7a81f239359bc07620dfd");
 
     }
 

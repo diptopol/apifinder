@@ -309,7 +309,7 @@ public class JarAnalyzer {
 				&& jr.getArtifactId().equals(j.getArtifactId()) && jr.getVersion().equals(j.getVersion()))
 				.findAny();
 		try {
-			if (!o_jr.isPresent()) {
+			if (true || !o_jr.isPresent()) {
 				JarInformation jr = jm.persist(new JarInformationImpl().setArtifactId(j.getArtifactId()).setGroupId(j.getGroupId())
 						.setVersion(j.getVersion())
 						.setCouldFetch(couldFetch));
@@ -533,6 +533,7 @@ public class JarAnalyzer {
 			}
 		return -1;
 	}
+
 
 	public Optional<Integer> getJarID(String groupId, String artifactId, String version){
 		return jm.stream().filter(j -> j.getArtifactId().equals(artifactId)
