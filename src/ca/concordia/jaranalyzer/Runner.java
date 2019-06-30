@@ -22,7 +22,10 @@ import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationBuilder;
 public class Runner {
     public static final String path = "/Users/ameya/FinalResults/diffTools/Corpus/";
     public static final String jars_path = "/Users/ameya/FinalResults/diffTools/jars/";
-    public static final JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();
+    public static final JarAnalysisApplication app = new JarAnalysisApplicationBuilder()
+            .withIpAddress("172.17.0.2")
+            .withPassword("anjaneya")
+            .withUsername("root").build();
 //    public static final JarInformationManager jm = app.getOrThrow(JarInformationManager.class);;
 //    public static final PackageInformationManager pkgM = app.getOrThrow(PackageInformationManager.class);
 //    public static final ClassInformationManager clsM = app.getOrThrow(ClassInformationManager.class);
