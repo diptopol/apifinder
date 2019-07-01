@@ -22,8 +22,6 @@ public class APIFinderImpl implements APIFinder {
 	private List<JarInfo> jarInfosFromRepository;
 	private List<Integer> jarIDs ;
 	private boolean couldGenerateEffectivePom = false;
-	public static final JarAnalysisApplication app = new JarAnalysisApplicationBuilder().build();
-
 
 	public APIFinderImpl(String pr){}
 
@@ -38,9 +36,14 @@ public class APIFinderImpl implements APIFinder {
 
 
 	public static void persistJarsCommit(String groupId, String artifactID, String version, String sha){
+	JarAnalysisApplication app = new JarAnalysisApplicationBuilder()
+			.withConnectionUrl("jdbc:mysql://127.0.0.1:3306")
+			.withPassword("password")
+			.withUsername("ameya").build();
 		JarAnalyzer analyzer = new JarAnalyzer(app);
 		analyzer.getJarID(groupId, artifactID, version)
 				.ifPresent(i -> analyzer.persistCommitJar(sha,i));
+		app.close();
 	}
 
 	public APIFinderImpl(JarAnalyzer analyzer){
@@ -69,6 +72,15 @@ public class APIFinderImpl implements APIFinder {
 
 	public APIFinderImpl(String artifactID, String groupID, String version, String path, String commitID){
 		try {
+
+			if(Files.exists(Paths.get(path)))
+				System.out.println(path);
+
+			JarAnalysisApplication app = new JarAnalysisApplicationBuilder()
+					.withConnectionUrl("jdbc:mysql://127.0.0.1:3306")
+					.withPassword("password")
+					.withUsername("ameya").build();
+
 			JarAnalyzer analyzer = new JarAnalyzer(app);
             if(Files.exists(Paths.get(path))) {
                 System.out.println(path);

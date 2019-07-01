@@ -23,13 +23,22 @@
 			</resource>
 		</resources>
 		<plugins>
-			<!--<plugin>-->
-				<!--<artifactId>maven-compiler-plugin</artifactId>-->
-				<!--<configuration>-->
-					<!--&lt;!&ndash;<source>1.6</source>&ndash;&gt;-->
-					<!--&lt;!&ndash;<target>1.6</target>&ndash;&gt;-->
-				<!--</configuration>-->
-			<!--</plugin>-->
+			<plugin>
+				<!-- Build an executable JAR -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>target/</classpathPrefix>
+							<mainClass>ca.concordia.jaranalyzer.Runner</mainClass>
+						</manifest>
+						<!--<cleanupDaemonThreads>false</cleanupDaemonThreads>-->
+					</archive>
+				</configuration>
+			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
