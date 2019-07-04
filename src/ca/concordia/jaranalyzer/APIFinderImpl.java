@@ -18,10 +18,20 @@ import ca.concordia.jaranalyzer.util.Utility;
 
 public class APIFinderImpl implements APIFinder {
 
+
+	static JarAnalysisApplication app = new JarAnalysisApplicationBuilder()
+			//	.withConnectionUrl("jdbc:mysql://127.0.0.1:3306")
+			//	.withPassword(pwd)
+			//	.withUsername(username)
+			.build();
+
 	private List<JarInfo> jarInfosFromPom;
 	private List<JarInfo> jarInfosFromRepository;
 	private List<Integer> jarIDs ;
 	private boolean couldGenerateEffectivePom = false;
+
+	private static final String username = "root";
+	private static final String pwd = "anjaneya99";
 
 	public APIFinderImpl(String pr){}
 
@@ -36,10 +46,6 @@ public class APIFinderImpl implements APIFinder {
 
 
 	public static void persistJarsCommit(String groupId, String artifactID, String version, String sha){
-	JarAnalysisApplication app = new JarAnalysisApplicationBuilder()
-			.withConnectionUrl("jdbc:mysql://127.0.0.1:3306")
-			.withPassword("password")
-			.withUsername("ameya").build();
 		JarAnalyzer analyzer = new JarAnalyzer(app);
 		analyzer.getJarID(groupId, artifactID, version)
 				.ifPresent(i -> analyzer.persistCommitJar(sha,i));
@@ -76,10 +82,7 @@ public class APIFinderImpl implements APIFinder {
 			if(Files.exists(Paths.get(path)))
 				System.out.println(path);
 
-			JarAnalysisApplication app = new JarAnalysisApplicationBuilder()
-					.withConnectionUrl("jdbc:mysql://127.0.0.1:3306")
-					.withPassword("password")
-					.withUsername("ameya").build();
+
 
 			JarAnalyzer analyzer = new JarAnalyzer(app);
             if(Files.exists(Paths.get(path))) {

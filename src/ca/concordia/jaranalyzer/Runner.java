@@ -4,10 +4,9 @@ import java.io.File;
 
 public class Runner {
     public static void main(String args[]) {
-        String s = new File("").getAbsolutePath().concat("../jars/codemodel-2.6.jar");
+        String s = new File("").getAbsolutePath().concat("resources/codemodel-2.6.jar");
         new APIFinderImpl("com.sun.ccoooooodemodel","codemodel","2.6"
-
-                , s
+                , "/Users/ameya/FinalResults/diffTools/MigrationMiner/librariesClasses/jar/codemodel-2.6.jar"
                 ,"21a7a07b2dc634184fd7a81f239359bc07620dfd");
 
     }
