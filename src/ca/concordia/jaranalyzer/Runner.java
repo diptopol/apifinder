@@ -20,7 +20,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalS
 public class Runner {
     public static void main(String args[]) throws Exception {
         if(!Files.exists(Paths.get("D:\\MyProjects\\apache-tinkerpop-gremlin-server-3.4.3\\data\\JavaJars.kryo"))){
-            APIFinderImpl.analyseJavaJars("D:\\MyProjects\\jdk1.8.0_222-windows-x64\\","8");
+        //    APIFinderImpl.analyseJavaJars("D:\\MyProjects\\jdk1.8.0_222-windows-x64\\","8");
         }
         GraphTraversalSource t = traversal().withRemote(DriverRemoteConnection.using("localhost",8182,"g"));
         APIFinderImpl apiF = new APIFinderImpl(t);
