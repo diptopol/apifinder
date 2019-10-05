@@ -4,9 +4,11 @@ package ca.concordia.jaranalyzer;
 
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.apache.tinkerpop.shaded.jackson.core.io.IOContext;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal;
+import static org.apache.tinkerpop.gremlin.structure.io.IoCore.gryo;
 
 
 public class Runner {
@@ -22,7 +25,11 @@ public class Runner {
         if(!Files.exists(Paths.get("D:\\MyProjects\\apache-tinkerpop-gremlin-server-3.4.3\\data\\JavaJars.kryo"))){
         //    APIFinderImpl.analyseJavaJars("D:\\MyProjects\\jdk1.8.0_222-windows-x64\\","8");
         }
-        GraphTraversalSource t = traversal().withRemote(DriverRemoteConnection.using("localhost",8182,"g"));
+
+        final Graph newGraph = TinkerGraph.open();
+        newGraph.io(gryo()).readGraph("D:\\MyProjects\\JarAnalyzer\\resources\\JavaJars.kryo");
+        GraphTraversalSource t = traversal().withGraph(newGraph);
+        //traversal().withRemote(DriverRemoteConnection.using("localhost",8182,"g"));
         APIFinderImpl apiF = new APIFinderImpl(t);
         apiF.findAllTypes(Arrays.asList("java.util.Map"),"Entry");
         t.V().has("Kind","Jar").valueMap("ArtifactId","Version","GroupId").toStream()

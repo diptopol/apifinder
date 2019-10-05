@@ -15,6 +15,7 @@ import ca.concordia.jaranalyzer.Models.JarInfo;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
