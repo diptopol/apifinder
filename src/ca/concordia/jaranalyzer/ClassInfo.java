@@ -36,6 +36,7 @@ public class ClassInfo  {
 			this.superInterfaceMap = new LinkedHashMap<>();
 
 			this.qualifiedName = classNode.name.replace('/', '.');
+			this.qualifiedName = qualifiedName.contains("$") ? qualifiedName.replace("$",".") : qualifiedName;
 			if (!classNode.name.contains("/")) {
 				this.name = classNode.name;
 				this.packageName = "";
@@ -86,6 +87,7 @@ public class ClassInfo  {
 			for (FieldNode fieldNode : fieldNodes) {
 				fields.add(new FieldInfo(fieldNode, this));
 			}
+
 		} catch (Exception e) {
 			System.out.println(e);
 		}

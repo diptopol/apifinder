@@ -3,27 +3,44 @@ package ca.concordia.jaranalyzer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
-import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplicationBuilder;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
+
 import ca.concordia.jaranalyzer.util.Utility;
+import javassist.bytecode.AnnotationDefaultAttribute;
+import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.process.traversal.TextP;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.process.traversal.step.map.PropertiesStep;
+import org.apache.tinkerpop.gremlin.process.traversal.step.map.PropertyKeyStep;
+import org.apache.tinkerpop.gremlin.process.traversal.util.OrP;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.io.IoCore;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jgit.lib.Repository;
+import us.orgst.DBModels.JaranalysisApplication;
+import us.orgst.DBModels.JaranalysisApplicationBuilder;
+import us.orgst.DBModels.jaranalysis.jaranalysis.class_information.ClassInformation;
+
+import static java.util.stream.Collectors.toList;
+import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
 public class APIFinderImpl implements APIFinder {
 
-
-	static JarAnalysisApplication app = new JarAnalysisApplicationBuilder()
-			//	.withConnectionUrl("jdbc:mysql://127.0.0.1:3306")
-			//	.withPassword(pwd)
-			//	.withUsername(username)
-			.build();
 
 	private List<JarInfo> jarInfosFromPom;
 	private List<JarInfo> jarInfosFromRepository;
@@ -32,12 +49,14 @@ public class APIFinderImpl implements APIFinder {
 
 	private static final String username = "root";
 	private static final String pwd = "anjaneya99";
+	private GraphTraversalSource traverser;
 
-	public APIFinderImpl(String pr){}
+	public APIFinderImpl(String pr){
 
+	}
 
-	public static void analyzeJavaJars(JarAnalyzer ja){
-		new APIFinderImpl(ja);
+	public APIFinderImpl(GraphTraversalSource t) {
+		this.traverser = t;
 	}
 
 	public static void analyzeJar( String groupId, String artifactID, String version, String path,String sha){
@@ -46,43 +65,93 @@ public class APIFinderImpl implements APIFinder {
 
 
 	public static void persistJarsCommit(String groupId, String artifactID, String version, String sha){
+		JaranalysisApplication app = new JaranalysisApplicationBuilder().build();
 		JarAnalyzer analyzer = new JarAnalyzer(app);
 		analyzer.getJarID(groupId, artifactID, version)
 				.ifPresent(i -> analyzer.persistCommitJar(sha,i));
 		app.close();
 	}
 
-	public APIFinderImpl(JarAnalyzer analyzer){
-		String javaHome = "/Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/";
-		String javaVersion = "1.8";
+	public static void analyseJavaJars(String path, String javaVersion){
+		new APIFinderImpl(new JarAnalyzer(path),path,javaVersion);
+	}
+
+	public APIFinderImpl(JarAnalyzer analyzer, String javaHome, String javaVersion, Stream<String> s){
 		System.out.println(javaHome);
 			if (javaHome != null) {
 				List<String> jarFiles = Utility.getFiles(javaHome, "jar");
 				System.out.println(jarFiles.size());
 				for (String jarLocation : jarFiles) {
 					try {
-						if(Files.exists(Paths.get(jarLocation))) {
-							System.out.println(jarLocation);
+						Path path = Paths.get(jarLocation);
+						if(Files.exists(path)) {
 							JarFile jarFile = new JarFile(new File(jarLocation));
-							analyzer.analyzeJar(jarFile, "JAVA", jarFile.getName(), javaVersion);
+							analyzer.jarToGraph(jarFile, path.getFileName().toString(), "Java", javaVersion);
 						}
-					} catch (IOException e) {
+					} catch (Exception  e) {
 						e.printStackTrace();
 						System.out.println(e.toString());
 						System.out.println("Could not open the JAR");
 					}
 				}
+
 			}
+
+
+
+		analyzer.graph.traversal().io("D:\\MyProjects\\apache-tinkerpop-gremlin-server-3.4.3\\data\\JavaJars.kryo").write();
+	}
+
+	public static void getCompilationUnitWorld(CompilationUnit cu, String fileName, TinkerGraph g) throws JavaModelException {
+		List<ImportDeclaration> imports = cu.imports();
+
+		List<AbstractTypeDeclaration> types = cu.types();
+		for(AbstractTypeDeclaration t : types){
+			if(t instanceof TypeDeclaration){
+				TypeDeclaration td = (TypeDeclaration)t;
+				if(td.isInterface()){
+					Vertex tp = g.addVertex("Kind", "Interface", "Name", td.getName().toString());
+					imports.stream().map(i->i.getName().toString()).forEach(i -> {
+						Vertex iv = g.addVertex("Kind", "Import", "Name", i);
+						tp.addEdge("Imports", iv);
+					});
+					for(MethodDeclaration md: td.getMethods()){
+						 params = md.parameters();
+						g.addVertex("Kind","Method", "ReturnType",md.getReturnType2().toString(), "ParamType", )
+
+					}
+				}
+			}else if(t instanceof EnumDeclaration){
+
+			}
+		}
+
+
+		cuw.addAllImportsStatements(imports.stream().filter(x->!x.isOnDemand()).map(x->x.getName().getFullyQualifiedName()).collect(toList()));
+		cuw.addAllImportsOnDemand(imports.stream().filter(x->x.isOnDemand()).map(x->x.getName().getFullyQualifiedName()).collect(toList()));
+		cuw.setPackage(Optional.ofNullable(cu.getPackage())
+				.map(PackageDeclaration::getName).map(Name::getFullyQualifiedName).orElse(""));
+		cuw.setFile(fileName);
+		cuw.addAllUsedTypes(getAllTypeGraphsIn(cu));
+		final List<AbstractTypeDeclaration> typeDeclarations = cu.types();
+		for(AbstractTypeDeclaration a : typeDeclarations){
+			if(a instanceof TypeDeclaration){
+				cuw.addClasses(getClassWorld((TypeDeclaration) a));
+			}
+			if (a instanceof EnumDeclaration){
+				cuw.addClasses(getClassWorld((EnumDeclaration) a));
+			}
+		}
+		return cuw.build();
+
 	}
 
 
 	public APIFinderImpl(String artifactID, String groupID, String version, String path, String commitID){
 		try {
-
+			JaranalysisApplication app = new JaranalysisApplicationBuilder().build();
 			if(Files.exists(Paths.get(path)))
 				System.out.println(path);
-
-
 
 			JarAnalyzer analyzer = new JarAnalyzer(app);
             if(Files.exists(Paths.get(path))) {
@@ -99,126 +168,23 @@ public class APIFinderImpl implements APIFinder {
 	}
 
 
-
-
-	public APIFinderImpl(String projLocation, JarAnalyzer analyzer, String sha, String prjct) {
-
-		jarInfosFromRepository = new ArrayList<>();
-		jarInfosFromPom = new ArrayList<>();
-
-		String javaHome = System.getProperty("java.home");
-		String javaVersion = System.getProperty("java.version");
-
-//		if(jm.stream().noneMatch(j -> j.getGroupId().equals("JAVA")
-//				&& j.getVersion().matches(javaVersion))) {
-			if (javaHome != null) {
-				List<String> jarFiles = Utility.getFiles(javaHome, ".jar");
-				for (String jarLocation : jarFiles) {
-					try {
-						JarFile jarFile = new JarFile(new File(jarLocation));
-						Integer jarInfo = analyzer.analyzeJar(jarFile, "JAVA",
-								jarFile.getName(), javaVersion);
-						//jarInfo.ifPresent(j -> jarInfosFromRepository.add(j));
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		//}
-		if (!projLocation.isEmpty()) {
-			Set<String> poms = getAllPoms(projLocation + prjct);
-			if(!poms.isEmpty()) {
-				couldGenerateEffectivePom = analyzer.tryGenerateEffectivePom(projLocation, sha, prjct);
-				if(couldGenerateEffectivePom){
-					jarInfosFromPom =analyzer.analyzeJarsFromEffectivePom(projLocation + prjct + "effectivePom.xml");
-				}
-			}
-
-			for (String jarPath : getAllJars(projLocation + prjct)) {
-				JarFile jarFile;
-				try {
-					jarFile = new JarFile(new File(jarPath));
-//					analyzer.analyzeJar(jarFile, "", jarFile.getName(), sha)
-//							.ifPresent( j -> jarInfosFromRepository.add(j));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-
-		ArrayList<JarInfo> allJars = new ArrayList<JarInfo>();
-		allJars.addAll(jarInfosFromRepository);
-		allJars.addAll(jarInfosFromPom);
-		for (JarInfo jarInfo : allJars) {
-			for (ClassInfo classInfo : jarInfo.getClasses()) {
-				if (classInfo.getSuperClassInfo() == null &&
-						!classInfo.getSuperClassName().equals("java.lang.Object")) {
-					for (JarInfo jar : allJars) {
-						for (ClassInfo cls : jar.getClasses()) {
-							if (cls.getQualifiedName().equals( classInfo.getSuperClassName())) {
-								classInfo.setSuperClassInfo(cls);
-							}
-						}
-					}
-				}
-			}
-		}
-		List<JarInformation> jarInfs = analyzer.getJarInformationFromPom(new HashSet<>(getAllPoms(projLocation + prjct)));
-//		CommitsJarManager cjM = app.getOrThrow(CommitsJarManager.class);
-//		jarIDs = app.getOrThrow(JarInformationManager.class)
-//				.stream()
-//				.filter(x -> (jarInfs.stream()
-//						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
-//									&& jr.getGroupId().equals(x.getGroupId())
-//									&& jr.getVersion().equals(x.getVersion()))
-//						|| jarInfosFromRepository.stream()
-//						.anyMatch(jr -> jr.getArtifactId().equals(x.getArtifactId())
-//								&& jr.getGroupId().equals(x.getGroupId())
-//								&& jr.getVersion().equals(x.getVersion()))
-//								))
-//				.map(j -> j.getId()).collect(Collectors.toList());
-
-		//jarIDs.forEach(i -> cjM.persist(new CommitsJarImpl().setJarId(i).setSha(sha)));
-
-
-
-
-
-//		jarIDs = app.stream().map(GeneratedJarInformation::getId)
-//				//jarInfosFromPom.stream().map(d -> analyzer.persistJarInfo(d,app))
-//				.collect(Collectors.toList());
-	}
-
-	public boolean couldGenerateEffectivePom() {
-		return couldGenerateEffectivePom;
-	}
-
-	public List<JarInfo> getJarInfosFromPom() {
-		return jarInfosFromPom;
-	}
-
-
-	public List<Integer> getJarIDs() {
-		return jarIDs;
-	}
-
 	public Set<MethodInfo> findAllMethods(List<String> imports,
 										  String methodName, int numberOfParameters) {
-		Set<MethodInfo> matchedMethods = new LinkedHashSet<MethodInfo>();
-		List<String> importStatements = new ArrayList<String>(imports);
-
-		if (methodName.contains(".")) {
-			importStatements.add(methodName);
-		}
-
-		for (String importedPackage : importStatements) {
-			findMatchingMethods(jarInfosFromRepository, matchedMethods,
-					importedPackage, methodName, numberOfParameters);
-
-			findMatchingMethods(jarInfosFromPom, matchedMethods,
-					importedPackage, methodName, numberOfParameters);
-		}
-		return matchedMethods;
+//		Set<MethodInfo> matchedMethods = new LinkedHashSet<MethodInfo>();
+//		List<String> importStatements = new ArrayList<String>(imports);
+//
+//		if (methodName.contains(".")) {
+//			importStatements.add(methodName);
+//		}
+//
+//		for (String importedPackage : importStatements) {
+//			findMatchingMethods(jarInfosFromRepository, matchedMethods,
+//					importedPackage, methodName, numberOfParameters);
+//
+//			findMatchingMethods(jarInfosFromPom, matchedMethods,
+//					importedPackage, methodName, numberOfParameters);
+//		}
+		return new LinkedHashSet<MethodInfo>();
 	}
 
 	private void findMatchingMethods(List<JarInfo> jarInfos,
@@ -251,42 +217,41 @@ public class APIFinderImpl implements APIFinder {
 	}
 
 	public static Set<String> getFiles(String directory, String type) {
-		Set<String> jarFiles = new HashSet<String>();
-		File dir = new File(directory);
-		if (dir.listFiles() != null)
-			for (File file : dir.listFiles()) {
-				if (file.isDirectory() && !file.getName().equals("bin")) {
-					jarFiles.addAll(getFiles(file.getAbsolutePath(), type));
-				} else if (file.getAbsolutePath().toLowerCase()
-						.endsWith((type.toLowerCase()))) {
-					jarFiles.add(file.getAbsolutePath());
-				}
-			}
-		return jarFiles;
+//		Set<String> jarFiles = new HashSet<String>();
+//		File dir = new File(directory);
+//		if (dir.listFiles() != null)
+//			for (File file : dir.listFiles()) {
+//				if (file.isDirectory() && !file.getName().equals("bin")) {
+//					jarFiles.addAll(getFiles(file.getAbsolutePath(), type));
+//				} else if (file.getAbsolutePath().toLowerCase()
+//						.endsWith((type.toLowerCase()))) {
+//					jarFiles.add(file.getAbsolutePath());
+//				}
+//			}
+		return new HashSet<>();
 	}
 
-	public Set<ClassInfo> findAllTypes(List<String> imports, String typeName) {
-		Set<ClassInfo> matchedTypes = new LinkedHashSet<ClassInfo>();
 
-		List<String> importStatements = new ArrayList<String>(imports);
 
-		if (typeName.contains(".")) {
-			importStatements.add(typeName);
-		}
-
-		for (String importedPackage : importStatements) {
-			findMatchingTypes(jarInfosFromRepository, matchedTypes,
-					importedPackage, typeName);
-
-			findMatchingTypes(jarInfosFromPom, matchedTypes, importedPackage,
-					typeName);
-		}
-		return matchedTypes;
+	public Set<ClassInformation> findAllTypes(List<String> qualifiers, String lookupType) throws Exception {
+		traverser.V()
+				.has("Kind","Class")
+				.where(or(has("QName",TextP.within(qualifiers)),
+						has("QName",TextP.within(qualifiers.stream().map(x->x +"."+ lookupType).collect(toList())))))
+				.out("Declares").has("Kind","Method")
+				.valueMap("Name","ReturnType","ParamType")
+				.forEachRemaining(x ->{
+					x.entrySet().forEach(z -> {
+						System.out.println(z.getKey());
+						System.out.println(z.getValue());
+						System.out.println(z.getValue().getClass().toString());
+					});
+					System.out.println("---");
+				} );
+		return new HashSet<>();
 	}
 
-	private void findMatchingTypes(List<JarInfo> jarInfos,
-			Set<ClassInfo> matchedTypes, String importedPackage,
-			String typeName) {
+	private void findMatchingTypes(List<JarInfo> jarInfos, Set<ClassInfo> matchedTypes, String importedPackage, String typeName) {
 		for (JarInfo jarInfo : jarInfos) {
 			if (jarInfo == null)
 				continue;
@@ -306,22 +271,8 @@ public class APIFinderImpl implements APIFinder {
 	}
 
 	public Set<FieldInfo> findAllFields(List<String> imports, String fieldName) {
-		Set<FieldInfo> matchedFields = new LinkedHashSet<FieldInfo>();
-		
-		List<String> importStatements = new ArrayList<String>(imports);
 
-		if (fieldName.contains(".")) {
-			importStatements.add(fieldName);
-		}
-		
-		for (String importedPackage : importStatements) {
-			findMatchingFields(jarInfosFromRepository, matchedFields,
-					importedPackage, fieldName);
-
-			findMatchingFields(jarInfosFromPom, matchedFields, importedPackage,
-					fieldName);
-		}
-		return matchedFields;
+		return new HashSet<>();
 	}
 
 	private void findMatchingFields(List<JarInfo> jarInfos,

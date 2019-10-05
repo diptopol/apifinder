@@ -1,57 +1,34 @@
 package ca.concordia.jaranalyzer;
 
-import static ca.concordia.jaranalyzer.APIFinderImpl.app;
+
+
+import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
+import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+
+import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal;
+
 
 public class Runner {
-    public static void main(String args[]) {
-        //String s = new File("").getAbsolutePath().concat("resources/codemodel-2.6.jar");
-        new APIFinderImpl( new JarAnalyzer(app));
-//        new APIFinderImpl("com.sun.ccoooooodemodel","codemodel","2.6"
-//                , "/Users/ameya/FinalResults/diffTools/MigrationMiner/librariesClasses/jar/codemodel-2.6.jar"
-//                ,"21a7a07b2dc634184fd7a81f239359bc07620dfd");
-
+    public static void main(String args[]) throws Exception {
+        if(!Files.exists(Paths.get("D:\\MyProjects\\apache-tinkerpop-gremlin-server-3.4.3\\data\\JavaJars.kryo"))){
+            APIFinderImpl.analyseJavaJars("D:\\MyProjects\\jdk1.8.0_222-windows-x64\\","8");
+        }
+        GraphTraversalSource t = traversal().withRemote(DriverRemoteConnection.using("localhost",8182,"g"));
+        APIFinderImpl apiF = new APIFinderImpl(t);
+        apiF.findAllTypes(Arrays.asList("java.util.Map"),"Entry");
+        t.V().has("Kind","Jar").valueMap("ArtifactId","Version","GroupId").toStream()
+                .forEach(m -> m.forEach((k,v) -> System.out.println(k + "  " + v.toString())));
+        t.close();
+        System.out.println();
     }
-
-
-
-
-//    private static List<DiffEntry> getDiffs(Repository repo, Git g, RevCommit c) throws GitAPIException, IOException {
-//        return g.diff()
-//                .setOldTree(prepareTreeParser(c.getParent(0).getId().getName(), repo))
-//                .setNewTree(prepareTreeParser(c.getId().getName(), repo))
-//                .call();
-//    }
-//
-//    public static CanonicalTreeParser prepareTreeParser(String sha, Repository repository) throws IOException {
-//        RevWalk walk = new RevWalk(repository) ;
-//        RevCommit commit = walk.parseCommit(repository.resolve(sha));
-//        RevTree tree = walk.parseTree(commit.getTree().getId());
-//        CanonicalTreeParser treeParser = new CanonicalTreeParser();
-//        ObjectReader reader = repository.newObjectReader();
-//        treeParser.reset(reader, tree.getId());
-//        walk.dispose();
-//        return treeParser;
-//    }
-//
-//
-//    private static boolean checkoutCommit(Git g, RevCommit c) {
-//        try {
-//            g.checkout().setName(c.getId().getName()).call();
-//            return true;
-//        }catch(Exception e) {
-//            e.printStackTrace();
-//            return false;
-//        }
-//    }
-//
-//    private static boolean containsFilesOFType(String direc, String type)  {
-//        try {
-//            return Files.find(Paths.get(direc), Integer.MAX_VALUE, (p, a) -> a.isRegularFile() && p.toString().endsWith(type))
-//                    .findFirst().isPresent();
-//        }catch (Exception e){
-//            throw new RuntimeException("could not find " + direc);
-//        }
-//    }
-
 }
 

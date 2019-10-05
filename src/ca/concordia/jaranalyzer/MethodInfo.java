@@ -20,6 +20,7 @@ public class MethodInfo {
 	private boolean isStatic;
 	private boolean isSynchronized;
 	private boolean isConstructor;
+	private String qualifiedName;
 
 	@SuppressWarnings("unchecked")
 	public MethodInfo(MethodNode methodNode, ClassInfo classInfo) {
@@ -54,9 +55,10 @@ public class MethodInfo {
 		} else if ((methodNode.access & Opcodes.ACC_PRIVATE) != 0) {
 			isPrivate = true;
 		}
-
+		this.qualifiedName = classInfo.getQualifiedName();
 		if ((methodNode.access & Opcodes.ACC_STATIC) != 0) {
 			isStatic = true;
+			this.qualifiedName = qualifiedName + name;
 		}
 
 		if ((methodNode.access & Opcodes.ACC_ABSTRACT) != 0) {

@@ -44,14 +44,14 @@
                 <artifactId>maven-compiler-plugin</artifactId>
 				<version>3.6.1</version>
                 <configuration>
-                    <source>9</source>
-                    <target>9</target>
+					<source>9</source>
+					<target>9</target>
                 </configuration>
             </plugin>
 			<plugin>
 				<groupId>com.speedment</groupId>
 				<artifactId>speedment-maven-plugin</artifactId>
-				<version>3.1.13</version>
+				<version>3.1.18</version>
 
 				<configuration>
 					<appName>${project.artifactId}</appName>
@@ -62,11 +62,34 @@
 					<dependency>
 						<groupId>mysql</groupId>
 						<artifactId>mysql-connector-java</artifactId>
-						<version>8.0.13</version>
+						<version>8.0.17</version>
 						<scope>runtime</scope>
 					</dependency>
 				</dependencies>
 			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-assembly-plugin</artifactId>-->
+<!--				<version>3.1.1</version>-->
+<!--				<configuration>-->
+<!--&lt;!&ndash;					<source>9</source>&ndash;&gt;-->
+<!--&lt;!&ndash;					<target>9</target>&ndash;&gt;-->
+<!--					&lt;!&ndash; get all project dependencies &ndash;&gt;-->
+<!--					<descriptorRefs>-->
+<!--						<descriptorRef>jar-with-dependencies</descriptorRef>-->
+<!--					</descriptorRefs>-->
+<!--				</configuration>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<id>make-assembly</id>-->
+<!--						&lt;!&ndash; bind to the packaging phase &ndash;&gt;-->
+<!--						<phase>package</phase>-->
+<!--						<goals>-->
+<!--							<goal>single</goal>-->
+<!--						</goals>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--			</plugin>-->
 		</plugins>
 	</build>
 	<dependencies>
@@ -97,6 +120,21 @@
 			<version>4.1.4.Final</version>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.tinkerpop</groupId>
+			<artifactId>tinkergraph-gremlin</artifactId>
+			<version>3.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tinkerpop</groupId>
+			<artifactId>gremlin-driver</artifactId>
+			<version>3.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tinkerpop</groupId>
+			<artifactId>gremlin-core</artifactId>
+			<version>3.4.3</version>
+		</dependency>
+		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
 			<version>3.7.2</version>
@@ -121,13 +159,13 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.13</version>
+			<version>8.0.17</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.speedment</groupId>
 			<artifactId>runtime</artifactId>
-			<version>3.1.13</version>
+			<version>3.1.18</version>
 			<type>pom</type>
 		</dependency>
 		<dependency>

@@ -1,14 +1,14 @@
 {
   "config" : {
-    "speedmentVersion" : "Speedment:3.1.13",
+    "speedmentVersion" : "Speedment:3.1.18",
     "nameProtected" : false,
     "expanded" : true,
-    "appId" : "3c6e6434-4376-46ce-9733-468f521252fd",
+    "appId" : "dec2827a-91c9-4c68-a590-a89fc2255c18",
     "companyName" : "company",
-    "name" : "JarAnalysis",
+    "name" : "jaranalysis",
     "packageLocation" : "src/",
-    "id" : "JarAnalysis",
-    "packageName" : "ca.concordia.jaranalyzer.DBModels",
+    "id" : "jaranalysis",
+    "packageName" : "us.orgst.DBModels",
     "dbmses" : [
       {
         "nameProtected" : true,
@@ -20,25 +20,24 @@
             "expanded" : true,
             "tables" : [
               {
-                "nameProtected" : true,
-                "expanded" : true,
+                "expanded" : false,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
                     "foreignKeyColumns" : [
                       {
-                        "foreignDatabaseName" : "JarAnalysis",
-                        "foreignSchemaName" : "JarAnalysis",
+                        "foreignDatabaseName" : "jaranalysis",
+                        "foreignSchemaName" : "jaranalysis",
                         "expanded" : true,
                         "name" : "PackageID",
                         "foreignColumnName" : "ID",
                         "id" : "PackageID",
-                        "foreignTableName" : "PackageInformation",
+                        "foreignTableName" : "package_information",
                         "ordinalPosition" : 1
                       }
                     ],
-                    "name" : "classinformation_ibfk_1",
-                    "id" : "classinformation_ibfk_1",
+                    "name" : "class_information_ibfk_1",
+                    "id" : "class_information_ibfk_1",
                     "enabled" : true
                   }
                 ],
@@ -89,37 +88,11 @@
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Long",
-                    "nameProtected" : true,
-                    "expanded" : true,
-                    "nullable" : true,
-                    "autoIncrement" : false,
-                    "name" : "SuperClassId",
-                    "nullableImplementation" : "OPTIONAL",
-                    "id" : "SuperClassId",
-                    "ordinalPosition" : 7,
-                    "enabled" : false
-                  },
-                  {
-                    "databaseType" : "java.lang.Long",
-                    "nameProtected" : true,
-                    "expanded" : true,
-                    "nullable" : true,
-                    "autoIncrement" : false,
-                    "name" : "SuperInterfaceID",
-                    "nullableImplementation" : "OPTIONAL",
-                    "id" : "SuperInterfaceID",
-                    "ordinalPosition" : 8,
-                    "enabled" : false
-                  },
-                  {
-                    "databaseType" : "java.lang.Long",
-                    "nameProtected" : true,
                     "expanded" : true,
                     "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "autoIncrement" : true,
                     "name" : "ID",
-                    "nullableImplementation" : "OPTIONAL",
                     "id" : "ID",
                     "ordinalPosition" : 1,
                     "enabled" : true
@@ -200,25 +173,24 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "ClassInformation",
-                "id" : "ClassInformation",
+                "name" : "class_information",
+                "id" : "class_information",
                 "enabled" : true
               },
               {
-                "nameProtected" : true,
-                "expanded" : true,
+                "expanded" : false,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
                     "foreignKeyColumns" : [
                       {
-                        "foreignDatabaseName" : "JarAnalysis",
-                        "foreignSchemaName" : "JarAnalysis",
+                        "foreignDatabaseName" : "jaranalysis",
+                        "foreignSchemaName" : "jaranalysis",
                         "expanded" : true,
                         "name" : "ProjectID",
                         "foreignColumnName" : "Id",
                         "id" : "ProjectID",
-                        "foreignTableName" : "Projects",
+                        "foreignTableName" : "projects",
                         "ordinalPosition" : 1
                       }
                     ],
@@ -274,24 +246,18 @@
                 "columns" : [
                   {
                     "databaseType" : "java.lang.String",
-                    "nameProtected" : true,
                     "expanded" : true,
                     "nullable" : false,
-                    "autoIncrement" : false,
                     "name" : "SHA",
-                    "nullableImplementation" : "OPTIONAL",
                     "id" : "SHA",
                     "ordinalPosition" : 1,
                     "enabled" : true
                   },
                   {
                     "databaseType" : "java.sql.Timestamp",
-                    "nameProtected" : true,
                     "expanded" : true,
                     "nullable" : false,
-                    "autoIncrement" : false,
                     "name" : "Time",
-                    "nullableImplementation" : "OPTIONAL",
                     "id" : "Time",
                     "ordinalPosition" : 2,
                     "enabled" : true
@@ -362,35 +328,29 @@
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "nameProtected" : true,
                     "expanded" : true,
                     "nullable" : true,
-                    "autoIncrement" : false,
                     "name" : "couldCheckout",
-                    "nullableImplementation" : "OPTIONAL",
                     "id" : "couldCheckout",
                     "ordinalPosition" : 10,
                     "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.Boolean",
-                    "nameProtected" : true,
                     "expanded" : true,
                     "nullable" : true,
-                    "autoIncrement" : false,
                     "name" : "EffectivePom",
-                    "nullableImplementation" : "OPTIONAL",
                     "id" : "EffectivePom",
                     "ordinalPosition" : 11,
                     "enabled" : true
                   }
                 ],
-                "name" : "Commits",
-                "id" : "Commits",
+                "name" : "commits",
+                "id" : "commits",
                 "enabled" : true
               },
               {
-                "expanded" : true,
+                "expanded" : false,
                 "primaryKeyColumns" : [
                   {
                     "expanded" : true,
@@ -440,12 +400,12 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "CommitsEffectivePom",
-                "id" : "CommitsEffectivePom",
+                "name" : "commits_effective_pom",
+                "id" : "commits_effective_pom",
                 "enabled" : true
               },
               {
-                "expanded" : true,
+                "expanded" : false,
                 "isView" : false,
                 "columns" : [
                   {
@@ -468,29 +428,29 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "CommitsJar",
-                "id" : "CommitsJar",
+                "name" : "commits_jar",
+                "id" : "commits_jar",
                 "enabled" : true
               },
               {
-                "expanded" : true,
+                "expanded" : false,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
                     "foreignKeyColumns" : [
                       {
-                        "foreignDatabaseName" : "JarAnalysis",
-                        "foreignSchemaName" : "JarAnalysis",
+                        "foreignDatabaseName" : "jaranalysis",
+                        "foreignSchemaName" : "jaranalysis",
                         "expanded" : true,
                         "name" : "ClassID",
                         "foreignColumnName" : "ID",
                         "id" : "ClassID",
-                        "foreignTableName" : "ClassInformation",
+                        "foreignTableName" : "class_information",
                         "ordinalPosition" : 1
                       }
                     ],
-                    "name" : "fieldinformation_ibfk_1",
-                    "id" : "fieldinformation_ibfk_1",
+                    "name" : "field_information_ibfk_1",
+                    "id" : "field_information_ibfk_1",
                     "enabled" : true
                   }
                 ],
@@ -523,7 +483,7 @@
                   {
                     "expanded" : false,
                     "unique" : false,
-                    "name" : "ClassID",
+                    "name" : "fieldinformation_ibfk_1",
                     "indexColumns" : [
                       {
                         "orderType" : "ASC",
@@ -533,7 +493,7 @@
                         "ordinalPosition" : 1
                       }
                     ],
-                    "id" : "ClassID",
+                    "id" : "fieldinformation_ibfk_1",
                     "enabled" : true
                   }
                 ],
@@ -598,12 +558,12 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "FieldInformation",
-                "id" : "FieldInformation",
+                "name" : "field_information",
+                "id" : "field_information",
                 "enabled" : true
               },
               {
-                "expanded" : true,
+                "expanded" : false,
                 "primaryKeyColumns" : [
                   {
                     "expanded" : true,
@@ -681,58 +641,20 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "JarInformation",
-                "id" : "JarInformation",
+                "name" : "jar_information",
+                "id" : "jar_information",
                 "enabled" : true
               },
               {
-                "expanded" : true,
-                "foreignKeys" : [
-                  {
-                    "expanded" : false,
-                    "foreignKeyColumns" : [
-                      {
-                        "foreignDatabaseName" : "JarAnalysis",
-                        "foreignSchemaName" : "JarAnalysis",
-                        "expanded" : true,
-                        "name" : "MethodID",
-                        "foreignColumnName" : "ID",
-                        "id" : "MethodID",
-                        "foreignTableName" : "MethodInformation",
-                        "ordinalPosition" : 1
-                      }
-                    ],
-                    "name" : "methodargtypeinformation_ibfk_1",
-                    "id" : "methodargtypeinformation_ibfk_1",
-                    "enabled" : true
-                  }
-                ],
-                "indexes" : [
-                  {
-                    "expanded" : false,
-                    "unique" : false,
-                    "name" : "MethodID",
-                    "indexColumns" : [
-                      {
-                        "orderType" : "ASC",
-                        "expanded" : true,
-                        "name" : "MethodID",
-                        "id" : "MethodID",
-                        "ordinalPosition" : 1
-                      }
-                    ],
-                    "id" : "MethodID",
-                    "enabled" : true
-                  }
-                ],
+                "expanded" : false,
                 "isView" : false,
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Long",
                     "expanded" : true,
                     "nullable" : true,
-                    "name" : "MethodID",
-                    "id" : "MethodID",
+                    "name" : "MethodId",
+                    "id" : "MethodId",
                     "ordinalPosition" : 1,
                     "enabled" : true
                   },
@@ -746,29 +668,29 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "MethodArgTypeInformation",
-                "id" : "MethodArgTypeInformation",
+                "name" : "method_arg_type_information",
+                "id" : "method_arg_type_information",
                 "enabled" : true
               },
               {
-                "expanded" : true,
+                "expanded" : false,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
                     "foreignKeyColumns" : [
                       {
-                        "foreignDatabaseName" : "JarAnalysis",
-                        "foreignSchemaName" : "JarAnalysis",
+                        "foreignDatabaseName" : "jaranalysis",
+                        "foreignSchemaName" : "jaranalysis",
                         "expanded" : true,
                         "name" : "ClassID",
                         "foreignColumnName" : "ID",
                         "id" : "ClassID",
-                        "foreignTableName" : "ClassInformation",
+                        "foreignTableName" : "class_information",
                         "ordinalPosition" : 1
                       }
                     ],
-                    "name" : "methodinformation_ibfk_1",
-                    "id" : "methodinformation_ibfk_1",
+                    "name" : "method_information_ibfk_1",
+                    "id" : "method_information_ibfk_1",
                     "enabled" : true
                   }
                 ],
@@ -801,7 +723,7 @@
                   {
                     "expanded" : false,
                     "unique" : false,
-                    "name" : "ClassID",
+                    "name" : "methodinformation_ibfk_1",
                     "indexColumns" : [
                       {
                         "orderType" : "ASC",
@@ -811,7 +733,7 @@
                         "ordinalPosition" : 1
                       }
                     ],
-                    "id" : "ClassID",
+                    "id" : "methodinformation_ibfk_1",
                     "enabled" : true
                   }
                 ],
@@ -906,29 +828,29 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "MethodInformation",
-                "id" : "MethodInformation",
+                "name" : "method_information",
+                "id" : "method_information",
                 "enabled" : true
               },
               {
-                "expanded" : true,
+                "expanded" : false,
                 "foreignKeys" : [
                   {
                     "expanded" : false,
                     "foreignKeyColumns" : [
                       {
-                        "foreignDatabaseName" : "JarAnalysis",
-                        "foreignSchemaName" : "JarAnalysis",
+                        "foreignDatabaseName" : "jaranalysis",
+                        "foreignSchemaName" : "jaranalysis",
                         "expanded" : true,
                         "name" : "JarID",
                         "foreignColumnName" : "ID",
                         "id" : "JarID",
-                        "foreignTableName" : "JarInformation",
+                        "foreignTableName" : "jar_information",
                         "ordinalPosition" : 1
                       }
                     ],
-                    "name" : "packageinformation_ibfk_1",
-                    "id" : "packageinformation_ibfk_1",
+                    "name" : "package_information_ibfk_1",
+                    "id" : "package_information_ibfk_1",
                     "enabled" : true
                   }
                 ],
@@ -1008,12 +930,12 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "PackageInformation",
-                "id" : "PackageInformation",
+                "name" : "package_information",
+                "id" : "package_information",
                 "enabled" : true
               },
               {
-                "expanded" : true,
+                "expanded" : false,
                 "primaryKeyColumns" : [
                   {
                     "expanded" : true,
@@ -1092,22 +1014,23 @@
                     "enabled" : true
                   }
                 ],
-                "name" : "Projects",
-                "id" : "Projects",
+                "name" : "projects",
+                "id" : "projects",
                 "enabled" : true
               },
               {
-                "expanded" : true,
+                "expanded" : false,
                 "isView" : false,
                 "columns" : [
                   {
                     "databaseType" : "java.lang.Long",
-                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "expanded" : true,
+                    "typeMapper" : "com.speedment.runtime.typemapper.primitive.PrimitiveTypeMapper",
                     "nullable" : false,
                     "name" : "ClassId",
                     "id" : "ClassId",
-                    "ordinalPosition" : 1
+                    "ordinalPosition" : 1,
+                    "enabled" : true
                   },
                   {
                     "databaseType" : "java.lang.String",
@@ -1115,23 +1038,25 @@
                     "nullable" : false,
                     "name" : "SuperInterface",
                     "id" : "SuperInterface",
-                    "ordinalPosition" : 2
+                    "ordinalPosition" : 2,
+                    "enabled" : true
                   }
                 ],
-                "name" : "SuperInterfaceClass",
-                "id" : "SuperInterfaceClass"
+                "name" : "super_interface_class",
+                "id" : "super_interface_class",
+                "enabled" : true
               }
             ],
-            "name" : "JarAnalysis",
-            "id" : "JarAnalysis",
+            "name" : "jaranalysis",
+            "id" : "jaranalysis",
             "enabled" : true
           }
         ],
         "typeName" : "MySQL",
         "ipAddress" : "127.0.0.1",
-        "name" : "JarAnalysis",
-        "connectionUrl" : "jdbc:mysql://127.0.0.1:3306?useUnicode=true&characterEncoding=UTF-8&useServerPrepStmts=true&zeroDateTimeBehavior=CONVERT_TO_NULL&nullNamePatternMatchesAll=true&useLegacyDatetimeCode=true&serverTimezone=UTC&user=root&password=anjaneya99",
-        "id" : "JarAnalysis",
+        "name" : "jaranalysis",
+        "connectionUrl" : "jdbc:mysql://127.0.0.1:3306?useUnicode=true&characterEncoding=UTF-8&useServerPrepStmts=true&zeroDateTimeBehavior=CONVERT_TO_NULL&nullNamePatternMatchesAll=true&useLegacyDatetimeCode=true&serverTimezone=UTC&user=root&password=anjaneya",
+        "id" : "jaranalysis",
         "enabled" : true,
         "username" : "root"
       }

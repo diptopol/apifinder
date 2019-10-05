@@ -1,15 +1,14 @@
 package ca.concordia.jaranalyzer;
 
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
@@ -36,36 +35,41 @@ import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import ca.concordia.jaranalyzer.DBModels.JarAnalysisApplication;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformation;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.classinformation.ClassInformationManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitseffectivepom.CommitsEffectivePomManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.commitsjar.CommitsJarManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.fieldinformation.FieldInformationManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformation;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.jarinformation.JarInformationManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodargtypeinformation.MethodArgTypeInformationManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformation;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.methodinformation.MethodInformationManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformation;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.packageinformation.PackageInformationManager;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.superinterfaceclass.SuperInterfaceClassImpl;
-import ca.concordia.jaranalyzer.DBModels.jaranalysis.jaranalysis.superinterfaceclass.SuperInterfaceClassManager;
+import us.orgst.DBModels.JaranalysisApplication;
+
 import ca.concordia.jaranalyzer.util.Utility;
+import us.orgst.DBModels.jaranalysis.jaranalysis.class_information.ClassInformation;
+import us.orgst.DBModels.jaranalysis.jaranalysis.class_information.ClassInformationImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.class_information.ClassInformationManager;
+import us.orgst.DBModels.jaranalysis.jaranalysis.commits_effective_pom.CommitsEffectivePomImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.commits_effective_pom.CommitsEffectivePomManager;
+import us.orgst.DBModels.jaranalysis.jaranalysis.commits_jar.CommitsJarImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.commits_jar.CommitsJarManager;
+import us.orgst.DBModels.jaranalysis.jaranalysis.field_information.FieldInformationImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.field_information.FieldInformationManager;
+import us.orgst.DBModels.jaranalysis.jaranalysis.jar_information.JarInformation;
+import us.orgst.DBModels.jaranalysis.jaranalysis.jar_information.JarInformationImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.jar_information.JarInformationManager;
+import us.orgst.DBModels.jaranalysis.jaranalysis.method_arg_type_information.MethodArgTypeInformation;
+import us.orgst.DBModels.jaranalysis.jaranalysis.method_arg_type_information.MethodArgTypeInformationImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.method_arg_type_information.MethodArgTypeInformationManager;
+import us.orgst.DBModels.jaranalysis.jaranalysis.method_information.MethodInformation;
+import us.orgst.DBModels.jaranalysis.jaranalysis.method_information.MethodInformationImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.method_information.MethodInformationManager;
+import us.orgst.DBModels.jaranalysis.jaranalysis.package_information.PackageInformation;
+import us.orgst.DBModels.jaranalysis.jaranalysis.package_information.PackageInformationImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.package_information.PackageInformationManager;
+import us.orgst.DBModels.jaranalysis.jaranalysis.super_interface_class.SuperInterfaceClassImpl;
+import us.orgst.DBModels.jaranalysis.jaranalysis.super_interface_class.SuperInterfaceClassManager;
+
+import static java.util.stream.Collectors.*;
 
 
 public class JarAnalyzer {
 
 
 	private String jarsPath;
-	private JarAnalysisApplication app;
+	private JaranalysisApplication app;
 	private JarInformationManager jm;
 	private PackageInformationManager pkgM;
 	private ClassInformationManager clsM;
@@ -75,8 +79,9 @@ public class JarAnalyzer {
 	private MethodArgTypeInformationManager mthdArgM;
 	private SuperInterfaceClassManager sic;
 	private CommitsJarManager cjm;
+	public TinkerGraph graph;
 
-	public JarAnalyzer(JarAnalysisApplication app1){
+	public JarAnalyzer(JaranalysisApplication app1){
 		this.app =  app1;
 		jm = app.getOrThrow(JarInformationManager.class);
 		pkgM = app.getOrThrow(PackageInformationManager.class);
@@ -86,9 +91,16 @@ public class JarAnalyzer {
 		cmtEffM = app.getOrThrow(CommitsEffectivePomManager.class);
 		sic = app.getOrThrow(SuperInterfaceClassManager.class);
 		cjm = app.getOrThrow(CommitsJarManager.class);
+		mthdArgM =  app.getOrThrow(MethodArgTypeInformationManager.class);
 	}
 
-	public JarAnalyzer(JarAnalysisApplication app, String jarPath) {
+	public JarAnalyzer(String jarPath) {
+		File file = new File(jarPath);
+		graph = TinkerGraph.open();
+		graph.createIndex("Kind",Vertex.class);
+	}
+
+	public JarAnalyzer(JaranalysisApplication app, String jarPath) {
 		File file = new File(jarPath);
 		file.mkdirs();
 		jarsPath = file.getAbsolutePath();
@@ -99,7 +111,7 @@ public class JarAnalyzer {
 		mthdM = app.getOrThrow(MethodInformationManager.class);
 		fldM = app.getOrThrow(FieldInformationManager.class);
 		cmtEffM = app.getOrThrow(CommitsEffectivePomManager.class);
-		//	mthdArgM =  app.getOrThrow(MethodArgTypeInformationManager.class);
+		mthdArgM =  app.getOrThrow(MethodArgTypeInformationManager.class);
 		sic = app.getOrThrow(SuperInterfaceClassManager.class);
 		cjm = app.getOrThrow(CommitsJarManager.class);
 //
@@ -272,7 +284,7 @@ public class JarAnalyzer {
 	}
 
 
-	public Optional<JarInfo> getJarInfoFromDependencyEffectivePom(JarInformation ji,  JarInformationManager jm) {
+	public Optional<JarInfo> getJarInfoFromDependencyEffectivePom(JarInformation ji, JarInformationManager jm) {
 		String groupId = ji.getGroupId();
 		String artifactId = ji.getArtifactId();
 		String version = ji.getVersion();
@@ -302,6 +314,40 @@ public class JarAnalyzer {
 						.orElse(""))
 				.setId(-1);
 	}
+
+	public void toGraph(JarInfo j) {
+		Vertex jar = graph.addVertex("Kind", "Jar", "ArtifactId", j.getArtifactId(), "Version", j.getVersion(), "GroupId", j.getGroupId());
+		for (PackageInfo p : j.getPackages()) {
+			Vertex pkg = graph.addVertex("Kind","Package","Name",p.getName());
+			jar.addEdge("ContainsPkg",pkg);
+			for(ClassInfo c : p.getClasses()){
+				Vertex cls = graph.addVertex("Kind","Class","isAbstract",c.isAbstract(),"isInterface",
+						c.isInterface(), "Name", c.getName(),"Type",c.getType().toString(), "QName", c.getQualifiedName());
+				pkg.addEdge("Contains",cls);
+
+				if(!c.getSuperClassName().isEmpty())
+					cls.addEdge("extends",graph.addVertex("Kind", "SuperClass", "Name", c.getSuperClassName()));
+
+				c.getSuperInterfaceNames().stream()
+						.forEach(e -> cls.addEdge("implements", graph.addVertex("Kind","SuperInterface","Name",e)));
+
+				c.getMethods().stream().filter(x->!x.isPrivate())
+						.forEach(m -> {
+							Vertex x = graph.addVertex("Kind","Method","Name",m.getName(),"isAbstract",m.isAbstract()
+									, "isConstructor",m.isConstructor(),"isStatic",m.isStatic(),"ReturnType",m.getReturnType(),"ParamType",m.getParameterTypes());
+							cls.addEdge("Declares",x);
+						});
+
+				c.getFields().stream().filter(x->!x.isPrivate())
+						.forEach(f -> cls.addEdge("Declares",graph.addVertex("Kind","Field", "Name",f.getName(),"ReturnType",f.getType().toString())));
+
+			}
+		}
+
+	}
+
+
+
 
 
 	public Integer persistJarInfo(JarInfo j, boolean couldFetch) {
@@ -342,10 +388,15 @@ public class JarAnalyzer {
 									.setName(m.getName())
 									.setReturnType(m.getReturnType()));
 
-//						for(Type t : Arrays.asList(m.getArgumentTypes()))
-//							mthdArgM.persist(new MethodArgTypeInformationImpl()
-//									.setMethodId(mi.getId())
-//									.setType(t.getClassName()));
+
+							String[] params = m.getParameterTypes() !=null && !m.getParameterTypes().isEmpty()? m.getParameterTypes().split(",") : new String[0];
+
+							for(String t :params) {
+								MethodArgTypeInformation f = mthdArgM.persist(new MethodArgTypeInformationImpl()
+										.setMethodId(mi.getId())
+										.setType(t));
+//								System.out.println(f.getMethodId());
+							}
 						}
 
 						for (FieldInfo f : c.getFields()) {
@@ -365,6 +416,7 @@ public class JarAnalyzer {
 				return o_jr.get().getId();
 			}
 		}catch (Exception e){
+			e.printStackTrace();
 			return -1;
 		}
 	}
@@ -532,6 +584,11 @@ public class JarAnalyzer {
 					});
 			}
 		return -1;
+	}
+
+	public void jarToGraph(JarFile jarFile, String groupId, String artifactId, String version) {
+		JarInfo ji = new JarInfo(jarFile, groupId, artifactId, version);
+		toGraph(ji);
 	}
 
 
