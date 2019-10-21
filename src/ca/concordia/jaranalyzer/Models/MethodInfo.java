@@ -5,7 +5,9 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MethodInfo {
 	private String name;
@@ -158,11 +160,7 @@ public class MethodInfo {
 
 	public String getParameterTypes() {
 		String parameters = "";
-		for (Type type : argumentTypes) {
-			parameters += type.getClassName() + ",";// .substring(type.getClassName().lastIndexOf('.')
-													// + 1) + " ";
-		}
-		return parameters;
+		return Arrays.stream(argumentTypes).map(x->x.getClassName()).collect(Collectors.joining("&"));
 	}
 
 	public String getReturnType() {

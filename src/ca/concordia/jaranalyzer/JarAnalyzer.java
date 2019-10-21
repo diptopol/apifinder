@@ -42,41 +42,6 @@ public class JarAnalyzer {
 		graph.createIndex("Kind",Vertex.class);
 	}
 
-
-
-
-
-
-
-
-	private Optional<Document> getDocument(File inputFile)  {
-		try {
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document doc = dBuilder.parse(inputFile);
-			doc.getDocumentElement().normalize();
-			return Optional.of(doc);
-		}catch (Exception e){
-			e.printStackTrace();
-			return Optional.empty();
-		}
-	}
-
-	private Map<String, String> getProperties(Document doc){
-
-		return Optional.ofNullable(doc.getElementsByTagName("properties"))
-				.map(p -> p.item(0))
-				.map(Node::getChildNodes)
-				.filter(p->p.getLength()>0)
-				.map(c -> IntStream.range(0, c.getLength()).boxed()
-						.filter(i -> !c.item(i).getTextContent().trim().isEmpty() )
-						.collect(toMap(i -> c.item(i).getNodeName(), i -> c.item(i).getTextContent(),
-								mergeProperties)))
-				.orElse(new HashMap<>());
-	}
-
-	private BinaryOperator<String> mergeProperties = (s1, s2) -> s1.equals(s2)? s1 : s1+","+s2;
-
 	public void toGraph(JarInfo j) {
 		Vertex jar = graph.addVertex("Kind", "Jar", "ArtifactId", j.getArtifactId(), "Version", j.getVersion(), "GroupId", j.getGroupId());
 		for (PackageInfo p : j.getPackages()) {
@@ -105,7 +70,6 @@ public class JarAnalyzer {
 
 			}
 		}
-
 	}
 
 	private JarInfo getJarInfo(String groupId, String artifactId, String version) {

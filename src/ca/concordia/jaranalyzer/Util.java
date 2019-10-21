@@ -5,21 +5,30 @@ import static java.util.stream.Collectors.toMap;
 
 import com.jasongoodwin.monads.Try;
 
+import org.apache.commons.io.IOUtils;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
+import org.eclipse.jgit.treewalk.TreeWalk;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 public class Util {
 
@@ -69,6 +78,28 @@ public class Util {
                 .onFailure(Throwable::printStackTrace)
 
                 .orElse(new ArrayList<>());
+    }
+
+    public static CompilationUnit getCuFor(String content){
+        ASTParser parser = ASTParser.newParser(AST.JLS11);
+        Map<String, String> options = JavaCore.getOptions();
+        options.put(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, JavaCore.VERSION_1_8);
+        options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_8);
+        options.put(JavaCore.COMPILER_COMPLIANCE, JavaCore.VERSION_1_8);
+        parser.setCompilerOptions(options);
+        parser.setResolveBindings(false);
+        parser.setKind(ASTParser.K_COMPILATION_UNIT);
+        parser.setStatementsRecovery(true);
+        parser.setSource(content.toCharArray());
+        return  (CompilationUnit)parser.createAST(null);
+    }
+
+    public static String getFileContent(Repository repository, TreeWalk treeWalk) throws IOException {
+        ObjectId objectId = treeWalk.getObjectId(0);
+        ObjectLoader loader = repository.open(objectId);
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(loader.openStream(), writer);
+        return Optional.ofNullable(writer.toString()).orElse("");
     }
 
 }
