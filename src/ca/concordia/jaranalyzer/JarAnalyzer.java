@@ -36,8 +36,7 @@ public class JarAnalyzer {
 
 
 
-	public JarAnalyzer(String jarPath) {
-		File file = new File(jarPath);
+	public JarAnalyzer() {
 		graph = TinkerGraph.open();
 		graph.createIndex("Kind",Vertex.class);
 	}
@@ -48,13 +47,13 @@ public class JarAnalyzer {
 			Vertex pkg = graph.addVertex("Kind","Package","Name",p.getName());
 			jar.addEdge("ContainsPkg",pkg);
 			for(ClassInfo c : p.getClasses()){
+
 				Vertex cls = graph.addVertex("Kind","Class","isAbstract",c.isAbstract(),"isInterface",
-						c.isInterface(), "Name", c.getName(),"Type",c.getType().toString(), "QName", c.getQualifiedName());
+						c.isInterface(),"isEnum",c.isEnum(), "Name", c.getName(),"Type",c.getType().toString(), "QName", c.getQualifiedName());
 				pkg.addEdge("Contains",cls);
 
 				if(!c.getSuperClassName().isEmpty())
 					cls.addEdge("extends",graph.addVertex("Kind", "SuperClass", "Name", c.getSuperClassName()));
-
 				c.getSuperInterfaceNames().stream()
 						.forEach(e -> cls.addEdge("implements", graph.addVertex("Kind","SuperInterface","Name",e)));
 

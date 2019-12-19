@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ClassInfo  {
+
 	private String qualifiedName;
 	private String name;
 	private String packageName;
@@ -28,13 +29,13 @@ public class ClassInfo  {
 	private String superClassName;
 	private ClassInfo superClassInfo;
 	private Map<String, ClassInfo> superInterfaceMap;
+	private boolean isEnum;
 
 	public ClassInfo(ClassNode classNode) {
 		try {
 			this.methods = new ArrayList<>();
 			this.fields = new ArrayList<>();
 			this.superInterfaceMap = new LinkedHashMap<>();
-
 			this.qualifiedName = classNode.name.replace('/', '.');
 			this.qualifiedName = qualifiedName.contains("$") ? qualifiedName.replace("$",".") : qualifiedName;
 			if (!classNode.name.contains("/")) {
@@ -47,7 +48,7 @@ public class ClassInfo  {
 			}
 
 			if (classNode.superName != null) {
-				this.superClassName = classNode.superName.replace('/', '.');
+				this.superClassName = classNode.superName.replace('/', '.').replace("$",".");
 			} else {
 				this.superClassName = "";
 			}
@@ -70,10 +71,14 @@ public class ClassInfo  {
 				isInterface = true;
 			}
 
+			if ((classNode.access & Opcodes.ACC_ENUM) != 0) {
+				isEnum = true;
+			}
+
 			@SuppressWarnings("unchecked")
 			List<String> implementedInterfaces = classNode.interfaces;
 			for (String interfaceName : implementedInterfaces) {
-				superInterfaceMap.put(interfaceName.replace('/', '.'), null);
+				superInterfaceMap.put(interfaceName.replace('/', '.').replace("$","."), null);
 			}
 			
 			@SuppressWarnings("unchecked")
@@ -155,6 +160,7 @@ public class ClassInfo  {
 	}
 
 	public void putSuperInterfaceInfo(String interfaceName, ClassInfo interfaceInfo) {
+		interfaceName = interfaceName.replace("$",".");
 		superInterfaceMap.put(interfaceName, interfaceInfo);
 	}
 
@@ -270,7 +276,7 @@ public class ClassInfo  {
 	}
 
 
-
-
-
+	public boolean isEnum() {
+		return isEnum;
+	}
 }
