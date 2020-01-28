@@ -14,7 +14,7 @@ import java.util.jar.JarFile;
 
 import ca.concordia.jaranalyzer.util.Utility;
 
-public class JarInfo {
+public class JarInformation {
 	private String name;
 	private String groupId;
 	private String artifactId;
@@ -23,8 +23,8 @@ public class JarInfo {
 	private Map<String, PackageInfo> packages;
 
 
-	public JarInfo(JarFile jarFile, String groupId, String artifactId,
-			String version) {
+	public JarInformation(JarFile jarFile, String groupId, String artifactId,
+						  String version) {
 		this.artifactId = artifactId;
 		this.groupId = groupId;
 		this.version = version;
@@ -157,8 +157,8 @@ public class JarInfo {
 
 	@Override
 	public boolean equals(Object o){
-		if(o instanceof JarInfo){
-			JarInfo j = (JarInfo) o;
+		if(o instanceof JarInformation){
+			JarInformation j = (JarInformation) o;
 			return j.getArtifactId().equals(artifactId)
 					&& j.getVersion().equals(version)
 					&& j.getGroupId().equals(groupId);

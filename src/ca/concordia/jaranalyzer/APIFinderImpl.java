@@ -1,10 +1,8 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.util.Utility;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
-import org.apache.tinkerpop.gremlin.process.traversal.Text;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -21,7 +19,10 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -62,8 +63,6 @@ public class APIFinderImpl  {
 				}
 
 			}
-
-
 
 		analyzer.graph.traversal().io("D:\\MyProjects\\apache-tinkerpop-gremlin-server-3.4.3\\data\\JavaJars.kryo")
 				.with(IO.writer, IO.gryo)
@@ -170,6 +169,17 @@ public class APIFinderImpl  {
 				.as("c","s")
 				.select("c","s").by("QName")
 				.by(__().out("extends","implements").has("Name", TextP.neq("java.lang.Object")).values("Name").fold())
+				.toStream().map(x -> new Tuple2<>((String) x.get("c"), ((List<String>) x.get("s"))))
+				.filter(x->!x._2().isEmpty())
+				.collect(toMap(x -> x._1(), x -> x._2(),(x,y) -> x));
+	}
+
+	public Map<String, List<String>> getJdkComposition(GraphTraversalSource traverser) {
+		return  traverser.V()
+				.has("Kind", "Class")
+				.as("c","s")
+				.select("c","s").by("QName")
+				.by(__().out("Declares").has("Kind", "Field").values("ReturnType").fold())
 				.toStream().map(x -> new Tuple2<>((String) x.get("c"), ((List<String>) x.get("s"))))
 				.filter(x->!x._2().isEmpty())
 				.collect(toMap(x -> x._1(), x -> x._2(),(x,y) -> x));
