@@ -1,5 +1,8 @@
 package ca.concordia.jaranalyzer.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -10,9 +13,13 @@ import java.util.Properties;
  */
 public class PropertyReader {
 
+    private static Logger logger = LoggerFactory.getLogger(PropertyReader.class);
+
     private static Properties properties;
 
     static {
+        logger.info("Load Config properties");
+
         InputStream inputStream;
         properties = new Properties();
         String fileName = "config.properties";
@@ -22,7 +29,7 @@ public class PropertyReader {
             properties.load(inputStream);
 
         } catch (IOException ex) {
-            ex.printStackTrace();
+            logger.error("Couldn't load config properties", ex);
         }
     }
 
