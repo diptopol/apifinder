@@ -64,7 +64,7 @@ public class APIFinderImpl  {
 
 			}
 
-		analyzer.graph.traversal().io("D:\\MyProjects\\apache-tinkerpop-gremlin-server-3.4.3\\data\\JavaJars.kryo")
+		analyzer.graph.traversal().io(Utility.getJarStoragePath())
 				.with(IO.writer, IO.gryo)
 				.write().iterate();
 	}

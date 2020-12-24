@@ -63,6 +63,12 @@ public class Utility {
 		return jarFiles;
 	}
 
+	public static String getJarStoragePath() {
+		return PropertyReader.getProperty("jar.storage.directory")
+				+ "\\"
+				+ PropertyReader.getProperty("jar.storage.filename");
+	}
+
 	public static String getHTML(String urlToRead) throws Exception {
 	      StringBuilder result = new StringBuilder();
 	      URL url = new URL(urlToRead);

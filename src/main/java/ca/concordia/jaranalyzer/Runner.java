@@ -2,6 +2,8 @@ package ca.concordia.jaranalyzer;
 
 
 
+import ca.concordia.jaranalyzer.util.PropertyReader;
+import ca.concordia.jaranalyzer.util.Utility;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -23,12 +25,13 @@ import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalS
 
 public class Runner {
     public static void main(String args[]) throws Exception {
-        if(!Files.exists(Paths.get("D:\\MyProjects\\apache-tinkerpop-gremlin-server-3.4.3\\data\\JavaJars.kryo"))){
-            APIFinderImpl apiF = new APIFinderImpl(new JarAnalyzer(),"C:\\Program Files\\Java\\jre1.8.0_171","8");
+        if(!Files.exists(Paths.get(Utility.getJarStoragePath()))){
+            APIFinderImpl apiF = new APIFinderImpl(new JarAnalyzer(),PropertyReader.getProperty("java.jar.directory"),
+                    PropertyReader.getProperty("java.version"));
         }
         final TinkerGraph newGraph = TinkerGraph.open();
         GraphTraversalSource gr = traversal().withRemote(DriverRemoteConnection.using("localhost",8182,"g"));
-//                newGraph.traversal().io("D:\\MyProjects\\apache-tinkerpop-gremlin-server-3.4.3\\data\\JavaJars.kryo")
+//                newGraph.traversal().io(Utility.getJarStoragePath())
 //                .with(IO.reader, IO.gryo)
 //                .read().iterate();
 
