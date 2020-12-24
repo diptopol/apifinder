@@ -24,13 +24,19 @@ import static java.util.stream.Stream.ofNullable;
 
 public class JarAnalyzer {
 
-
+    /*
+     * After removal of APIFinderImpl, this instance will be made private
+     */
     public TinkerGraph graph;
-
 
     public JarAnalyzer() {
         graph = TinkerGraph.open();
         graph.createIndex("Kind", Vertex.class);
+    }
+
+    public JarAnalyzer(TinkerGraph graph) {
+        this.graph = graph;
+        this.graph.createIndex("Kind", Vertex.class);
     }
 
     public void toGraph(JarInformation j) {
