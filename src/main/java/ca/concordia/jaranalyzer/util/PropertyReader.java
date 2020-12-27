@@ -20,14 +20,11 @@ public class PropertyReader {
     static {
         logger.info("Load Config properties");
 
-        InputStream inputStream;
         properties = new Properties();
         String fileName = "config.properties";
 
         try {
-            inputStream = PropertyReader.class.getClassLoader().getResourceAsStream(fileName);
-            properties.load(inputStream);
-
+            properties.load(PropertyReader.class.getClassLoader().getResourceAsStream(fileName));
         } catch (IOException ex) {
             logger.error("Couldn't load config properties", ex);
         }

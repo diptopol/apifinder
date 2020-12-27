@@ -40,22 +40,21 @@ public class TypeInferenceAPI {
     private static TinkerGraph tinkerGraph;
     private static JarAnalyzer jarAnalyzer;
 
-//    public static Path pathToSetup;
     public static Path pathToCorpus;
     public static String mavenHome;
 
 
     static {
-        tinkerGraph = TinkerGraph.open();
-        jarAnalyzer = new JarAnalyzer(tinkerGraph);
+//        tinkerGraph = TinkerGraph.open();
+//        jarAnalyzer = new JarAnalyzer(tinkerGraph);
 
-        if (!Files.exists(getJarStoragePath())) {
-            createClassStructureGraphForJavaJars();
-            storeClassStructureGraph();
-        } else {
-            loadClassStructureGraph();
-        }
-//        pathToSetup=Paths.get(getProperty("PathToSetup"));
+//        if (!Files.exists(getJarStoragePath())) {
+//            createClassStructureGraphForJavaJars();
+//            storeClassStructureGraph();
+//        } else {
+//            loadClassStructureGraph();
+//        }
+
         pathToCorpus = Path.of(getProperty("PathToCorpus"));
         mavenHome = getProperty("mavenHome");
 
@@ -95,6 +94,12 @@ public class TypeInferenceAPI {
     }
 
 
+    public static void main(String[] args){
+        getDependenciesFromEffectivePom("1a020b7e447bddc48b677d702611f58f7c9033cc", "guava", "https://github.com/google/guava.git")
+                .forEach(System.out::println);
+    }
+
+
     private static Path pathToProjectFolder(String projectName){
         return pathToCorpus.resolve("Project_"+projectName);
     }
@@ -108,7 +113,7 @@ public class TypeInferenceAPI {
         if (Files.exists(pathToProject))
             repo = Try.ofFailable(() -> Git.open(pathToProject.resolve(projectName).toFile()))
                     .orElseThrow(() -> new RuntimeException("Could not open " + projectName)).getRepository();
-        else repo = tryCloningRepo(projectName, cloneLink, pathToProject.toString())
+        else repo = tryCloningRepo(projectName, cloneLink, pathToProject)
                 .orElseThrow(() -> new RuntimeException("Could not clone" + projectName)).getRepository();
 
 

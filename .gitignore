@@ -25,3 +25,4 @@ bin
 target/*
 *.md5
 *.md5
+Corpus/*

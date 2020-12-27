@@ -1,5 +1,6 @@
 package ca.concordia.jaranalyzer.util;
 
+import static ca.concordia.jaranalyzer.util.FileUtils.createFolderIfAbsent;
 import static java.util.stream.Collectors.toMap;
 
 
@@ -40,11 +41,12 @@ public class GitUtil {
 
 
 
-    public static Try<Git> tryCloningRepo(String projectName, String cloneLink, String path) {
-        return Try.ofFailable(() -> Git.open(new File(path + projectName)))
-                .onFailure(e -> System.out.println("Did not find " + projectName + " at" + path))
+    public static Try<Git> tryCloningRepo(String projectName, String cloneLink, Path pathToProject) {
+        createFolderIfAbsent(pathToProject);
+        return Try.ofFailable(() -> Git.open(pathToProject.resolve(projectName).toFile()))
+                .onFailure(e -> System.out.println("Did not find " + projectName + " at" + pathToProject.toString()))
                 .orElseTry(() ->
-                        Git.cloneRepository().setURI(cloneLink).setDirectory(new File(path + projectName)).call())
+                        Git.cloneRepository().setURI(cloneLink).setDirectory(pathToProject.resolve(projectName).toFile()).call())
                 .onFailure(e -> System.out.println("Could not clone " + projectName));
 
     }
