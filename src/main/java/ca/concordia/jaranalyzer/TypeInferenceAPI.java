@@ -93,19 +93,8 @@ public class TypeInferenceAPI {
         }
     }
 
-
-    public static void main(String[] args){
-//        getDependenciesFromEffectivePom("1a020b7e447bddc48b677d702611f58f7c9033cc", "guava", "https://github.com/google/guava.git")
-//                .forEach(System.out::println);
-
-        getDependenciesFromEffectivePom("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
-                "RefactoringMinerIssueReproduction", "https://github.com/diptopol/RefactoringMinerIssueReproduction.git")
-                .forEach(System.out::println);
-    }
-
-
-    private static Path pathToProjectFolder(String projectName){
-        return pathToCorpus.resolve("Project_"+projectName);
+    private static Path pathToProjectFolder(String projectName) {
+        return pathToCorpus.resolve("Project_" + projectName);
     }
 
 
@@ -126,7 +115,7 @@ public class TypeInferenceAPI {
         FileUtils.materializeAtBase(p, poms);
         Path effectivePomPath = p.resolve("effectivePom.xml");
 
-        if(!effectivePomPath.toFile().exists()) {
+        if (!effectivePomPath.toFile().exists()) {
             InvocationRequest request = new DefaultInvocationRequest();
             request.setPomFile(new File(p.resolve("pom.xml").toAbsolutePath().toString()));
             request.setGoals(Arrays.asList("help:effective-pom", "-Doutput=" + effectivePomPath.toAbsolutePath().toString()));
@@ -145,19 +134,19 @@ public class TypeInferenceAPI {
         }
 
         String effectivePomPathContent = readFile(effectivePomPath);
-  //      deleteDirectory(p);
+        deleteDirectory(p);
         return Optional.of(effectivePomPathContent);
     }
 
-    public static Set<Tuple3<String, String, String>> getDependenciesFromEffectivePom(String commit, String projectName, String cloneLink){
+    public static Set<Tuple3<String, String, String>> getDependenciesFromEffectivePom(String commit, String projectName, String cloneLink) {
 
         Set<String> deps = generateEffectivePom(commit, projectName, cloneLink)
                 .map(Utility::listOfJavaProjectLibraryFromEffectivePom)
                 .orElse(new HashSet<>());
 
-        return deps.stream().map(x->x.split(":"))
-                .filter(x->x.length == 3)
-                .map(dep-> Tuple.of(dep[0], dep[1], dep[2]))
+        return deps.stream().map(x -> x.split(":"))
+                .filter(x -> x.length == 3)
+                .map(dep -> Tuple.of(dep[0], dep[1], dep[2]))
                 .collect(toSet());
     }
 
