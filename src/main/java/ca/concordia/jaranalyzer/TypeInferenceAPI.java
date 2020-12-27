@@ -95,7 +95,11 @@ public class TypeInferenceAPI {
 
 
     public static void main(String[] args){
-        getDependenciesFromEffectivePom("1a020b7e447bddc48b677d702611f58f7c9033cc", "guava", "https://github.com/google/guava.git")
+//        getDependenciesFromEffectivePom("1a020b7e447bddc48b677d702611f58f7c9033cc", "guava", "https://github.com/google/guava.git")
+//                .forEach(System.out::println);
+
+        getDependenciesFromEffectivePom("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
+                "RefactoringMinerIssueReproduction", "https://github.com/diptopol/RefactoringMinerIssueReproduction.git")
                 .forEach(System.out::println);
     }
 
@@ -141,7 +145,7 @@ public class TypeInferenceAPI {
         }
 
         String effectivePomPathContent = readFile(effectivePomPath);
-        deleteDirectory(p);
+  //      deleteDirectory(p);
         return Optional.of(effectivePomPathContent);
     }
 

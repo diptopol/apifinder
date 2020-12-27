@@ -132,6 +132,10 @@ public class Utility {
 
 			List<Element> projectNodes = root.getChildren();
 
+			if (!projectNodes.stream().allMatch(e -> e.getName().equals("project"))){
+				projectNodes = Arrays.asList(root);
+			}
+
 			for(Element project: projectNodes) {
 
 				String grId = getchild(project, "groupId").getValue();
