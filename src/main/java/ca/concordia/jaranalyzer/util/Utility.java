@@ -1,17 +1,17 @@
 package ca.concordia.jaranalyzer.util;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.input.SAXBuilder;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Utility {
 
@@ -63,10 +63,9 @@ public class Utility {
 		return jarFiles;
 	}
 
-	public static String getJarStoragePath() {
-		return PropertyReader.getProperty("jar.storage.directory")
-				+ "\\"
-				+ PropertyReader.getProperty("jar.storage.filename");
+	public static Path getJarStoragePath() {
+		return Path.of(PropertyReader.getProperty("jar.storage.directory"))
+				.resolve(PropertyReader.getProperty("jar.storage.filename"));
 	}
 
 	public static String getHTML(String urlToRead) throws Exception {
@@ -82,4 +81,106 @@ public class Utility {
 	      rd.close();
 	      return result.toString();
 	   }
+
+	public static Element getchild(Element classElement, String name) {
+		try {
+			List<Element> elementChildren = classElement.getChildren();
+
+			for(int temp = 0; temp < elementChildren.size(); ++temp) {
+				Element element = elementChildren.get(temp);
+				if (element.getName().equals(name)) {
+					return element;
+				}
+			}
+		} catch (Exception var6) {
+			System.out.println("No child found under:" + name);
+		}
+
+		return null;
+	}
+
+
+
+
+	public static Set<String> listOfJavaProjectLibraryFromEffectivePom(String pomContent){
+
+		Set<String> versionLibraries = new HashSet<>();
+		Set<String> projectVersions = new HashSet<>();
+
+		try {
+
+			//File inputFile = new File(projectVersionPath);
+			SAXBuilder saxBuilder = new SAXBuilder();
+			Document document = saxBuilder.build(new ByteArrayInputStream(pomContent.getBytes(StandardCharsets.UTF_8)));
+
+			Element root = document.getRootElement();
+
+			// get public properties for library version
+			HashMap<String,String> propertiesList= new HashMap<>();
+			try{
+				Element properties = getchild(  root, "properties");
+				List<Element> propertiesListNode = properties.getChildren();
+
+				for (int temp = 0; temp < propertiesListNode.size(); temp++) {
+					Element property = propertiesListNode.get(temp);
+					propertiesList.put("${"+property.getName() +"}", property.getValue());
+
+				}
+			}catch(Exception ex){
+
+			}
+
+			List<Element> projectNodes = root.getChildren();
+
+			for(Element project: projectNodes) {
+
+				String grId = getchild(project, "groupId").getValue();
+				String artID = getchild(project, "artifactId").getValue();
+				String vrsn = getchild(project, "version").getValue();
+				projectVersions.add(String.join(":", grId, artID, vrsn));
+
+
+				Element dependencyManagement = getchild(project, "dependencyManagement");
+				Element dependencies = null;
+				if (dependencyManagement != null) {
+					dependencies = getchild(dependencyManagement, "dependencies");
+				} else {
+					//dependencies may lives under root
+					dependencies = getchild(project, "dependencies");
+				}
+
+				if (dependencies != null) {
+					List<Element> dependencytList = dependencies.getChildren();
+					for (int temp = 0; temp < dependencytList.size(); temp++) {
+						Element dependency = dependencytList.get(temp);
+						List<Element> librariesList = dependency.getChildren();
+						String groupId = "";
+						String artifactId = "";
+						String version = "";
+						for (int temp1 = 0; temp1 < librariesList.size(); temp1++) {
+							Element libraryInfo = librariesList.get(temp1);
+							if (libraryInfo.getName().equals("groupId"))
+								groupId = libraryInfo.getValue();
+							if (libraryInfo.getName().equals("artifactId"))
+								artifactId = libraryInfo.getValue();
+							if (libraryInfo.getName().equals("version")) {
+								version = libraryInfo.getValue();
+								if (version.startsWith("${")) {
+									version = propertiesList.get(version);
+								}
+							}
+						}
+						String libraryLink = groupId + ":" + artifactId + ":" + version;
+						versionLibraries.add(libraryLink);
+					}
+				}
+			}
+
+		} catch (Exception e) {
+
+			System.out.println(e.getMessage());
+		}
+		System.out.println("Found libraries-> "+versionLibraries);
+		return versionLibraries.stream().filter(x->!projectVersions.contains(x)).collect(Collectors.toSet());
+	}
 }

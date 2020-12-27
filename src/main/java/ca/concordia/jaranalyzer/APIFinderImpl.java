@@ -27,8 +27,8 @@ import java.util.jar.JarFile;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static ca.concordia.jaranalyzer.Util.getCuFor;
-import static ca.concordia.jaranalyzer.Util.getFileContent;
+import static ca.concordia.jaranalyzer.util.GitUtil.getCuFor;
+import static ca.concordia.jaranalyzer.util.GitUtil.getFileContent;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
@@ -64,7 +64,7 @@ public class APIFinderImpl  {
 
 			}
 
-		analyzer.graph.traversal().io(Utility.getJarStoragePath())
+		analyzer.graph.traversal().io(Utility.getJarStoragePath().toString())
 				.with(IO.writer, IO.gryo)
 				.write().iterate();
 	}

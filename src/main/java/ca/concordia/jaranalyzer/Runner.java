@@ -25,7 +25,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalS
 
 public class Runner {
     public static void main(String args[]) throws Exception {
-        if(!Files.exists(Paths.get(Utility.getJarStoragePath()))){
+        if(!Files.exists(Utility.getJarStoragePath())){
             APIFinderImpl apiF = new APIFinderImpl(new JarAnalyzer(),PropertyReader.getProperty("java.jar.directory"),
                     PropertyReader.getProperty("java.version"));
         }
