@@ -1,8 +1,12 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.Models.JarInformation;
+import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.Utility;
+import io.vavr.Tuple3;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +15,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
 import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
@@ -39,13 +45,41 @@ public class TypeInferenceAPI {
         }
     }
 
+    public static void loadExternalJars(String commitId, String projectName, Repository repository) {
+        Set<Tuple3<String, String, String>> jarArtifactInfoSet =
+                ExternalJarExtractionUtility.getDependenciesFromEffectivePom(commitId, projectName, repository);
 
-    public static List<String> getQualifiedClassName(String className) {
+        Set<Tuple3<String, String, String>> jarArtifactInfoSetForLoad = jarArtifactInfoSet.stream()
+                .filter(jarArtifactInfo -> !isJarExists(jarArtifactInfo._1, jarArtifactInfo._2, jarArtifactInfo._3))
+                .collect(Collectors.toSet());
+
+        jarArtifactInfoSetForLoad.forEach(jarArtifactInfo -> {
+            JarInformation jarInformation =
+                    ExternalJarExtractionUtility.getJarInfo(jarArtifactInfo._1, jarArtifactInfo._2, jarArtifactInfo._3);
+
+            jarAnalyzer.toGraph(jarInformation);
+        });
+
+        if (jarArtifactInfoSetForLoad.size() > 0) {
+            storeClassStructureGraph();
+        }
+    }
+
+    static List<String> getQualifiedClassName(String className) {
         return tinkerGraph.traversal().V()
                 .has("Kind", "Class")
                 .has("Name", className)
                 .<String>values("QName")
                 .toList();
+    }
+
+    private static boolean isJarExists(String groupId, String artifactId, String version) {
+        return tinkerGraph.traversal().V()
+                .has("Kind", "Jar")
+                .has("GroupId", groupId)
+                .has("ArtifactId", artifactId)
+                .has("Version", version)
+                .toSet().size() > 0;
     }
 
     private static void createClassStructureGraphForJavaJars() {
