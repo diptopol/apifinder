@@ -40,24 +40,16 @@ public class TypeInferenceAPI {
     private static TinkerGraph tinkerGraph;
     private static JarAnalyzer jarAnalyzer;
 
-    public static Path pathToCorpus;
-    public static String mavenHome;
-
-
     static {
-//        tinkerGraph = TinkerGraph.open();
-//        jarAnalyzer = new JarAnalyzer(tinkerGraph);
+        tinkerGraph = TinkerGraph.open();
+        jarAnalyzer = new JarAnalyzer(tinkerGraph);
 
-//        if (!Files.exists(getJarStoragePath())) {
-//            createClassStructureGraphForJavaJars();
-//            storeClassStructureGraph();
-//        } else {
-//            loadClassStructureGraph();
-//        }
-
-        pathToCorpus = Path.of(getProperty("PathToCorpus"));
-        mavenHome = getProperty("mavenHome");
-
+        if (!Files.exists(getJarStoragePath())) {
+            createClassStructureGraphForJavaJars();
+            storeClassStructureGraph();
+        } else {
+            loadClassStructureGraph();
+        }
     }
 
 
@@ -91,63 +83,6 @@ public class TypeInferenceAPI {
             }
 
         }
-    }
-
-    private static Path pathToProjectFolder(String projectName) {
-        return pathToCorpus.resolve("Project_" + projectName);
-    }
-
-
-    private static Optional<String> generateEffectivePom(String commitID, final String projectName, String cloneLink) {
-
-        var pathToProject = pathToProjectFolder(projectName);
-
-        Repository repo;
-        if (Files.exists(pathToProject))
-            repo = Try.ofFailable(() -> Git.open(pathToProject.resolve(projectName).toFile()))
-                    .orElseThrow(() -> new RuntimeException("Could not open " + projectName)).getRepository();
-        else repo = tryCloningRepo(projectName, cloneLink, pathToProject)
-                .orElseThrow(() -> new RuntimeException("Could not clone" + projectName)).getRepository();
-
-
-        Map<Path, String> poms = GitUtil.populateFileContents(repo, commitID, x -> x.endsWith("pom.xml"));
-        Path p = pathToProject.resolve("tmp").resolve(commitID);
-        FileUtils.materializeAtBase(p, poms);
-        Path effectivePomPath = p.resolve("effectivePom.xml");
-
-        if (!effectivePomPath.toFile().exists()) {
-            InvocationRequest request = new DefaultInvocationRequest();
-            request.setPomFile(new File(p.resolve("pom.xml").toAbsolutePath().toString()));
-            request.setGoals(Arrays.asList("help:effective-pom", "-Doutput=" + effectivePomPath.toAbsolutePath().toString()));
-            Invoker invoker = new DefaultInvoker();
-            invoker.setMavenHome(new File(mavenHome));
-            try {
-                InvocationResult result = invoker.execute(request);
-                if (result.getExitCode() != 0) {
-                    System.out.println("Build Failed");
-                    System.out.println("Could not generate effective pom");
-                    return Optional.empty();
-                }
-            } catch (Exception e) {
-                return Optional.empty();
-            }
-        }
-
-        String effectivePomPathContent = readFile(effectivePomPath);
-        deleteDirectory(p);
-        return Optional.of(effectivePomPathContent);
-    }
-
-    public static Set<Tuple3<String, String, String>> getDependenciesFromEffectivePom(String commit, String projectName, String cloneLink) {
-
-        Set<String> deps = generateEffectivePom(commit, projectName, cloneLink)
-                .map(Utility::listOfJavaProjectLibraryFromEffectivePom)
-                .orElse(new HashSet<>());
-
-        return deps.stream().map(x -> x.split(":"))
-                .filter(x -> x.length == 3)
-                .map(dep -> Tuple.of(dep[0], dep[1], dep[2]))
-                .collect(toSet());
     }
 
     private static void storeClassStructureGraph() {

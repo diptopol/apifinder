@@ -80,67 +80,6 @@ public class JarAnalyzer {
     }
 
 
-    private JarInformation getJarInfo(String groupId, String artifactId, String version) {
-        JarInformation jarInformation;
-        String url = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
-                + "-" + version + ".jar";
-        jarInformation = getAsJarInformation(url, groupId, artifactId, version);
-
-        if (jarInformation == null) {
-            url = "http://central.maven.org/maven2/org/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
-                    + "-" + version + ".jar";
-            jarInformation = getAsJarInformation(url, groupId, artifactId, version);
-        }
-
-        if (jarInformation == null) {
-            url = "http://central.maven.org/maven2/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version
-                    + "/" + artifactId + "-" + version + ".jar";
-            jarInformation = getAsJarInformation(url, groupId, artifactId, version);
-        }
-        return jarInformation;
-    }
-
-
-    public JarInformation getAsJarInformation(String url, String groupId, String artifactId, String version) {
-        JarFile jarFile = DownloadJar(url);
-        return getAsJarInformation(jarFile, groupId, artifactId, version);
-    }
-
-    public JarFile DownloadJar(String jarUrl) {
-        String jarName = Utility.getJarName(jarUrl);
-        String jarLocation = "";// jarsPath.toString() + '/' + jarName;
-        JarFile jarFile = null;
-        File file = new File(jarLocation);
-        if (file.exists()) {
-            try {
-                return new JarFile(new File(jarLocation));
-            } catch (IOException e) {
-                // System.out.println("Cannot open jar: " + jarLocation);
-            }
-        }
-        try {
-            Utility.downloadUsingStream(jarUrl, jarLocation);
-        } catch (IOException e) {
-            // System.out.println("Could not download jar: " + jarUrl);
-        }
-
-        try {
-            jarFile = new JarFile(new File(jarLocation));
-        } catch (IOException e) {
-            // System.out.println("Cannot open jar: " + jarLocation);
-        }
-        return jarFile;
-    }
-
-    public JarInformation getAsJarInformation(JarFile jarFile, String groupId, String artifactId, String version) {
-        if (jarFile == null)
-            return null;
-
-        JarInformation jarInformation = new JarInformation(jarFile, groupId, artifactId, version);
-        return jarInformation;
-    }
-
-
     public void jarToGraph(JarFile jarFile, String groupId, String artifactId, String version) {
         JarInformation ji = new JarInformation(jarFile, groupId, artifactId, version);
         toGraph(ji);

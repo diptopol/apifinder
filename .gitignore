@@ -26,3 +26,4 @@ target/*
 *.md5
 *.md5
 Corpus/*
+jarsPath/*
