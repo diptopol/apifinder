@@ -27,3 +27,4 @@ target/*
 *.md5
 Corpus/*
 jarsPath/*
+testProjectDirectory/*

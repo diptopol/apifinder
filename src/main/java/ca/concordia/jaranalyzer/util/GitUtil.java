@@ -37,10 +37,6 @@ import java.util.function.Predicate;
 
 public class GitUtil {
 
-
-
-
-
     public static Try<Git> tryCloningRepo(String projectName, String cloneLink, Path pathToProject) {
         createFolderIfAbsent(pathToProject);
         return Try.ofFailable(() -> Git.open(pathToProject.resolve(projectName).toFile()))
@@ -178,4 +174,13 @@ public class GitUtil {
     }
 
 
+    public static Repository getRepository(String projectName, String cloneLink, Path pathToProject) {
+        Repository repo;
+        if (Files.exists(pathToProject))
+            repo = Try.ofFailable(() -> Git.open(pathToProject.resolve(projectName).toFile()))
+                    .orElseThrow(() -> new RuntimeException("Could not open " + projectName)).getRepository();
+        else repo = tryCloningRepo(projectName, cloneLink, pathToProject)
+                .orElseThrow(() -> new RuntimeException("Could not clone" + projectName)).getRepository();
+        return repo;
+    }
 }

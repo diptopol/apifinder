@@ -1,23 +1,19 @@
 package ca.concordia.jaranalyzer.util;
 
 import ca.concordia.jaranalyzer.Models.JarInformation;
-import com.jasongoodwin.monads.Try;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.apache.maven.shared.invoker.*;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarFile;
 
 import static ca.concordia.jaranalyzer.util.FileUtils.deleteDirectory;
 import static ca.concordia.jaranalyzer.util.FileUtils.readFile;
-import static ca.concordia.jaranalyzer.util.GitUtil.tryCloningRepo;
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
 import static java.util.stream.Collectors.toSet;
 
@@ -63,12 +59,7 @@ public class ExternalJarExtractionUtility {
     private static Optional<String> generateEffectivePom(String commitID, final String projectName, String cloneLink) {
         Path pathToProject = pathToProjectFolder(projectName);
 
-        Repository repo;
-        if (Files.exists(pathToProject))
-            repo = Try.ofFailable(() -> Git.open(pathToProject.resolve(projectName).toFile()))
-                    .orElseThrow(() -> new RuntimeException("Could not open " + projectName)).getRepository();
-        else repo = tryCloningRepo(projectName, cloneLink, pathToProject)
-                .orElseThrow(() -> new RuntimeException("Could not clone" + projectName)).getRepository();
+        Repository repo = GitUtil.getRepository(projectName, cloneLink, pathToProject);
 
 
         return generateEffectivePOM(commitID, projectName, repo);

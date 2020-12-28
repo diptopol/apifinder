@@ -1,16 +1,8 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.util.FileUtils;
-import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
-import com.jasongoodwin.monads.Try;
-import io.vavr.Tuple;
-import io.vavr.Tuple3;
-import org.apache.maven.shared.invoker.*;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,16 +10,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.List;
 import java.util.jar.JarFile;
 
-import static ca.concordia.jaranalyzer.util.FileUtils.deleteDirectory;
-import static ca.concordia.jaranalyzer.util.FileUtils.readFile;
-import static ca.concordia.jaranalyzer.util.GitUtil.tryCloningRepo;
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
 import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
-import static ca.concordia.jaranalyzer.util.Utility.listOfJavaProjectLibraryFromEffectivePom;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * @author Diptopol
