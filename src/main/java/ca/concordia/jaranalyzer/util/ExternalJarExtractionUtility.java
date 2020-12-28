@@ -5,6 +5,8 @@ import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.apache.maven.shared.invoker.*;
 import org.eclipse.jgit.lib.Repository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,8 @@ import static java.util.stream.Collectors.toSet;
  * @since 12/27/2020 5:17 PM
  */
 public class ExternalJarExtractionUtility {
+
+    private static Logger logger = LoggerFactory.getLogger(ExternalJarExtractionUtility.class);
 
     public static Set<Tuple3<String, String, String>> getDependenciesFromEffectivePom(String commit,
                                                                                       String projectName,
@@ -85,8 +89,8 @@ public class ExternalJarExtractionUtility {
             try {
                 InvocationResult result = invoker.execute(request);
                 if (result.getExitCode() != 0) {
-                    System.out.println("Build Failed");
-                    System.out.println("Could not generate effective pom");
+                    logger.info("Build Failed");
+                    logger.info("Could not generate effective pom");
                     return Optional.empty();
                 }
             } catch (Exception e) {
@@ -135,8 +139,7 @@ public class ExternalJarExtractionUtility {
         if (jarFile == null)
             return null;
 
-        JarInformation jarInformation = new JarInformation(jarFile, groupId, artifactId, version);
-        return jarInformation;
+        return new JarInformation(jarFile, groupId, artifactId, version);
     }
 
     private static JarInformation getAsJarInformation(String url, String groupId, String artifactId, String version) {
@@ -155,20 +158,21 @@ public class ExternalJarExtractionUtility {
             try {
                 return new JarFile(new File(jarLocation));
             } catch (IOException e) {
-                // System.out.println("Cannot open jar: " + jarLocation);
+                logger.error("Cannot open jar: " + jarLocation, e);
             }
         }
         try {
             Utility.downloadUsingStream(jarUrl, jarLocation);
         } catch (IOException e) {
-            // System.out.println("Could not download jar: " + jarUrl);
+            logger.error("Could not download jar: " + jarUrl, e);
         }
 
         try {
             jarFile = new JarFile(new File(jarLocation));
         } catch (IOException e) {
-            // System.out.println("Cannot open jar: " + jarLocation);
+            logger.error("Cannot open jar: " + jarLocation, e);
         }
+
         return jarFile;
     }
 }
