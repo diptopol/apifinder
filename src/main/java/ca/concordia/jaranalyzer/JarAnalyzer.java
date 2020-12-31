@@ -4,14 +4,13 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.Models.ClassInfo;
 import ca.concordia.jaranalyzer.Models.JarInformation;
 import ca.concordia.jaranalyzer.Models.PackageInfo;
-import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.objectweb.asm.Type;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.JarFile;
@@ -46,8 +45,13 @@ public class JarAnalyzer {
             jar.addEdge("ContainsPkg", pkg);
             for (ClassInfo c : p.getClasses()) {
 
-                Vertex cls = graph.addVertex("Kind", "Class", "isAbstract", c.isAbstract(), "isInterface",
-                        c.isInterface(), "isEnum", c.isEnum(), "Name", c.getName(), "Type", c.getType().toString(), "QName", c.getQualifiedName());
+                Vertex cls = graph.addVertex("Kind", "Class", "isAbstract", c.isAbstract(),
+                        "isInterface", c.isInterface(), "isEnum", c.isEnum(), "Name", c.getName(),
+                        "isPublic", c.isPublic(), "isPrivate", c.isPrivate(), "isProtected", c.isProtected(),
+                        "QName", c.getQualifiedName());
+
+                cls.property("typeDescriptor", c.getType().getDescriptor());
+
                 pkg.addEdge("Contains", cls);
 
                 if (!c.getSuperClassName().isEmpty())
@@ -57,8 +61,22 @@ public class JarAnalyzer {
 
                 c.getMethods().stream().filter(x -> !x.isPrivate())
                         .forEach(m -> {
-                            Vertex x = graph.addVertex("Kind", "Method", "Name", m.getName(), "isAbstract", m.isAbstract()
-                                    , "isConstructor", m.isConstructor(), "isStatic", m.isStatic(), "ReturnType", m.getReturnType(), "ParamType", m.getParameterTypes());
+                            Vertex x = graph.addVertex("Kind", "Method", "Name", m.getName(),
+                                    "isAbstract", m.isAbstract(), "isConstructor", m.isConstructor(),
+                                    "isStatic", m.isStatic(), "isPublic", m.isPublic(), "isPrivate", m.isPrivate(),
+                                    "isProtected", m.isProtected(), "isSynchronized", m.isSynchronized(),
+                                    "className", m.getClassName());
+
+                            x.property("returnTypeDescriptor", m.getReturnTypeAsType().getDescriptor());
+
+                            for (Type type : m.getArgumentTypes()) {
+                                x.property(VertexProperty.Cardinality.list, "argumentTypeDescriptorList", type.getDescriptor());
+                            }
+
+                            for (String thrownInternalClassName : m.getThrownInternalClassNames()) {
+                                x.property(VertexProperty.Cardinality.set, "thrownInternalClassNames", thrownInternalClassName);
+                            }
+
                             cls.addEdge("Declares", x);
                         });
 

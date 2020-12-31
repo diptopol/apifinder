@@ -1,10 +1,12 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.Test;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,5 +39,18 @@ public class TypeInferenceAPITest {
 
         assert qualifiedNameList.size() == 1;
         assert "org.refactoringminer.api.Refactoring".equals(qualifiedNameList.get(0));
+    }
+
+    @Test
+    public void testGetAllMethods() {
+        List<String> importList = new ArrayList<>();
+        importList.add("java.util.Collections");
+
+        List<MethodInfo> methodInfoList =
+                TypeInferenceAPI.getAllMethods(importList, "reverse", 1);
+
+        assert methodInfoList.size() == 1;
+
+        assert "public static void reverse(java.util.List)".equals(methodInfoList.get(0).toString());
     }
 }

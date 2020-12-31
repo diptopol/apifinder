@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.Models;
 
 
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -30,6 +31,21 @@ public class ClassInfo  {
 	private ClassInfo superClassInfo;
 	private Map<String, ClassInfo> superInterfaceMap;
 	private boolean isEnum;
+
+	public ClassInfo(Vertex vertex) {
+		this.name = vertex.<String>property("Name").value();
+		this.qualifiedName = vertex.<String>property("QName").value();
+
+		this.isPublic = vertex.<Boolean>property("isPublic").value();
+		this.isPrivate = vertex.<Boolean>property("isPrivate").value();
+		this.isProtected = vertex.<Boolean>property("isProtected").value();
+		this.isAbstract = vertex.<Boolean>property("isAbstract").value();
+		this.isInterface = vertex.<Boolean>property("isInterface").value();
+		this.isEnum = vertex.<Boolean>property("isEnum").value();
+
+		this.type = Type.getType(vertex.<String>property("typeDescriptor").value());
+	}
+
 
 	public ClassInfo(ClassNode classNode) {
 		try {

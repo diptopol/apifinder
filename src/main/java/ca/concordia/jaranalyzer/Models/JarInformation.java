@@ -1,20 +1,20 @@
 package ca.concordia.jaranalyzer.Models;
 
+import ca.concordia.jaranalyzer.util.Utility;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import ca.concordia.jaranalyzer.util.Utility;
-
 public class JarInformation {
+
+	private static Logger logger = LoggerFactory.getLogger(JarInformation.class);
+
 	private String name;
 	private String groupId;
 	private String artifactId;
@@ -22,9 +22,11 @@ public class JarInformation {
 
 	private Map<String, PackageInfo> packages;
 
-
 	public JarInformation(JarFile jarFile, String groupId, String artifactId,
 						  String version) {
+
+		logger.info("Processing JarInformation of {}:{}:{}", groupId, artifactId, version);
+
 		this.artifactId = artifactId;
 		this.groupId = groupId;
 		this.version = version;
@@ -36,7 +38,8 @@ public class JarInformation {
 
 			JarEntry entry = entries.nextElement();
 			String entryName = entry.getName();
-			if (entryName.endsWith(".class")) {
+
+			if (entryName.endsWith(".class") && !entryName.equals("module-info.class")) {
 				ClassNode classNode = new ClassNode();
 				InputStream classFileInputStream;
 				try {
@@ -46,14 +49,12 @@ public class JarInformation {
 								classFileInputStream);
 						classReader.accept(classNode, 0);
 					} catch (Exception e) {
-						System.out.println("Could not read class file");
-						e.printStackTrace();
+						logger.error("Could not read class file: " + entryName, e);
 					} finally {
 						classFileInputStream.close();
 					}
 				} catch (Exception e) {
-					System.out.println("Could not read class file");
-					e.printStackTrace();
+					logger.error("Could not read class file", e);
 				}
 				ClassInfo newClass = new ClassInfo(classNode);
 				if(newClass.getQualifiedName()!=null) {

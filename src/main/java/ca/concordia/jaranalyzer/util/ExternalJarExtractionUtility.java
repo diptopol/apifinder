@@ -73,6 +73,10 @@ public class ExternalJarExtractionUtility {
         String mavenHome = getProperty("mavenHome");
         Path pathToProject = pathToProjectFolder(projectName);
 
+        if (!new File(mavenHome).exists()) {
+            throw new RuntimeException("Maven Home is not configured properly");
+        }
+
         FileUtils.createFolderIfAbsent(pathToProject);
 
         Map<Path, String> poms = GitUtil.populateFileContents(repo, commitID, x -> x.endsWith("pom.xml"));
@@ -105,34 +109,10 @@ public class ExternalJarExtractionUtility {
     }
 
     public static JarInformation getJarInfo(String groupId, String artifactId, String version) {
-        JarInformation jarInformation;
-        String url = "http://central.maven.org/maven2/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
-                + "-" + version + ".jar";
+        String url = "https://repo1.maven.org/maven2/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version
+                + "/" + artifactId + "-" + version + ".jar";
 
-        jarInformation = getAsJarInformation(url, groupId, artifactId, version);
-
-        if (jarInformation == null) {
-            url = "http://central.maven.org/maven2/org/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId
-                    + "-" + version + ".jar";
-
-            jarInformation = getAsJarInformation(url, groupId, artifactId, version);
-        }
-
-        if (jarInformation == null) {
-            url = "http://central.maven.org/maven2/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version
-                    + "/" + artifactId + "-" + version + ".jar";
-
-            jarInformation = getAsJarInformation(url, groupId, artifactId, version);
-        }
-
-        if (jarInformation == null) {
-            url = "https://repo1.maven.org/maven2/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version
-                    + "/" + artifactId + "-" + version + ".jar";
-
-            jarInformation = getAsJarInformation(url, groupId, artifactId, version);
-        }
-
-        return jarInformation;
+        return getAsJarInformation(url, groupId, artifactId, version);
     }
 
     private static JarInformation getAsJarInformation(JarFile jarFile, String groupId, String artifactId, String version) {

@@ -1,10 +1,15 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.Models.ClassInfo;
 import ca.concordia.jaranalyzer.Models.JarInformation;
+import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple3;
+import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
+import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
@@ -14,6 +19,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -34,7 +40,10 @@ public class TypeInferenceAPI {
     private static JarAnalyzer jarAnalyzer;
 
     static {
-        tinkerGraph = TinkerGraph.open();
+        Configuration configuration = new BaseConfiguration();
+        configuration.addProperty("gremlin.tinkergraph.defaultVertexPropertyCardinality", "list");
+
+        tinkerGraph = TinkerGraph.open(configuration);
         jarAnalyzer = new JarAnalyzer(tinkerGraph);
 
         if (!Files.exists(getJarStoragePath())) {
@@ -63,6 +72,54 @@ public class TypeInferenceAPI {
         if (jarArtifactInfoSetForLoad.size() > 0) {
             storeClassStructureGraph();
         }
+    }
+
+    public static List<MethodInfo> getAllMethods(List<String> importList, String methodName, int numberOfParameters) {
+        List<String> qualifiedClassNameList = importList.stream()
+                .map(importStatement -> (importStatement.startsWith("import static")
+                        ? importStatement.substring(0, importStatement.lastIndexOf(".")).replace("import static", "")
+                        : importStatement.replace("import ", "")).trim())
+                .collect(Collectors.toList());
+
+        if (methodName.contains(".")) {
+            qualifiedClassNameList.add(methodName);
+            methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
+        }
+
+        qualifiedClassNameList.addAll(
+                tinkerGraph.traversal().V()
+                        .has("Kind", "Class")
+                        .has("QName", TextP.within(qualifiedClassNameList))
+                        .out("extends", "implements")
+                        .<String>values("Name")
+                        .toSet()
+        );
+
+        List<ClassInfo> classInfoList = tinkerGraph.traversal().V()
+                .has("Kind", "Class")
+                .has("QName", TextP.within(qualifiedClassNameList))
+                .toStream()
+                .map(ClassInfo::new)
+                .collect(Collectors.toList());
+
+        List<MethodInfo> methodInfoList = new ArrayList<>();
+
+        for (ClassInfo classInfo : classInfoList) {
+            List<MethodInfo> selectedMethodInfoList = tinkerGraph.traversal().V()
+                    .has("Kind", "Class")
+                    .has("QName", classInfo.getQualifiedName())
+                    .out("Declares")
+                    .has("Kind", "Method")
+                    .has("Name", methodName)
+                    .toStream()
+                    .map(v -> new MethodInfo(v, classInfo))
+                    .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters)
+                    .collect(Collectors.toList());
+
+            methodInfoList.addAll(selectedMethodInfoList);
+        }
+
+        return methodInfoList;
     }
 
     static List<String> getQualifiedClassName(String className) {

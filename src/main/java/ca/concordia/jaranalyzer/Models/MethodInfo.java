@@ -1,11 +1,14 @@
 package ca.concordia.jaranalyzer.Models;
 
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +26,41 @@ public class MethodInfo {
 	private boolean isSynchronized;
 	private boolean isConstructor;
 	private String qualifiedName;
+
+	public MethodInfo(Vertex vertex, ClassInfo classInfo) {
+		this.classInfo = classInfo;
+
+		this.name = vertex.<String>property("Name").value();
+		this.isAbstract = vertex.<Boolean>property("isAbstract").value();
+		this.isConstructor = vertex.<Boolean>property("isConstructor").value();
+		this.isStatic = vertex.<Boolean>property("isStatic").value();
+		this.isPrivate = vertex.<Boolean>property("isPrivate").value();
+		this.isPublic = vertex.<Boolean>property("isPublic").value();
+		this.isProtected = vertex.<Boolean>property("isProtected").value();
+		this.isSynchronized = vertex.<Boolean>property("isSynchronized").value();
+
+		this.returnType = Type.getType(vertex.<String>property("returnTypeDescriptor").value());
+
+		Iterator<VertexProperty<String>> argumentTypeDescriptorListIterator
+				= vertex.properties("argumentTypeDescriptorList");
+
+		List<Type> argumentTypeList = new ArrayList<>();
+
+		while (argumentTypeDescriptorListIterator.hasNext()) {
+			argumentTypeList.add(Type.getType(argumentTypeDescriptorListIterator.next().value()));
+		}
+
+		this.argumentTypes = argumentTypeList.toArray(new Type[0]);
+
+		Iterator<VertexProperty<String>> thrownInternalClassNamesIterator =
+				vertex.properties("thrownInternalClassNames");
+
+		this.thrownInternalClassNames = new ArrayList<>();
+
+		while (thrownInternalClassNamesIterator.hasNext()) {
+			this.thrownInternalClassNames.add(thrownInternalClassNamesIterator.next().value());
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	public MethodInfo(MethodNode methodNode, ClassInfo classInfo) {
@@ -128,12 +166,6 @@ public class MethodInfo {
 		return name;
 	}
 
-
-
-
-
-
-
 	public ClassInfo getClassInfo() {
 		return classInfo;
 	}
@@ -159,7 +191,6 @@ public class MethodInfo {
 	}
 
 	public String getParameterTypes() {
-		String parameters = "";
 		return Arrays.stream(argumentTypes).map(x->x.getClassName()).collect(Collectors.joining("&"));
 	}
 
