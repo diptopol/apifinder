@@ -6,6 +6,7 @@ import ca.concordia.jaranalyzer.Models.JarInformation;
 import ca.concordia.jaranalyzer.Models.PackageInfo;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
@@ -39,50 +40,98 @@ public class JarAnalyzer {
     }
 
     public void toGraph(JarInformation j) {
-        Vertex jar = graph.addVertex("Kind", "Jar", "ArtifactId", j.getArtifactId(), "Version", j.getVersion(), "GroupId", j.getGroupId());
+        GraphTraversalSource graphTraversalSource = graph.traversal();
+
+        Vertex jar = graphTraversalSource.addV()
+                .property("Kind", "Jar")
+                .property("ArtifactId", j.getArtifactId())
+                .property("Version", j.getVersion())
+                .property("GroupId", j.getGroupId())
+                .next();
+
         for (PackageInfo p : j.getPackages()) {
-            Vertex pkg = graph.addVertex("Kind", "Package", "Name", p.getName());
-            jar.addEdge("ContainsPkg", pkg);
+            Vertex pkg = graphTraversalSource.addV()
+                    .property("Kind", "Package")
+                    .property("Name", p.getName())
+                    .next();
+
+            graphTraversalSource.addE("ContainsPkg").from(jar).to(pkg).iterate();
+
             for (ClassInfo c : p.getClasses()) {
+                Vertex cls = graphTraversalSource.addV()
+                        .property("Kind", "Class")
+                        .property("isAbstract", c.isAbstract())
+                        .property("isInterface", c.isInterface())
+                        .property("isEnum", c.isEnum())
+                        .property("Name", c.getName())
+                        .property("isPublic", c.isPublic())
+                        .property("isPrivate", c.isPrivate())
+                        .property("isProtected", c.isProtected())
+                        .property("QName", c.getQualifiedName())
+                        .property("typeDescriptor", c.getType().getDescriptor())
+                        .next();
 
-                Vertex cls = graph.addVertex("Kind", "Class", "isAbstract", c.isAbstract(),
-                        "isInterface", c.isInterface(), "isEnum", c.isEnum(), "Name", c.getName(),
-                        "isPublic", c.isPublic(), "isPrivate", c.isPrivate(), "isProtected", c.isProtected(),
-                        "QName", c.getQualifiedName());
+                graphTraversalSource.addE("Contains").from(pkg).to(cls).iterate();
 
-                cls.property("typeDescriptor", c.getType().getDescriptor());
+                if (!c.getSuperClassName().isEmpty()) {
+                    Vertex superClass = graphTraversalSource.addV()
+                            .property("Kind", "SuperClass")
+                            .property("Name", c.getSuperClassName())
+                            .next();
 
-                pkg.addEdge("Contains", cls);
+                    graphTraversalSource.addE("extends").from(cls).to(superClass).iterate();
+                }
 
-                if (!c.getSuperClassName().isEmpty())
-                    cls.addEdge("extends", graph.addVertex("Kind", "SuperClass", "Name", c.getSuperClassName()));
-                c.getSuperInterfaceNames().stream()
-                        .forEach(e -> cls.addEdge("implements", graph.addVertex("Kind", "SuperInterface", "Name", e)));
+                c.getSuperInterfaceNames()
+                        .forEach(e -> {
+                            Vertex superInterface = graphTraversalSource.addV()
+                                    .property("Kind", "SuperInterface")
+                                    .property("Name", e).next();
+
+                            graphTraversalSource.addE("implements").from(cls).to(superInterface).iterate();
+                        });
 
                 c.getMethods().stream().filter(x -> !x.isPrivate())
                         .forEach(m -> {
-                            Vertex x = graph.addVertex("Kind", "Method", "Name", m.getName(),
-                                    "isAbstract", m.isAbstract(), "isConstructor", m.isConstructor(),
-                                    "isStatic", m.isStatic(), "isPublic", m.isPublic(), "isPrivate", m.isPrivate(),
-                                    "isProtected", m.isProtected(), "isSynchronized", m.isSynchronized(),
-                                    "className", m.getClassName());
-
-                            x.property("returnTypeDescriptor", m.getReturnTypeAsType().getDescriptor());
+                            Vertex x = graphTraversalSource.addV()
+                                    .property("Kind", "Method")
+                                    .property("Name", m.getName())
+                                    .property("isAbstract", m.isAbstract())
+                                    .property("isConstructor", m.isConstructor())
+                                    .property("isStatic", m.isStatic())
+                                    .property("isPublic", m.isPublic())
+                                    .property("isPrivate", m.isPrivate())
+                                    .property("isProtected", m.isProtected())
+                                    .property("isSynchronized", m.isSynchronized())
+                                    .property("className", m.getClassName())
+                                    .property("returnTypeDescriptor", m.getReturnTypeAsType().getDescriptor())
+                                    .next();
 
                             for (Type type : m.getArgumentTypes()) {
-                                x.property(VertexProperty.Cardinality.list, "argumentTypeDescriptorList", type.getDescriptor());
+                                graphTraversalSource.V(x.id())
+                                        .property(VertexProperty.Cardinality.list, "argumentTypeDescriptorList",
+                                                type.getDescriptor()).next();
                             }
 
                             for (String thrownInternalClassName : m.getThrownInternalClassNames()) {
-                                x.property(VertexProperty.Cardinality.set, "thrownInternalClassNames", thrownInternalClassName);
+                                graphTraversalSource.V(x.id())
+                                        .property(VertexProperty.Cardinality.set, "thrownInternalClassNames",
+                                                thrownInternalClassName);
                             }
 
-                            cls.addEdge("Declares", x);
+                            graphTraversalSource.addE("Declares").from(cls).to(x).iterate();
                         });
 
                 c.getFields().stream().filter(x -> !x.isPrivate())
-                        .forEach(f -> cls.addEdge("Declares", graph.addVertex("Kind", "Field", "Name", f.getName(), "ReturnType", f.getType().toString())));
+                        .forEach(f -> {
+                            Vertex field = graphTraversalSource.addV()
+                                    .property("Kind", "Field")
+                                    .property("Name", f.getName())
+                                    .property("ReturnType", f.getType().toString())
+                                    .next();
 
+                            graphTraversalSource.addE("Declares").from(cls).to(field).iterate();
+                        });
             }
         }
     }
