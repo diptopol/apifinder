@@ -8,6 +8,7 @@ import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple3;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
@@ -100,7 +101,16 @@ public class TypeInferenceAPI {
 
         if (methodName.contains(".")) {
             qualifiedClassNameSet.add(methodName);
-            methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
+
+            /*
+             * It is difficult to differentiate fully qualified class constructor and inner class constructor. Currently,
+             * assuming that if there is only one dot exists, considering it as inner class constructor. Otherwise
+             * considering method name as a fully qualified class constructor. This assumption will not always hold. If
+             * better alternative solution is found, code will be updated.
+             */
+            methodName = StringUtils.countMatches(methodName, ".") > 1
+                    ? methodName.substring(methodName.lastIndexOf(".") + 1)
+                    : methodName.replace(".", "$");
         }
 
         qualifiedClassNameSet.addAll(
@@ -118,6 +128,14 @@ public class TypeInferenceAPI {
                         .has("QName", TextP.within(qualifiedClassNameSet))
                         .out("extends", "implements")
                         .<String>values("Name")
+                        .toSet()
+        );
+
+        qualifiedClassNameSet.addAll(
+                tinkerGraph.traversal().V().has("Kind", "Class")
+                        .has("QName", TextP.within(qualifiedClassNameSet))
+                        .out("Declares")
+                        .has("Kind", "InnerClass").<String>values("Name")
                         .toSet()
         );
 

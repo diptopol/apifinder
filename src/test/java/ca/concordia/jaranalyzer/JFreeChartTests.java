@@ -119,4 +119,18 @@ public class JFreeChartTests {
         assert "[public abstract java.lang.Comparable getRowKey(int)]".equals(matches.toString());
     }
 
+
+    @Test
+    public void findInnerClassConstructorWithOuterClassConcatenated() {
+        List<String> imports = Arrays.asList("java.lang",
+                "org.jfree.data.time", "java.util.Calendar", "java.util.TimeZone",
+                "org.jfree.data.DomainInfo", "org.jfree.data.Range", "org.jfree.data.RangeInfo",
+                "org.jfree.data.general.SeriesChangeEvent", "org.jfree.data.xy.AbstractIntervalXYDataset",
+                "org.jfree.data.xy.IntervalXYDataset", "org.jfree.data.time.DynamicTimeSeriesCollection");
+
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "DynamicTimeSeriesCollection.ValueSequence", 2);
+
+        assert "[public void DynamicTimeSeriesCollection$ValueSequence(org.jfree.data.time.DynamicTimeSeriesCollection, int)]".equals(matches.toString());
+    }
+
 }

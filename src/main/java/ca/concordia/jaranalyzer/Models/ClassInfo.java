@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class ClassInfo  {
 	private String superClassName;
 	private ClassInfo superClassInfo;
 	private Map<String, ClassInfo> superInterfaceMap;
+	private List<String> innerClassNameList;
 	private boolean isEnum;
 
 	public ClassInfo(Vertex vertex) {
@@ -51,6 +53,7 @@ public class ClassInfo  {
 		try {
 			this.methods = new ArrayList<>();
 			this.fields = new ArrayList<>();
+			this.innerClassNameList = new ArrayList<>();
 			this.superInterfaceMap = new LinkedHashMap<>();
 			this.qualifiedName = classNode.name.replace('/', '.');
 			this.qualifiedName = qualifiedName.contains("$") ? qualifiedName.replace("$",".") : qualifiedName;
@@ -107,6 +110,10 @@ public class ClassInfo  {
 			List<FieldNode> fieldNodes = classNode.fields;
 			for (FieldNode fieldNode : fieldNodes) {
 				fields.add(new FieldInfo(fieldNode, this));
+			}
+
+			for (InnerClassNode innerClassNode : classNode.innerClasses) {
+				innerClassNameList.add(innerClassNode.name.replace("/", ".").replace("$", "."));
 			}
 
 		} catch (Exception e) {
@@ -178,6 +185,10 @@ public class ClassInfo  {
 	public void putSuperInterfaceInfo(String interfaceName, ClassInfo interfaceInfo) {
 		interfaceName = interfaceName.replace("$",".");
 		superInterfaceMap.put(interfaceName, interfaceInfo);
+	}
+
+	public List<String> getInnerClassNameList() {
+		return innerClassNameList;
 	}
 
 	public ArrayList<MethodInfo> getPublicMethods() {

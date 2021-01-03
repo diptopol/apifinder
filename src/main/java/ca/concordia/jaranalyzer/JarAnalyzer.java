@@ -82,6 +82,16 @@ public class JarAnalyzer {
                     graphTraversalSource.addE("extends").from(cls).to(superClass).iterate();
                 }
 
+                c.getInnerClassNameList()
+                        .forEach(ic -> {
+                            Vertex innerClass = graphTraversalSource.addV()
+                                    .property("Kind", "InnerClass")
+                                    .property("Name", ic)
+                                    .next();
+
+                            graphTraversalSource.addE("Declares").from(cls).to(innerClass).iterate();
+                        });
+
                 c.getSuperInterfaceNames()
                         .forEach(e -> {
                             Vertex superInterface = graphTraversalSource.addV()
