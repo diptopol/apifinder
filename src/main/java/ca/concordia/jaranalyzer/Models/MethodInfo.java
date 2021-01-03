@@ -25,6 +25,7 @@ public class MethodInfo {
 	private boolean isStatic;
 	private boolean isSynchronized;
 	private boolean isConstructor;
+	private boolean isVarargs;
 	private String qualifiedName;
 
 	public MethodInfo(Vertex vertex, ClassInfo classInfo) {
@@ -38,6 +39,7 @@ public class MethodInfo {
 		this.isPublic = vertex.<Boolean>property("isPublic").value();
 		this.isProtected = vertex.<Boolean>property("isProtected").value();
 		this.isSynchronized = vertex.<Boolean>property("isSynchronized").value();
+		this.isVarargs = vertex.<Boolean>property("isVarargs").value();
 
 		this.returnType = Type.getType(vertex.<String>property("returnTypeDescriptor").value());
 
@@ -107,6 +109,10 @@ public class MethodInfo {
 
 		if ((methodNode.access & Opcodes.ACC_SYNCHRONIZED) != 0) {
 			isSynchronized = true;
+		}
+		
+		if ((methodNode.access & Opcodes.ACC_VARARGS) != 0) {
+			isVarargs = true;
 		}
 	}
 
@@ -230,6 +236,10 @@ public class MethodInfo {
 
 	public boolean isSynchronized() {
 		return isSynchronized;
+	}
+
+	public boolean isVarargs() {
+		return isVarargs;
 	}
 
 	public boolean matches(String methodName, int numberOfParameters) {

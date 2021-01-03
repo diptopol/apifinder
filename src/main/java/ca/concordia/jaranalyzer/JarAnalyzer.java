@@ -113,6 +113,7 @@ public class JarAnalyzer {
                                     .property("isPrivate", m.isPrivate())
                                     .property("isProtected", m.isProtected())
                                     .property("isSynchronized", m.isSynchronized())
+                                    .property("isVarargs", m.isVarargs())
                                     .property("className", m.getClassName())
                                     .property("returnTypeDescriptor", m.getReturnTypeAsType().getDescriptor())
                                     .next();
