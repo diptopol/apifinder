@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -75,21 +76,46 @@ public class TypeInferenceAPI {
     }
 
     public static List<MethodInfo> getAllMethods(List<String> importList, String methodName, int numberOfParameters) {
-        List<String> qualifiedClassNameList = importList.stream()
-                .map(importStatement -> (importStatement.startsWith("import static")
-                        ? importStatement.substring(0, importStatement.lastIndexOf(".")).replace("import static", "")
-                        : importStatement.replace("import ", "")).trim())
+        List<String> importStaticList = importList.stream().filter(im -> im.startsWith("import static")).collect(Collectors.toList());
+        List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
+        Set<String> qualifiedClassNameSet = new HashSet<>();
+
+        List<String> packageNameList = nonImportStaticList.stream()
+                .filter(im -> im.endsWith(".*"))
+                .map(im -> im.substring(0, im.lastIndexOf(".*")).replace("import", "").trim())
                 .collect(Collectors.toList());
 
+        qualifiedClassNameSet.addAll(
+                nonImportStaticList.stream()
+                        .filter(im -> !im.endsWith(".*"))
+                        .map(im -> im.replace("import", "").trim())
+                        .collect(Collectors.toSet())
+        );
+
+        qualifiedClassNameSet.addAll(
+                importStaticList.stream()
+                        .map(im -> im.substring(0, im.lastIndexOf(".")).replace("import static", "").trim())
+                        .collect(Collectors.toSet())
+        );
+
         if (methodName.contains(".")) {
-            qualifiedClassNameList.add(methodName);
+            qualifiedClassNameSet.add(methodName);
             methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
         }
 
-        qualifiedClassNameList.addAll(
+        qualifiedClassNameSet.addAll(
+                tinkerGraph.traversal().V()
+                        .has("Kind", "Package")
+                        .has("Name", TextP.within(packageNameList))
+                        .out("Contains").<String>values("QName")
+                        .toSet()
+
+        );
+
+        qualifiedClassNameSet.addAll(
                 tinkerGraph.traversal().V()
                         .has("Kind", "Class")
-                        .has("QName", TextP.within(qualifiedClassNameList))
+                        .has("QName", TextP.within(qualifiedClassNameSet))
                         .out("extends", "implements")
                         .<String>values("Name")
                         .toSet()
@@ -97,7 +123,7 @@ public class TypeInferenceAPI {
 
         List<ClassInfo> classInfoList = tinkerGraph.traversal().V()
                 .has("Kind", "Class")
-                .has("QName", TextP.within(qualifiedClassNameList))
+                .has("QName", TextP.within(qualifiedClassNameSet))
                 .toStream()
                 .map(ClassInfo::new)
                 .collect(Collectors.toList());

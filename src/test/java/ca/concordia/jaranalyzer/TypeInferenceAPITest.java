@@ -53,4 +53,16 @@ public class TypeInferenceAPITest {
 
         assert "public static void reverse(java.util.List)".equals(methodInfoList.get(0).toString());
     }
+
+    @Test
+    public void testGetAllMethodsWithOnDemandImportList() {
+        List<String> importList = new ArrayList<>();
+        importList.add("java.util.*");
+
+        List<MethodInfo> methodInfoList =
+                TypeInferenceAPI.getAllMethods(importList, "ArrayList", 1);
+
+        assert "[public void ArrayList(int), public void ArrayList(java.util.Collection)]".equals(methodInfoList.toString());
+
+    }
 }
