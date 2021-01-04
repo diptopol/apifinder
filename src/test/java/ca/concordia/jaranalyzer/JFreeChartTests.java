@@ -6,6 +6,8 @@ import org.eclipse.jgit.lib.Repository;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,10 +69,10 @@ public class JFreeChartTests {
 
     @Test
     public void findClassConstructorWithQualifiedName() {
-    	List<String> imports = Collections.singletonList("java.lang.*");
-    	List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "java.util.ArrayList", 0);
+        List<String> imports = Collections.singletonList("java.lang.*");
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "java.util.ArrayList", 0);
 
-    	assert "[public void ArrayList()]".equals(matches.toString());
+        assert "[public void ArrayList()]".equals(matches.toString());
     }
 
     @Test
@@ -127,9 +129,28 @@ public class JFreeChartTests {
         assert "[public abstract java.lang.Comparable getRowKey(int)]".equals(matches.toString());
     }
 
+    @Test
+    public void findInnerClassConstructorWithoutQualifiedName() {
+        List<String> imports = Arrays.asList("java.lang.*", "org.jfree.chart.axis.*");
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "BaseTimelineSegmentRange", 2);
+        assertEquals("[public void SegmentedTimeline$BaseTimelineSegmentRange(long, long)]", matches.toString());
+    }
 
     @Test
     public void findInnerClassConstructorWithOuterClassConcatenated() {
+        List<String> imports = Arrays.asList("java.lang.*",
+                "org.jfree.data.time.*", "java.util.Calendar", "java.util.TimeZone",
+                "org.jfree.data.DomainInfo", "org.jfree.data.Range", "org.jfree.data.RangeInfo",
+                "org.jfree.data.general.SeriesChangeEvent", "org.jfree.data.xy.AbstractIntervalXYDataset",
+                "org.jfree.data.xy.IntervalXYDataset");
+
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "DynamicTimeSeriesCollection.ValueSequence", 2);
+
+        assert "[public void DynamicTimeSeriesCollection$ValueSequence(org.jfree.data.time.DynamicTimeSeriesCollection, int)]".equals(matches.toString());
+    }
+
+    @Test
+    public void findInnerClassConstructorWithoutOuterClassConcatenated() {
         List<String> imports = Arrays.asList("java.lang.*",
                 "org.jfree.data.time.*", "java.util.Calendar", "java.util.TimeZone",
                 "org.jfree.data.DomainInfo", "org.jfree.data.Range", "org.jfree.data.RangeInfo",
@@ -140,5 +161,4 @@ public class JFreeChartTests {
 
         assert "[public void DynamicTimeSeriesCollection$ValueSequence(org.jfree.data.time.DynamicTimeSeriesCollection, int)]".equals(matches.toString());
     }
-
 }
