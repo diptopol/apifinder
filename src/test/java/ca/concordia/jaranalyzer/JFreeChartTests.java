@@ -31,8 +31,8 @@ public class JFreeChartTests {
 
     @Test
     public void findMethodInSuperclassOfImport() {
-        List<String> imports = Arrays.asList("java.lang",
-                "org.jfree.chart.needle",
+        List<String> imports = Arrays.asList("java.lang.*",
+                "org.jfree.chart.needle.*",
                 "java.awt.Graphics2D",
                 "java.awt.geom.GeneralPath", "java.awt.geom.Point2D",
                 "java.awt.geom.Rectangle2D", "java.io.Serializable");
@@ -47,11 +47,11 @@ public class JFreeChartTests {
         List<String> imports = Arrays.asList("import static org.junit.jupiter.api.Assertions.assertEquals",
                 "import static org.junit.jupiter.api.Assertions.assertTrue",
                 "import static org.junit.jupiter.api.Assertions.assertFalse",
-                "import java.awt.BasicStroke",
-                "import java.awt.Color",
-                "import org.jfree.chart.TestUtils",
-                "import org.jfree.chart.util.PublicCloneable",
-                "import org.junit.jupiter.api.Test");
+                "java.awt.BasicStroke",
+                "java.awt.Color",
+                "org.jfree.chart.TestUtils",
+                "org.jfree.chart.util.PublicCloneable",
+                "org.junit.jupiter.api.Test");
 
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "assertTrue", 2);
 
@@ -67,15 +67,23 @@ public class JFreeChartTests {
 
     @Test
     public void findClassConstructorWithQualifiedName() {
-        List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "ArrayList", 0);
+    	List<String> imports = Collections.singletonList("java.lang.*");
+    	List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "java.util.ArrayList", 0);
 
-        assert "[public void ArrayList()]".equals(matches.toString());
+    	assert "[public void ArrayList()]".equals(matches.toString());
+    }
+
+    @Test
+    public void findClassConstructorWithNonQualifiedName() {
+        List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "ArrayList", 1);
+
+        assert "[public void ArrayList(java.util.Collection), public void ArrayList(int)]".equals(matches.toString());
     }
 
     @Test
     public void findMethod() {
-        List<String> imports = Arrays.asList("java.lang", "org.jfree.chart.block",
+        List<String> imports = Arrays.asList("java.lang.*", "org.jfree.chart.block.*",
                 "java.awt.Graphics2D", "java.awt.geom.Rectangle2D",
                 "java.io.Serializable", "java.util.List",
                 "org.jfree.ui.Size2D",
@@ -88,8 +96,8 @@ public class JFreeChartTests {
 
     @Test
     public void findMethodInSuperInterfaceOfImport() {
-        List<String> imports = Arrays.asList("java.lang",
-                "org.jfree.chart.renderer.category",
+        List<String> imports = Arrays.asList("java.lang.*",
+                "org.jfree.chart.renderer.category.*",
                 "java.awt.Graphics2D",
                 "java.awt.Paint",
                 "java.awt.Shape",
@@ -122,13 +130,13 @@ public class JFreeChartTests {
 
     @Test
     public void findInnerClassConstructorWithOuterClassConcatenated() {
-        List<String> imports = Arrays.asList("java.lang",
-                "org.jfree.data.time", "java.util.Calendar", "java.util.TimeZone",
+        List<String> imports = Arrays.asList("java.lang.*",
+                "org.jfree.data.time.*", "java.util.Calendar", "java.util.TimeZone",
                 "org.jfree.data.DomainInfo", "org.jfree.data.Range", "org.jfree.data.RangeInfo",
                 "org.jfree.data.general.SeriesChangeEvent", "org.jfree.data.xy.AbstractIntervalXYDataset",
-                "org.jfree.data.xy.IntervalXYDataset", "org.jfree.data.time.DynamicTimeSeriesCollection");
+                "org.jfree.data.xy.IntervalXYDataset");
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "DynamicTimeSeriesCollection.ValueSequence", 2);
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "ValueSequence", 2);
 
         assert "[public void DynamicTimeSeriesCollection$ValueSequence(org.jfree.data.time.DynamicTimeSeriesCollection, int)]".equals(matches.toString());
     }
