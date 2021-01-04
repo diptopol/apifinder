@@ -67,8 +67,8 @@ public class JFreeChartTests {
 
     @Test
     public void findClassConstructorWithQualifiedName() {
-        List<String> imports = Collections.singletonList("java.lang");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "java.util.ArrayList", 0);
+        List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "ArrayList", 0);
 
         assert "[public void ArrayList()]".equals(matches.toString());
     }

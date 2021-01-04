@@ -117,7 +117,13 @@ public class TypeInferenceAPI {
                 tinkerGraph.traversal().V()
                         .has("Kind", "Package")
                         .has("Name", TextP.within(packageNameList))
-                        .out("Contains").<String>values("QName")
+                        .out("Contains")
+                        .has("Kind", "Class")
+                        .out("Declares")
+                        .has("Kind", "Method")
+                        .has("Name", methodName)
+                        .in("Declares")
+                        .<String>values("QName")
                         .toSet()
 
         );
