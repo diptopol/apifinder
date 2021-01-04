@@ -68,6 +68,7 @@ public class JarAnalyzer {
                         .property("isPrivate", c.isPrivate())
                         .property("isProtected", c.isProtected())
                         .property("QName", c.getQualifiedName())
+                        .property("isInnerClass", c.isInnerClass())
                         .property("typeDescriptor", c.getType().getDescriptor())
                         .next();
 

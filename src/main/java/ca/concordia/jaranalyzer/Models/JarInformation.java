@@ -58,8 +58,11 @@ public class JarInformation {
 				}
 				ClassInfo newClass = new ClassInfo(classNode);
 				if(newClass.getQualifiedName()!=null) {
-					String packageName = newClass.getQualifiedName().substring(0,
-							newClass.getQualifiedName().lastIndexOf('.'));
+					int packageNameConcludingIndex = newClass.isInnerClass()
+							? newClass.getQualifiedName().substring(0, newClass.getQualifiedName().lastIndexOf('.')).lastIndexOf(".")
+							: newClass.getQualifiedName().lastIndexOf('.');
+
+					String packageName = newClass.getQualifiedName().substring(0, packageNameConcludingIndex);
 					PackageInfo packageInfo = getPackageInfo(packageName);
 					packageInfo.addClass(newClass);
 				}

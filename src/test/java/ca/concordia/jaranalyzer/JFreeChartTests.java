@@ -80,7 +80,13 @@ public class JFreeChartTests {
         List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(imports, "ArrayList", 1);
 
-        assert "[public void ArrayList(java.util.Collection), public void ArrayList(int)]".equals(matches.toString());
+        List<String> methodSignatureList = new ArrayList<>();
+        methodSignatureList.add("void Arrays$ArrayList(java.lang.Object[])");
+        methodSignatureList.add("public void ArrayList(int)");
+        methodSignatureList.add("public void ArrayList(java.util.Collection)");
+
+        assert matches.size() == methodSignatureList.size()
+                && matches.stream().allMatch(match -> methodSignatureList.contains(match.toString()));
     }
 
     @Test
