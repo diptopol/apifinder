@@ -14,6 +14,7 @@ import org.objectweb.asm.Type;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.jar.JarFile;
 
 import static java.util.stream.Collectors.toList;
@@ -118,6 +119,12 @@ public class JarAnalyzer {
                                     .property("className", m.getClassName())
                                     .property("returnTypeDescriptor", m.getReturnTypeAsType().getDescriptor())
                                     .next();
+
+                            if (Objects.nonNull(m.getInternalClassConstructorSuffix())) {
+                                graphTraversalSource.V(x.id())
+                                        .property("internalClassConstructorSuffix", m.getInternalClassConstructorSuffix())
+                                        .next();
+                            }
 
                             for (Type type : m.getArgumentTypes()) {
                                 graphTraversalSource.V(x.id())

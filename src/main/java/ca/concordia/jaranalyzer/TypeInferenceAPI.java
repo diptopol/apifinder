@@ -108,9 +108,7 @@ public class TypeInferenceAPI {
              * considering method name as a fully qualified class constructor. This assumption will not always hold. If
              * better alternative solution is found, code will be updated.
              */
-            methodName = StringUtils.countMatches(methodName, ".") > 1
-                    ? methodName.substring(methodName.lastIndexOf(".") + 1)
-                    : methodName.replace(".", "$");
+            methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
         }
 
         qualifiedClassNameSet.addAll(
@@ -125,7 +123,6 @@ public class TypeInferenceAPI {
                         .in("Declares")
                         .<String>values("QName")
                         .toSet()
-
         );
 
         qualifiedClassNameSet.addAll(

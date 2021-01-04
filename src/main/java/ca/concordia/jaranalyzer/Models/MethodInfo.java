@@ -6,10 +6,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MethodInfo {
@@ -27,6 +24,7 @@ public class MethodInfo {
 	private boolean isConstructor;
 	private boolean isVarargs;
 	private String qualifiedName;
+	private String internalClassConstructorSuffix;
 
 	public MethodInfo(Vertex vertex, ClassInfo classInfo) {
 		this.classInfo = classInfo;
@@ -40,6 +38,12 @@ public class MethodInfo {
 		this.isProtected = vertex.<Boolean>property("isProtected").value();
 		this.isSynchronized = vertex.<Boolean>property("isSynchronized").value();
 		this.isVarargs = vertex.<Boolean>property("isVarargs").value();
+
+		VertexProperty<String> internalClassConstructorSuffixProp = vertex.property("internalClassConstructorSuffix");
+
+		if (internalClassConstructorSuffixProp.isPresent()) {
+			this.internalClassConstructorSuffix = internalClassConstructorSuffixProp.value();
+		}
 
 		this.returnType = Type.getType(vertex.<String>property("returnTypeDescriptor").value());
 
@@ -69,12 +73,18 @@ public class MethodInfo {
 		this.name = methodNode.name;
 		if (name.equals("<init>")) {
 			isConstructor = true;
-			name = classInfo.getName();
+
+			if (classInfo.getName().contains("$")) {
+				internalClassConstructorSuffix = classInfo.getName().substring(0, classInfo.getName().lastIndexOf("$") + 1);
+				name = classInfo.getName().replace(internalClassConstructorSuffix, "");
+			} else {
+				name = classInfo.getName();
+			}
 		}
 
 		this.classInfo = classInfo;
 		this.returnType = Type.getReturnType(methodNode.desc);
-		if (isConstructor && name.contains("$")) {
+		if (isConstructor && Objects.nonNull(internalClassConstructorSuffix)) {
 			List<Type> types = new ArrayList<Type>();
 			for (Type type : Type.getArgumentTypes(methodNode.desc)) {
 				if (!classInfo.getQualifiedName().startsWith(type.getClassName() + "$")) {
@@ -140,6 +150,11 @@ public class MethodInfo {
 
 		methodDescription.append(returnType.getClassName());
 		methodDescription.append(" ");
+
+		if (Objects.nonNull(internalClassConstructorSuffix)) {
+			methodDescription.append(internalClassConstructorSuffix);
+		}
+
 		methodDescription.append(this.name);
 
 		methodDescription.append("(");
@@ -240,6 +255,10 @@ public class MethodInfo {
 
 	public boolean isVarargs() {
 		return isVarargs;
+	}
+
+	public String getInternalClassConstructorSuffix() {
+		return internalClassConstructorSuffix;
 	}
 
 	public boolean matches(String methodName, int numberOfParameters) {
