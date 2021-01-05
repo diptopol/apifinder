@@ -213,7 +213,7 @@ public class TypeInferenceAPI {
         return jarVertexIdSet.toArray(new Object[0]);
     }
 
-    static List<String> getQualifiedClassName(String className) {
+    public static List<String> getQualifiedClassName(String className) {
         return tinkerGraph.traversal().V()
                 .has("Kind", "Class")
                 .has("Name", className)
@@ -221,11 +221,18 @@ public class TypeInferenceAPI {
                 .toList();
     }
 
-    static JarAnalyzer getJarAnalyzer() {
-        return jarAnalyzer;
-    }
 
-    static boolean isJarExists(String groupId, String artifactId, String version) {
+	public static void loadJar(String groupId, String artifactId, String version) {
+		if (!isJarExists(groupId, artifactId, version)) {
+            JarInformation jarInformation =
+                    ExternalJarExtractionUtility.getJarInfo(groupId, artifactId, version);
+
+            jarAnalyzer.toGraph(jarInformation);
+            storeClassStructureGraph();
+        }
+	}
+
+    private static boolean isJarExists(String groupId, String artifactId, String version) {
         return tinkerGraph.traversal().V()
                 .has("Kind", "Jar")
                 .has("GroupId", groupId)
@@ -258,7 +265,7 @@ public class TypeInferenceAPI {
         }
     }
 
-    static void storeClassStructureGraph() {
+    private static void storeClassStructureGraph() {
         logger.info("storing graph");
 
         tinkerGraph.traversal().io(getJarStoragePath().toString())

@@ -191,12 +191,7 @@ public class JFreeChartTests {
         String artifactId = "jfreechart";
         String version = "1.0.19";
 
-        if (!TypeInferenceAPI.isJarExists(groupId, artifactId, version)) {
-            JarInformation jarInformation =
-                    ExternalJarExtractionUtility.getJarInfo(groupId, artifactId, version);
-
-            TypeInferenceAPI.getJarAnalyzer().toGraph(jarInformation);
-            TypeInferenceAPI.storeClassStructureGraph();
-        }
+        TypeInferenceAPI.loadJar(groupId, artifactId, version);
     }
+
 }
