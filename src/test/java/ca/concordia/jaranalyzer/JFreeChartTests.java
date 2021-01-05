@@ -153,9 +153,9 @@ public class JFreeChartTests {
     public void findInnerClassConstructorWithoutQualifiedName() {
         List<String> imports = Arrays.asList("java.lang.*", "org.jfree.chart.axis.*");
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
-                javaVersion, imports, "BaseTimelineSegmentRange", 3);
+                javaVersion, imports, "BaseTimelineSegmentRange", 2);
 
-        assertEquals("[public void SegmentedTimeline$BaseTimelineSegmentRange(org.jfree.chart.axis.SegmentedTimeline, long, long)]", matches.toString());
+        assertEquals("[public void SegmentedTimeline$BaseTimelineSegmentRange(long, long)]", matches.toString());
     }
 
     @Test
@@ -167,9 +167,9 @@ public class JFreeChartTests {
                 "org.jfree.data.xy.IntervalXYDataset");
 
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "DynamicTimeSeriesCollection.ValueSequence", 2);
+                "DynamicTimeSeriesCollection.ValueSequence", 1);
 
-        assert "[public void DynamicTimeSeriesCollection$ValueSequence(org.jfree.data.time.DynamicTimeSeriesCollection, int)]".equals(matches.toString());
+        assert "[public void DynamicTimeSeriesCollection$ValueSequence(int)]".equals(matches.toString());
     }
 
     @Test
@@ -181,9 +181,29 @@ public class JFreeChartTests {
                 "org.jfree.data.xy.IntervalXYDataset");
 
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "ValueSequence", 2);
+                "ValueSequence", 1);
 
-        assert "[public void DynamicTimeSeriesCollection$ValueSequence(org.jfree.data.time.DynamicTimeSeriesCollection, int)]".equals(matches.toString());
+        assert "[public void DynamicTimeSeriesCollection$ValueSequence(int)]".equals(matches.toString());
+    }
+
+    @Test
+    public void findMethodInNestedType() {
+        List<String> imports = Arrays.asList(
+                "java.lang.*", 
+                "org.jfree.chart.axis.*",
+                "java.io.Serializable",
+                "java.util.ArrayList",
+                "java.util.Calendar",
+                "java.util.Collections",
+                "java.util.Date",
+                "java.util.GregorianCalendar",
+                "java.util.Iterator",
+                "java.util.List",
+                "java.util.Locale",
+                "java.util.SimpleTimeZone",
+                "java.util.TimeZone");
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "Segment", 1);
+        assertEquals("[protected void SegmentedTimeline$Segment(long)]", matches.toString());
     }
 
     public static void loadPreviousJFreeChartJar() {

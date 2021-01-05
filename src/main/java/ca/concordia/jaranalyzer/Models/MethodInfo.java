@@ -87,7 +87,7 @@ public class MethodInfo {
 		if (isConstructor && Objects.nonNull(internalClassConstructorSuffix)) {
 			List<Type> types = new ArrayList<Type>();
 			for (Type type : Type.getArgumentTypes(methodNode.desc)) {
-				if (!classInfo.getQualifiedName().startsWith(type.getClassName() + "$")) {
+				if (!classInfo.getQualifiedName().startsWith(type.getClassName() + ".")) {
 					types.add(type);
 				}
 			}
