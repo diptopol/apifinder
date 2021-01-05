@@ -59,28 +59,4 @@ public class TypeInferenceAPITest {
 
         assert "public static void reverse(java.util.List)".equals(methodInfoList.get(0).toString());
     }
-
-    /**
-     * Currently, private inner classes are not excluded. If it is essential to exclude private inner classes further
-     * improvement will be needed.
-     */
-    @Test
-    public void testGetAllMethodsWithOnDemandImportList() {
-        String javaVersion = getProperty("java.version");
-
-        List<String> importList = new ArrayList<>();
-        importList.add("java.util.*");
-
-        List<MethodInfo> methodInfoList =
-                TypeInferenceAPI.getAllMethods(new HashSet<>(), javaVersion, importList,
-                        "ArrayList", 1);
-
-        List<String> methodSignatureList = new ArrayList<>();
-        methodSignatureList.add("void Arrays$ArrayList(java.lang.Object[])");
-        methodSignatureList.add("public void ArrayList(int)");
-        methodSignatureList.add("public void ArrayList(java.util.Collection)");
-
-        assert methodInfoList.size() == methodSignatureList.size()
-                && methodInfoList.stream().allMatch(methodInfo -> methodSignatureList.contains(methodInfo.toString()));
-    }
 }
