@@ -1,6 +1,8 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.Models.JarInformation;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
+import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import io.vavr.Tuple3;
 import org.eclipse.jgit.lib.Repository;
@@ -8,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
+import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 
 import java.nio.file.Path;
@@ -33,6 +36,7 @@ public class JFreeChartTests {
 
         Repository repository = GitUtil.getRepository(projectName, projectUrl, projectDirectory);
         jarInformationSet = TypeInferenceAPI.loadExternalJars(commitId, projectName, repository);
+        loadPreviousJFreeChartJar();
     }
 
     @Test
@@ -148,9 +152,10 @@ public class JFreeChartTests {
     @Test
     public void findInnerClassConstructorWithoutQualifiedName() {
         List<String> imports = Arrays.asList("java.lang.*", "org.jfree.chart.axis.*");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "BaseTimelineSegmentRange", 2);
-        assertEquals("[public void SegmentedTimeline$BaseTimelineSegmentRange(long, long)]", matches.toString());
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
+                javaVersion, imports, "BaseTimelineSegmentRange", 3);
+
+        assertEquals("[public void SegmentedTimeline$BaseTimelineSegmentRange(org.jfree.chart.axis.SegmentedTimeline, long, long)]", matches.toString());
     }
 
     @Test
@@ -179,5 +184,19 @@ public class JFreeChartTests {
                 "ValueSequence", 2);
 
         assert "[public void DynamicTimeSeriesCollection$ValueSequence(org.jfree.data.time.DynamicTimeSeriesCollection, int)]".equals(matches.toString());
+    }
+
+    public static void loadPreviousJFreeChartJar() {
+        String groupId = "org.jfree";
+        String artifactId = "jfreechart";
+        String version = "1.0.19";
+
+        if (!TypeInferenceAPI.isJarExists(groupId, artifactId, version)) {
+            JarInformation jarInformation =
+                    ExternalJarExtractionUtility.getJarInfo(groupId, artifactId, version);
+
+            TypeInferenceAPI.getJarAnalyzer().toGraph(jarInformation);
+            TypeInferenceAPI.storeClassStructureGraph();
+        }
     }
 }

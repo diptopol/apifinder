@@ -221,7 +221,11 @@ public class TypeInferenceAPI {
                 .toList();
     }
 
-    private static boolean isJarExists(String groupId, String artifactId, String version) {
+    static JarAnalyzer getJarAnalyzer() {
+        return jarAnalyzer;
+    }
+
+    static boolean isJarExists(String groupId, String artifactId, String version) {
         return tinkerGraph.traversal().V()
                 .has("Kind", "Jar")
                 .has("GroupId", groupId)
@@ -254,7 +258,7 @@ public class TypeInferenceAPI {
         }
     }
 
-    private static void storeClassStructureGraph() {
+    static void storeClassStructureGraph() {
         logger.info("storing graph");
 
         tinkerGraph.traversal().io(getJarStoragePath().toString())
