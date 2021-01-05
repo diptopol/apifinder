@@ -7,7 +7,10 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+
+import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
 
 /**
  * @author Diptopol
@@ -43,11 +46,14 @@ public class TypeInferenceAPITest {
 
     @Test
     public void testGetAllMethods() {
+        String javaVersion = getProperty("java.version");
+
         List<String> importList = new ArrayList<>();
         importList.add("java.util.Collections");
 
         List<MethodInfo> methodInfoList =
-                TypeInferenceAPI.getAllMethods(importList, "reverse", 1);
+                TypeInferenceAPI.getAllMethods(new HashSet<>(), javaVersion, importList,
+                        "reverse", 1);
 
         assert methodInfoList.size() == 1;
 
@@ -60,11 +66,14 @@ public class TypeInferenceAPITest {
      */
     @Test
     public void testGetAllMethodsWithOnDemandImportList() {
+        String javaVersion = getProperty("java.version");
+
         List<String> importList = new ArrayList<>();
         importList.add("java.util.*");
 
         List<MethodInfo> methodInfoList =
-                TypeInferenceAPI.getAllMethods(importList, "ArrayList", 1);
+                TypeInferenceAPI.getAllMethods(new HashSet<>(), javaVersion, importList,
+                        "ArrayList", 1);
 
         List<String> methodSignatureList = new ArrayList<>();
         methodSignatureList.add("void Arrays$ArrayList(java.lang.Object[])");

@@ -8,9 +8,9 @@ import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple3;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
+import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class TypeInferenceAPI {
         }
     }
 
-    public static void loadExternalJars(String commitId, String projectName, Repository repository) {
+    public static Set<Tuple3<String, String, String>> loadExternalJars(String commitId, String projectName, Repository repository) {
         Set<Tuple3<String, String, String>> jarArtifactInfoSet =
                 ExternalJarExtractionUtility.getDependenciesFromEffectivePom(commitId, projectName, repository);
 
@@ -74,9 +74,18 @@ public class TypeInferenceAPI {
         if (jarArtifactInfoSetForLoad.size() > 0) {
             storeClassStructureGraph();
         }
+
+        return jarArtifactInfoSet;
     }
 
-    public static List<MethodInfo> getAllMethods(List<String> importList, String methodName, int numberOfParameters) {
+    public static List<MethodInfo> getAllMethods(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                 String javaVersion,
+                                                 List<String> importList,
+                                                 String methodName,
+                                                 int numberOfParameters) {
+
+        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion);
+
         List<String> importStaticList = importList.stream().filter(im -> im.startsWith("import static")).collect(Collectors.toList());
         List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
         Set<String> qualifiedClassNameSet = new HashSet<>();
@@ -112,7 +121,8 @@ public class TypeInferenceAPI {
         }
 
         qualifiedClassNameSet.addAll(
-                tinkerGraph.traversal().V()
+                tinkerGraph.traversal().V(jarVertexIds)
+                        .out("ContainsPkg")
                         .has("Kind", "Package")
                         .has("Name", TextP.within(packageNameList))
                         .out("Contains")
@@ -126,7 +136,8 @@ public class TypeInferenceAPI {
         );
 
         qualifiedClassNameSet.addAll(
-                tinkerGraph.traversal().V()
+                tinkerGraph.traversal().V(jarVertexIds)
+                        .out("ContainsPkg").out("Contains")
                         .has("Kind", "Class")
                         .has("QName", TextP.within(qualifiedClassNameSet))
                         .out("extends", "implements")
@@ -135,14 +146,17 @@ public class TypeInferenceAPI {
         );
 
         qualifiedClassNameSet.addAll(
-                tinkerGraph.traversal().V().has("Kind", "Class")
+                tinkerGraph.traversal().V(jarVertexIds)
+                        .out("ContainsPkg").out("Contains")
+                        .has("Kind", "Class")
                         .has("QName", TextP.within(qualifiedClassNameSet))
                         .out("Declares")
                         .has("Kind", "InnerClass").<String>values("Name")
                         .toSet()
         );
 
-        List<ClassInfo> classInfoList = tinkerGraph.traversal().V()
+        List<ClassInfo> classInfoList = tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
                 .has("QName", TextP.within(qualifiedClassNameSet))
                 .toStream()
@@ -152,7 +166,8 @@ public class TypeInferenceAPI {
         List<MethodInfo> methodInfoList = new ArrayList<>();
 
         for (ClassInfo classInfo : classInfoList) {
-            List<MethodInfo> selectedMethodInfoList = tinkerGraph.traversal().V()
+            List<MethodInfo> selectedMethodInfoList = tinkerGraph.traversal().V(jarVertexIds)
+                    .out("ContainsPkg").out("Contains")
                     .has("Kind", "Class")
                     .has("QName", classInfo.getQualifiedName())
                     .out("Declares")
@@ -167,6 +182,35 @@ public class TypeInferenceAPI {
         }
 
         return methodInfoList;
+    }
+
+    private static Object[] getJarVertexIds(Set<Tuple3<String, String, String>> jarInformationSet, String javaVersion) {
+        Set<Object> jarVertexIdSet = new HashSet<>();
+
+        jarInformationSet.forEach(j -> {
+            jarVertexIdSet.addAll(
+                    tinkerGraph.traversal().V()
+                            .has("Kind", "Jar")
+                            .has("GroupId", j._1)
+                            .has("ArtifactId", j._2)
+                            .has("Version", j._3)
+                            .toStream()
+                            .map(Element::id)
+                            .collect(Collectors.toSet())
+            );
+        });
+
+        jarVertexIdSet.addAll(
+                tinkerGraph.traversal().V()
+                        .has("Kind", "Jar")
+                        .has("ArtifactId", "Java")
+                        .has("Version", javaVersion)
+                        .toStream()
+                        .map(Element::id)
+                        .collect(Collectors.toSet())
+        );
+
+        return jarVertexIdSet.toArray(new Object[0]);
     }
 
     static List<String> getQualifiedClassName(String className) {
