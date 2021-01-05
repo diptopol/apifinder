@@ -1,8 +1,6 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.Models.JarInformation;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
-import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import io.vavr.Tuple3;
 import org.eclipse.jgit.lib.Repository;
@@ -54,7 +52,7 @@ public class JFreeChartTests {
     }
 
     @Test
-    public void findMethodInSuperclassOfImportLocatedInAnotherJar() {
+    public void findMethodWithStaticImport() {
         List<String> imports = Arrays.asList("import static org.junit.jupiter.api.Assertions.assertEquals",
                 "import static org.junit.jupiter.api.Assertions.assertTrue",
                 "import static org.junit.jupiter.api.Assertions.assertFalse",
@@ -204,6 +202,30 @@ public class JFreeChartTests {
                 "java.util.TimeZone");
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "Segment", 1);
         assertEquals("[protected void SegmentedTimeline$Segment(long)]", matches.toString());
+    }
+
+    @Test
+    public void findMethodInSuperclassOfImportLocatedInAnotherJar() {
+        List<String> imports = Arrays.asList(
+                "java.lang.*",
+                "org.jfree.chart.demo.*",
+                "java.awt.Color", "java.awt.Dimension",
+                "java.awt.GradientPaint",
+                "org.jfree.chart.ChartFactory",
+                "org.jfree.chart.ChartPanel",
+                "org.jfree.chart.JFreeChart",
+                "org.jfree.chart.axis.CategoryAxis",
+                "org.jfree.chart.axis.CategoryLabelPositions",
+                "org.jfree.chart.axis.NumberAxis",
+                "org.jfree.chart.plot.CategoryPlot",
+                "org.jfree.chart.plot.PlotOrientation",
+                "org.jfree.chart.renderer.category.BarRenderer",
+                "org.jfree.data.category.CategoryDataset",
+                "org.jfree.data.category.DefaultCategoryDataset",
+                "org.jfree.ui.ApplicationFrame",
+                "org.jfree.ui.RefineryUtilities");
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "setPreferredSize", 1);
+        assertEquals("[public void setPreferredSize(java.awt.Dimension), public void setPreferredSize(java.awt.Dimension)]", matches.toString());
     }
 
     public static void loadPreviousJFreeChartJar() {
