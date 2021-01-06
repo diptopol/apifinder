@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MethodInfo {
+	private Object id;
 	private String name;
 	private ClassInfo classInfo;
 	private Type[] argumentTypes;
@@ -26,9 +27,8 @@ public class MethodInfo {
 	private String qualifiedName;
 	private String internalClassConstructorSuffix;
 
-	public MethodInfo(Vertex vertex, ClassInfo classInfo) {
-		this.classInfo = classInfo;
-
+	public MethodInfo(Vertex vertex) {
+		this.id = vertex.id();
 		this.name = vertex.<String>property("Name").value();
 		this.isAbstract = vertex.<Boolean>property("isAbstract").value();
 		this.isConstructor = vertex.<Boolean>property("isConstructor").value();
@@ -66,6 +66,7 @@ public class MethodInfo {
 		while (thrownInternalClassNamesIterator.hasNext()) {
 			this.thrownInternalClassNames.add(thrownInternalClassNamesIterator.next().value());
 		}
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -183,12 +184,20 @@ public class MethodInfo {
 		return methodDescription.toString();
 	}
 
+	public Object getId() {
+		return id;
+	}
+
 	public String getName() {
 		return name;
 	}
 
 	public ClassInfo getClassInfo() {
 		return classInfo;
+	}
+
+	public void setClassInfo(ClassInfo classInfo) {
+		this.classInfo = classInfo;
 	}
 
 	public String getQualifiedClassName() {

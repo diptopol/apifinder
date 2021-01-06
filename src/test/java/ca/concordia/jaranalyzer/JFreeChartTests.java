@@ -229,11 +229,13 @@ public class JFreeChartTests {
                 "org.jfree.data.category.DefaultCategoryDataset",
                 "org.jfree.ui.ApplicationFrame",
                 "org.jfree.ui.RefineryUtilities");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "setPreferredSize", 1);
-        assertEquals("[public void setPreferredSize(java.awt.Dimension), public void setPreferredSize(java.awt.Dimension)]", matches.toString());
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
+                javaVersion, imports, "setPreferredSize", 1);
+
+        assertEquals("[public void setPreferredSize(java.awt.Dimension)]", matches.toString());
     }
 
-    public static void loadPreviousJFreeChartJar() {
+    private static void loadPreviousJFreeChartJar() {
         String groupId = "org.jfree";
         String artifactId = "jfreechart";
         String version = "1.0.19";
