@@ -176,6 +176,16 @@ public class JFreeChartTests {
     }
 
     @Test
+    public void findInnerClassConstructorWithOuterClassConcatenatedAndOuterClassImport() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import java.awt.geom.Point2D");
+
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
+                "Point2D.Double", 2);
+
+        assert "[public void Point2D$Double(double, double)]".equals(matches.toString());
+    }
+
+    @Test
     public void findInnerClassConstructorWithoutOuterClassConcatenated() {
         List<String> imports = Arrays.asList("java.lang.*",
                 "org.jfree.data.time.*", "java.util.Calendar", "java.util.TimeZone",

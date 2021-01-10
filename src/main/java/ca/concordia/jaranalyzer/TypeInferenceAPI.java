@@ -127,6 +127,17 @@ public class TypeInferenceAPI {
             methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
         }
 
+        Set<String> innerClassSet = tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
+                .has("Kind", "Class")
+                .has("QName", TextP.within(importedClassQNameList))
+                .out("Declares")
+                .has("Kind", "InnerClass")
+                .<String>values("Name")
+                .toSet();
+
+        importedClassQNameList.addAll(innerClassSet);
+
         List<MethodInfo> qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
                 jarVertexIds, importedClassQNameList);
 
