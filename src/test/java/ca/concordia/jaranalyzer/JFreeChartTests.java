@@ -245,6 +245,21 @@ public class JFreeChartTests {
         assertEquals("[public void setPreferredSize(java.awt.Dimension)]", matches.toString());
     }
 
+    @Test
+    public void findConstructorWithDiamondSign() {
+        List<String> imports = Arrays.asList("import java.lang.*",
+                "import org.jfree.chart.axis.*",
+                "import java.util.ArrayList",
+                "import java.util.List",
+                "import java.util.Objects",
+                "import org.jfree.chart.ui.RectangleEdge");
+
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet,
+                javaVersion, imports, "ArrayList<>", 0);
+
+        assertEquals("[public void ArrayList()]", matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         String groupId = "org.jfree";
         String artifactId = "jfreechart";

@@ -120,6 +120,17 @@ public class TypeInferenceAPI {
         );
 
         /*
+          Method name may contains parameterized type (e.g ArrayList<String>). So removal of parameterized type is required
+          before method name matching.
+         */
+        if (methodName.contains("<") && methodName.contains(">")) {
+            int startIndex = methodName.lastIndexOf("<");
+            int endIndex = methodName.lastIndexOf(">") + 1;
+
+            methodName = methodName.replace(methodName.substring(startIndex, endIndex), "");
+        }
+
+        /*
           For fully qualified method expression, We are extracting fully qualified class name as import and method name
          */
         if (methodName.contains(".")) {
