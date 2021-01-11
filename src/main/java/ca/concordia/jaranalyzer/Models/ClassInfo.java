@@ -34,6 +34,7 @@ public class ClassInfo  {
 	private List<String> innerClassNameList;
 	private boolean isEnum;
 	private boolean isInnerClass;
+	private boolean isAnonymousInnerClass;
 
 	public ClassInfo(Vertex vertex) {
 		this.name = vertex.<String>property("Name").value();
@@ -46,6 +47,7 @@ public class ClassInfo  {
 		this.isInterface = vertex.<Boolean>property("isInterface").value();
 		this.isEnum = vertex.<Boolean>property("isEnum").value();
 		this.isInnerClass = vertex.<Boolean>property("isInnerClass").value();
+		this.isAnonymousInnerClass = vertex.<Boolean>property("isAnonymousInnerClass").value();
 
 		this.type = Type.getType(vertex.<String>property("typeDescriptor").value());
 	}
@@ -58,7 +60,10 @@ public class ClassInfo  {
 			this.innerClassNameList = new ArrayList<>();
 			this.superInterfaceMap = new LinkedHashMap<>();
 			this.qualifiedName = classNode.name.replace('/', '.');
+
 			this.isInnerClass = qualifiedName.contains("$");
+			this.isAnonymousInnerClass = qualifiedName.matches(".*\\$[0-9]+");
+
 			this.qualifiedName = qualifiedName.contains("$") ? qualifiedName.replace("$",".") : qualifiedName;
 			if (!classNode.name.contains("/")) {
 				this.name = classNode.name;
@@ -312,5 +317,9 @@ public class ClassInfo  {
 
 	public boolean isInnerClass() {
 		return isInnerClass;
+	}
+
+	public boolean isAnonymousInnerClass() {
+		return isAnonymousInnerClass;
 	}
 }

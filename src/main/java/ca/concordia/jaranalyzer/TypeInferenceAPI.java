@@ -9,6 +9,7 @@ import io.vavr.Tuple3;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
@@ -170,6 +171,7 @@ public class TypeInferenceAPI {
                 .has("Name", TextP.within(packageNameList))
                 .out("Contains")
                 .has("Kind", "Class")
+                .has("isAnonymousInnerClass", P.neq(true))
                 .<String>values("QName")
                 .toSet();
 
@@ -230,6 +232,7 @@ public class TypeInferenceAPI {
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
                 .has("QName", TextP.within(classQNameList))
+                .has("isAnonymousInnerClass", P.neq(true))
                 .out("Declares")
                 .has("Kind", "Method")
                 .has("Name", methodName)

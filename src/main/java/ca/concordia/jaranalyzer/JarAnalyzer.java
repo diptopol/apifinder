@@ -70,6 +70,7 @@ public class JarAnalyzer {
                         .property("isProtected", c.isProtected())
                         .property("QName", c.getQualifiedName())
                         .property("isInnerClass", c.isInnerClass())
+                        .property("isAnonymousInnerClass", c.isAnonymousInnerClass())
                         .property("typeDescriptor", c.getType().getDescriptor())
                         .next();
 
