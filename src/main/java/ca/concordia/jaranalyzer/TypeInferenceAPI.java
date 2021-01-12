@@ -183,7 +183,6 @@ public class TypeInferenceAPI {
                 .has("Name", TextP.within(packageNameList))
                 .out("Contains")
                 .has("Kind", "Class")
-                .has("isAnonymousInnerClass", P.neq(true))
                 .<String>values("QName")
                 .toSet();
 
@@ -244,7 +243,6 @@ public class TypeInferenceAPI {
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
                 .has("QName", TextP.within(classQNameList))
-                .has("isAnonymousInnerClass", P.neq(true))
                 .out("Declares")
                 .has("Kind", "Method")
                 .has("Name", methodName)

@@ -62,6 +62,10 @@ public class JarAnalyzer {
             Map<Object, List<String>> innerClassQNameMap = new HashMap<>();
 
             for (ClassInfo c : p.getClasses()) {
+                if (c.isAnonymousInnerClass()) {
+                    continue;
+                }
+
                 Vertex cls = graphTraversalSource.addV()
                         .property("Kind", "Class")
                         .property("isAbstract", c.isAbstract())

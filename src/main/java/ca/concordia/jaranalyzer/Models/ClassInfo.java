@@ -17,6 +17,8 @@ import java.util.Set;
 
 public class ClassInfo  {
 
+	private static final String ANONYMOUS_INNER_CLASS_NAME_REGEX = ".*\\$[0-9]+";
+
 	private String qualifiedName;
 	private String name;
 	private String packageName;
@@ -47,7 +49,6 @@ public class ClassInfo  {
 		this.isInterface = vertex.<Boolean>property("isInterface").value();
 		this.isEnum = vertex.<Boolean>property("isEnum").value();
 		this.isInnerClass = vertex.<Boolean>property("isInnerClass").value();
-		this.isAnonymousInnerClass = vertex.<Boolean>property("isAnonymousInnerClass").value();
 
 		this.type = Type.getType(vertex.<String>property("typeDescriptor").value());
 	}
@@ -62,7 +63,7 @@ public class ClassInfo  {
 			this.qualifiedName = classNode.name.replace('/', '.');
 
 			this.isInnerClass = qualifiedName.contains("$");
-			this.isAnonymousInnerClass = qualifiedName.matches(".*\\$[0-9]+");
+			this.isAnonymousInnerClass = qualifiedName.matches(ANONYMOUS_INNER_CLASS_NAME_REGEX);
 
 			this.qualifiedName = qualifiedName.contains("$") ? qualifiedName.replace("$",".") : qualifiedName;
 			if (!classNode.name.contains("/")) {
@@ -121,7 +122,9 @@ public class ClassInfo  {
 			}
 
 			for (InnerClassNode innerClassNode : classNode.innerClasses) {
-				innerClassNameList.add(innerClassNode.name.replace("/", ".").replace("$", "."));
+				if (!innerClassNode.name.matches(ANONYMOUS_INNER_CLASS_NAME_REGEX)) {
+					innerClassNameList.add(innerClassNode.name.replace("/", ".").replace("$", "."));
+				}
 			}
 
 		} catch (Exception e) {
