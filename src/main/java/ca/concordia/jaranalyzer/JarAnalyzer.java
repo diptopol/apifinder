@@ -12,6 +12,7 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.objectweb.asm.Type;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,6 +59,8 @@ public class JarAnalyzer {
 
             graphTraversalSource.addE("ContainsPkg").from(jar).to(pkg).iterate();
 
+            Map<Object, List<String>> innerClassQNameMap = new HashMap<>();
+
             for (ClassInfo c : p.getClasses()) {
                 Vertex cls = graphTraversalSource.addV()
                         .property("Kind", "Class")
@@ -85,15 +88,7 @@ public class JarAnalyzer {
                     graphTraversalSource.addE("extends").from(cls).to(superClass).iterate();
                 }
 
-                c.getInnerClassNameList()
-                        .forEach(ic -> {
-                            Vertex innerClass = graphTraversalSource.addV()
-                                    .property("Kind", "InnerClass")
-                                    .property("Name", ic)
-                                    .next();
-
-                            graphTraversalSource.addE("Declares").from(cls).to(innerClass).iterate();
-                        });
+                innerClassQNameMap.put(cls.id(), c.getInnerClassNameList());
 
                 c.getSuperInterfaceNames()
                         .forEach(e -> {
@@ -153,6 +148,24 @@ public class JarAnalyzer {
                             graphTraversalSource.addE("Declares").from(cls).to(field).iterate();
                         });
             }
+
+            innerClassQNameMap.forEach((classVertexId, innerClassQNameList) -> {
+                if (!innerClassQNameList.isEmpty()) {
+                    Vertex classVertex = graphTraversalSource.V(classVertexId).next();
+
+                    innerClassQNameList.forEach(innerClassQName -> {
+                        graphTraversalSource.V(jar.id())
+                                .out("ContainsPkg")
+                                .hasId(pkg.id())
+                                .out("Contains")
+                                .has("Kind", "Class")
+                                .has("QName", innerClassQName)
+                                .addE("ContainsInnerClass").from(classVertex)
+                                .iterate();
+                    });
+                }
+            });
+
         }
     }
 

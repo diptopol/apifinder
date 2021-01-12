@@ -80,15 +80,18 @@ public class TypeInferenceAPI {
     }
 
     /**
-     * The process of checking classes for specific method will happen in three steps.<br><br>
+     * The process of checking classes for specific method will happen in four steps.<br><br>
      *
      * <strong>Step 1</strong>: All the classes who are directly mentioned in the import statement will be checked,
      * if method found it will be returned.<br>
      *
-     * <strong>Step 2</strong>: All the classes under on-demand package import will be searched, if method found
+     * <strong>Step 2</strong>: All the inner classes of classes who are directly mentioned in the import statement will
+     * be checked, if method found it will be returned.<br>
+     *
+     * <strong>Step 3</strong>: All the classes under on-demand package import will be searched, if method found
      * it will be returned.<br>
      *
-     * <strong>Step 3</strong>: Recursively look for super classes and interfaces from all the import classes (on demand and normal)
+     * <strong>Step 4</strong>: Recursively look for super classes and interfaces from all the import classes (on demand and normal)
      * if in any step method is found it will be returned, otherwise recursion will happen until java.lang.Object is
      * reached, then if no method is found an empty list will be returned.<br>
      */
@@ -139,17 +142,6 @@ public class TypeInferenceAPI {
             methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
         }
 
-        Set<String> innerClassSet = tinkerGraph.traversal().V(jarVertexIds)
-                .out("ContainsPkg").out("Contains")
-                .has("Kind", "Class")
-                .has("QName", TextP.within(importedClassQNameList))
-                .out("Declares")
-                .has("Kind", "InnerClass")
-                .<String>values("Name")
-                .toSet();
-
-        importedClassQNameList.addAll(innerClassSet);
-
         List<MethodInfo> qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
                 jarVertexIds, importedClassQNameList);
 
@@ -159,6 +151,26 @@ public class TypeInferenceAPI {
 
         /*
           STEP 2
+         */
+        qualifiedMethodInfoList = tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
+                .has("Kind", "Class")
+                .has("QName", TextP.within(importedClassQNameList))
+                .out("ContainsInnerClass")
+                .out("Declares")
+                .has("Kind", "Method")
+                .has("Name", methodName)
+                .toStream()
+                .map(MethodInfo::new)
+                .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters)
+                .collect(Collectors.toList());
+
+        if (!qualifiedMethodInfoList.isEmpty()) {
+            return populateClassInfo(qualifiedMethodInfoList);
+        }
+
+        /*
+          STEP 3
          */
         List<String> packageNameList = nonImportStaticList.stream()
                 .filter(im -> im.endsWith(".*"))
@@ -184,7 +196,7 @@ public class TypeInferenceAPI {
         }
 
         /*
-          STEP 3
+          STEP 4
          */
         Set<String> classQNameList = new HashSet<>(importedClassQNameList);
 
