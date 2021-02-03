@@ -260,6 +260,24 @@ public class JFreeChartTests {
         assertEquals("[public void ArrayList()]", matches.toString());
     }
 
+    @Test
+    public void findConstructorWithArgumentTypeArray() {
+        List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
+                "ArrayList", 1, null, "java.lang.Object[]");
+
+        assert "[void Arrays$ArrayList(java.lang.Object[])]".equals(matches.toString());
+    }
+
+    @Test
+    public void findConstructorWithArgumentTypeSubClass() {
+        List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
+                "ArrayList", 1, "ArrayList", "java.util.ArrayList");
+
+        assert "[public void ArrayList(java.util.Collection)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         String groupId = "org.jfree";
         String artifactId = "jfreechart";

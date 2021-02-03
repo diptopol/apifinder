@@ -8,12 +8,13 @@ import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple3;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
-import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.lib.Repository;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,12 +22,10 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
 import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
@@ -79,6 +78,117 @@ public class TypeInferenceAPI {
         return jarArtifactInfoSet;
     }
 
+    public static List<MethodInfo> getAllMethods(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                 String javaVersion,
+                                                 List<String> importList,
+                                                 String methodName,
+                                                 int numberOfParameters,
+                                                 String callerClassName,
+                                                 String... argumentTypes) {
+        List<String> argumentTypeList = new ArrayList<>(Arrays.asList(argumentTypes));
+
+        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion);
+        List<MethodInfo> methodInfoList =
+                getAllMethods(jarVertexIds, importList, methodName, numberOfParameters);
+
+        if (methodInfoList.size() == 1) {
+            return methodInfoList;
+        }
+
+        /*
+         * Caller class name filter. class name can be qualified name or simple name
+         *
+         */
+        if (Objects.nonNull(callerClassName) && !callerClassName.equals("")) {
+            methodInfoList = methodInfoList.stream()
+                    .filter(methodInfo -> methodInfo.getClassInfo().getQualifiedName().matches(callerClassName)
+                            || methodInfo.getClassInfo().getName().matches(callerClassName))
+                    .collect(Collectors.toList());
+        }
+
+        if (methodInfoList.size() == 1) {
+            return methodInfoList;
+        }
+
+        /*
+         * Argument type check filter.
+         */
+        if (!argumentTypeList.isEmpty()) {
+            return methodInfoList.stream().filter(methodInfo -> {
+
+                List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
+                List<String> methodArgumentClassNameList = Stream.of(methodInfo.getArgumentTypes())
+                        .map(Type::getClassName)
+                        .collect(Collectors.toList());
+
+                List<String> commonClassNameList = getCommonClassNameList(argumentTypeClassNameList, methodArgumentClassNameList);
+
+                argumentTypeClassNameList.removeAll(commonClassNameList);
+                methodArgumentClassNameList.removeAll(commonClassNameList);
+
+                if (argumentTypeClassNameList.isEmpty() && methodArgumentClassNameList.isEmpty()) {
+                    return true;
+                }
+
+                List<String> matchedMethodArgumentTypeList = new ArrayList<>();
+
+                for (int index = 0; index < argumentTypeClassNameList.size(); index++) {
+                    String argumentTypeClassName = argumentTypeClassNameList.get(index);
+                    String methodArgumentTypeClassName = methodArgumentClassNameList.get(index);
+
+                    if (isPrimitiveType(argumentTypeClassName, methodArgumentTypeClassName)) {
+                        return false;
+                    }
+
+                    if (isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
+                        return false;
+                    }
+
+                    /*
+                     * Trimmed down array dimension before searching for super classes.
+                     */
+                    argumentTypeClassName = argumentTypeClassName.replaceAll("[/]", "");
+                    methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("[/]", "");
+
+                    Set<String> classNameList = new HashSet<>();
+                    classNameList.add(argumentTypeClassName);
+
+                    while (!classNameList.isEmpty()) {
+                        classNameList = tinkerGraph.traversal().V(jarVertexIds)
+                                .out("ContainsPkg").out("Contains")
+                                .has("Kind", "Class")
+                                .has("QName", TextP.within(classNameList))
+                                .out("extends", "implements")
+                                .<String>values("Name")
+                                .toSet();
+
+                        if (classNameList.contains(methodArgumentTypeClassName)) {
+                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                            break;
+                        }
+                    }
+                }
+
+                methodArgumentClassNameList.removeAll(matchedMethodArgumentTypeList);
+
+                return methodArgumentClassNameList.isEmpty();
+            }).collect(Collectors.toList());
+        }
+
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> getAllMethods(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                 String javaVersion,
+                                                 List<String> importList,
+                                                 String methodName,
+                                                 int numberOfParameters) {
+        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion);
+
+        return getAllMethods(jarVertexIds, importList, methodName, numberOfParameters);
+    }
+
+
     /**
      * The process of checking classes for specific method will happen in four steps.<br><br>
      *
@@ -95,13 +205,10 @@ public class TypeInferenceAPI {
      * if in any step method is found it will be returned, otherwise recursion will happen until java.lang.Object is
      * reached, then if no method is found an empty list will be returned.<br>
      */
-    public static List<MethodInfo> getAllMethods(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                 String javaVersion,
+    private static List<MethodInfo> getAllMethods(Object[] jarVertexIds,
                                                  List<String> importList,
                                                  String methodName,
                                                  int numberOfParameters) {
-
-        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion);
 
         List<String> importStaticList = importList.stream().filter(im -> im.startsWith("import static")).collect(Collectors.toList());
         List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
@@ -279,6 +386,35 @@ public class TypeInferenceAPI {
         );
 
         return jarVertexIdSet.toArray(new Object[0]);
+    }
+
+    private static List<String> getCommonClassNameList(List<String> argumentTypeClassNameList,
+                                                       List<String> methodArgumentClassNameList) {
+
+        List<String> commonClassNameList = new ArrayList<>(argumentTypeClassNameList);
+        commonClassNameList.retainAll(methodArgumentClassNameList);
+
+        return commonClassNameList;
+    }
+
+    private static boolean isPrimitiveType(String argumentTypeClassName, String methodArgumentTypeClassName) {
+        List<String> primitiveTypeList =
+                new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
+
+        return primitiveTypeList.contains(argumentTypeClassName)
+                || primitiveTypeList.contains(methodArgumentTypeClassName);
+    }
+
+    private static boolean isArrayDimensionMismatch(String argumentTypeClassName, String methodArgumentTypeClassName) {
+        boolean isArgumentTypeArray = argumentTypeClassName.endsWith("[]");
+        int argumentTypeArrayDimension = StringUtils.countMatches(argumentTypeClassName, "[]");
+
+        boolean isMethodArgumentTypeArray = methodArgumentTypeClassName.endsWith("[]");
+        int methodArgumentTypeArrayDimension = StringUtils.countMatches(methodArgumentTypeClassName, "[]");
+
+        return (isArgumentTypeArray && !isMethodArgumentTypeArray)
+                || (!isArgumentTypeArray && isMethodArgumentTypeArray)
+                || argumentTypeArrayDimension != methodArgumentTypeArrayDimension;
     }
 
     public static List<String> getQualifiedClassName(String className) {
