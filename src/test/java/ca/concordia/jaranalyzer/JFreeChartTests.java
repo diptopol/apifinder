@@ -33,7 +33,7 @@ public class JFreeChartTests {
         String commitId = "35d53459e854a2bb39d6f012ce9b78ec8ab7f0f9";
 
         Repository repository = GitUtil.getRepository(projectName, projectUrl, projectDirectory);
-        jarInformationSet = TypeInferenceAPI.loadExternalJars(commitId, projectName, repository);
+        jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, repository);
         loadPreviousJFreeChartJar();
     }
 
@@ -45,8 +45,9 @@ public class JFreeChartTests {
                 "java.awt.geom.GeneralPath", "java.awt.geom.Point2D",
                 "java.awt.geom.Rectangle2D", "java.io.Serializable");
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "getMinX", 0);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet, javaVersion, imports, "getMinX", 0).getMethodList();
+
 
         assert "[public double getMinX()]".equals(matches.toString());
     }
@@ -62,8 +63,9 @@ public class JFreeChartTests {
                 "org.jfree.chart.util.PublicCloneable",
                 "org.junit.jupiter.api.Test");
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "assertTrue", 2);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet, javaVersion, imports,
+                "assertTrue", 2).getMethodList();
 
         List<String> methodSignatureList = new ArrayList<>();
         methodSignatureList.add("public static void assertTrue(java.util.function.BooleanSupplier, java.lang.String)");
@@ -78,8 +80,8 @@ public class JFreeChartTests {
     @Test
     public void findClassConstructorWithQualifiedName() {
         List<String> imports = Collections.singletonList("java.lang.*");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "java.util.ArrayList", 0);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "java.util.ArrayList", 0).getMethodList();
 
         assert "[public void ArrayList()]".equals(matches.toString());
     }
@@ -92,8 +94,8 @@ public class JFreeChartTests {
     @Test
     public void findClassConstructorWithNonQualifiedName() {
         List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "ArrayList", 1);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "ArrayList", 1).getMethodList();
 
         List<String> methodSignatureList = new ArrayList<>();
         methodSignatureList.add("void Arrays$ArrayList(java.lang.Object[])");
@@ -111,9 +113,8 @@ public class JFreeChartTests {
                 "java.io.Serializable", "java.util.List",
                 "org.jfree.ui.Size2D",
                 "org.jfree.data.Range");
-
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "constrain", 1);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "constrain", 1).getMethodList();
 
         assert "[public double constrain(double)]".equals(matches.toString());
     }
@@ -147,16 +148,16 @@ public class JFreeChartTests {
                 "org.jfree.util.PublicCloneable",
                 "org.jfree.util.ShapeUtilities");
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "getRowKey", 1);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "getRowKey", 1).getMethodList();
         assert "[public abstract java.lang.Comparable getRowKey(int)]".equals(matches.toString());
     }
 
     @Test
     public void findInnerClassConstructorWithoutQualifiedName() {
         List<String> imports = Arrays.asList("java.lang.*", "org.jfree.chart.axis.*");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
-                javaVersion, imports, "BaseTimelineSegmentRange", 2);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
+                javaVersion, imports, "BaseTimelineSegmentRange", 2).getMethodList();
 
         assertEquals("[public void SegmentedTimeline$BaseTimelineSegmentRange(long, long)]", matches.toString());
     }
@@ -169,8 +170,9 @@ public class JFreeChartTests {
                 "org.jfree.data.general.SeriesChangeEvent", "org.jfree.data.xy.AbstractIntervalXYDataset",
                 "org.jfree.data.xy.IntervalXYDataset");
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "DynamicTimeSeriesCollection.ValueSequence", 1);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "DynamicTimeSeriesCollection.ValueSequence", 1)
+                .getMethodList();
 
         assert "[public void DynamicTimeSeriesCollection$ValueSequence(int)]".equals(matches.toString());
     }
@@ -179,8 +181,8 @@ public class JFreeChartTests {
     public void findInnerClassConstructorWithOuterClassConcatenatedAndOuterClassImport() {
         List<String> imports = Arrays.asList("import java.lang.*", "import java.awt.geom.Point2D");
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "Point2D.Double", 2);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "Point2D.Double", 2).getMethodList();
 
         assert "[public void Point2D$Double(double, double)]".equals(matches.toString());
     }
@@ -193,8 +195,8 @@ public class JFreeChartTests {
                 "org.jfree.data.general.SeriesChangeEvent", "org.jfree.data.xy.AbstractIntervalXYDataset",
                 "org.jfree.data.xy.IntervalXYDataset");
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "ValueSequence", 1);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "ValueSequence", 1).getMethodList();
 
         assert "[public void DynamicTimeSeriesCollection$ValueSequence(int)]".equals(matches.toString());
     }
@@ -202,7 +204,7 @@ public class JFreeChartTests {
     @Test
     public void findMethodInNestedType() {
         List<String> imports = Arrays.asList(
-                "java.lang.*", 
+                "java.lang.*",
                 "org.jfree.chart.axis.*",
                 "java.io.Serializable",
                 "java.util.ArrayList",
@@ -215,7 +217,10 @@ public class JFreeChartTests {
                 "java.util.Locale",
                 "java.util.SimpleTimeZone",
                 "java.util.TimeZone");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "Segment", 1);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports,
+                "Segment", 1)
+                .getMethodList();
         assertEquals("[protected void SegmentedTimeline$Segment(long)]", matches.toString());
     }
 
@@ -239,8 +244,10 @@ public class JFreeChartTests {
                 "org.jfree.data.category.DefaultCategoryDataset",
                 "org.jfree.ui.ApplicationFrame",
                 "org.jfree.ui.RefineryUtilities");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
-                javaVersion, imports, "setPreferredSize", 1);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
+                javaVersion, imports, "setPreferredSize", 1)
+                .getMethodList();
 
         assertEquals("[public void setPreferredSize(java.awt.Dimension)]", matches.toString());
     }
@@ -254,8 +261,8 @@ public class JFreeChartTests {
                 "import java.util.Objects",
                 "import org.jfree.chart.ui.RectangleEdge");
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet,
-                javaVersion, imports, "ArrayList<>", 0);
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet,
+                javaVersion, imports, "ArrayList<>", 0).getMethodList();
 
         assertEquals("[public void ArrayList()]", matches.toString());
     }
@@ -263,8 +270,10 @@ public class JFreeChartTests {
     @Test
     public void findConstructorWithArgumentTypeArray() {
         List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "ArrayList", 1, null, "java.lang.Object[]");
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "ArrayList", 1)
+                .setArgumentTypeAsCriteria(0, "java.lang.Object[]")
+                .getMethodList();
 
         assert "[void Arrays$ArrayList(java.lang.Object[])]".equals(matches.toString());
     }
@@ -272,11 +281,60 @@ public class JFreeChartTests {
     @Test
     public void findConstructorWithArgumentTypeSubClass() {
         List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet, javaVersion, imports,
-                "ArrayList", 1, "ArrayList", "java.util.ArrayList");
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
+                "ArrayList", 1)
+                .setInvokerTypeAsCriteria("ArrayList")
+                .setArgumentTypeAsCriteria(0, "java.util.ArrayList")
+                .getMethodList();
 
         assert "[public void ArrayList(java.util.Collection)]".equals(matches.toString());
     }
+
+
+    /**
+     *  There are 4 method signature of assertTrue with parameter size 2<br><br>
+     *
+     *  public static void assertTrue(java.util.function.BooleanSupplier, java.lang.String)<br>
+     *  public static void assertTrue(boolean, java.util.function.Supplier)<br>
+     *  public static void assertTrue(java.util.function.BooleanSupplier, java.util.function.Supplier)<br>
+     *  public static void assertTrue(boolean, java.lang.String)<br><br>
+     *
+     *  `setArgumentTypeAsCriteria(argumentIndex, argumentType)` method will help API to search for method which has that
+     *  `argumentType` class or any super class of that for `argumentIndex`.<br><br>
+     *
+     *  This method assume argumentIndex always will start from 0.<br><br>
+     *
+     *  This tests verifies whether API can filter out method list with partial argument types as parameter
+     *  (e.g., assertTrue method has 4 method signature with parameter size 2. So passing argument index 1 and argument type
+     *  `java.util.function.Supplier`, API will filter out all the methods which does not contain
+     *  `java.util.function.Supplier` as second parameter)
+     *
+     */
+    @Test
+    public void findMethodWithPartialArgumentTypeWithIndex() {
+        List<String> imports = Arrays.asList("import static org.junit.jupiter.api.Assertions.assertEquals",
+                "import static org.junit.jupiter.api.Assertions.assertTrue",
+                "import static org.junit.jupiter.api.Assertions.assertFalse",
+                "java.awt.BasicStroke",
+                "java.awt.Color",
+                "org.jfree.chart.TestUtils",
+                "org.jfree.chart.util.PublicCloneable",
+                "org.junit.jupiter.api.Test");
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet, javaVersion, imports, "assertTrue", 2)
+                .setInvokerTypeAsCriteria("org.junit.jupiter.api.Assertions")
+                .setArgumentTypeAsCriteria(1, "java.util.function.Supplier")
+                .getMethodList();
+
+        List<String> methodSignatureList = new ArrayList<>();
+        methodSignatureList.add("public static void assertTrue(boolean, java.util.function.Supplier)");
+        methodSignatureList.add("public static void assertTrue(java.util.function.BooleanSupplier, java.util.function.Supplier)");
+
+        assert matches.size() == methodSignatureList.size()
+                && matches.stream().allMatch(match -> methodSignatureList.contains(match.toString()));
+    }
+
 
     private static void loadPreviousJFreeChartJar() {
         String groupId = "org.jfree";
