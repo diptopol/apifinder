@@ -41,7 +41,20 @@ public class TypeInferenceAPI {
     private static TinkerGraph tinkerGraph;
     private static JarAnalyzer jarAnalyzer;
 
+    private static Map<String, String> PRIMITIVE_WRAPPER_CLASS_MAP = new HashMap<>();
+
     static {
+        PRIMITIVE_WRAPPER_CLASS_MAP.put("boolean", "java.lang.Boolean");
+        PRIMITIVE_WRAPPER_CLASS_MAP.put("byte", "java.lang.Byte");
+        PRIMITIVE_WRAPPER_CLASS_MAP.put("char", "java.lang.Character");
+        PRIMITIVE_WRAPPER_CLASS_MAP.put("float", "java.lang.Float");
+        PRIMITIVE_WRAPPER_CLASS_MAP.put("int", "java.lang.Integer");
+        PRIMITIVE_WRAPPER_CLASS_MAP.put("long", "java.lang.Long");
+        PRIMITIVE_WRAPPER_CLASS_MAP.put("short", "java.lang.Short");
+        PRIMITIVE_WRAPPER_CLASS_MAP.put("double", "java.lang.Double");
+
+        PRIMITIVE_WRAPPER_CLASS_MAP = Collections.unmodifiableMap(PRIMITIVE_WRAPPER_CLASS_MAP);
+
         Configuration configuration = new BaseConfiguration();
         configuration.addProperty("gremlin.tinkergraph.defaultVertexPropertyCardinality", "list");
 
@@ -136,12 +149,30 @@ public class TypeInferenceAPI {
                     String argumentTypeClassName = argumentTypeClassNameList.get(index);
                     String methodArgumentTypeClassName = methodArgumentClassNameList.get(index);
 
-                    if (isPrimitiveType(argumentTypeClassName, methodArgumentTypeClassName)) {
-                        return false;
+                    if (isPrimitiveType(argumentTypeClassName) && isPrimitiveType(methodArgumentTypeClassName)) {
+                        if (argumentTypeClassName.equals("short")
+                                && Arrays.asList("int", "double", "long").contains(methodArgumentTypeClassName)) {
+
+                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+
+                        } else if (argumentTypeClassName.equals("int")
+                                && Arrays.asList("double", "long").contains(methodArgumentTypeClassName)) {
+
+                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+
+                        } else {
+                            return false;
+                        }
                     }
 
                     if (isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
                         return false;
+                    }
+
+                    if (isPrimitiveType(argumentTypeClassName)
+                            && PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
+
+                        matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                     }
 
                     /*
@@ -397,12 +428,11 @@ public class TypeInferenceAPI {
         return commonClassNameList;
     }
 
-    private static boolean isPrimitiveType(String argumentTypeClassName, String methodArgumentTypeClassName) {
+    private static boolean isPrimitiveType(String argumentTypeClassName) {
         List<String> primitiveTypeList =
                 new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
 
-        return primitiveTypeList.contains(argumentTypeClassName)
-                || primitiveTypeList.contains(methodArgumentTypeClassName);
+        return primitiveTypeList.contains(argumentTypeClassName);
     }
 
     private static boolean isArrayDimensionMismatch(String argumentTypeClassName, String methodArgumentTypeClassName) {

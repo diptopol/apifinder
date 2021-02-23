@@ -335,6 +335,17 @@ public class JFreeChartTests {
                 && matches.stream().allMatch(match -> methodSignatureList.contains(match.toString()));
     }
 
+    @Test
+    public void findMethodForPrimitiveTypeUnboxing() {
+        List<String> imports = Arrays.asList("import java.util.*");
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet, javaVersion, imports, "Date", 1)
+                .setArgumentTypeAsCriteria(0, "int")
+                .getMethodList();
+
+        assert "[public void Date(long)]".equals(matches.toString());
+    }
 
     private static void loadPreviousJFreeChartJar() {
         String groupId = "org.jfree";
