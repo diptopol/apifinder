@@ -129,6 +129,11 @@ public class MethodInfo {
 
 	public String toString() {
 		StringBuilder methodDescription = new StringBuilder();
+
+		if (classInfo != null) {
+			methodDescription.append(classInfo.getQualifiedName()).append("::");
+		}
+
 		if (isPublic) {
 			methodDescription.append("public ");
 		} else if (isProtected) {

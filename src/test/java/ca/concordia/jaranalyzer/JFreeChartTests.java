@@ -49,7 +49,7 @@ public class JFreeChartTests {
                 .new Criteria(jarInformationSet, javaVersion, imports, "getMinX", 0).getMethodList();
 
 
-        assert "[public double getMinX()]".equals(matches.toString());
+        assert "[java.awt.geom.RectangularShape::public double getMinX()]".equals(matches.toString());
     }
 
     @Test
@@ -68,10 +68,10 @@ public class JFreeChartTests {
                 "assertTrue", 2).getMethodList();
 
         List<String> methodSignatureList = new ArrayList<>();
-        methodSignatureList.add("public static void assertTrue(java.util.function.BooleanSupplier, java.lang.String)");
-        methodSignatureList.add("public static void assertTrue(boolean, java.util.function.Supplier)");
-        methodSignatureList.add("public static void assertTrue(java.util.function.BooleanSupplier, java.util.function.Supplier)");
-        methodSignatureList.add("public static void assertTrue(boolean, java.lang.String)");
+        methodSignatureList.add("org.junit.jupiter.api.Assertions::public static void assertTrue(java.util.function.BooleanSupplier, java.lang.String)");
+        methodSignatureList.add("org.junit.jupiter.api.Assertions::public static void assertTrue(boolean, java.util.function.Supplier)");
+        methodSignatureList.add("org.junit.jupiter.api.Assertions::public static void assertTrue(java.util.function.BooleanSupplier, java.util.function.Supplier)");
+        methodSignatureList.add("org.junit.jupiter.api.Assertions::public static void assertTrue(boolean, java.lang.String)");
 
         assert matches.size() == methodSignatureList.size()
                 && matches.stream().allMatch(match -> methodSignatureList.contains(match.toString()));
@@ -83,7 +83,7 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "java.util.ArrayList", 0).getMethodList();
 
-        assert "[public void ArrayList()]".equals(matches.toString());
+        assert "[java.util.ArrayList::public void ArrayList()]".equals(matches.toString());
     }
 
 
@@ -98,9 +98,9 @@ public class JFreeChartTests {
                 "ArrayList", 1).getMethodList();
 
         List<String> methodSignatureList = new ArrayList<>();
-        methodSignatureList.add("void Arrays$ArrayList(java.lang.Object[])");
-        methodSignatureList.add("public void ArrayList(int)");
-        methodSignatureList.add("public void ArrayList(java.util.Collection)");
+        methodSignatureList.add("java.util.Arrays.ArrayList::void Arrays$ArrayList(java.lang.Object[])");
+        methodSignatureList.add("java.util.ArrayList::public void ArrayList(int)");
+        methodSignatureList.add("java.util.ArrayList::public void ArrayList(java.util.Collection)");
 
         assert matches.size() == methodSignatureList.size()
                 && matches.stream().allMatch(match -> methodSignatureList.contains(match.toString()));
@@ -116,7 +116,7 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "constrain", 1).getMethodList();
 
-        assert "[public double constrain(double)]".equals(matches.toString());
+        assert "[org.jfree.data.Range::public double constrain(double)]".equals(matches.toString());
     }
 
     @Test
@@ -150,7 +150,8 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "getRowKey", 1).getMethodList();
-        assert "[public abstract java.lang.Comparable getRowKey(int)]".equals(matches.toString());
+
+        assert "[org.jfree.data.KeyedValues2D::public abstract java.lang.Comparable getRowKey(int)]".equals(matches.toString());
     }
 
     @Test
@@ -159,7 +160,8 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
                 javaVersion, imports, "BaseTimelineSegmentRange", 2).getMethodList();
 
-        assertEquals("[public void SegmentedTimeline$BaseTimelineSegmentRange(long, long)]", matches.toString());
+        assertEquals("[org.jfree.chart.axis.SegmentedTimeline.BaseTimelineSegmentRange::" +
+                "public void SegmentedTimeline$BaseTimelineSegmentRange(long, long)]", matches.toString());
     }
 
     @Test
@@ -174,7 +176,8 @@ public class JFreeChartTests {
                 "DynamicTimeSeriesCollection.ValueSequence", 1)
                 .getMethodList();
 
-        assert "[public void DynamicTimeSeriesCollection$ValueSequence(int)]".equals(matches.toString());
+        assert ("[org.jfree.data.time.DynamicTimeSeriesCollection.ValueSequence::" +
+                "public void DynamicTimeSeriesCollection$ValueSequence(int)]").equals(matches.toString());
     }
 
     @Test
@@ -184,7 +187,7 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "Point2D.Double", 2).getMethodList();
 
-        assert "[public void Point2D$Double(double, double)]".equals(matches.toString());
+        assert "[java.awt.geom.Point2D.Double::public void Point2D$Double(double, double)]".equals(matches.toString());
     }
 
     @Test
@@ -198,7 +201,8 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "ValueSequence", 1).getMethodList();
 
-        assert "[public void DynamicTimeSeriesCollection$ValueSequence(int)]".equals(matches.toString());
+        assert ("[org.jfree.data.time.DynamicTimeSeriesCollection.ValueSequence" +
+                "::public void DynamicTimeSeriesCollection$ValueSequence(int)]").equals(matches.toString());
     }
 
     @Test
@@ -221,7 +225,9 @@ public class JFreeChartTests {
                 .new Criteria(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports,
                 "Segment", 1)
                 .getMethodList();
-        assertEquals("[protected void SegmentedTimeline$Segment(long)]", matches.toString());
+
+        assertEquals("[org.jfree.chart.axis.SegmentedTimeline.Segment::" +
+                "protected void SegmentedTimeline$Segment(long)]", matches.toString());
     }
 
     @Test
@@ -249,7 +255,7 @@ public class JFreeChartTests {
                 javaVersion, imports, "setPreferredSize", 1)
                 .getMethodList();
 
-        assertEquals("[public void setPreferredSize(java.awt.Dimension)]", matches.toString());
+        assertEquals("[javax.swing.JComponent::public void setPreferredSize(java.awt.Dimension)]", matches.toString());
     }
 
     @Test
@@ -264,7 +270,7 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet,
                 javaVersion, imports, "ArrayList<>", 0).getMethodList();
 
-        assertEquals("[public void ArrayList()]", matches.toString());
+        assertEquals("[java.util.ArrayList::public void ArrayList()]", matches.toString());
     }
 
     @Test
@@ -275,7 +281,7 @@ public class JFreeChartTests {
                 .setArgumentTypeAsCriteria(0, "java.lang.Object[]")
                 .getMethodList();
 
-        assert "[void Arrays$ArrayList(java.lang.Object[])]".equals(matches.toString());
+        assert "[java.util.Arrays.ArrayList::void Arrays$ArrayList(java.lang.Object[])]".equals(matches.toString());
     }
 
     @Test
@@ -287,7 +293,7 @@ public class JFreeChartTests {
                 .setArgumentTypeAsCriteria(0, "java.util.ArrayList")
                 .getMethodList();
 
-        assert "[public void ArrayList(java.util.Collection)]".equals(matches.toString());
+        assert "[java.util.ArrayList::public void ArrayList(java.util.Collection)]".equals(matches.toString());
     }
 
 
@@ -328,8 +334,8 @@ public class JFreeChartTests {
                 .getMethodList();
 
         List<String> methodSignatureList = new ArrayList<>();
-        methodSignatureList.add("public static void assertTrue(boolean, java.util.function.Supplier)");
-        methodSignatureList.add("public static void assertTrue(java.util.function.BooleanSupplier, java.util.function.Supplier)");
+        methodSignatureList.add("org.junit.jupiter.api.Assertions::public static void assertTrue(boolean, java.util.function.Supplier)");
+        methodSignatureList.add("org.junit.jupiter.api.Assertions::public static void assertTrue(java.util.function.BooleanSupplier, java.util.function.Supplier)");
 
         assert matches.size() == methodSignatureList.size()
                 && matches.stream().allMatch(match -> methodSignatureList.contains(match.toString()));
@@ -344,7 +350,7 @@ public class JFreeChartTests {
                 .setArgumentTypeAsCriteria(0, "int")
                 .getMethodList();
 
-        assert "[public void Date(long)]".equals(matches.toString());
+        assert "[java.util.Date::public void Date(long)]".equals(matches.toString());
     }
 
     private static void loadPreviousJFreeChartJar() {

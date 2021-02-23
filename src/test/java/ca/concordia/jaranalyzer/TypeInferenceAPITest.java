@@ -57,6 +57,6 @@ public class TypeInferenceAPITest {
 
         assert methodInfoList.size() == 1;
 
-        assert "public static void reverse(java.util.List)".equals(methodInfoList.get(0).toString());
+        assert "java.util.Collections::public static void reverse(java.util.List)".equals(methodInfoList.get(0).toString());
     }
 }
