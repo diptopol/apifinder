@@ -290,7 +290,7 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "ArrayList", 1)
                 .setInvokerTypeAsCriteria("ArrayList")
-                .setArgumentTypeAsCriteria(0, "java.util.ArrayList")
+                .setArgumentTypeAsCriteria(0, "ArrayList")
                 .getMethodList();
 
         assert "[java.util.ArrayList::public void ArrayList(java.util.Collection)]".equals(matches.toString());
@@ -339,6 +339,21 @@ public class JFreeChartTests {
 
         assert matches.size() == methodSignatureList.size()
                 && matches.stream().allMatch(match -> methodSignatureList.contains(match.toString()));
+    }
+
+    @Test
+    public void findMethodWithChildCallerClass() {
+        List<String> imports = Arrays.asList("import java.lang.*",
+                "import org.jfree.data.xy.*");
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet, javaVersion, imports, "getStartX", 2)
+                .setInvokerTypeAsCriteria("org.jfree.data.xy.AbstractIntervalXYDataset")
+                .setArgumentTypeAsCriteria(0, "int")
+                .setArgumentTypeAsCriteria(1, "int")
+                .getMethodList();
+
+        assert "[org.jfree.data.xy.IntervalXYDataset::public abstract java.lang.Number getStartX(int, int)]".equals(matches.toString());
     }
 
     @Test

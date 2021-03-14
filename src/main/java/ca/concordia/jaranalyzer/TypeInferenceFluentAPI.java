@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Function;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
@@ -119,10 +120,54 @@ public class TypeInferenceFluentAPI {
          *
          */
         if (Objects.nonNull(callerClassName) && !callerClassName.equals("")) {
-            methodInfoList = methodInfoList.stream()
-                    .filter(methodInfo -> methodInfo.getClassInfo().getQualifiedName().matches(callerClassName)
-                            || methodInfo.getClassInfo().getName().matches(callerClassName))
-                    .collect(Collectors.toList());
+            Map<String, List<MethodInfo>> methodInfoDeclaringClassNameMap = new HashMap<>();
+
+            String methodInfoClassName;
+            for (MethodInfo methodInfo : methodInfoList) {
+                if (StringUtils.countMatches(callerClassName, ".") <= 0) {
+                    methodInfoClassName = methodInfo.getClassInfo().getName();
+
+                } else {
+                    methodInfoClassName = methodInfo.getQualifiedClassName();
+                }
+
+                List<MethodInfo> methodInfoListForClass = methodInfoDeclaringClassNameMap.containsKey(methodInfoClassName)
+                        ? methodInfoDeclaringClassNameMap.get(methodInfoClassName) : new ArrayList<>();
+
+                methodInfoListForClass.add(methodInfo);
+                methodInfoDeclaringClassNameMap.put(methodInfoClassName, methodInfoListForClass);
+            }
+
+            List<String> methodInfoClassNameList = new ArrayList<>(methodInfoDeclaringClassNameMap.keySet());
+
+            List<MethodInfo> filteredListByCallerClassName = new ArrayList<>();
+
+            if (methodInfoClassNameList.contains(callerClassName)) {
+                filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
+
+            } else {
+                Set<String> classNameSet = new HashSet<>();
+                classNameSet.add(callerClassName);
+
+                while (!classNameSet.isEmpty()) {
+                    classNameSet = tinkerGraph.traversal().V(jarVertexIds)
+                            .out("ContainsPkg").out("Contains")
+                            .has("Kind", "Class")
+                            .has("QName", TextP.within(classNameSet))
+                            .out("extends", "implements")
+                            .<String>values("Name")
+                            .toSet();
+
+                    for (String className: methodInfoClassNameList) {
+                        if (classNameSet.contains(className)) {
+                            filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(className));
+                            break;
+                        }
+                    }
+                }
+            }
+
+            methodInfoList = filteredListByCallerClassName;
         }
 
         if (methodInfoList.size() == 1) {
@@ -182,7 +227,6 @@ public class TypeInferenceFluentAPI {
                         return false;
                     }
 
-
                     if (isPrimitiveType(argumentTypeClassName)
                             && PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
 
@@ -196,7 +240,21 @@ public class TypeInferenceFluentAPI {
                     methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("[/]", "");
 
                     Set<String> classNameList = new HashSet<>();
-                    classNameList.add(argumentTypeClassName);
+
+                    if (StringUtils.countMatches(argumentTypeClassName, ".") <= 0) {
+                        argumentTypeClassName = argumentTypeClassName.replace(".", "$");
+
+                        classNameList.addAll(tinkerGraph.traversal().V(jarVertexIds)
+                                .out("ContainsPkg").out("Contains")
+                                .has("Kind", "Class")
+                                .has("Name", TextP.within(argumentTypeClassName))
+                                .<String>values("QName")
+                                .toSet());
+
+                    } else {
+                        classNameList.add(argumentTypeClassName);
+                    }
+
 
                     while (!classNameList.isEmpty()) {
                         classNameList = tinkerGraph.traversal().V(jarVertexIds)
