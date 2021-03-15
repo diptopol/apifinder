@@ -97,6 +97,7 @@ public class TypeInferenceAPI {
                                                  String methodName,
                                                  int numberOfParameters,
                                                  String callerClassName,
+                                                 boolean isSuperOfCallerClass,
                                                  String... argumentTypes) {
         List<String> argumentTypeList = new ArrayList<>(Arrays.asList(argumentTypes));
 
@@ -135,21 +136,28 @@ public class TypeInferenceAPI {
 
             List<MethodInfo> filteredListByCallerClassName = new ArrayList<>();
 
-            if (methodInfoClassNameList.contains(callerClassName)) {
+            if (!isSuperOfCallerClass && methodInfoClassNameList.contains(callerClassName)) {
                 filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
 
             } else {
                 Set<String> classNameSet = new HashSet<>();
                 classNameSet.add(callerClassName);
 
+                String[] allOutGoingEdges = new String[]{"extends", "implements"};
+                String[] superClassOutGoingEdgeLabels = isSuperOfCallerClass
+                        ? new String[]{"extends"}
+                        : allOutGoingEdges;
+
                 while (!classNameSet.isEmpty()) {
                     classNameSet = tinkerGraph.traversal().V(jarVertexIds)
                             .out("ContainsPkg").out("Contains")
                             .has("Kind", "Class")
                             .has("QName", TextP.within(classNameSet))
-                            .out("extends", "implements")
+                            .out(superClassOutGoingEdgeLabels)
                             .<String>values("Name")
                             .toSet();
+
+                    superClassOutGoingEdgeLabels = allOutGoingEdges;
 
                     for (String className: methodInfoClassNameList) {
                         if (classNameSet.contains(className)) {

@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
@@ -142,27 +141,37 @@ public class TypeInferenceFluentAPI {
 
             List<MethodInfo> filteredListByCallerClassName = new ArrayList<>();
 
-            if (methodInfoClassNameList.contains(callerClassName)) {
+            if (!criteria.isSuperOfCallerClass() && methodInfoClassNameList.contains(callerClassName)) {
                 filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
 
             } else {
                 Set<String> classNameSet = new HashSet<>();
                 classNameSet.add(callerClassName);
 
+                String[] allOutGoingEdges = new String[]{"extends", "implements"};
+                String[] superClassOutGoingEdgeLabels = criteria.isSuperOfCallerClass()
+                        ? new String[]{"extends"}
+                        : allOutGoingEdges;
+
                 while (!classNameSet.isEmpty()) {
                     classNameSet = tinkerGraph.traversal().V(jarVertexIds)
                             .out("ContainsPkg").out("Contains")
                             .has("Kind", "Class")
                             .has("QName", TextP.within(classNameSet))
-                            .out("extends", "implements")
+                            .out(superClassOutGoingEdgeLabels)
                             .<String>values("Name")
                             .toSet();
+
+                    superClassOutGoingEdgeLabels = allOutGoingEdges;
 
                     for (String className: methodInfoClassNameList) {
                         if (classNameSet.contains(className)) {
                             filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(className));
-                            break;
                         }
+                    }
+
+                    if (!filteredListByCallerClassName.isEmpty()) {
+                        break;
                     }
                 }
             }
@@ -562,6 +571,7 @@ public class TypeInferenceFluentAPI {
         private String methodName;
         private int numberOfParameters;
         private String callerClassName;
+        private boolean isSuperOfCallerClass;
         private Map<Integer, String> argumentTypeMap;
 
         private Set<Tuple3<String, String, String>> getDependentJarInformationSet() {
@@ -586,6 +596,10 @@ public class TypeInferenceFluentAPI {
 
         private String getCallerClassName() {
             return callerClassName;
+        }
+
+        private boolean isSuperOfCallerClass() {
+            return isSuperOfCallerClass;
         }
 
         private List<Tuple2<Integer, String>> getArgumentTypeWithIndexList() {
@@ -615,6 +629,12 @@ public class TypeInferenceFluentAPI {
 
         public Criteria setInvokerTypeAsCriteria(String callerClassName) {
             this.callerClassName = callerClassName;
+
+            return this;
+        }
+
+        public Criteria setSuperInvokerTypeAsCriteria(boolean isSuperOfCallerClass) {
+            this.isSuperOfCallerClass = isSuperOfCallerClass;
 
             return this;
         }

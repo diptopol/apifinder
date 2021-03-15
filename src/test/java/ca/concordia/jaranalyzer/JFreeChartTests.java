@@ -381,6 +381,22 @@ public class JFreeChartTests {
     }
 
     @Test
+    public void findMethodForSuperOfCallerClass() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.urls.*", "import org.jfree.data.xy.XYZDataset");
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet, javaVersion, imports, "generateURL", 3)
+                .setInvokerTypeAsCriteria("org.jfree.chart.urls.StandardXYZURLGenerator")
+                .setSuperInvokerTypeAsCriteria(true)
+                .setArgumentTypeAsCriteria(0, "XYZDataset")
+                .setArgumentTypeAsCriteria(1, "int")
+                .setArgumentTypeAsCriteria(2, "int")
+                .getMethodList();
+
+        assert "[org.jfree.chart.urls.StandardXYURLGenerator::public java.lang.String generateURL(org.jfree.data.xy.XYDataset, int, int)]".equals(matches.toString());
+    }
+
+    @Test
     public void findMethodForPrimitiveTypeUnboxing() {
         List<String> imports = Arrays.asList("import java.util.*");
 
