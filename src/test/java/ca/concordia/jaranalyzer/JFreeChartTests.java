@@ -342,6 +342,30 @@ public class JFreeChartTests {
     }
 
     @Test
+    public void findMethodWithStaticImportAndWithoutInvoker() {
+        List<String> imports = Arrays.asList("import static org.junit.jupiter.api.Assertions.assertEquals",
+                "import static org.junit.jupiter.api.Assertions.assertTrue",
+                "import static org.junit.jupiter.api.Assertions.assertFalse",
+                "java.awt.BasicStroke",
+                "java.awt.Color",
+                "org.jfree.chart.TestUtils",
+                "org.jfree.chart.util.PublicCloneable",
+                "org.junit.jupiter.api.Test");
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet, javaVersion, imports, "assertTrue", 2)
+                .setArgumentTypeAsCriteria(1, "java.util.function.Supplier")
+                .getMethodList();
+
+        List<String> methodSignatureList = new ArrayList<>();
+        methodSignatureList.add("org.junit.jupiter.api.Assertions::public static void assertTrue(boolean, java.util.function.Supplier)");
+        methodSignatureList.add("org.junit.jupiter.api.Assertions::public static void assertTrue(java.util.function.BooleanSupplier, java.util.function.Supplier)");
+
+        assert matches.size() == methodSignatureList.size()
+                && matches.stream().allMatch(match -> methodSignatureList.contains(match.toString()));
+    }
+
+    @Test
     public void findMethodWithChildCallerClass() {
         List<String> imports = Arrays.asList("import java.lang.*",
                 "import org.jfree.data.xy.*");
