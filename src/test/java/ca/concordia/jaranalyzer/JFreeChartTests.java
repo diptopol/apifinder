@@ -397,12 +397,24 @@ public class JFreeChartTests {
     }
 
     @Test
-    public void findMethodForPrimitiveTypeUnboxing() {
+    public void findMethodForPrimitiveTypeWideningConversion() {
         List<String> imports = Arrays.asList("import java.util.*");
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "Date", 1)
                 .setArgumentTypeAsCriteria(0, "int")
+                .getMethodList();
+
+        assert "[java.util.Date::public void Date(long)]".equals(matches.toString());
+    }
+
+    @Test
+    public void findMethodForPrimitiveTypeNarrowingConversion() {
+        List<String> imports = Arrays.asList("import java.util.*");
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet, javaVersion, imports, "Date", 1)
+                .setArgumentTypeAsCriteria(0, "double")
                 .getMethodList();
 
         assert "[java.util.Date::public void Date(long)]".equals(matches.toString());

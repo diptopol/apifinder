@@ -43,6 +43,10 @@ public class TypeInferenceAPI {
 
     private static Map<String, String> PRIMITIVE_WRAPPER_CLASS_MAP = new HashMap<>();
 
+    private static Map<String, List<String>> PRIMITIVE_TYPE_WIDENING_MAP = new HashMap<>();
+
+    private static Map<String, List<String>> PRIMITIVE_TYPE_NARROWING_MAP = new HashMap<>();
+
     static {
         PRIMITIVE_WRAPPER_CLASS_MAP.put("boolean", "java.lang.Boolean");
         PRIMITIVE_WRAPPER_CLASS_MAP.put("byte", "java.lang.Byte");
@@ -54,6 +58,24 @@ public class TypeInferenceAPI {
         PRIMITIVE_WRAPPER_CLASS_MAP.put("double", "java.lang.Double");
 
         PRIMITIVE_WRAPPER_CLASS_MAP = Collections.unmodifiableMap(PRIMITIVE_WRAPPER_CLASS_MAP);
+
+        PRIMITIVE_TYPE_WIDENING_MAP.put("byte", Arrays.asList("short", "int", "long", "float", "double"));
+        PRIMITIVE_TYPE_WIDENING_MAP.put("short", Arrays.asList("int", "long", "float", "double"));
+        PRIMITIVE_TYPE_WIDENING_MAP.put("char", Arrays.asList("int", "long", "float", "double"));
+        PRIMITIVE_TYPE_WIDENING_MAP.put("int", Arrays.asList("long", "float", "double"));
+        PRIMITIVE_TYPE_WIDENING_MAP.put("long", Arrays.asList("float", "double"));
+        PRIMITIVE_TYPE_WIDENING_MAP.put("float", Arrays.asList("double"));
+
+        PRIMITIVE_TYPE_WIDENING_MAP = Collections.unmodifiableMap(PRIMITIVE_TYPE_WIDENING_MAP);
+
+        PRIMITIVE_TYPE_NARROWING_MAP.put("short", Arrays.asList("byte", "char"));
+        PRIMITIVE_TYPE_NARROWING_MAP.put("char", Arrays.asList("byte", "short"));
+        PRIMITIVE_TYPE_NARROWING_MAP.put("int", Arrays.asList("byte", "short", "char"));
+        PRIMITIVE_TYPE_NARROWING_MAP.put("long", Arrays.asList("byte", "short", "char", "int"));
+        PRIMITIVE_TYPE_NARROWING_MAP.put("float", Arrays.asList("byte", "short", "char", "int", "long"));
+        PRIMITIVE_TYPE_NARROWING_MAP.put("double", Arrays.asList("byte", "short", "char", "int", "long", "float"));
+
+        PRIMITIVE_TYPE_NARROWING_MAP = Collections.unmodifiableMap(PRIMITIVE_TYPE_NARROWING_MAP);
 
         Configuration configuration = new BaseConfiguration();
         configuration.addProperty("gremlin.tinkergraph.defaultVertexPropertyCardinality", "list");
@@ -202,14 +224,10 @@ public class TypeInferenceAPI {
                     String methodArgumentTypeClassName = methodArgumentClassNameList.get(index);
 
                     if (isPrimitiveType(argumentTypeClassName) && isPrimitiveType(methodArgumentTypeClassName)) {
-                        if (argumentTypeClassName.equals("short")
-                                && Arrays.asList("int", "double", "long").contains(methodArgumentTypeClassName)) {
-
+                        if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                             matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
-                        } else if (argumentTypeClassName.equals("int")
-                                && Arrays.asList("double", "long").contains(methodArgumentTypeClassName)) {
-
+                        } else if (isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                             matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
                         } else {
@@ -478,6 +496,14 @@ public class TypeInferenceAPI {
         commonClassNameList.retainAll(methodArgumentClassNameList);
 
         return commonClassNameList;
+    }
+
+    private static boolean isWideningPrimitiveConversion(String type1, String type2) {
+        return PRIMITIVE_TYPE_WIDENING_MAP.containsKey(type1) && PRIMITIVE_TYPE_WIDENING_MAP.get(type1).contains(type2);
+    }
+
+    private static boolean isNarrowingPrimitiveConversion(String type1, String type2) {
+        return PRIMITIVE_TYPE_NARROWING_MAP.containsKey(type1) && PRIMITIVE_TYPE_NARROWING_MAP.get(type1).contains(type2);
     }
 
     private static boolean isPrimitiveType(String argumentTypeClassName) {
