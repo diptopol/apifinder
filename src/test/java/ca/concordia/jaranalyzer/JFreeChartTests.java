@@ -278,7 +278,7 @@ public class JFreeChartTests {
         List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "ArrayList", 1)
-                .setArgumentTypeAsCriteria(0, "java.lang.Object[]")
+                .setArgumentType(0, "java.lang.Object[]")
                 .getMethodList();
 
         assert "[java.util.Arrays.ArrayList::void Arrays$ArrayList(java.lang.Object[])]".equals(matches.toString());
@@ -289,8 +289,8 @@ public class JFreeChartTests {
         List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "ArrayList", 1)
-                .setInvokerTypeAsCriteria("ArrayList")
-                .setArgumentTypeAsCriteria(0, "ArrayList")
+                .setInvokerType("ArrayList")
+                .setArgumentType(0, "ArrayList")
                 .getMethodList();
 
         assert "[java.util.ArrayList::public void ArrayList(java.util.Collection)]".equals(matches.toString());
@@ -305,7 +305,7 @@ public class JFreeChartTests {
      *  public static void assertTrue(java.util.function.BooleanSupplier, java.util.function.Supplier)<br>
      *  public static void assertTrue(boolean, java.lang.String)<br><br>
      *
-     *  `setArgumentTypeAsCriteria(argumentIndex, argumentType)` method will help API to search for method which has that
+     *  `setArgumentType(argumentIndex, argumentType)` method will help API to search for method which has that
      *  `argumentType` class or any super class of that for `argumentIndex`.<br><br>
      *
      *  This method assume argumentIndex always will start from 0.<br><br>
@@ -329,8 +329,8 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "assertTrue", 2)
-                .setInvokerTypeAsCriteria("org.junit.jupiter.api.Assertions")
-                .setArgumentTypeAsCriteria(1, "java.util.function.Supplier")
+                .setInvokerType("org.junit.jupiter.api.Assertions")
+                .setArgumentType(1, "java.util.function.Supplier")
                 .getMethodList();
 
         List<String> methodSignatureList = new ArrayList<>();
@@ -354,7 +354,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "assertTrue", 2)
-                .setArgumentTypeAsCriteria(1, "java.util.function.Supplier")
+                .setArgumentType(1, "java.util.function.Supplier")
                 .getMethodList();
 
         List<String> methodSignatureList = new ArrayList<>();
@@ -372,9 +372,9 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "getStartX", 2)
-                .setInvokerTypeAsCriteria("org.jfree.data.xy.AbstractIntervalXYDataset")
-                .setArgumentTypeAsCriteria(0, "int")
-                .setArgumentTypeAsCriteria(1, "int")
+                .setInvokerType("org.jfree.data.xy.AbstractIntervalXYDataset")
+                .setArgumentType(0, "int")
+                .setArgumentType(1, "int")
                 .getMethodList();
 
         assert "[org.jfree.data.xy.IntervalXYDataset::public abstract java.lang.Number getStartX(int, int)]".equals(matches.toString());
@@ -386,11 +386,11 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "generateURL", 3)
-                .setInvokerTypeAsCriteria("org.jfree.chart.urls.StandardXYZURLGenerator")
-                .setSuperInvokerTypeAsCriteria(true)
-                .setArgumentTypeAsCriteria(0, "XYZDataset")
-                .setArgumentTypeAsCriteria(1, "int")
-                .setArgumentTypeAsCriteria(2, "int")
+                .setInvokerType("org.jfree.chart.urls.StandardXYZURLGenerator")
+                .setSuperInvoker(true)
+                .setArgumentType(0, "XYZDataset")
+                .setArgumentType(1, "int")
+                .setArgumentType(2, "int")
                 .getMethodList();
 
         assert "[org.jfree.chart.urls.StandardXYURLGenerator::public java.lang.String generateURL(org.jfree.data.xy.XYDataset, int, int)]".equals(matches.toString());
@@ -402,7 +402,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "Date", 1)
-                .setArgumentTypeAsCriteria(0, "int")
+                .setArgumentType(0, "int")
                 .getMethodList();
 
         assert "[java.util.Date::public void Date(long)]".equals(matches.toString());
@@ -414,7 +414,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "Date", 1)
-                .setArgumentTypeAsCriteria(0, "double")
+                .setArgumentType(0, "double")
                 .getMethodList();
 
         assert "[java.util.Date::public void Date(long)]".equals(matches.toString());

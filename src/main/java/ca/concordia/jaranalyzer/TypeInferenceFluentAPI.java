@@ -38,6 +38,9 @@ public class TypeInferenceFluentAPI {
 
     private static Logger logger = LoggerFactory.getLogger(TypeInferenceAPI.class);
 
+    private static final List<String> PRIMITIVE_TYPE_LIST =
+            new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
+
     private static Map<String, String> PRIMITIVE_WRAPPER_CLASS_MAP = new HashMap<>();
 
     private static Map<String, List<String>> PRIMITIVE_TYPE_WIDENING_MAP = new HashMap<>();
@@ -523,10 +526,7 @@ public class TypeInferenceFluentAPI {
     }
 
     private boolean isPrimitiveType(String argumentTypeClassName) {
-        List<String> primitiveTypeList =
-                new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
-
-        return primitiveTypeList.contains(argumentTypeClassName);
+        return PRIMITIVE_TYPE_LIST.contains(argumentTypeClassName);
     }
 
     private boolean isArrayDimensionMismatch(String argumentTypeClassName, String methodArgumentTypeClassName) {
@@ -653,13 +653,13 @@ public class TypeInferenceFluentAPI {
             this.argumentTypeMap = new HashMap<>();
         }
 
-        public Criteria setInvokerTypeAsCriteria(String callerClassName) {
+        public Criteria setInvokerType(String callerClassName) {
             this.callerClassName = callerClassName;
 
             return this;
         }
 
-        public Criteria setSuperInvokerTypeAsCriteria(boolean isSuperOfCallerClass) {
+        public Criteria setSuperInvoker(boolean isSuperOfCallerClass) {
             this.isSuperOfCallerClass = isSuperOfCallerClass;
 
             return this;
@@ -668,7 +668,7 @@ public class TypeInferenceFluentAPI {
         /**
          * argumentIndex is assumed to be starts with 0 and will consider the max value of argumentIndex as last value.
          */
-        public Criteria setArgumentTypeAsCriteria(int argumentIndex, String argumentType) {
+        public Criteria setArgumentType(int argumentIndex, String argumentType) {
             this.argumentTypeMap.put(argumentIndex, argumentType);
 
             return this;

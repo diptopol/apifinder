@@ -41,6 +41,9 @@ public class TypeInferenceAPI {
     private static TinkerGraph tinkerGraph;
     private static JarAnalyzer jarAnalyzer;
 
+    private static final List<String> PRIMITIVE_TYPE_LIST =
+            new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
+
     private static Map<String, String> PRIMITIVE_WRAPPER_CLASS_MAP = new HashMap<>();
 
     private static Map<String, List<String>> PRIMITIVE_TYPE_WIDENING_MAP = new HashMap<>();
@@ -507,10 +510,7 @@ public class TypeInferenceAPI {
     }
 
     private static boolean isPrimitiveType(String argumentTypeClassName) {
-        List<String> primitiveTypeList =
-                new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
-
-        return primitiveTypeList.contains(argumentTypeClassName);
+        return PRIMITIVE_TYPE_LIST.contains(argumentTypeClassName);
     }
 
     private static boolean isArrayDimensionMismatch(String argumentTypeClassName, String methodArgumentTypeClassName) {
