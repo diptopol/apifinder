@@ -187,8 +187,11 @@ public class TypeInferenceAPI {
                     for (String className: methodInfoClassNameList) {
                         if (classNameSet.contains(className)) {
                             filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(className));
-                            break;
                         }
+                    }
+
+                    if (!filteredListByCallerClassName.isEmpty()) {
+                        break;
                     }
                 }
             }
