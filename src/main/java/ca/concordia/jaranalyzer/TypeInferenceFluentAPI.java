@@ -130,7 +130,6 @@ public class TypeInferenceFluentAPI {
 
     private List<MethodInfo> getFilteredMethodList(Criteria criteria) {
         String callerClassName = criteria.getCallerClassName();
-        List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList();
 
         Object[] jarVertexIds = getJarVertexIds(criteria);
         List<MethodInfo> methodInfoList = getAllMethods(jarVertexIds, criteria);
@@ -211,7 +210,30 @@ public class TypeInferenceFluentAPI {
         /*
          * Argument type check filter.
          */
-        if (!argumentTypeWithIndexList.isEmpty()) {
+        if (!criteria.getArgumentTypeWithIndexList().isEmpty()) {
+            List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList().stream()
+                    .map(argumentTypeWithIndex -> {
+                        Integer argumentIndex = argumentTypeWithIndex._1();
+                        String argumentType = argumentTypeWithIndex._2();
+
+                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
+                            argumentType = argumentType.replace(".", "$");
+
+                            List<String> qualifiedNameList = tinkerGraph.traversal().V(jarVertexIds)
+                                    .out("ContainsPkg").out("Contains")
+                                    .has("Kind", "Class")
+                                    .has("Name", argumentType)
+                                    .<String>values("QName")
+                                    .toList();
+
+                            return qualifiedNameList.isEmpty()
+                                    ? argumentTypeWithIndex
+                                    : new Tuple2<>(argumentIndex, qualifiedNameList.get(0));
+                        }
+
+                        return argumentTypeWithIndex;
+                    }).collect(Collectors.toList());
+
             return methodInfoList.stream().filter(methodInfo -> {
 
                 argumentTypeWithIndexList.sort(Comparator.comparingInt(Tuple2::_1));
@@ -270,21 +292,7 @@ public class TypeInferenceFluentAPI {
                     methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("[/]", "");
 
                     Set<String> classNameList = new HashSet<>();
-
-                    if (StringUtils.countMatches(argumentTypeClassName, ".") <= 0) {
-                        argumentTypeClassName = argumentTypeClassName.replace(".", "$");
-
-                        classNameList.addAll(tinkerGraph.traversal().V(jarVertexIds)
-                                .out("ContainsPkg").out("Contains")
-                                .has("Kind", "Class")
-                                .has("Name", TextP.within(argumentTypeClassName))
-                                .<String>values("QName")
-                                .toSet());
-
-                    } else {
-                        classNameList.add(argumentTypeClassName);
-                    }
-
+                    classNameList.add(argumentTypeClassName);
 
                     while (!classNameList.isEmpty()) {
                         classNameList = tinkerGraph.traversal().V(jarVertexIds)

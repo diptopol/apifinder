@@ -124,8 +124,6 @@ public class TypeInferenceAPI {
                                                  String callerClassName,
                                                  boolean isSuperOfCallerClass,
                                                  String... argumentTypes) {
-        List<String> argumentTypeList = new ArrayList<>(Arrays.asList(argumentTypes));
-
         Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion);
         List<MethodInfo> methodInfoList =
                 getAllMethods(jarVertexIds, importList, methodName, numberOfParameters);
@@ -206,7 +204,25 @@ public class TypeInferenceAPI {
         /*
          * Argument type check filter.
          */
-        if (!argumentTypeList.isEmpty()) {
+        if (argumentTypes.length > 0) {
+            List<String> argumentTypeList = new ArrayList<>(Arrays.asList(argumentTypes)).stream()
+                    .map(argumentType -> {
+                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
+                            argumentType = argumentType.replace(".", "$");
+
+                            List<String> qualifiedNameList = tinkerGraph.traversal().V(jarVertexIds)
+                                    .out("ContainsPkg").out("Contains")
+                                    .has("Kind", "Class")
+                                    .has("Name", argumentType)
+                                    .<String>values("QName")
+                                    .toList();
+
+                            return qualifiedNameList.isEmpty() ? argumentType : qualifiedNameList.get(0);
+                        }
+
+                        return argumentType;
+                    }).collect(Collectors.toList());
+
             return methodInfoList.stream().filter(methodInfo -> {
 
                 List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
