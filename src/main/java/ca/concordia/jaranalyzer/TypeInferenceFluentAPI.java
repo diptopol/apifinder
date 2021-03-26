@@ -128,6 +128,16 @@ public class TypeInferenceFluentAPI {
         return jarArtifactInfoSet;
     }
 
+    public void loadJar(String groupId, String artifactId, String version) {
+        if (!isJarExists(groupId, artifactId, version)) {
+            JarInformation jarInformation =
+                    ExternalJarExtractionUtility.getJarInfo(groupId, artifactId, version);
+
+            jarAnalyzer.toGraph(jarInformation);
+            storeClassStructureGraph();
+        }
+    }
+
     private List<MethodInfo> getFilteredMethodList(Criteria criteria) {
         String callerClassName = criteria.getCallerClassName();
 

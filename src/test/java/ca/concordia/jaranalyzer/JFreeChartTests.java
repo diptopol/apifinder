@@ -425,7 +425,7 @@ public class JFreeChartTests {
         String artifactId = "jfreechart";
         String version = "1.0.19";
 
-        TypeInferenceAPI.loadJar(groupId, artifactId, version);
+        TypeInferenceFluentAPI.getInstance().loadJar(groupId, artifactId, version);
     }
 
 }
