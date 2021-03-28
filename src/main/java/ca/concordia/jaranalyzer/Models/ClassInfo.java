@@ -41,6 +41,7 @@ public class ClassInfo  {
 	public ClassInfo(Vertex vertex) {
 		this.name = vertex.<String>property("Name").value();
 		this.qualifiedName = vertex.<String>property("QName").value();
+		this.packageName = vertex.<String>property("packageName").value();
 
 		this.isPublic = vertex.<Boolean>property("isPublic").value();
 		this.isPrivate = vertex.<Boolean>property("isPrivate").value();

@@ -156,8 +156,6 @@ public class TypeInferenceAPI {
         List<String> importStaticList = importList.stream().filter(im -> im.startsWith("import static")).collect(Collectors.toList());
         List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
         Set<String> importedClassQNameList = new HashSet<>();
-
-        List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, jarVertexIds);
         /*
           STEP 1
          */
@@ -173,6 +171,14 @@ public class TypeInferenceAPI {
                         .map(im -> im.substring(0, im.lastIndexOf(".")).replace("import static", "").trim())
                         .collect(Collectors.toSet())
         );
+
+
+        List<String> packageNameList = nonImportStaticList.stream()
+                .filter(im -> im.endsWith(".*"))
+                .map(im -> im.substring(0, im.lastIndexOf(".*")).replace("import", "").trim())
+                .collect(Collectors.toList());
+
+        List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, jarVertexIds, importedClassQNameList, packageNameList);
 
         /*
           Method name may contains parameterized type (e.g ArrayList<String>). So removal of parameterized type is required
@@ -229,11 +235,6 @@ public class TypeInferenceAPI {
         /*
           STEP 3
          */
-        List<String> packageNameList = nonImportStaticList.stream()
-                .filter(im -> im.endsWith(".*"))
-                .map(im -> im.substring(0, im.lastIndexOf(".*")).replace("import", "").trim())
-                .collect(Collectors.toList());
-
         Set<String> classNameListForPackgage = tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg")
                 .has("Kind", "Package")
@@ -445,7 +446,8 @@ public class TypeInferenceAPI {
         }
     }
 
-    private static List<String> resolveQNameForArgumentTypes(String[] argumentTypes, Object[] jarVertexIds) {
+    private static List<String> resolveQNameForArgumentTypes(String[] argumentTypes, Object[] jarVertexIds,
+                                                             Set<String> importedClassQNameList, List<String> packageNameList) {
         if (argumentTypes.length > 0) {
             return new ArrayList<>(Arrays.asList(argumentTypes)).stream()
                     .map(argumentType -> {
@@ -458,6 +460,11 @@ public class TypeInferenceAPI {
                                     .has("Name", argumentType)
                                     .toStream()
                                     .map(ClassInfo::new)
+                                    .collect(Collectors.toList());
+
+                            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(classInfo ->
+                                    importedClassQNameList.contains(classInfo.getQualifiedName())
+                                            || packageNameList.contains(classInfo.getPackageName()))
                                     .collect(Collectors.toList());
 
                             return qualifiedClassInfoList.isEmpty()

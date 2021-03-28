@@ -162,8 +162,6 @@ public class TypeInferenceFluentAPI {
         List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
         Set<String> importedClassQNameList = new HashSet<>();
 
-        resolveQNameForArgumentTypes(criteria, jarVertexIds);
-
         /*
           STEP 1
          */
@@ -180,6 +178,12 @@ public class TypeInferenceFluentAPI {
                         .collect(Collectors.toSet())
         );
 
+        List<String> packageNameList = nonImportStaticList.stream()
+                .filter(im -> im.endsWith(".*"))
+                .map(im -> im.substring(0, im.lastIndexOf(".*")).replace("import", "").trim())
+                .collect(Collectors.toList());
+
+        resolveQNameForArgumentTypes(criteria, jarVertexIds, importedClassQNameList, packageNameList);
         /*
           Method name may contains parameterized type (e.g ArrayList<String>). So removal of parameterized type is required
           before method name matching.
@@ -233,11 +237,6 @@ public class TypeInferenceFluentAPI {
         /*
           STEP 3
          */
-        List<String> packageNameList = nonImportStaticList.stream()
-                .filter(im -> im.endsWith(".*"))
-                .map(im -> im.substring(0, im.lastIndexOf(".*")).replace("import", "").trim())
-                .collect(Collectors.toList());
-
         Set<String> classNameListForPackgage = tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg")
                 .has("Kind", "Package")
@@ -449,7 +448,8 @@ public class TypeInferenceFluentAPI {
         }
     }
 
-    private void resolveQNameForArgumentTypes(Criteria criteria, Object[] jarVertexIds) {
+    private void resolveQNameForArgumentTypes(Criteria criteria, Object[] jarVertexIds,
+                                              Set<String> importedClassQNameList, List<String> packageNameList) {
         if (!criteria.getArgumentTypeWithIndexList().isEmpty()) {
             List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList().stream()
                     .map(argumentTypeWithIndex -> {
@@ -459,16 +459,22 @@ public class TypeInferenceFluentAPI {
                         if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
                             argumentType = argumentType.replace(".", "$");
 
-                            List<String> qualifiedNameList = tinkerGraph.traversal().V(jarVertexIds)
+                            List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
                                     .out("ContainsPkg").out("Contains")
                                     .has("Kind", "Class")
                                     .has("Name", argumentType)
-                                    .<String>values("QName")
-                                    .toList();
+                                    .toStream()
+                                    .map(ClassInfo::new)
+                                    .collect(Collectors.toList());
 
-                            return qualifiedNameList.isEmpty()
+                            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(classInfo ->
+                                    importedClassQNameList.contains(classInfo.getQualifiedName())
+                                            || packageNameList.contains(classInfo.getPackageName()))
+                                    .collect(Collectors.toList());
+
+                            return qualifiedClassInfoList.isEmpty()
                                     ? argumentTypeWithIndex
-                                    : new Tuple2<>(argumentIndex, qualifiedNameList.get(0));
+                                    : new Tuple2<>(argumentIndex, qualifiedClassInfoList.get(0).getQualifiedName());
                         }
 
                         return argumentTypeWithIndex;

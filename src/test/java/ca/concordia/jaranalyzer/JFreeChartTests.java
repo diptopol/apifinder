@@ -452,6 +452,23 @@ public class JFreeChartTests {
         assert "[org.jfree.chart.block.AbstractBlock::public void setWidth(double)]".equals(matches.toString());
     }
 
+    @Test
+    public void findMethodForImportedArgumentTypes() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.plot.*",
+                "import org.jfree.chart.renderer.xy.XYBlockRenderer", "import org.jfree.data.Range",
+                "import org.jfree.data.contour.ContourDataset", "import org.jfree.data.contour.DefaultContourDataset");
+
+        List<MethodInfo> methodInfoList = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(singleton(
+                new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "getZValueRange",
+                2).setInvokerType("DefaultContourDataset")
+                .setArgumentType(0, "Range")
+                .setArgumentType(1, "Range").getMethodList();
+
+        assert "[org.jfree.data.contour.DefaultContourDataset::public org.jfree.data.Range getZValueRange(org.jfree.data.Range, org.jfree.data.Range)]"
+                .equals(methodInfoList.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
