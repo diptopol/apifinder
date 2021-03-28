@@ -120,195 +120,9 @@ public class TypeInferenceAPI {
                                                  String javaVersion,
                                                  List<String> importList,
                                                  String methodName,
-                                                 int numberOfParameters,
-                                                 String callerClassName,
-                                                 boolean isSuperOfCallerClass,
-                                                 String... argumentTypes) {
-        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion);
-        List<MethodInfo> methodInfoList =
-                getAllMethods(jarVertexIds, importList, methodName, numberOfParameters);
-
-        if (methodInfoList.size() == 1) {
-            return methodInfoList;
-        }
-
-        /*
-         * Caller class name filter. class name can be qualified name or simple name
-         *
-         */
-        if (Objects.nonNull(callerClassName) && !callerClassName.equals("")) {
-            Map<String, List<MethodInfo>> methodInfoDeclaringClassNameMap = new HashMap<>();
-
-            String methodInfoClassName;
-            for (MethodInfo methodInfo : methodInfoList) {
-                if (StringUtils.countMatches(callerClassName, ".") <= 0) {
-                    methodInfoClassName = methodInfo.getClassInfo().getName();
-
-                } else {
-                    methodInfoClassName = methodInfo.getQualifiedClassName();
-                }
-
-                List<MethodInfo> methodInfoListForClass = methodInfoDeclaringClassNameMap.containsKey(methodInfoClassName)
-                        ? methodInfoDeclaringClassNameMap.get(methodInfoClassName) : new ArrayList<>();
-
-                methodInfoListForClass.add(methodInfo);
-                methodInfoDeclaringClassNameMap.put(methodInfoClassName, methodInfoListForClass);
-            }
-
-            List<String> methodInfoClassNameList = new ArrayList<>(methodInfoDeclaringClassNameMap.keySet());
-
-            List<MethodInfo> filteredListByCallerClassName = new ArrayList<>();
-
-            if (!isSuperOfCallerClass && methodInfoClassNameList.contains(callerClassName)) {
-                filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
-
-            } else {
-                Set<String> classNameSet = new HashSet<>();
-                classNameSet.add(callerClassName);
-
-                String[] allOutGoingEdges = new String[]{"extends", "implements"};
-                String[] superClassOutGoingEdgeLabels = isSuperOfCallerClass
-                        ? new String[]{"extends"}
-                        : allOutGoingEdges;
-
-                while (!classNameSet.isEmpty()) {
-                    classNameSet = tinkerGraph.traversal().V(jarVertexIds)
-                            .out("ContainsPkg").out("Contains")
-                            .has("Kind", "Class")
-                            .has("QName", TextP.within(classNameSet))
-                            .out(superClassOutGoingEdgeLabels)
-                            .<String>values("Name")
-                            .toSet();
-
-                    superClassOutGoingEdgeLabels = allOutGoingEdges;
-
-                    for (String className: methodInfoClassNameList) {
-                        if (classNameSet.contains(className)) {
-                            filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(className));
-                        }
-                    }
-
-                    if (!filteredListByCallerClassName.isEmpty()) {
-                        break;
-                    }
-                }
-            }
-
-            methodInfoList = filteredListByCallerClassName;
-        }
-
-        if (methodInfoList.size() == 1) {
-            return methodInfoList;
-        }
-
-        /*
-         * Argument type check filter.
-         */
-        if (argumentTypes.length > 0) {
-            List<String> argumentTypeList = new ArrayList<>(Arrays.asList(argumentTypes)).stream()
-                    .map(argumentType -> {
-                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
-                            argumentType = argumentType.replace(".", "$");
-
-                            List<String> qualifiedNameList = tinkerGraph.traversal().V(jarVertexIds)
-                                    .out("ContainsPkg").out("Contains")
-                                    .has("Kind", "Class")
-                                    .has("Name", argumentType)
-                                    .<String>values("QName")
-                                    .toList();
-
-                            return qualifiedNameList.isEmpty() ? argumentType : qualifiedNameList.get(0);
-                        }
-
-                        return argumentType;
-                    }).collect(Collectors.toList());
-
-            return methodInfoList.stream().filter(methodInfo -> {
-
-                List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
-                List<String> methodArgumentClassNameList = Stream.of(methodInfo.getArgumentTypes())
-                        .map(Type::getClassName)
-                        .collect(Collectors.toList());
-
-                List<String> commonClassNameList = getCommonClassNameList(argumentTypeClassNameList, methodArgumentClassNameList);
-
-                argumentTypeClassNameList.removeAll(commonClassNameList);
-                methodArgumentClassNameList.removeAll(commonClassNameList);
-
-                if (argumentTypeClassNameList.isEmpty() && methodArgumentClassNameList.isEmpty()) {
-                    return true;
-                }
-
-                List<String> matchedMethodArgumentTypeList = new ArrayList<>();
-
-                for (int index = 0; index < argumentTypeClassNameList.size(); index++) {
-                    String argumentTypeClassName = argumentTypeClassNameList.get(index);
-                    String methodArgumentTypeClassName = methodArgumentClassNameList.get(index);
-
-                    if (isPrimitiveType(argumentTypeClassName) && isPrimitiveType(methodArgumentTypeClassName)) {
-                        if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
-                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-
-                        } else if (isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
-                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-
-                        } else {
-                            return false;
-                        }
-                    }
-
-                    if (isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
-                        return false;
-                    }
-
-                    if (isPrimitiveType(argumentTypeClassName)
-                            && PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
-
-                        matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                    }
-
-                    /*
-                     * Trimmed down array dimension before searching for super classes.
-                     */
-                    argumentTypeClassName = argumentTypeClassName.replaceAll("[/]", "");
-                    methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("[/]", "");
-
-                    Set<String> classNameList = new HashSet<>();
-                    classNameList.add(argumentTypeClassName);
-
-                    while (!classNameList.isEmpty()) {
-                        classNameList = tinkerGraph.traversal().V(jarVertexIds)
-                                .out("ContainsPkg").out("Contains")
-                                .has("Kind", "Class")
-                                .has("QName", TextP.within(classNameList))
-                                .out("extends", "implements")
-                                .<String>values("Name")
-                                .toSet();
-
-                        if (classNameList.contains(methodArgumentTypeClassName)) {
-                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                            break;
-                        }
-                    }
-                }
-
-                methodArgumentClassNameList.removeAll(matchedMethodArgumentTypeList);
-
-                return methodArgumentClassNameList.isEmpty();
-            }).collect(Collectors.toList());
-        }
-
-        return methodInfoList;
-    }
-
-    public static List<MethodInfo> getAllMethods(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                 String javaVersion,
-                                                 List<String> importList,
-                                                 String methodName,
                                                  int numberOfParameters) {
-        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion);
-
-        return getAllMethods(jarVertexIds, importList, methodName, numberOfParameters);
+        return getAllMethods(dependentJarInformationSet, javaVersion, importList, methodName, numberOfParameters,
+                null, false);
     }
 
 
@@ -328,10 +142,16 @@ public class TypeInferenceAPI {
      * if in any step method is found it will be returned, otherwise recursion will happen until java.lang.Object is
      * reached, then if no method is found an empty list will be returned.<br>
      */
-    private static List<MethodInfo> getAllMethods(Object[] jarVertexIds,
+    public static List<MethodInfo> getAllMethods(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                 String javaVersion,
                                                  List<String> importList,
                                                  String methodName,
-                                                 int numberOfParameters) {
+                                                 int numberOfParameters,
+                                                 String callerClassName,
+                                                 boolean isSuperOfCallerClass,
+                                                 String... argumentTypes) {
+
+        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion);
 
         List<String> importStaticList = importList.stream().filter(im -> im.startsWith("import static")).collect(Collectors.toList());
         List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
@@ -375,8 +195,11 @@ public class TypeInferenceAPI {
         List<MethodInfo> qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
                 jarVertexIds, importedClassQNameList);
 
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+                argumentTypes, jarVertexIds);
+
         if (!qualifiedMethodInfoList.isEmpty()) {
-            return populateClassInfo(qualifiedMethodInfoList);
+            return qualifiedMethodInfoList;
         }
 
         /*
@@ -395,8 +218,11 @@ public class TypeInferenceAPI {
                 .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters)
                 .collect(Collectors.toList());
 
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+                argumentTypes, jarVertexIds);
+
         if (!qualifiedMethodInfoList.isEmpty()) {
-            return populateClassInfo(qualifiedMethodInfoList);
+            return qualifiedMethodInfoList;
         }
 
         /*
@@ -420,8 +246,11 @@ public class TypeInferenceAPI {
 
         qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters, jarVertexIds, classNameListForPackgage);
 
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+                argumentTypes, jarVertexIds);
+
         if (!qualifiedMethodInfoList.isEmpty()) {
-            return populateClassInfo(qualifiedMethodInfoList);
+            return qualifiedMethodInfoList;
         }
 
         /*
@@ -439,13 +268,200 @@ public class TypeInferenceAPI {
                     .toSet();
 
             qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters, jarVertexIds, classQNameList);
+
+            qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+                    argumentTypes, jarVertexIds);
         }
 
         if (!qualifiedMethodInfoList.isEmpty()) {
-            return populateClassInfo(qualifiedMethodInfoList);
+            return qualifiedMethodInfoList;
 
         } else {
             return Collections.emptyList();
+        }
+    }
+
+    private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList, String callerClassName,
+                                                  boolean isSuperOfCallerClass, String[] argumentTypes,
+                                                  Object[] jarVertexIds) {
+        if (methodInfoList.isEmpty()) {
+            return methodInfoList;
+        }
+
+        populateClassInfo(methodInfoList);
+        methodInfoList = filterByMethodInvoker(methodInfoList, callerClassName, isSuperOfCallerClass, jarVertexIds);
+
+        return filterByMethodArgumentTypes(methodInfoList, argumentTypes, jarVertexIds);
+    }
+
+    private static List<MethodInfo> filterByMethodInvoker(List<MethodInfo> methodInfoList, String callerClassName,
+                                                          boolean isSuperOfCallerClass, Object[] jarVertexIds) {
+        if (!methodInfoList.isEmpty() && Objects.nonNull(callerClassName) && !callerClassName.equals("")) {
+            Map<String, List<MethodInfo>> methodInfoDeclaringClassNameMap = new HashMap<>();
+
+            String methodInfoClassName;
+            for (MethodInfo methodInfo : methodInfoList) {
+                if (StringUtils.countMatches(callerClassName, ".") <= 0) {
+                    methodInfoClassName = methodInfo.getClassInfo().getName();
+
+                } else {
+                    methodInfoClassName = methodInfo.getQualifiedClassName();
+                }
+
+                List<MethodInfo> methodInfoListForClass = methodInfoDeclaringClassNameMap.containsKey(methodInfoClassName)
+                        ? methodInfoDeclaringClassNameMap.get(methodInfoClassName) : new ArrayList<>();
+
+                methodInfoListForClass.add(methodInfo);
+                methodInfoDeclaringClassNameMap.put(methodInfoClassName, methodInfoListForClass);
+            }
+
+            List<String> methodInfoClassNameList = new ArrayList<>(methodInfoDeclaringClassNameMap.keySet());
+
+            List<MethodInfo> filteredListByCallerClassName = new ArrayList<>();
+
+            if (methodInfoClassNameList.contains(callerClassName) && !isSuperOfCallerClass) {
+                filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
+
+            } else {
+                Set<String> classNameSet = new HashSet<>();
+                classNameSet.add(callerClassName);
+
+                String[] allOutGoingEdges = new String[]{"extends", "implements"};
+                String[] superClassOutGoingEdgeLabels = isSuperOfCallerClass
+                        ? new String[]{"extends"}
+                        : allOutGoingEdges;
+
+                while (!classNameSet.isEmpty()) {
+                    classNameSet = tinkerGraph.traversal().V(jarVertexIds)
+                            .out("ContainsPkg").out("Contains")
+                            .has("Kind", "Class")
+                            .has("QName", TextP.within(classNameSet))
+                            .out(superClassOutGoingEdgeLabels)
+                            .<String>values("Name")
+                            .toSet();
+
+                    superClassOutGoingEdgeLabels = allOutGoingEdges;
+
+                    for (String className : methodInfoClassNameList) {
+                        if (classNameSet.contains(className)) {
+                            filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(className));
+                        }
+                    }
+
+                    if (!filteredListByCallerClassName.isEmpty()) {
+                        break;
+                    }
+                }
+            }
+
+            return filteredListByCallerClassName;
+        } else {
+            return methodInfoList;
+        }
+    }
+
+    private static List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, String[] argumentTypes,
+                                                                Object[] jarVertexIds) {
+        if (!methodInfoList.isEmpty() && argumentTypes.length > 0) {
+            List<String> argumentTypeList = new ArrayList<>(Arrays.asList(argumentTypes)).stream()
+                    .map(argumentType -> {
+                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
+                            argumentType = argumentType.replace(".", "$");
+
+                            List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
+                                    .out("ContainsPkg").out("Contains")
+                                    .has("Kind", "Class")
+                                    .has("Name", argumentType)
+                                    .toStream()
+                                    .map(ClassInfo::new)
+                                    .collect(Collectors.toList());
+
+                            return qualifiedClassInfoList.isEmpty()
+                                    ? argumentType
+                                    : qualifiedClassInfoList.get(0).getQualifiedName();
+                        }
+
+                        return argumentType;
+                    }).collect(Collectors.toList());
+
+            return methodInfoList.stream().filter(methodInfo -> {
+                List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
+                List<String> methodArgumentClassNameList = Stream.of(methodInfo.getArgumentTypes())
+                        .map(Type::getClassName)
+                        .collect(Collectors.toList());
+
+                List<String> commonClassNameList = getCommonClassNameList(argumentTypeClassNameList, methodArgumentClassNameList);
+
+                argumentTypeClassNameList.removeAll(commonClassNameList);
+                methodArgumentClassNameList.removeAll(commonClassNameList);
+
+                if (argumentTypeClassNameList.isEmpty() && methodArgumentClassNameList.isEmpty()) {
+                    return true;
+                }
+
+                List<String> matchedMethodArgumentTypeList = new ArrayList<>();
+
+                for (int index = 0; index < argumentTypeClassNameList.size(); index++) {
+                    String argumentTypeClassName = argumentTypeClassNameList.get(index);
+                    String methodArgumentTypeClassName = methodArgumentClassNameList.get(index);
+
+                    if (isPrimitiveType(argumentTypeClassName) && isPrimitiveType(methodArgumentTypeClassName)) {
+                        if (argumentTypeClassName.equals("short")
+                                && Arrays.asList("int", "double", "long").contains(methodArgumentTypeClassName)) {
+
+                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+
+                        } else if (argumentTypeClassName.equals("int")
+                                && Arrays.asList("double", "long").contains(methodArgumentTypeClassName)) {
+
+                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    if (isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
+                        continue;
+                    }
+
+                    if (isPrimitiveType(argumentTypeClassName)
+                            && PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
+
+                        matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                    }
+
+                    /*
+                     * Trimmed down array dimension before searching for super classes.
+                     */
+                    argumentTypeClassName = argumentTypeClassName.replaceAll("[/]", "");
+                    methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("[/]", "");
+
+                    Set<String> classNameList = new HashSet<>();
+                    classNameList.add(argumentTypeClassName);
+
+                    while (!classNameList.isEmpty()) {
+                        classNameList = tinkerGraph.traversal().V(jarVertexIds)
+                                .out("ContainsPkg").out("Contains")
+                                .has("Kind", "Class")
+                                .has("QName", TextP.within(classNameList))
+                                .out("extends", "implements")
+                                .<String>values("Name")
+                                .toSet();
+
+                        if (classNameList.contains(methodArgumentTypeClassName)) {
+                            matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                            break;
+                        }
+                    }
+                }
+
+                methodArgumentClassNameList.removeAll(matchedMethodArgumentTypeList);
+
+                return methodArgumentClassNameList.isEmpty();
+            }).collect(Collectors.toList());
+        } else {
+            return methodInfoList;
         }
     }
 

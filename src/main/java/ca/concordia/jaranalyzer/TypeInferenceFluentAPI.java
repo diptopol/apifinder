@@ -138,21 +138,163 @@ public class TypeInferenceFluentAPI {
         }
     }
 
-    private List<MethodInfo> getFilteredMethodList(Criteria criteria) {
-        String callerClassName = criteria.getCallerClassName();
-
+    /**
+     * The process of checking classes for specific method will happen in four steps.<br><br>
+     *
+     * <strong>Step 1</strong>: All the classes who are directly mentioned in the import statement will be checked,
+     * if method found it will be returned.<br>
+     *
+     * <strong>Step 2</strong>: All the inner classes of classes who are directly mentioned in the import statement will
+     * be checked, if method found it will be returned.<br>
+     *
+     * <strong>Step 3</strong>: All the classes under on-demand package import will be searched, if method found
+     * it will be returned.<br>
+     *
+     * <strong>Step 4</strong>: Recursively look for super classes and interfaces from all the import classes (on demand and normal)
+     * if in any step method is found it will be returned, otherwise recursion will happen until java.lang.Object is
+     * reached, then if no method is found an empty list will be returned.<br>
+     */
+    private List<MethodInfo> getAllMethods(Criteria criteria) {
         Object[] jarVertexIds = getJarVertexIds(criteria);
-        List<MethodInfo> methodInfoList = getAllMethods(jarVertexIds, criteria);
+        List<String> importList = criteria.getImportList();
+        String methodName = criteria.getMethodName();
+        List<String> importStaticList = importList.stream().filter(im -> im.startsWith("import static")).collect(Collectors.toList());
+        List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
+        Set<String> importedClassQNameList = new HashSet<>();
 
-        if (methodInfoList.size() == 1) {
-            return methodInfoList;
+        /*
+          STEP 1
+         */
+        importedClassQNameList.addAll(
+                nonImportStaticList.stream()
+                        .filter(im -> !im.endsWith(".*"))
+                        .map(im -> im.replace("import", "").trim())
+                        .collect(Collectors.toSet())
+        );
+
+        importedClassQNameList.addAll(
+                importStaticList.stream()
+                        .map(im -> im.substring(0, im.lastIndexOf(".")).replace("import static", "").trim())
+                        .collect(Collectors.toSet())
+        );
+
+        /*
+          Method name may contains parameterized type (e.g ArrayList<String>). So removal of parameterized type is required
+          before method name matching.
+         */
+        if (methodName.contains("<") && methodName.contains(">")) {
+            int startIndex = methodName.lastIndexOf("<");
+            int endIndex = methodName.lastIndexOf(">") + 1;
+
+            methodName = methodName.replace(methodName.substring(startIndex, endIndex), "");
         }
 
         /*
-         * Caller class name filter. class name can be qualified name or simple name
-         *
+          For fully qualified method expression, We are extracting fully qualified class name as import and method name
          */
-        if (Objects.nonNull(callerClassName) && !callerClassName.equals("")) {
+        if (methodName.contains(".")) {
+            importedClassQNameList.add(methodName);
+            methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
+        }
+
+        List<MethodInfo> qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
+                jarVertexIds, importedClassQNameList);
+
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+
+        if (!qualifiedMethodInfoList.isEmpty()) {
+            return qualifiedMethodInfoList;
+        }
+
+        /*
+          STEP 2
+         */
+        qualifiedMethodInfoList = tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
+                .has("Kind", "Class")
+                .has("QName", TextP.within(importedClassQNameList))
+                .out("ContainsInnerClass")
+                .out("Declares")
+                .has("Kind", "Method")
+                .has("Name", methodName)
+                .toStream()
+                .map(MethodInfo::new)
+                .filter(methodInfo -> methodInfo.getArgumentTypes().length == criteria.getNumberOfParameters())
+                .collect(Collectors.toList());
+
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+
+        if (!qualifiedMethodInfoList.isEmpty()) {
+            return qualifiedMethodInfoList;
+        }
+
+        /*
+          STEP 3
+         */
+        List<String> packageNameList = nonImportStaticList.stream()
+                .filter(im -> im.endsWith(".*"))
+                .map(im -> im.substring(0, im.lastIndexOf(".*")).replace("import", "").trim())
+                .collect(Collectors.toList());
+
+        Set<String> classNameListForPackgage = tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg")
+                .has("Kind", "Package")
+                .has("Name", TextP.within(packageNameList))
+                .out("Contains")
+                .has("Kind", "Class")
+                .<String>values("QName")
+                .toSet();
+
+        importedClassQNameList.addAll(classNameListForPackgage);
+
+        qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(), jarVertexIds, classNameListForPackgage);
+
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+
+        if (!qualifiedMethodInfoList.isEmpty()) {
+            return qualifiedMethodInfoList;
+        }
+
+        /*
+          STEP 4
+         */
+        Set<String> classQNameList = new HashSet<>(importedClassQNameList);
+
+        while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
+            classQNameList = tinkerGraph.traversal().V(jarVertexIds)
+                    .out("ContainsPkg").out("Contains")
+                    .has("Kind", "Class")
+                    .has("QName", TextP.within(classQNameList))
+                    .out("extends", "implements")
+                    .<String>values("Name")
+                    .toSet();
+
+            qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(), jarVertexIds, classQNameList);
+            qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+        }
+
+        if (!qualifiedMethodInfoList.isEmpty()) {
+            return qualifiedMethodInfoList;
+
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {
+        if (methodInfoList.isEmpty()) {
+            return methodInfoList;
+        }
+
+        populateClassInfo(methodInfoList);
+        methodInfoList = filterByMethodInvoker(methodInfoList, criteria, jarVertexIds);
+        return filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
+    }
+
+    private List<MethodInfo> filterByMethodInvoker(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {
+        String callerClassName = criteria.getCallerClassName();
+
+        if (!methodInfoList.isEmpty() && Objects.nonNull(callerClassName) && !callerClassName.equals("")) {
             Map<String, List<MethodInfo>> methodInfoDeclaringClassNameMap = new HashMap<>();
 
             String methodInfoClassName;
@@ -210,17 +352,14 @@ public class TypeInferenceFluentAPI {
                 }
             }
 
-            methodInfoList = filteredListByCallerClassName;
-        }
-
-        if (methodInfoList.size() == 1) {
+            return filteredListByCallerClassName;
+        } else {
             return methodInfoList;
         }
+    }
 
-        /*
-         * Argument type check filter.
-         */
-        if (!criteria.getArgumentTypeWithIndexList().isEmpty()) {
+    private List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {
+        if (!methodInfoList.isEmpty() && !criteria.getArgumentTypeWithIndexList().isEmpty()) {
             List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList().stream()
                     .map(argumentTypeWithIndex -> {
                         Integer argumentIndex = argumentTypeWithIndex._1();
@@ -324,143 +463,8 @@ public class TypeInferenceFluentAPI {
 
                 return methodArgumentClassNameList.isEmpty();
             }).collect(Collectors.toList());
-        }
-
-        return methodInfoList;
-    }
-
-    /**
-     * The process of checking classes for specific method will happen in four steps.<br><br>
-     *
-     * <strong>Step 1</strong>: All the classes who are directly mentioned in the import statement will be checked,
-     * if method found it will be returned.<br>
-     *
-     * <strong>Step 2</strong>: All the inner classes of classes who are directly mentioned in the import statement will
-     * be checked, if method found it will be returned.<br>
-     *
-     * <strong>Step 3</strong>: All the classes under on-demand package import will be searched, if method found
-     * it will be returned.<br>
-     *
-     * <strong>Step 4</strong>: Recursively look for super classes and interfaces from all the import classes (on demand and normal)
-     * if in any step method is found it will be returned, otherwise recursion will happen until java.lang.Object is
-     * reached, then if no method is found an empty list will be returned.<br>
-     */
-    private List<MethodInfo> getAllMethods(Object[] jarVertexIds, Criteria criteria) {
-        List<String> importList = criteria.getImportList();
-        String methodName = criteria.getMethodName();
-        List<String> importStaticList = importList.stream().filter(im -> im.startsWith("import static")).collect(Collectors.toList());
-        List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
-        Set<String> importedClassQNameList = new HashSet<>();
-
-        /*
-          STEP 1
-         */
-        importedClassQNameList.addAll(
-                nonImportStaticList.stream()
-                        .filter(im -> !im.endsWith(".*"))
-                        .map(im -> im.replace("import", "").trim())
-                        .collect(Collectors.toSet())
-        );
-
-        importedClassQNameList.addAll(
-                importStaticList.stream()
-                        .map(im -> im.substring(0, im.lastIndexOf(".")).replace("import static", "").trim())
-                        .collect(Collectors.toSet())
-        );
-
-        /*
-          Method name may contains parameterized type (e.g ArrayList<String>). So removal of parameterized type is required
-          before method name matching.
-         */
-        if (methodName.contains("<") && methodName.contains(">")) {
-            int startIndex = methodName.lastIndexOf("<");
-            int endIndex = methodName.lastIndexOf(">") + 1;
-
-            methodName = methodName.replace(methodName.substring(startIndex, endIndex), "");
-        }
-
-        /*
-          For fully qualified method expression, We are extracting fully qualified class name as import and method name
-         */
-        if (methodName.contains(".")) {
-            importedClassQNameList.add(methodName);
-            methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
-        }
-
-        List<MethodInfo> qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
-                jarVertexIds, importedClassQNameList);
-
-        if (!qualifiedMethodInfoList.isEmpty()) {
-            return populateClassInfo(qualifiedMethodInfoList);
-        }
-
-        /*
-          STEP 2
-         */
-        qualifiedMethodInfoList = tinkerGraph.traversal().V(jarVertexIds)
-                .out("ContainsPkg").out("Contains")
-                .has("Kind", "Class")
-                .has("QName", TextP.within(importedClassQNameList))
-                .out("ContainsInnerClass")
-                .out("Declares")
-                .has("Kind", "Method")
-                .has("Name", methodName)
-                .toStream()
-                .map(MethodInfo::new)
-                .filter(methodInfo -> methodInfo.getArgumentTypes().length == criteria.getNumberOfParameters())
-                .collect(Collectors.toList());
-
-        if (!qualifiedMethodInfoList.isEmpty()) {
-            return populateClassInfo(qualifiedMethodInfoList);
-        }
-
-        /*
-          STEP 3
-         */
-        List<String> packageNameList = nonImportStaticList.stream()
-                .filter(im -> im.endsWith(".*"))
-                .map(im -> im.substring(0, im.lastIndexOf(".*")).replace("import", "").trim())
-                .collect(Collectors.toList());
-
-        Set<String> classNameListForPackgage = tinkerGraph.traversal().V(jarVertexIds)
-                .out("ContainsPkg")
-                .has("Kind", "Package")
-                .has("Name", TextP.within(packageNameList))
-                .out("Contains")
-                .has("Kind", "Class")
-                .<String>values("QName")
-                .toSet();
-
-        importedClassQNameList.addAll(classNameListForPackgage);
-
-        qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(), jarVertexIds, classNameListForPackgage);
-
-        if (!qualifiedMethodInfoList.isEmpty()) {
-            return populateClassInfo(qualifiedMethodInfoList);
-        }
-
-        /*
-          STEP 4
-         */
-        Set<String> classQNameList = new HashSet<>(importedClassQNameList);
-
-        while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
-            classQNameList = tinkerGraph.traversal().V(jarVertexIds)
-                    .out("ContainsPkg").out("Contains")
-                    .has("Kind", "Class")
-                    .has("QName", TextP.within(classQNameList))
-                    .out("extends", "implements")
-                    .<String>values("Name")
-                    .toSet();
-
-            qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(), jarVertexIds, classQNameList);
-        }
-
-        if (!qualifiedMethodInfoList.isEmpty()) {
-            return populateClassInfo(qualifiedMethodInfoList);
-
         } else {
-            return Collections.emptyList();
+            return methodInfoList;
         }
     }
 
@@ -693,7 +697,7 @@ public class TypeInferenceFluentAPI {
         }
 
         public List<MethodInfo> getMethodList() {
-            return getFilteredMethodList(this);
+            return getAllMethods(this);
         }
     }
 }

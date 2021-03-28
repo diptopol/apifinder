@@ -420,12 +420,43 @@ public class JFreeChartTests {
         assert "[java.util.Date::public void Date(long)]".equals(matches.toString());
     }
 
-    private static void loadPreviousJFreeChartJar() {
-        String groupId = "org.jfree";
-        String artifactId = "jfreechart";
-        String version = "1.0.19";
+    /**
+     * The internal process of selection of methods is done in 4 steps. In each step, we first match method name and
+     * parameter size initially. If we found any match we are doing further filtering like invokerType check, argumentTypes
+     * check. If after filtration, we are unable to find single method instances we move to next step.
+     *
+     * This test is added to check whether the further filtration is done properly or not. This test search for a method
+     * named 'setWidth(org.jfree.ui.Size2D)' with 1 argument. In first step, we can find method with same name and
+     * argument size. But invokerType do not match. So the process will move on to next steps. In third step, we will
+     * receive the appropriate method "setWidth(org.jfree.chart.block.AbstractBlock)".
+     */
+    @Test
+    public void findMethodForMultipleOccurrencesInDifferentSteps() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.block.*",
+                "import java.awt.Graphics2D", "import java.awt.geom.Rectangle2D", "import java.io.Serializable",
+                "import org.jfree.ui.Size2D", "import org.jfree.util.PublicCloneable");
 
-        TypeInferenceFluentAPI.getInstance().loadJar(groupId, artifactId, version);
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet1, javaVersion, imports, "setWidth", 1)
+                .setInvokerType("org.jfree.chart.block.EmptyBlock")
+                .setArgumentType(0, "double")
+                .setSuperInvoker(true)
+                .getMethodList();
+
+        assert "[org.jfree.chart.block.AbstractBlock::public void setWidth(double)]".equals(matches.toString());
+    }
+
+    private static void loadPreviousJFreeChartJar() {
+        TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
+        TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
+        TypeInferenceFluentAPI.getInstance().loadJar("junit", "junit", "4.11");
+        TypeInferenceFluentAPI.getInstance().loadJar("javax.servlet", "servlet-api", "2.5");
     }
 
 }
