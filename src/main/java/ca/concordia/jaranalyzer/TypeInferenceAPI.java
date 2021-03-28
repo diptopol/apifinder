@@ -157,6 +157,7 @@ public class TypeInferenceAPI {
         List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
         Set<String> importedClassQNameList = new HashSet<>();
 
+        List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, jarVertexIds);
         /*
           STEP 1
          */
@@ -196,7 +197,7 @@ public class TypeInferenceAPI {
                 jarVertexIds, importedClassQNameList);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
-                argumentTypes, jarVertexIds);
+                argumentTypeList, jarVertexIds);
 
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
@@ -219,7 +220,7 @@ public class TypeInferenceAPI {
                 .collect(Collectors.toList());
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
-                argumentTypes, jarVertexIds);
+                argumentTypeList, jarVertexIds);
 
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
@@ -247,7 +248,7 @@ public class TypeInferenceAPI {
         qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters, jarVertexIds, classNameListForPackgage);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
-                argumentTypes, jarVertexIds);
+                argumentTypeList, jarVertexIds);
 
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
@@ -270,7 +271,7 @@ public class TypeInferenceAPI {
             qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters, jarVertexIds, classQNameList);
 
             qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
-                    argumentTypes, jarVertexIds);
+                    argumentTypeList, jarVertexIds);
         }
 
         if (!qualifiedMethodInfoList.isEmpty()) {
@@ -282,7 +283,7 @@ public class TypeInferenceAPI {
     }
 
     private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList, String callerClassName,
-                                                  boolean isSuperOfCallerClass, String[] argumentTypes,
+                                                  boolean isSuperOfCallerClass, List<String> argumentTypeList,
                                                   Object[] jarVertexIds) {
         if (methodInfoList.isEmpty()) {
             return methodInfoList;
@@ -291,7 +292,7 @@ public class TypeInferenceAPI {
         populateClassInfo(methodInfoList);
         methodInfoList = filterByMethodInvoker(methodInfoList, callerClassName, isSuperOfCallerClass, jarVertexIds);
 
-        return filterByMethodArgumentTypes(methodInfoList, argumentTypes, jarVertexIds);
+        return filterByMethodArgumentTypes(methodInfoList, argumentTypeList, jarVertexIds);
     }
 
     private static List<MethodInfo> filterByMethodInvoker(List<MethodInfo> methodInfoList, String callerClassName,
@@ -360,30 +361,9 @@ public class TypeInferenceAPI {
         }
     }
 
-    private static List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, String[] argumentTypes,
+    private static List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, List<String> argumentTypeList,
                                                                 Object[] jarVertexIds) {
-        if (!methodInfoList.isEmpty() && argumentTypes.length > 0) {
-            List<String> argumentTypeList = new ArrayList<>(Arrays.asList(argumentTypes)).stream()
-                    .map(argumentType -> {
-                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
-                            argumentType = argumentType.replace(".", "$");
-
-                            List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
-                                    .out("ContainsPkg").out("Contains")
-                                    .has("Kind", "Class")
-                                    .has("Name", argumentType)
-                                    .toStream()
-                                    .map(ClassInfo::new)
-                                    .collect(Collectors.toList());
-
-                            return qualifiedClassInfoList.isEmpty()
-                                    ? argumentType
-                                    : qualifiedClassInfoList.get(0).getQualifiedName();
-                        }
-
-                        return argumentType;
-                    }).collect(Collectors.toList());
-
+        if (!methodInfoList.isEmpty() && !argumentTypeList.isEmpty()) {
             return methodInfoList.stream().filter(methodInfo -> {
                 List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
                 List<String> methodArgumentClassNameList = Stream.of(methodInfo.getArgumentTypes())
@@ -462,6 +442,33 @@ public class TypeInferenceAPI {
             }).collect(Collectors.toList());
         } else {
             return methodInfoList;
+        }
+    }
+
+    private static List<String> resolveQNameForArgumentTypes(String[] argumentTypes, Object[] jarVertexIds) {
+        if (argumentTypes.length > 0) {
+            return new ArrayList<>(Arrays.asList(argumentTypes)).stream()
+                    .map(argumentType -> {
+                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
+                            argumentType = argumentType.replace(".", "$");
+
+                            List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
+                                    .out("ContainsPkg").out("Contains")
+                                    .has("Kind", "Class")
+                                    .has("Name", argumentType)
+                                    .toStream()
+                                    .map(ClassInfo::new)
+                                    .collect(Collectors.toList());
+
+                            return qualifiedClassInfoList.isEmpty()
+                                    ? argumentType
+                                    : qualifiedClassInfoList.get(0).getQualifiedName();
+                        }
+
+                        return argumentType;
+                    }).collect(Collectors.toList());
+        } else {
+            return new ArrayList<>(Arrays.asList(argumentTypes));
         }
     }
 

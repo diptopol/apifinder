@@ -162,6 +162,8 @@ public class TypeInferenceFluentAPI {
         List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
         Set<String> importedClassQNameList = new HashSet<>();
 
+        resolveQNameForArgumentTypes(criteria, jarVertexIds);
+
         /*
           STEP 1
          */
@@ -360,28 +362,7 @@ public class TypeInferenceFluentAPI {
 
     private List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {
         if (!methodInfoList.isEmpty() && !criteria.getArgumentTypeWithIndexList().isEmpty()) {
-            List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList().stream()
-                    .map(argumentTypeWithIndex -> {
-                        Integer argumentIndex = argumentTypeWithIndex._1();
-                        String argumentType = argumentTypeWithIndex._2();
-
-                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
-                            argumentType = argumentType.replace(".", "$");
-
-                            List<String> qualifiedNameList = tinkerGraph.traversal().V(jarVertexIds)
-                                    .out("ContainsPkg").out("Contains")
-                                    .has("Kind", "Class")
-                                    .has("Name", argumentType)
-                                    .<String>values("QName")
-                                    .toList();
-
-                            return qualifiedNameList.isEmpty()
-                                    ? argumentTypeWithIndex
-                                    : new Tuple2<>(argumentIndex, qualifiedNameList.get(0));
-                        }
-
-                        return argumentTypeWithIndex;
-                    }).collect(Collectors.toList());
+            List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList();
 
             return methodInfoList.stream().filter(methodInfo -> {
 
@@ -465,6 +446,35 @@ public class TypeInferenceFluentAPI {
             }).collect(Collectors.toList());
         } else {
             return methodInfoList;
+        }
+    }
+
+    private void resolveQNameForArgumentTypes(Criteria criteria, Object[] jarVertexIds) {
+        if (!criteria.getArgumentTypeWithIndexList().isEmpty()) {
+            List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList().stream()
+                    .map(argumentTypeWithIndex -> {
+                        Integer argumentIndex = argumentTypeWithIndex._1();
+                        String argumentType = argumentTypeWithIndex._2();
+
+                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
+                            argumentType = argumentType.replace(".", "$");
+
+                            List<String> qualifiedNameList = tinkerGraph.traversal().V(jarVertexIds)
+                                    .out("ContainsPkg").out("Contains")
+                                    .has("Kind", "Class")
+                                    .has("Name", argumentType)
+                                    .<String>values("QName")
+                                    .toList();
+
+                            return qualifiedNameList.isEmpty()
+                                    ? argumentTypeWithIndex
+                                    : new Tuple2<>(argumentIndex, qualifiedNameList.get(0));
+                        }
+
+                        return argumentTypeWithIndex;
+                    }).collect(Collectors.toList());
+
+            criteria.setArgumentTypeWithIndexList(argumentTypeWithIndexList);
         }
     }
 
@@ -658,6 +668,13 @@ public class TypeInferenceFluentAPI {
             return argumentTypeMap.entrySet().stream()
                     .map(e -> new Tuple2<>(e.getKey(), e.getValue()))
                     .collect(Collectors.toList());
+        }
+
+        private void setArgumentTypeWithIndexList(List<Tuple2<Integer, String>> argumentTypeWithIndexList) {
+            if (!argumentTypeWithIndexList.isEmpty()) {
+                argumentTypeMap = argumentTypeWithIndexList.stream()
+                        .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+            }
         }
 
         public Criteria(Set<Tuple3<String, String, String>> dependentJarInformationSet,
