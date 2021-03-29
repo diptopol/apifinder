@@ -136,7 +136,7 @@ public class JarAnalyzer {
                             for (String thrownInternalClassName : m.getThrownInternalClassNames()) {
                                 graphTraversalSource.V(x.id())
                                         .property(VertexProperty.Cardinality.set, "thrownInternalClassNames",
-                                                thrownInternalClassName);
+                                                thrownInternalClassName).next();
                             }
 
                             graphTraversalSource.addE("Declares").from(cls).to(x).iterate();
