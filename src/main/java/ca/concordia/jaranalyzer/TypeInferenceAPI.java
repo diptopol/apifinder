@@ -373,8 +373,10 @@ public class TypeInferenceAPI {
 
                 List<String> commonClassNameList = getCommonClassNameList(argumentTypeClassNameList, methodArgumentClassNameList);
 
-                argumentTypeClassNameList.removeAll(commonClassNameList);
-                methodArgumentClassNameList.removeAll(commonClassNameList);
+                for (String commonClassName : commonClassNameList) {
+                    argumentTypeClassNameList.remove(commonClassName);
+                    methodArgumentClassNameList.remove(commonClassName);
+                }
 
                 if (argumentTypeClassNameList.isEmpty() && methodArgumentClassNameList.isEmpty()) {
                     return true;
@@ -540,8 +542,15 @@ public class TypeInferenceAPI {
     private static List<String> getCommonClassNameList(List<String> argumentTypeClassNameList,
                                                        List<String> methodArgumentClassNameList) {
 
-        List<String> commonClassNameList = new ArrayList<>(argumentTypeClassNameList);
-        commonClassNameList.retainAll(methodArgumentClassNameList);
+        assert argumentTypeClassNameList.size() == methodArgumentClassNameList.size();
+
+        List<String> commonClassNameList = new ArrayList<>();
+
+        for (int index = 0; index < argumentTypeClassNameList.size(); index++) {
+            if (argumentTypeClassNameList.get(index).equals(methodArgumentClassNameList.get(index))) {
+                commonClassNameList.add(argumentTypeClassNameList.get(index));
+            }
+        }
 
         return commonClassNameList;
     }

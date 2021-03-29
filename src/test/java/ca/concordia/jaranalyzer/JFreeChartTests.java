@@ -468,6 +468,29 @@ public class JFreeChartTests {
                 .equals(methodInfoList.toString());
     }
 
+    @Test
+    public void findMethodWithMultipleSameTypeArgumentInstances() {
+        List<String> imports = Arrays.asList("org.jfree.chart.axis.ExtendedCategoryAxis", "import java.lang.*",
+                "import org.jfree.chart.axis.*", "import static org.junit.Assert.assertEquals", "import static org.junit.Assert.assertFalse",
+                "import static org.junit.Assert.assertTrue", "import java.awt.Color", "import java.awt.Font",
+                "import java.awt.GradientPaint", "import org.jfree.chart.TestUtilities", "import org.junit.Test");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
+                "addSubLabel", 2)
+                .setInvokerType("org.jfree.chart.axis.ExtendedCategoryAxis")
+                .setArgumentType(0, "java.lang.String")
+                .setArgumentType(1, "java.lang.String")
+                .getMethodList();
+
+        assert "[org.jfree.chart.axis.ExtendedCategoryAxis::public void addSubLabel(java.lang.Comparable, java.lang.String)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
