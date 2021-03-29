@@ -387,23 +387,19 @@ public class TypeInferenceAPI {
                     String methodArgumentTypeClassName = methodArgumentClassNameList.get(index);
 
                     if (isPrimitiveType(argumentTypeClassName) && isPrimitiveType(methodArgumentTypeClassName)) {
-                        if (argumentTypeClassName.equals("short")
-                                && Arrays.asList("int", "double", "long").contains(methodArgumentTypeClassName)) {
-
+                        if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                             matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
-                        } else if (argumentTypeClassName.equals("int")
-                                && Arrays.asList("double", "long").contains(methodArgumentTypeClassName)) {
-
+                        } else if (isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                             matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
                         } else {
-                            continue;
+                            return false;
                         }
                     }
 
                     if (isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
-                        continue;
+                        return false;
                     }
 
                     if (isPrimitiveType(argumentTypeClassName)

@@ -86,7 +86,6 @@ public class JFreeChartTests {
         assert "[java.util.ArrayList::public void ArrayList()]".equals(matches.toString());
     }
 
-
     /**
      * Currently, private inner classes are not excluded. If it is essential to exclude private inner classes further
      * improvement will be needed.

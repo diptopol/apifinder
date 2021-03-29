@@ -341,7 +341,7 @@ public class TypeInferenceFluentAPI {
 
                     superClassOutGoingEdgeLabels = allOutGoingEdges;
 
-                    for (String className: methodInfoClassNameList) {
+                    for (String className : methodInfoClassNameList) {
                         if (classNameSet.contains(className)) {
                             filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(className));
                         }
