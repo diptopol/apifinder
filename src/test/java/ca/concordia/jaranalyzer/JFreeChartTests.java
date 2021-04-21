@@ -469,6 +469,26 @@ public class JFreeChartTests {
     }
 
     @Test
+    public void findMethodWhereMethodExistInSuperClass() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.data.general.*",
+                "import java.io.Serializable", "import org.jfree.data.DefaultKeyedValue",
+                "import org.jfree.data.KeyedValue", "import org.jfree.util.ObjectUtilities");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
+                "getValue", 0)
+                .setInvokerType("KeyedValue")
+                .getMethodList();
+
+        assert "[org.jfree.data.Value::public abstract java.lang.Number getValue()]".equals(matches.toString());
+    }
+
+    @Test
     public void findMethodWithMultipleSameTypeArgumentInstances() {
         List<String> imports = Arrays.asList("org.jfree.chart.axis.ExtendedCategoryAxis", "import java.lang.*",
                 "import org.jfree.chart.axis.*", "import static org.junit.Assert.assertEquals", "import static org.junit.Assert.assertFalse",

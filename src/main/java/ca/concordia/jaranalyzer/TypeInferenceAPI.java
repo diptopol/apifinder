@@ -178,6 +178,7 @@ public class TypeInferenceAPI {
                 .map(im -> im.substring(0, im.lastIndexOf(".*")).replace("import", "").trim())
                 .collect(Collectors.toList());
 
+        callerClassName = resolveQNameForClass(callerClassName, jarVertexIds, importedClassQNameList, packageNameList);
         List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, jarVertexIds, importedClassQNameList, packageNameList);
 
         /*
@@ -303,12 +304,7 @@ public class TypeInferenceAPI {
 
             String methodInfoClassName;
             for (MethodInfo methodInfo : methodInfoList) {
-                if (StringUtils.countMatches(callerClassName, ".") <= 0) {
-                    methodInfoClassName = methodInfo.getClassInfo().getName();
-
-                } else {
-                    methodInfoClassName = methodInfo.getQualifiedClassName();
-                }
+                methodInfoClassName = methodInfo.getQualifiedClassName();
 
                 List<MethodInfo> methodInfoListForClass = methodInfoDeclaringClassNameMap.containsKey(methodInfoClassName)
                         ? methodInfoDeclaringClassNameMap.get(methodInfoClassName) : new ArrayList<>();
@@ -444,34 +440,44 @@ public class TypeInferenceAPI {
         }
     }
 
+    private static String resolveQNameForClass(String typeClassName,
+                                               Object[] jarVertexIds,
+                                               Set<String> importedClassQNameList,
+                                               List<String> packageNameList) {
+
+        if (Objects.nonNull(typeClassName) && !isPrimitiveType(typeClassName)
+                && StringUtils.countMatches(typeClassName, ".") <= 1) {
+
+            typeClassName = typeClassName.replace(".", "$");
+
+            List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
+                    .out("ContainsPkg").out("Contains")
+                    .has("Kind", "Class")
+                    .has("Name", typeClassName)
+                    .toStream()
+                    .map(ClassInfo::new)
+                    .collect(Collectors.toList());
+
+            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(classInfo ->
+                    importedClassQNameList.contains(classInfo.getQualifiedName())
+                            || packageNameList.contains(classInfo.getPackageName()))
+                    .collect(Collectors.toList());
+
+            return qualifiedClassInfoList.isEmpty()
+                    ? typeClassName
+                    : qualifiedClassInfoList.get(0).getQualifiedName();
+        }
+
+        return typeClassName;
+    }
+
     private static List<String> resolveQNameForArgumentTypes(String[] argumentTypes, Object[] jarVertexIds,
                                                              Set<String> importedClassQNameList, List<String> packageNameList) {
         if (argumentTypes.length > 0) {
             return new ArrayList<>(Arrays.asList(argumentTypes)).stream()
-                    .map(argumentType -> {
-                        if (!isPrimitiveType(argumentType) && StringUtils.countMatches(argumentType, ".") <= 1) {
-                            argumentType = argumentType.replace(".", "$");
-
-                            List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
-                                    .out("ContainsPkg").out("Contains")
-                                    .has("Kind", "Class")
-                                    .has("Name", argumentType)
-                                    .toStream()
-                                    .map(ClassInfo::new)
-                                    .collect(Collectors.toList());
-
-                            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(classInfo ->
-                                    importedClassQNameList.contains(classInfo.getQualifiedName())
-                                            || packageNameList.contains(classInfo.getPackageName()))
-                                    .collect(Collectors.toList());
-
-                            return qualifiedClassInfoList.isEmpty()
-                                    ? argumentType
-                                    : qualifiedClassInfoList.get(0).getQualifiedName();
-                        }
-
-                        return argumentType;
-                    }).collect(Collectors.toList());
+                    .map(typeClassName ->
+                            resolveQNameForClass(typeClassName, jarVertexIds, importedClassQNameList, packageNameList))
+                    .collect(Collectors.toList());
         } else {
             return new ArrayList<>(Arrays.asList(argumentTypes));
         }
