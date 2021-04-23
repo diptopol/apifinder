@@ -163,7 +163,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         if (!methodInfoList.isEmpty() && !criteria.getArgumentTypeWithIndexList().isEmpty()) {
             List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList();
 
-            return methodInfoList.stream().filter(methodInfo -> {
+            methodInfoList = methodInfoList.stream().filter(methodInfo -> {
 
                 argumentTypeWithIndexList.sort(Comparator.comparingInt(Tuple2::_1));
                 List<Type> methodArgumentTypeList = new ArrayList<>(Arrays.asList(methodInfo.getArgumentTypes()));
@@ -177,8 +177,15 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                     methodArgumentClassNameList.add(methodArgumentTypeList.get(index).getClassName());
                 }
 
-                return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph);
+                return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds,
+                        tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
+
+            if (methodInfoList.size() > 1) {
+                return methodInfoList.stream().filter(MethodInfo::isExactMatch).collect(Collectors.toList());
+            }
+
+            return methodInfoList;
         } else {
             return methodInfoList;
         }

@@ -219,9 +219,10 @@ public abstract class TypeInferenceBase {
     }
 
     static boolean matchMethodArguments(List<String> argumentTypeClassNameList,
-                                                  List<String> methodArgumentClassNameList,
-                                                  Object[] jarVertexIds,
-                                                  TinkerGraph tinkerGraph) {
+                                        List<String> methodArgumentClassNameList,
+                                        Object[] jarVertexIds,
+                                        TinkerGraph tinkerGraph,
+                                        MethodInfo methodInfo) {
         List<String> commonClassNameList = getCommonClassNameList(argumentTypeClassNameList, methodArgumentClassNameList);
 
         for (String commonClassName : commonClassNameList) {
@@ -230,6 +231,7 @@ public abstract class TypeInferenceBase {
         }
 
         if (argumentTypeClassNameList.isEmpty() && methodArgumentClassNameList.isEmpty()) {
+            methodInfo.setExactMatch(true);
             return true;
         }
 

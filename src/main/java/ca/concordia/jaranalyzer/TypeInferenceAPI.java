@@ -169,14 +169,20 @@ public class TypeInferenceAPI extends TypeInferenceBase {
     private static List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, List<String> argumentTypeList,
                                                                 Object[] jarVertexIds) {
         if (!methodInfoList.isEmpty() && !argumentTypeList.isEmpty()) {
-            return methodInfoList.stream().filter(methodInfo -> {
+            methodInfoList = methodInfoList.stream().filter(methodInfo -> {
                 List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
                 List<String> methodArgumentClassNameList = Stream.of(methodInfo.getArgumentTypes())
                         .map(Type::getClassName)
                         .collect(Collectors.toList());
 
-                return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph);
+                return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
+
+            if (methodInfoList.size() > 1 && methodInfoList.stream().anyMatch(MethodInfo::isExactMatch)) {
+                return methodInfoList.stream().filter(MethodInfo::isExactMatch).collect(Collectors.toList());
+            }
+
+            return methodInfoList;
         } else {
             return methodInfoList;
         }

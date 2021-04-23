@@ -511,6 +511,35 @@ public class JFreeChartTests {
         assert "[org.jfree.chart.axis.ExtendedCategoryAxis::public void addSubLabel(java.lang.Comparable, java.lang.String)]".equals(matches.toString());
     }
 
+    @Test
+    public void findMethodWithExactMatchingOfPrimitiveTypes() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.plot.dial.*",
+                "import java.awt.BasicStroke", "import java.awt.Color", "import java.awt.Graphics2D",
+                "import java.awt.Paint", "import java.awt.Shape", "import java.awt.Stroke", "import java.awt.geom.Arc2D",
+                "import java.awt.geom.Area", "import java.awt.geom.GeneralPath", "import java.awt.geom.Point2D",
+                "import java.awt.geom.Rectangle2D", "import java.io.IOException", "import java.io.ObjectInputStream",
+                "import java.io.ObjectOutputStream", "import java.io.Serializable", "import org.jfree.chart.HashUtilities",
+                "import org.jfree.chart.util.ParamChecks", "import org.jfree.io.SerialUtilities", "import org.jfree.util.PaintUtilities",
+                "import org.jfree.util.PublicCloneable");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet1, javaVersion, imports,
+                "Color", 3)
+                .setInvokerType("Color")
+                .setArgumentType(0, "int")
+                .setArgumentType(1, "int")
+                .setArgumentType(2, "int")
+                .getMethodList();
+
+        assert "[java.awt.Color::public void Color(int, int, int)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
