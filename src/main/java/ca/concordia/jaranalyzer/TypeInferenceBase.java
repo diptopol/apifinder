@@ -212,6 +212,10 @@ public abstract class TypeInferenceBase {
                 }
             }
 
+            if (filteredListByCallerClassName.size() > 1 && filteredListByCallerClassName.stream().anyMatch(m -> !m.isAbstract())) {
+                return filteredListByCallerClassName.stream().filter(m -> !m.isAbstract()).collect(Collectors.toList());
+            }
+
             return filteredListByCallerClassName;
         } else {
             return methodInfoList;

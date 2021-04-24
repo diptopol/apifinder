@@ -540,6 +540,50 @@ public class JFreeChartTests {
         assert "[java.awt.Color::public void Color(int, int, int)]".equals(matches.toString());
     }
 
+    @Test
+    public void findMethodWithNonAbstractImplCheck() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.renderer.category.*",
+                "import java.awt.Graphics2D", "import java.awt.geom.Rectangle2D", "import java.io.Serializable",
+                "import org.jfree.chart.axis.CategoryAxis", "import org.jfree.chart.axis.ValueAxis",
+                "import org.jfree.chart.entity.EntityCollection", "import org.jfree.chart.event.RendererChangeEvent",
+                "import org.jfree.chart.labels.CategoryItemLabelGenerator", "import org.jfree.chart.labels.ItemLabelAnchor",
+                "import org.jfree.chart.labels.ItemLabelPosition", "import org.jfree.chart.plot.CategoryPlot",
+                "import org.jfree.chart.plot.PlotOrientation", "import org.jfree.data.DataUtilities", "import org.jfree.data.Range",
+                "import org.jfree.data.category.CategoryDataset", "import org.jfree.data.general.DatasetUtilities", "import org.jfree.ui.RectangleEdge",
+                "import org.jfree.ui.TextAnchor", "import org.jfree.util.PublicCloneable");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet1, javaVersion, imports, "setBasePositiveItemLabelPosition", 1)
+                .setInvokerType("org.jfree.chart.renderer.category.StackedBarRenderer")
+                .setArgumentType(0, "org.jfree.chart.labels.ItemLabelPosition")
+                .getMethodList();
+
+        assert "[org.jfree.chart.renderer.AbstractRenderer::public void setBasePositiveItemLabelPosition(org.jfree.chart.labels.ItemLabelPosition)]".equals(matches.toString());
+    }
+
+    @Test
+    public void findMethodWhereMultipleClassExistsWithSameMethodSignatureInPackage() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.data.xy.*");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
+                "equals", 1, "org.jfree.data.xy.YIntervalSeries",
+                false, Collections.singleton("org.jfree.data.xy.YIntervalSeries").toArray(new String[0]));
+
+        assert "[org.jfree.data.ComparableObjectSeries::public boolean equals(java.lang.Object)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");

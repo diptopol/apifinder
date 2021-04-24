@@ -1,9 +1,11 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.Models.ClassInfo;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
 import io.vavr.Tuple3;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.lib.Repository;
 import org.objectweb.asm.Type;
@@ -57,7 +59,10 @@ public class TypeInferenceAPI extends TypeInferenceBase {
     }
 
     /**
-     * The process of checking classes for specific method will happen in four steps.<br><br>
+     * The process of checking classes for specific method will happen in below steps.<br><br>
+     *
+     * <strong>Step 0</strong>: If we can resolve qualified caller class name, we will use caller class to resolve method
+     * info.<br>
      *
      * <strong>Step 1</strong>: All the classes who are directly mentioned in the import statement will be checked,
      * if method found it will be returned.<br>
@@ -86,15 +91,46 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         Set<String> importedClassQNameSet = getImportedQNameList(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
+        List<MethodInfo> qualifiedMethodInfoList = new ArrayList<>();
+
+        String previousCallerClass = callerClassName;
         callerClassName = resolveQNameForClass(callerClassName, jarVertexIds, importedClassQNameSet, packageNameList, tinkerGraph);
         List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, jarVertexIds, importedClassQNameSet, packageNameList);
 
         methodName = processMethodName(methodName, importedClassQNameSet);
 
         /*
+          STEP 0
+         */
+
+        if (callerClassName != null && StringUtils.countMatches(callerClassName, ".") >= 1) {
+            List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousCallerClass, jarVertexIds,
+                    importedClassQNameSet, packageNameList, tinkerGraph);
+            Set<String> classQNameList = classInfoList.isEmpty()
+                    ? Collections.singleton(callerClassName)
+                    : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
+
+            while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
+                qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
+                        jarVertexIds, classQNameList, tinkerGraph);
+
+                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+                        argumentTypeList, jarVertexIds);
+
+                if (qualifiedMethodInfoList.isEmpty()) {
+                    classQNameList = getSuperClasses(classQNameList, jarVertexIds, tinkerGraph);
+                }
+            }
+
+            if (!qualifiedMethodInfoList.isEmpty()) {
+                return qualifiedMethodInfoList;
+            }
+        }
+
+        /*
           STEP 1
          */
-        List<MethodInfo> qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
+        qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
