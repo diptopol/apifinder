@@ -257,7 +257,8 @@ public abstract class TypeInferenceBase {
                 }
             }
 
-            if (isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
+            if (!methodArgumentTypeClassName.equals("java.lang.Object")
+                    && isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
                 return false;
             }
 
@@ -270,8 +271,9 @@ public abstract class TypeInferenceBase {
             /*
              * Trimmed down array dimension before searching for super classes.
              */
-            argumentTypeClassName = argumentTypeClassName.replaceAll("[/]", "");
-            methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("[/]", "");
+            argumentTypeClassName = argumentTypeClassName.replaceAll("\\[]", "");
+            methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("\\[]", "");
+            methodArgumentClassNameList.set(index, methodArgumentTypeClassName);
 
             Set<String> classNameList = new HashSet<>();
             classNameList.add(argumentTypeClassName);
