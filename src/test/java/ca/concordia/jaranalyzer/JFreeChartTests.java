@@ -577,9 +577,11 @@ public class JFreeChartTests {
         jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
         jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
-                "equals", 1, "org.jfree.data.xy.YIntervalSeries",
-                false, Collections.singleton("org.jfree.data.xy.YIntervalSeries").toArray(new String[0]));
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
+                "equals", 1)
+                .setInvokerType("org.jfree.data.xy.YIntervalSeries")
+                .setArgumentType(0, "org.jfree.data.xy.YIntervalSeries")
+                .getMethodList();
 
         assert "[org.jfree.data.ComparableObjectSeries::public boolean equals(java.lang.Object)]".equals(matches.toString());
     }
