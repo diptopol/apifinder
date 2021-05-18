@@ -275,6 +275,11 @@ public abstract class TypeInferenceBase {
             methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("\\[]", "");
             methodArgumentClassNameList.set(index, methodArgumentTypeClassName);
 
+            if (methodArgumentTypeClassName.contains("$")) {
+                methodArgumentTypeClassName = methodArgumentTypeClassName.replace("$", ".");
+                methodArgumentClassNameList.set(index, methodArgumentTypeClassName);
+            }
+
             Set<String> classNameList = new HashSet<>();
             classNameList.add(argumentTypeClassName);
 

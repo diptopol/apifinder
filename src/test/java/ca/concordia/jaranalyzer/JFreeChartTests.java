@@ -586,6 +586,27 @@ public class JFreeChartTests {
         assert "[org.jfree.data.ComparableObjectSeries::public boolean equals(java.lang.Object)]".equals(matches.toString());
     }
 
+    @Test
+    public void findMethodWhereArgumentIsInnerClass() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.*", "import java.awt.BasicStroke",
+                "import java.awt.Color", "import java.awt.Font", "import java.awt.GradientPaint", "import java.awt.font.TextAttribute",
+                "import java.awt.geom.Line2D", "import java.awt.geom.Rectangle2D", "import java.text.AttributedString", "import org.jfree.ui.GradientPaintTransformType",
+                "import org.jfree.ui.StandardGradientPaintTransformer", "import org.junit.Test", "import static org.junit.Assert.assertEquals",
+                "import static org.junit.Assert.assertFalse", "import static org.junit.Assert.assertSame", "import static org.junit.Assert.assertNotSame");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
+                "addAttribute", 2, "java.text.AttributedString", false,
+                "java.awt.font.TextAttribute", "java.awt.Font");
+
+        assert "[java.text.AttributedString::public void addAttribute(java.text.AttributedCharacterIterator$Attribute, java.lang.Object)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
