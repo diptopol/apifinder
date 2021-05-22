@@ -104,7 +104,7 @@ public class JarAnalyzer {
                             graphTraversalSource.addE("implements").from(cls).to(superInterface).iterate();
                         });
 
-                c.getMethods().stream().filter(x -> !x.isPrivate())
+                c.getMethods()
                         .forEach(m -> {
                             Vertex x = graphTraversalSource.addV()
                                     .property("Kind", "Method")
@@ -142,7 +142,7 @@ public class JarAnalyzer {
                             graphTraversalSource.addE("Declares").from(cls).to(x).iterate();
                         });
 
-                c.getFields().stream().filter(x -> !x.isPrivate())
+                c.getFields()
                         .forEach(f -> {
                             Vertex field = graphTraversalSource.addV()
                                     .property("Kind", "Field")
