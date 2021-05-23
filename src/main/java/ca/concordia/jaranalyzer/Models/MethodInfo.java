@@ -27,6 +27,7 @@ public class MethodInfo {
 	private String qualifiedName;
 	private String internalClassConstructorSuffix;
 
+	private boolean isCallerClassExactMatch;
 	private boolean isArgumentsExactMatch;
 
 	public MethodInfo(Vertex vertex) {
@@ -275,6 +276,14 @@ public class MethodInfo {
 
 	public String getInternalClassConstructorSuffix() {
 		return internalClassConstructorSuffix;
+	}
+
+	public boolean isCallerClassExactMatch() {
+		return isCallerClassExactMatch;
+	}
+
+	public void setCallerClassExactMatch(boolean callerClassExactMatch) {
+		isCallerClassExactMatch = callerClassExactMatch;
 	}
 
 	public boolean isArgumentsExactMatch() {

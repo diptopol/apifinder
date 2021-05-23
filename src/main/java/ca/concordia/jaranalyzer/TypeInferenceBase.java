@@ -178,7 +178,10 @@ public abstract class TypeInferenceBase {
             List<MethodInfo> filteredListByCallerClassName = new ArrayList<>();
 
             if (methodInfoClassNameList.contains(callerClassName) && !isSuperOfCallerClass) {
-                filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
+                List<MethodInfo> qualifiedMethodInfoList = methodInfoDeclaringClassNameMap.get(callerClassName);
+                qualifiedMethodInfoList.forEach(m -> m.setCallerClassExactMatch(true));
+
+                filteredListByCallerClassName.addAll(qualifiedMethodInfoList);
 
             } else {
                 Set<String> classNameSet = new HashSet<>();
@@ -210,6 +213,10 @@ public abstract class TypeInferenceBase {
                         break;
                     }
                 }
+            }
+
+            if (filteredListByCallerClassName.size() > 1 && filteredListByCallerClassName.stream().anyMatch(MethodInfo::isCallerClassExactMatch)) {
+                return filteredListByCallerClassName.stream().filter(MethodInfo::isCallerClassExactMatch).collect(Collectors.toList());
             }
 
             if (filteredListByCallerClassName.size() > 1 && filteredListByCallerClassName.stream().anyMatch(m -> !m.isAbstract())) {
