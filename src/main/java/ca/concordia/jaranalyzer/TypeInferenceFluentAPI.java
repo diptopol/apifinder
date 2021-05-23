@@ -217,7 +217,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             }).collect(Collectors.toList());
 
             if (methodInfoList.size() > 1) {
-                return methodInfoList.stream().filter(MethodInfo::isExactMatch).collect(Collectors.toList());
+                return methodInfoList.stream().filter(MethodInfo::isArgumentsExactMatch).collect(Collectors.toList());
             }
 
             return methodInfoList;

@@ -235,7 +235,7 @@ public abstract class TypeInferenceBase {
         }
 
         if (argumentTypeClassNameList.isEmpty() && methodArgumentClassNameList.isEmpty()) {
-            methodInfo.setExactMatch(true);
+            methodInfo.setArgumentsExactMatch(true);
             return true;
         }
 

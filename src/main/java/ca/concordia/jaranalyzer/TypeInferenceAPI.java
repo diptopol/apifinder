@@ -214,8 +214,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
 
-            if (methodInfoList.size() > 1 && methodInfoList.stream().anyMatch(MethodInfo::isExactMatch)) {
-                return methodInfoList.stream().filter(MethodInfo::isExactMatch).collect(Collectors.toList());
+            if (methodInfoList.size() > 1 && methodInfoList.stream().anyMatch(MethodInfo::isArgumentsExactMatch)) {
+                return methodInfoList.stream().filter(MethodInfo::isArgumentsExactMatch).collect(Collectors.toList());
             }
 
             return methodInfoList;
