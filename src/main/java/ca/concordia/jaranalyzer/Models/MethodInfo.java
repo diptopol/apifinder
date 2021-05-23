@@ -316,6 +316,29 @@ public class MethodInfo {
 		return false;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		MethodInfo that = (MethodInfo) o;
+
+		return name.equals(that.name) &&
+				(classInfo != null && that.classInfo != null && classInfo.getQualifiedName().equals(that.classInfo.getQualifiedName())) &&
+				Arrays.equals(argumentTypes, that.argumentTypes) &&
+				Objects.equals(returnType, that.returnType) &&
+				Objects.equals(thrownInternalClassNames, that.thrownInternalClassNames) &&
+				Objects.equals(internalClassConstructorSuffix, that.internalClassConstructorSuffix);
+	}
+
+	@Override
+	public int hashCode() {
+		String classInfoQName = classInfo != null ? classInfo.getQualifiedName() : null;
+
+		int result = Objects.hash(name, classInfoQName, returnType, thrownInternalClassNames, internalClassConstructorSuffix);
+		result = 31 * result + Arrays.hashCode(argumentTypes);
+
+		return result;
+	}
 
 //	public Identification getID(Identification owner){
 //		TypeSignature typeSign = TypeSignature.newBuilder()

@@ -192,6 +192,8 @@ public abstract class TypeInferenceBase {
                         ? new String[]{"extends"}
                         : allOutGoingEdges;
 
+                Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+
                 while (!classNameSet.isEmpty()) {
                     classNameSet = tinkerGraph.traversal().V(jarVertexIds)
                             .out("ContainsPkg").out("Contains")
@@ -209,9 +211,18 @@ public abstract class TypeInferenceBase {
                         }
                     }
 
+                    if (!filteredListByCallerClassName.isEmpty() && isDeferredMethodList(filteredListByCallerClassName)) {
+                        deferredQualifiedMethodInfoSet.addAll(filteredListByCallerClassName);
+                        filteredListByCallerClassName.clear();
+                    }
+
                     if (!filteredListByCallerClassName.isEmpty()) {
                         break;
                     }
+                }
+
+                if (filteredListByCallerClassName.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
+                    filteredListByCallerClassName.addAll(deferredQualifiedMethodInfoSet);
                 }
             }
 
@@ -219,14 +230,15 @@ public abstract class TypeInferenceBase {
                 return filteredListByCallerClassName.stream().filter(MethodInfo::isCallerClassExactMatch).collect(Collectors.toList());
             }
 
-            if (filteredListByCallerClassName.size() > 1 && filteredListByCallerClassName.stream().anyMatch(m -> !m.isAbstract())) {
-                return filteredListByCallerClassName.stream().filter(m -> !m.isAbstract()).collect(Collectors.toList());
-            }
-
             return filteredListByCallerClassName;
         } else {
             return methodInfoList;
         }
+    }
+
+    static boolean isDeferredMethodList(List<MethodInfo> methodInfoList) {
+        return methodInfoList.stream().allMatch(MethodInfo::isAbstract)
+                || methodInfoList.stream().allMatch(m -> m.getClassInfo().getQualifiedName().equals("java.lang.Object"));
     }
 
     static boolean matchMethodArguments(List<String> argumentTypeClassNameList,

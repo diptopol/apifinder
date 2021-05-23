@@ -108,15 +108,30 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                     ? Collections.singleton(callerClassName)
                     : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
 
+            Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+
             while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                         jarVertexIds, classQNameList, tinkerGraph);
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
 
+                if (!qualifiedMethodInfoList.isEmpty() && isDeferredMethodList(qualifiedMethodInfoList)) {
+                    deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+                    qualifiedMethodInfoList.clear();
+                }
+
                 if (qualifiedMethodInfoList.isEmpty()) {
                     classQNameList = getSuperClasses(classQNameList, jarVertexIds, tinkerGraph);
                 }
+            }
+
+            if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
+                if (deferredQualifiedMethodInfoSet.size() > 1 && deferredQualifiedMethodInfoSet.stream().anyMatch(MethodInfo::isCallerClassExactMatch)) {
+                    deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream().filter(MethodInfo::isCallerClassExactMatch).collect(Collectors.toSet());
+                }
+
+                qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 
             if (!qualifiedMethodInfoList.isEmpty()) {
@@ -164,6 +179,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
           STEP 4
          */
         Set<String> classQNameList = new HashSet<>(importedClassQNameSet);
+        Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
         while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
             classQNameList = getSuperClasses(classQNameList, jarVertexIds, tinkerGraph);
@@ -172,6 +188,19 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                     classQNameList, tinkerGraph);
 
             qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+
+            if (!qualifiedMethodInfoList.isEmpty() && isDeferredMethodList(qualifiedMethodInfoList)) {
+                deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+                qualifiedMethodInfoList.clear();
+            }
+        }
+
+        if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
+            if (deferredQualifiedMethodInfoSet.size() > 1 && deferredQualifiedMethodInfoSet.stream().anyMatch(MethodInfo::isCallerClassExactMatch)) {
+                deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream().filter(MethodInfo::isCallerClassExactMatch).collect(Collectors.toSet());
+            }
+
+            qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
         }
 
         if (!qualifiedMethodInfoList.isEmpty()) {
@@ -191,7 +220,14 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getCallerClassName(),
                 criteria.isSuperOfCallerClass, jarVertexIds, tinkerGraph);
 
-        return filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
+        methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
+
+
+        if (methodInfoList.size() > 1 && methodInfoList.stream().anyMatch(m -> !m.isAbstract())) {
+            return methodInfoList.stream().filter(m -> !m.isAbstract()).collect(Collectors.toList());
+        }
+
+        return methodInfoList;
     }
 
     private List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {

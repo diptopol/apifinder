@@ -607,6 +607,30 @@ public class JFreeChartTests {
         assert "[java.text.AttributedString::public void addAttribute(java.text.AttributedCharacterIterator$Attribute, java.lang.Object)]".equals(matches.toString());
     }
 
+    @Test
+    public void findMethodWhereMultipleCandidateInDifferentParentHierarchy() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.renderer.xy.*", "import java.awt.Graphics2D",
+                "import java.awt.Paint", "import java.awt.Stroke", "import java.awt.geom.Line2D", "import java.awt.geom.Rectangle2D", "import java.io.Serializable",
+                "import org.jfree.chart.HashUtilities", "import org.jfree.chart.axis.ValueAxis", "import org.jfree.chart.entity.EntityCollection",
+                "import org.jfree.chart.event.RendererChangeEvent", "import org.jfree.chart.labels.XYToolTipGenerator", "import org.jfree.chart.plot.CrosshairState",
+                "import org.jfree.chart.plot.PlotOrientation", "import org.jfree.chart.plot.PlotRenderingInfo", "import org.jfree.chart.plot.XYPlot",
+                "import org.jfree.chart.urls.XYURLGenerator", "import org.jfree.data.xy.XYDataset", "import org.jfree.ui.RectangleEdge", "import org.jfree.util.PublicCloneable");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
+                "setBaseToolTipGenerator", 1)
+                .setArgumentType(0, "org.jfree.chart.labels.XYToolTipGenerator")
+                .getMethodList();
+
+        assert "[org.jfree.chart.renderer.xy.AbstractXYItemRenderer::public void setBaseToolTipGenerator(org.jfree.chart.labels.XYToolTipGenerator)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
