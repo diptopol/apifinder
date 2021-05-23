@@ -600,9 +600,12 @@ public class JFreeChartTests {
         jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
         jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
-                "addAttribute", 2, "java.text.AttributedString", false,
-                "java.awt.font.TextAttribute", "java.awt.Font");
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
+                "addAttribute", 2)
+                .setInvokerType("java.text.AttributedString")
+                .setArgumentType(0,"java.awt.font.TextAttribute")
+                .setArgumentType(1, "java.awt.Font")
+                .getMethodList();
 
         assert "[java.text.AttributedString::public void addAttribute(java.text.AttributedCharacterIterator$Attribute, java.lang.Object)]".equals(matches.toString());
     }
