@@ -299,6 +299,10 @@ public abstract class TypeInferenceBase {
                 methodArgumentClassNameList.set(index, methodArgumentTypeClassName);
             }
 
+            if (isPrimitiveType(argumentTypeClassName) && methodArgumentTypeClassName.equals("java.lang.Object")) {
+                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+            }
+
             Set<String> classNameList = new HashSet<>();
             classNameList.add(argumentTypeClassName);
 
