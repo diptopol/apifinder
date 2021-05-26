@@ -247,6 +247,7 @@ public abstract class TypeInferenceBase {
                                         TinkerGraph tinkerGraph,
                                         MethodInfo methodInfo) {
         List<String> commonClassNameList = getCommonClassNameList(argumentTypeClassNameList, methodArgumentClassNameList);
+        methodInfo.setNumberOfExactMatchedArguments(commonClassNameList.size());
 
         for (String commonClassName : commonClassNameList) {
             argumentTypeClassNameList.remove(commonClassName);
@@ -254,7 +255,6 @@ public abstract class TypeInferenceBase {
         }
 
         if (argumentTypeClassNameList.isEmpty() && methodArgumentClassNameList.isEmpty()) {
-            methodInfo.setArgumentsExactMatch(true);
             return true;
         }
 

@@ -634,6 +634,29 @@ public class JFreeChartTests {
         assert "[org.jfree.chart.renderer.xy.AbstractXYItemRenderer::public void setBaseToolTipGenerator(org.jfree.chart.labels.XYToolTipGenerator)]".equals(matches.toString());
     }
 
+    @Test
+    public void findMethodWhereMultipleCandidatesWithPartialArgumentMatching() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.data.xy.*",
+                "import org.jfree.data.ComparableObjectItem", "import org.jfree.data.ComparableObjectSeries",
+                "import org.jfree.data.general.SeriesChangeEvent");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet1, javaVersion, imports, "add", 2)
+                .setInvokerType("org.jfree.data.xy.YIntervalSeries")
+                .setSuperInvoker(true)
+                .setArgumentType(0, "org.jfree.data.xy.YIntervalDataItem")
+                .setArgumentType(1, "boolean")
+                .getMethodList();
+
+        assert "[org.jfree.data.ComparableObjectSeries::protected void add(org.jfree.data.ComparableObjectItem, boolean)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");

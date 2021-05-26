@@ -28,7 +28,7 @@ public class MethodInfo {
 	private String internalClassConstructorSuffix;
 
 	private boolean isCallerClassExactMatch;
-	private boolean isArgumentsExactMatch;
+	private int numberOfExactMatchedArguments;
 
 	public MethodInfo(Vertex vertex) {
 		this.id = vertex.id();
@@ -286,12 +286,12 @@ public class MethodInfo {
 		isCallerClassExactMatch = callerClassExactMatch;
 	}
 
-	public boolean isArgumentsExactMatch() {
-		return isArgumentsExactMatch;
+	public int getNumberOfExactMatchedArguments() {
+		return numberOfExactMatchedArguments;
 	}
 
-	public void setArgumentsExactMatch(boolean argumentsExactMatch) {
-		isArgumentsExactMatch = argumentsExactMatch;
+	public void setNumberOfExactMatchedArguments(int numberOfExactMatchedArguments) {
+		this.numberOfExactMatchedArguments = numberOfExactMatchedArguments;
 	}
 
 	public boolean matches(String methodName, int numberOfParameters) {
