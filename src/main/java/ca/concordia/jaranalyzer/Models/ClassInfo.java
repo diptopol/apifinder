@@ -78,23 +78,35 @@ public class ClassInfo {
 
             this.type = Type.getObjectType(classNode.name);
 
-            if ((classNode.access & Opcodes.ACC_PUBLIC) != 0) {
+            int access = classNode.access;
+
+            /*
+             * access (for inner classes) does not reflact acces of classNode. Instead, we have to fetch access property
+             * of innerClassNode and use it.
+             */
+            for (InnerClassNode innerClassNode : classNode.innerClasses) {
+                if (innerClassNode.name.equals(classNode.name)) {
+                    access = innerClassNode.access;
+                }
+            }
+
+            if ((access & Opcodes.ACC_PUBLIC) != 0) {
                 isPublic = true;
-            } else if ((classNode.access & Opcodes.ACC_PROTECTED) != 0) {
+            } else if ((access & Opcodes.ACC_PROTECTED) != 0) {
                 isProtected = true;
-            } else if ((classNode.access & Opcodes.ACC_PRIVATE) != 0) {
+            } else if ((access & Opcodes.ACC_PRIVATE) != 0) {
                 isPrivate = true;
             }
 
-            if ((classNode.access & Opcodes.ACC_ABSTRACT) != 0) {
+            if ((access & Opcodes.ACC_ABSTRACT) != 0) {
                 isAbstract = true;
             }
 
-            if ((classNode.access & Opcodes.ACC_INTERFACE) != 0) {
+            if ((access & Opcodes.ACC_INTERFACE) != 0) {
                 isInterface = true;
             }
 
-            if ((classNode.access & Opcodes.ACC_ENUM) != 0) {
+            if ((access & Opcodes.ACC_ENUM) != 0) {
                 isEnum = true;
             }
 
