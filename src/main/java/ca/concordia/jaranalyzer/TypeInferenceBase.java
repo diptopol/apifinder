@@ -276,6 +276,12 @@ public abstract class TypeInferenceBase {
                 }
             }
 
+            if (isNullType(argumentTypeClassName) && !isPrimitiveType(methodArgumentTypeClassName)) {
+                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+
+                continue;
+            }
+
             if (!methodArgumentTypeClassName.equals("java.lang.Object")
                     && isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
                 return false;
@@ -539,6 +545,10 @@ public abstract class TypeInferenceBase {
         }
 
         return methodName;
+    }
+
+    private static boolean isNullType(String name) {
+        return "null".equals(name);
     }
 
     private static boolean isPrimitiveType(String argumentTypeClassName) {
