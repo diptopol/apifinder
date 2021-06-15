@@ -684,6 +684,27 @@ public class JFreeChartTests {
                 "java.lang.Comparable[], java.lang.Number[][], java.lang.Number[][])]", matches.toString());
     }
 
+    @Test
+    public void findMethodWithClosestArgumentMatching() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.util.*", "import java.awt.Color", "import java.awt.Graphics2D",
+                "import java.awt.image.BufferedImage", "import java.awt.image.DataBufferInt", "import java.io.Serializable", "import org.jfree.chart.HashUtilities");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
+                "hashCode", 2)
+                .setInvokerType("org.jfree.chart.HashUtilities")
+                .setArgumentType(0, "int")
+                .setArgumentType(1, "java.awt.Color")
+                .getMethodList();
+
+        assertEquals("[org.jfree.chart.HashUtilities::public static int hashCode(int, java.awt.Paint)]", matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");

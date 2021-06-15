@@ -249,17 +249,17 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
 
-            int maxNumberOfExactMatchedArguments = Optional.of(methodInfoList)
+            int minArgumentMatchingDistance = Optional.of(methodInfoList)
                     .orElse(Collections.emptyList())
                     .stream()
-                    .map(MethodInfo::getNumberOfExactMatchedArguments)
+                    .map(MethodInfo::getArgumentMatchingDistance)
                     .mapToInt(v->v)
                     .max()
                     .orElse(0);
 
-            if (methodInfoList.size() > 1 &&  maxNumberOfExactMatchedArguments >= 1) {
+            if (methodInfoList.size() > 1) {
                 return methodInfoList.stream()
-                        .filter(m -> m.getNumberOfExactMatchedArguments() >= maxNumberOfExactMatchedArguments)
+                        .filter(m -> m.getArgumentMatchingDistance() >= minArgumentMatchingDistance)
                         .collect(Collectors.toList());
             }
 

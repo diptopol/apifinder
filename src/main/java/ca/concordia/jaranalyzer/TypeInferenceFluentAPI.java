@@ -222,7 +222,6 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
 
-
         if (methodInfoList.size() > 1 && methodInfoList.stream().anyMatch(m -> !m.isAbstract())) {
             return methodInfoList.stream().filter(m -> !m.isAbstract()).collect(Collectors.toList());
         }
@@ -235,7 +234,6 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList();
 
             methodInfoList = methodInfoList.stream().filter(methodInfo -> {
-
                 argumentTypeWithIndexList.sort(Comparator.comparingInt(Tuple2::_1));
                 List<Type> methodArgumentTypeList = new ArrayList<>(Arrays.asList(methodInfo.getArgumentTypes()));
                 List<String> argumentTypeClassNameList = new ArrayList<>();
@@ -252,17 +250,17 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                         tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
 
-            int maxNumberOfExactMatchedArguments = Optional.of(methodInfoList)
+            int minArgumentMatchingDistance = Optional.of(methodInfoList)
                     .orElse(Collections.emptyList())
                     .stream()
-                    .map(MethodInfo::getNumberOfExactMatchedArguments)
+                    .map(MethodInfo::getArgumentMatchingDistance)
                     .mapToInt(v->v)
-                    .max()
+                    .min()
                     .orElse(0);
 
-            if (methodInfoList.size() > 1 &&  maxNumberOfExactMatchedArguments >= 1) {
+            if (methodInfoList.size() > 1) {
                 return methodInfoList.stream()
-                        .filter(m -> m.getNumberOfExactMatchedArguments() >= maxNumberOfExactMatchedArguments)
+                        .filter(m -> m.getArgumentMatchingDistance() == minArgumentMatchingDistance)
                         .collect(Collectors.toList());
             }
 

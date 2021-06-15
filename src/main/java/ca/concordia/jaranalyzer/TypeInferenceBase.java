@@ -34,6 +34,9 @@ public abstract class TypeInferenceBase {
 
     private static Logger logger = LoggerFactory.getLogger(TypeInferenceBase.class);
 
+    private static final int MAX_SUPER_CLASS_DISTANCE = 1000;
+    private static final int PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE = 1;
+
     private static final List<String> PRIMITIVE_TYPE_LIST =
             new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
 
@@ -247,7 +250,6 @@ public abstract class TypeInferenceBase {
                                         TinkerGraph tinkerGraph,
                                         MethodInfo methodInfo) {
         List<String> commonClassNameList = getCommonClassNameList(argumentTypeClassNameList, methodArgumentClassNameList);
-        methodInfo.setNumberOfExactMatchedArguments(commonClassNameList.size());
 
         for (String commonClassName : commonClassNameList) {
             argumentTypeClassNameList.remove(commonClassName);
@@ -266,9 +268,13 @@ public abstract class TypeInferenceBase {
 
             if (isPrimitiveType(argumentTypeClassName) && isPrimitiveType(methodArgumentTypeClassName)) {
                 if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
+                            + PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE);
                     matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
                 } else if (isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
+                            + PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE);
                     matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
                 } else {
@@ -306,11 +312,14 @@ public abstract class TypeInferenceBase {
             }
 
             if (isPrimitiveType(argumentTypeClassName) && methodArgumentTypeClassName.equals("java.lang.Object")) {
+                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
             }
 
             Set<String> classNameList = new HashSet<>();
             classNameList.add(argumentTypeClassName);
+
+            int distance = 0;
 
             while (!classNameList.isEmpty()) {
                 classNameList = tinkerGraph.traversal().V(jarVertexIds)
@@ -322,6 +331,12 @@ public abstract class TypeInferenceBase {
                         .toSet();
 
                 if (classNameList.contains(methodArgumentTypeClassName)) {
+                    if (methodArgumentTypeClassName.equals("java.lang.Object")) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
+                    } else {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + distance);
+                    }
+
                     matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                     break;
                 }
