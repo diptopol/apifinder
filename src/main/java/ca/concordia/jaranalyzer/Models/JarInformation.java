@@ -62,9 +62,11 @@ public class JarInformation {
 							? newClass.getQualifiedName().substring(0, newClass.getQualifiedName().lastIndexOf('.')).lastIndexOf(".")
 							: newClass.getQualifiedName().lastIndexOf('.');
 
-					String packageName = newClass.getQualifiedName().substring(0, packageNameConcludingIndex);
-					PackageInfo packageInfo = getPackageInfo(packageName);
-					packageInfo.addClass(newClass);
+					if (packageNameConcludingIndex >= 0) {
+						String packageName = newClass.getQualifiedName().substring(0, packageNameConcludingIndex);
+						PackageInfo packageInfo = getPackageInfo(packageName);
+						packageInfo.addClass(newClass);
+					}
 				}
 
 			}
