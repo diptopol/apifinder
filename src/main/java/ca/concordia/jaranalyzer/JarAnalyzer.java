@@ -147,7 +147,12 @@ public class JarAnalyzer {
                             Vertex field = graphTraversalSource.addV()
                                     .property("Kind", "Field")
                                     .property("Name", f.getName())
-                                    .property("ReturnType", f.getType().toString())
+                                    .property("isPublic", f.isPublic())
+                                    .property("isPrivate", f.isPrivate())
+                                    .property("isProtected", f.isProtected())
+                                    .property("isStatic", f.isStatic())
+                                    .property("returnTypeDescriptor", f.getType().getDescriptor())
+                                    .property("signature", f.getSignature())
                                     .next();
 
                             graphTraversalSource.addE("Declares").from(cls).to(field).iterate();

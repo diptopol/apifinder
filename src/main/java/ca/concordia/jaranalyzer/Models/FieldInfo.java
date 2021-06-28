@@ -1,10 +1,14 @@
 package ca.concordia.jaranalyzer.Models;
 
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldNode;
 
 public class FieldInfo {
+
+	private Object id;
 	private String name;
 	private ClassInfo classInfo;
 	private Type type;
@@ -13,6 +17,24 @@ public class FieldInfo {
 	private boolean isProtected;
 	private boolean isStatic;
 	private String signature;
+
+	public FieldInfo(Vertex vertex) {
+		this.id = vertex.id();
+		this.name = vertex.<String>property("Name").value();
+
+		this.isPublic = vertex.<Boolean>property("isPublic").value();
+		this.isPrivate = vertex.<Boolean>property("isPrivate").value();
+		this.isProtected = vertex.<Boolean>property("isProtected").value();
+		this.isStatic = vertex.<Boolean>property("isStatic").value();
+
+		this.type = Type.getType(vertex.<String>property("returnTypeDescriptor").value());
+
+		VertexProperty<String> signatureProperty = vertex.property("signature");
+
+		if (signatureProperty.isPresent()) {
+			this.signature = signatureProperty.value();
+		}
+	}
 
 	public FieldInfo(FieldNode fieldNode, ClassInfo classInfo) {
 		this.classInfo = classInfo;
@@ -40,6 +62,7 @@ public class FieldInfo {
 
 	public String toString() {
 		StringBuilder methodDescription = new StringBuilder();
+
 		if (isPublic) {
 			methodDescription.append("public ");
 		} else if (isProtected) {
@@ -63,7 +86,9 @@ public class FieldInfo {
 		return name;
 	}
 
-
+	public Object getId() {
+		return id;
+	}
 
 	public ClassInfo getClassInfo() {
 		return classInfo;
@@ -104,6 +129,5 @@ public class FieldInfo {
 	public String getSignature() {
 		return signature;
 	}
-
 
 }
