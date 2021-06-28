@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.util;
 
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
@@ -121,5 +122,13 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     public SignatureWriter getSignatureWriter() {
         return signatureWriter;
+    }
+
+    public Type[] getMethodArgumentTypes() {
+        return Type.getArgumentTypes(signatureWriter.toString());
+    }
+
+    public Type getMethodReturnType() {
+        return Type.getReturnType(signatureWriter.toString());
     }
 }

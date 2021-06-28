@@ -4,7 +4,6 @@ import ca.concordia.jaranalyzer.util.GenericTypeResolutionAdapter;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
-import org.objectweb.asm.signature.SignatureWriter;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,10 +29,8 @@ public class GenericTypeConversionTest {
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
         signatureReader.accept(genericTypeResolutionAdapter);
 
-        SignatureWriter signatureWriter = genericTypeResolutionAdapter.getSignatureWriter();
-
-        assert "[]".equals(Arrays.asList(Type.getArgumentTypes(signatureWriter.toString())).toString())
-                && "java.util.Set".equals(Type.getReturnType(signatureWriter.toString()).getClassName());
+        assert "[]".equals(Arrays.asList(genericTypeResolutionAdapter.getMethodArgumentTypes()).toString())
+                && "java.util.Set".equals(genericTypeResolutionAdapter.getMethodReturnType().getClassName());
     }
 
     @Test
@@ -49,14 +46,12 @@ public class GenericTypeConversionTest {
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
         signatureReader.accept(genericTypeResolutionAdapter);
 
-        SignatureWriter signatureWriter = genericTypeResolutionAdapter.getSignatureWriter();
-
-        List<String> argumentTypeClassNameList = Arrays.stream(Type.getArgumentTypes(signatureWriter.toString()))
+        List<String> argumentTypeClassNameList = Arrays.stream(genericTypeResolutionAdapter.getMethodArgumentTypes())
                 .map(Type::getClassName)
                 .collect(Collectors.toList());
 
         assert "[java.util.Map, boolean]".equals(argumentTypeClassNameList.toString())
-                && "void".equals(Type.getReturnType(signatureWriter.toString()).getClassName());
+                && "void".equals(genericTypeResolutionAdapter.getMethodReturnType().getClassName());
     }
 
     @Test
@@ -71,14 +66,12 @@ public class GenericTypeConversionTest {
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
         signatureReader.accept(genericTypeResolutionAdapter);
 
-        SignatureWriter signatureWriter = genericTypeResolutionAdapter.getSignatureWriter();
-
-        List<String> argumentTypeClassNameList = Arrays.stream(Type.getArgumentTypes(signatureWriter.toString()))
+        List<String> argumentTypeClassNameList = Arrays.stream(genericTypeResolutionAdapter.getMethodArgumentTypes())
                 .map(Type::getClassName)
                 .collect(Collectors.toList());
 
         assert "[java.lang.String[]]".equals(argumentTypeClassNameList.toString())
-                && "void".equals(Type.getReturnType(signatureWriter.toString()).getClassName());
+                && "void".equals(genericTypeResolutionAdapter.getMethodReturnType().getClassName());
     }
 
 }
