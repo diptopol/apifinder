@@ -1,14 +1,13 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.util.ClassSignatureFormalTypeParameterExtractor;
+import ca.concordia.jaranalyzer.util.FieldSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.GenericTypeResolutionAdapter;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +71,36 @@ public class GenericTypeConversionTest {
 
         assert "[java.lang.String[]]".equals(argumentTypeClassNameList.toString())
                 && "void".equals(genericTypeResolutionAdapter.getMethodReturnType().getClassName());
+    }
+
+    @Test
+    public void testFormalTypParameterExtractionFromClassSignature() {
+        String classSignature = "<K:Ljava/lang/Object;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/util/Map<TK;TV;>;Ljava/lang/Cloneable;Ljava/io/Serializable;";
+
+        SignatureReader signatureReader = new SignatureReader(classSignature);
+        List<String> typeClassNameList = new ArrayList<>(Arrays.asList("java.lang.String", "java.lang.Integer"));
+
+        ClassSignatureFormalTypeParameterExtractor classSignatureFormalTypeParameterExtractor =
+                new ClassSignatureFormalTypeParameterExtractor(typeClassNameList);
+
+        signatureReader.accept(classSignatureFormalTypeParameterExtractor);
+
+        assert "[V=java.lang.Integer, K=java.lang.String]"
+                .equals(classSignatureFormalTypeParameterExtractor.getFormalTypeParameterMap().entrySet().toString());
+    }
+
+    @Test
+    public void testFormalTypeParameterExtractionFromFieldSignature() {
+        String signature = "Ljava/util/Map<Ljava/lang/Integer;Lorg/jfree/data/xy/XYDataset;>;";
+
+        SignatureReader signatureReader = new SignatureReader(signature);
+        FieldSignatureFormalTypeParameterExtractor fieldSignatureFormalTypeParameterExtractor = new FieldSignatureFormalTypeParameterExtractor();
+
+        signatureReader.accept(fieldSignatureFormalTypeParameterExtractor);
+
+        assert "java.util.Map".equals(fieldSignatureFormalTypeParameterExtractor.getTypeClassName())
+                && "[java.lang.Integer, org.jfree.data.xy.XYDataset]"
+                .equals(fieldSignatureFormalTypeParameterExtractor.getTypeArgumentClassNameList().toString());
     }
 
 }
