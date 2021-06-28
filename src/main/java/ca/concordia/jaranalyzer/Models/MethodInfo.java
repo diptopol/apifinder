@@ -224,6 +224,10 @@ public class MethodInfo {
 		return argumentTypes;
 	}
 
+	public void setArgumentTypes(Type[] argumentTypes) {
+		this.argumentTypes = argumentTypes;
+	}
+
 	public boolean isConstructor() {
 		return isConstructor;
 	}
@@ -240,6 +244,10 @@ public class MethodInfo {
 	public Type getReturnTypeAsType() {
 		return returnType;// .substring(returnType.getClassName().lastIndexOf('.')
 		// + 1);
+	}
+
+	public void setReturnType(Type returnType) {
+		this.returnType = returnType;
 	}
 
 	public List<String> getThrownInternalClassNames() {
