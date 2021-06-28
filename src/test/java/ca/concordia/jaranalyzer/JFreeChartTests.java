@@ -719,9 +719,10 @@ public class JFreeChartTests {
         jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
         jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
 
-        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
-                "addValue", 2, null, false,
-                "java.lang.Comparable", "java.lang.Number");
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet1, javaVersion, imports, "addValue", 2)
+                .setArgumentType(0, "java.lang.Comparable")
+                .setArgumentType(1, "java.lang.Number").getMethodList();
 
         assert "[org.jfree.data.DefaultKeyedValues::public void addValue(java.lang.Comparable, java.lang.Number)]".equals(matches.toString());
     }
