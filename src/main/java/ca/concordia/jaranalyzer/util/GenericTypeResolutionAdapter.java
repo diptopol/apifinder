@@ -17,7 +17,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     private Map<String, String> formalParameterMap;
 
-    private boolean seenFormalTypeParameter;
+    private int argumentStack;
 
     /**
      * @param formalTypeParameterMap : This map will be used to resolve formal types
@@ -36,7 +36,6 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     @Override
     public void visitFormalTypeParameter(final String name) {
-        seenFormalTypeParameter = true;
         signatureWriter.visitFormalTypeParameter(name);
     }
 
@@ -71,7 +70,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     @Override
     public void visitTypeVariable(final String name) {
-        if (!seenFormalTypeParameter) {
+        if (argumentStack == 0) {
             String className = formalParameterMap.get(name);
             signatureWriter.visitClassType(className);
             signatureWriter.visitEnd();
@@ -86,37 +85,46 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     @Override
     public void visitClassType(final String name) {
-        if (!seenFormalTypeParameter) {
+        if (argumentStack == 0) {
             signatureWriter.visitClassType(name);
         }
+
+        argumentStack *= 2;
     }
 
     @Override
     public void visitInnerClassType(final String name) {
-        if (!seenFormalTypeParameter) {
+        argumentStack /= 2;
+
+        if (argumentStack == 0) {
             signatureWriter.visitInnerClassType(name);
         }
+
+        argumentStack *= 2;
     }
 
     @Override
     public void visitTypeArgument() {
-        seenFormalTypeParameter = true;
+        if (argumentStack % 2 == 0) {
+            argumentStack |= 1;
+        }
     }
 
     @Override
     public SignatureVisitor visitTypeArgument(final char tag) {
-        seenFormalTypeParameter = true;
+        if (argumentStack % 2 == 0) {
+            argumentStack |= 1;
+        }
+
         return this;
     }
 
     @Override
     public void visitEnd() {
-        if (seenFormalTypeParameter) {
-            signatureWriter.visitEnd();
-        }
+        argumentStack /= 2;
 
-        if (seenFormalTypeParameter) {
-            seenFormalTypeParameter = false;
+        if (argumentStack == 0) {
+            signatureWriter.visitEnd();
         }
     }
 

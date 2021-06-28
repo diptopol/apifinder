@@ -74,6 +74,20 @@ public class GenericTypeConversionTest {
     }
 
     @Test
+    public void testNonFormalTypeArgument() {
+        String signature = "(Ljava/lang/Object;)TV;";
+
+        Map<String, String> map = new HashMap<>();
+        map.put("V", "java.lang.String");
+
+        SignatureReader signatureReader = new SignatureReader(signature);
+        GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
+        signatureReader.accept(genericTypeResolutionAdapter);
+
+        assert "(Ljava/lang/Object;)Ljava.lang.String;".equals(genericTypeResolutionAdapter.getSignatureWriter().toString());
+    }
+
+    @Test
     public void testFormalTypParameterExtractionFromClassSignature() {
         String classSignature = "<K:Ljava/lang/Object;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/util/Map<TK;TV;>;Ljava/lang/Cloneable;Ljava/io/Serializable;";
 
