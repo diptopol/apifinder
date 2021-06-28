@@ -44,6 +44,7 @@ public abstract class TypeInferenceBase {
     private static Map<String, List<String>> PRIMITIVE_TYPE_NARROWING_MAP = new HashMap<>();
 
     private static Map<String, String> PRIMITIVE_WRAPPER_CLASS_MAP = new HashMap<>();
+    private static Map<String, String> PRIMITIVE_UN_WRAPPER_CLASS_MAP = new HashMap<>();
 
     static {
         PRIMITIVE_WRAPPER_CLASS_MAP.put("boolean", "java.lang.Boolean");
@@ -56,6 +57,17 @@ public abstract class TypeInferenceBase {
         PRIMITIVE_WRAPPER_CLASS_MAP.put("double", "java.lang.Double");
 
         PRIMITIVE_WRAPPER_CLASS_MAP = Collections.unmodifiableMap(PRIMITIVE_WRAPPER_CLASS_MAP);
+
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Boolean", "boolean");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put( "java.lang.Byte", "byte");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put( "java.lang.Character", "char");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Float", "float");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Integer", "int");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Long", "long");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Short", "short");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Double", "double");
+
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP = Collections.unmodifiableMap(PRIMITIVE_UN_WRAPPER_CLASS_MAP);
 
         PRIMITIVE_TYPE_WIDENING_MAP.put("byte", Arrays.asList("short", "int", "long", "float", "double"));
         PRIMITIVE_TYPE_WIDENING_MAP.put("short", Arrays.asList("int", "long", "float", "double"));
@@ -297,6 +309,14 @@ public abstract class TypeInferenceBase {
                     && PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
 
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+            }
+
+            if (isPrimitiveType(methodArgumentTypeClassName)
+                    && PRIMITIVE_UN_WRAPPER_CLASS_MAP.containsKey(argumentTypeClassName)
+                    && PRIMITIVE_UN_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
+
+                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                continue;
             }
 
             /*

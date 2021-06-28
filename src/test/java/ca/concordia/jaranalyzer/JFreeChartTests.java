@@ -705,6 +705,27 @@ public class JFreeChartTests {
         assertEquals("[org.jfree.chart.HashUtilities::public static int hashCode(int, java.awt.Paint)]", matches.toString());
     }
 
+    @Test
+    public void findMethodWithPrimitiveTypeUnWrappingArgument() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.data.general.*", "import java.io.Serializable",
+                "import java.util.Collections", "import java.util.List", "import org.jfree.chart.util.ParamChecks",
+                "import org.jfree.data.DefaultKeyedValues", "import org.jfree.data.KeyedValues", "import org.jfree.data.UnknownKeyException",
+                "import org.jfree.util.PublicCloneable", "import org.jfree.util.SortOrder");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
+                "addValue", 2, null, false,
+                "java.lang.Comparable", "java.lang.Number");
+
+        assert "[org.jfree.data.DefaultKeyedValues::public void addValue(java.lang.Comparable, java.lang.Number)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
