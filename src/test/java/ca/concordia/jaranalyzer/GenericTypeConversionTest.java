@@ -54,6 +54,26 @@ public class GenericTypeConversionTest {
     }
 
     @Test
+    public void testRemovalOfFormalTypeParameter() {
+        String methodSignature = "<T::Ljava/util/EventListener;>(Ljava/lang/Class<TT;>;TT;)V";
+
+        SignatureReader signatureReader = new SignatureReader(methodSignature);
+
+        Map<String, String> map = new HashMap<>();
+        map.put("T", "org.jfree.chart.plot.dial.DialLayerChangeListener");
+
+        GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
+        signatureReader.accept(genericTypeResolutionAdapter);
+
+        List<String> argumentTypeClassNameList = Arrays.stream(genericTypeResolutionAdapter.getMethodArgumentTypes())
+                .map(Type::getClassName)
+                .collect(Collectors.toList());
+
+        assert "[java.lang.Class, org.jfree.chart.plot.dial.DialLayerChangeListener]".equals(argumentTypeClassNameList.toString())
+                && "void".equals(genericTypeResolutionAdapter.getMethodReturnType().getClassName());
+    }
+
+    @Test
     public void testForArrayAsArgument() {
         String methodSignature = "([TE;)V";
 

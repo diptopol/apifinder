@@ -19,6 +19,8 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     private int argumentStack;
 
+    private boolean isFormalTypeParameterTraversalCompleted;
+
     /**
      * @param formalTypeParameterMap : This map will be used to resolve formal types
      */
@@ -30,35 +32,21 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     @Override
     public SignatureVisitor visitReturnType() {
+        isFormalTypeParameterTraversalCompleted = true;
         signatureWriter.visitReturnType();
         return this;
     }
 
     @Override
-    public void visitFormalTypeParameter(final String name) {
-        signatureWriter.visitFormalTypeParameter(name);
-    }
-
-    @Override
-    public SignatureVisitor visitClassBound() {
-        signatureWriter.visitClassBound();
-        return this;
-    }
-
-    @Override
-    public SignatureVisitor visitInterfaceBound() {
-        signatureWriter.visitInterfaceBound();
-        return this;
-    }
-
-    @Override
     public SignatureVisitor visitParameterType() {
+        isFormalTypeParameterTraversalCompleted = true;
         signatureWriter.visitParameterType();
         return this;
     }
 
     @Override
     public SignatureVisitor visitExceptionType() {
+        isFormalTypeParameterTraversalCompleted = true;
         signatureWriter.visitExceptionType();
         return this;
     }
@@ -85,7 +73,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     @Override
     public void visitClassType(final String name) {
-        if (argumentStack == 0) {
+        if (argumentStack == 0 && isFormalTypeParameterTraversalCompleted) {
             signatureWriter.visitClassType(name);
         }
 
@@ -96,7 +84,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
     public void visitInnerClassType(final String name) {
         argumentStack /= 2;
 
-        if (argumentStack == 0) {
+        if (argumentStack == 0 && isFormalTypeParameterTraversalCompleted) {
             signatureWriter.visitInnerClassType(name);
         }
 
@@ -123,7 +111,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
     public void visitEnd() {
         argumentStack /= 2;
 
-        if (argumentStack == 0) {
+        if (argumentStack == 0 && isFormalTypeParameterTraversalCompleted) {
             signatureWriter.visitEnd();
         }
     }
