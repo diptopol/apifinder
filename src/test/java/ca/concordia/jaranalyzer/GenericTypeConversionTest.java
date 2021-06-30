@@ -3,6 +3,7 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.util.ClassSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.FieldSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.GenericTypeResolutionAdapter;
+import ca.concordia.jaranalyzer.util.MethodSignatureFormalTypeParameterExtractor;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
@@ -135,6 +136,22 @@ public class GenericTypeConversionTest {
         assert "java.util.Map".equals(fieldSignatureFormalTypeParameterExtractor.getTypeClassName())
                 && "[java.lang.Integer, org.jfree.data.xy.XYDataset]"
                 .equals(fieldSignatureFormalTypeParameterExtractor.getTypeArgumentClassNameList().toString());
+    }
+
+    @Test
+    public void testFormalTypeParameterExtractionFromMethodSignature() {
+        String signature = "<T::Ljava/util/EventListener;>(Ljava/lang/Class<TT;>;TT;)V";
+
+        List<String> argumentList = new ArrayList<>(Arrays.asList("org.jfree.chart.plot.dial.DialLayerChangeListener",
+                "org.jfree.chart.plot.dial.DialLayerChangeListener"));
+
+        SignatureReader signatureReader = new SignatureReader(signature);
+        MethodSignatureFormalTypeParameterExtractor extractor = new MethodSignatureFormalTypeParameterExtractor(argumentList);
+
+        signatureReader.accept(extractor);
+
+        assert "[T=org.jfree.chart.plot.dial.DialLayerChangeListener]"
+                .equals(extractor.getFormalTypeParameterMap().entrySet().toString());
     }
 
 }
