@@ -300,6 +300,14 @@ public abstract class TypeInferenceBase {
                 continue;
             }
 
+            // this check has to be done before `isArrayDimensionMismatch` checking
+            if (methodArgumentTypeClassName.endsWith("[]")
+                    && isVarArgsMatch(methodArgumentTypeClassName, argumentTypeClassNameList.subList(index, argumentTypeClassNameList.size()))) {
+
+                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                break;
+            }
+
             if (!methodArgumentTypeClassName.equals("java.lang.Object")
                     && isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
                 return false;
@@ -443,7 +451,7 @@ public abstract class TypeInferenceBase {
                 .has("Name", methodName)
                 .toStream()
                 .map(MethodInfo::new)
-                .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters)
+                .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs())
                 .collect(Collectors.toList());
     }
 
@@ -459,7 +467,7 @@ public abstract class TypeInferenceBase {
                 .has("Name", methodName)
                 .toStream()
                 .map(MethodInfo::new)
-                .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters)
+                .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs())
                 .collect(Collectors.toList());
     }
 
@@ -600,11 +608,11 @@ public abstract class TypeInferenceBase {
 
     private static List<String> getCommonClassNameList(List<String> argumentTypeClassNameList,
                                                        List<String> methodArgumentClassNameList) {
-        assert argumentTypeClassNameList.size() == methodArgumentClassNameList.size();
 
+        int size = Math.min(argumentTypeClassNameList.size(), methodArgumentClassNameList.size());
         List<String> commonClassNameList = new ArrayList<>();
 
-        for (int index = 0; index < argumentTypeClassNameList.size(); index++) {
+        for (int index = 0; index < size; index++) {
             if (argumentTypeClassNameList.get(index).equals(methodArgumentClassNameList.get(index))) {
                 commonClassNameList.add(argumentTypeClassNameList.get(index));
             }
@@ -623,6 +631,11 @@ public abstract class TypeInferenceBase {
         return (isArgumentTypeArray && !isMethodArgumentTypeArray)
                 || (!isArgumentTypeArray && isMethodArgumentTypeArray)
                 || argumentTypeArrayDimension != methodArgumentTypeArrayDimension;
+    }
+
+    private static boolean isVarArgsMatch(String methodArgumentTypeClassName, List<String> varArgsTypeClassNameList) {
+        String typeName = methodArgumentTypeClassName.replaceAll("\\[]$", "");
+        return varArgsTypeClassNameList.stream().allMatch(name -> name.equals(typeName));
     }
 
 }

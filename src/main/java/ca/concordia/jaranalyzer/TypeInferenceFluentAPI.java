@@ -243,7 +243,10 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                     int index = argumentIndexTuple._1();
 
                     argumentTypeClassNameList.add(argumentIndexTuple._2());
-                    methodArgumentClassNameList.add(methodArgumentTypeList.get(index).getClassName());
+
+                    if (index < methodArgumentTypeList.size()) {
+                        methodArgumentClassNameList.add(methodArgumentTypeList.get(index).getClassName());
+                    }
                 }
 
                 return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds,
