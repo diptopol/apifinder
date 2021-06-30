@@ -104,7 +104,7 @@ public class GenericTypeConversionTest {
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
         signatureReader.accept(genericTypeResolutionAdapter);
 
-        assert "(Ljava/lang/Object;)Ljava.lang.String;".equals(genericTypeResolutionAdapter.getSignatureWriter().toString());
+        assert "(Ljava/lang/Object;)Ljava/lang/String;".equals(genericTypeResolutionAdapter.getSignatureWriter().toString());
     }
 
     @Test
