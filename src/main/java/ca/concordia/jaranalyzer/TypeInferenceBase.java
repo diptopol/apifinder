@@ -301,8 +301,9 @@ public abstract class TypeInferenceBase {
             }
 
             // this check has to be done before `isArrayDimensionMismatch` checking
-            if (methodArgumentTypeClassName.endsWith("[]")
-                    && isVarArgsMatch(methodArgumentTypeClassName, argumentTypeClassNameList.subList(index, argumentTypeClassNameList.size()))) {
+            if (methodArgumentTypeClassName.endsWith("[]") && methodInfo.isVarargs()
+                    && isVarArgsMatch(methodArgumentTypeClassName,
+                    argumentTypeClassNameList.subList(index, argumentTypeClassNameList.size()), jarVertexIds, tinkerGraph)) {
 
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                 break;
@@ -350,13 +351,7 @@ public abstract class TypeInferenceBase {
             int distance = 0;
 
             while (!classNameList.isEmpty()) {
-                classNameList = tinkerGraph.traversal().V(jarVertexIds)
-                        .out("ContainsPkg").out("Contains")
-                        .has("Kind", "Class")
-                        .has("QName", TextP.within(classNameList))
-                        .out("extends", "implements")
-                        .<String>values("Name")
-                        .toSet();
+                classNameList = getSuperClasses(classNameList, jarVertexIds, tinkerGraph);
 
                 if (classNameList.contains(methodArgumentTypeClassName)) {
                     if (methodArgumentTypeClassName.equals("java.lang.Object")) {
@@ -633,9 +628,45 @@ public abstract class TypeInferenceBase {
                 || argumentTypeArrayDimension != methodArgumentTypeArrayDimension;
     }
 
-    private static boolean isVarArgsMatch(String methodArgumentTypeClassName, List<String> varArgsTypeClassNameList) {
-        String typeName = methodArgumentTypeClassName.replaceAll("\\[]$", "");
-        return varArgsTypeClassNameList.stream().allMatch(name -> name.equals(typeName));
+    private static boolean isVarArgsMatch(String methodArgumentTypeClassName,
+                                          List<String> varArgsTypeClassNameList,
+                                          Object[] jarVertexIds,
+                                          TinkerGraph tinkerGraph) {
+        String typeClassName = methodArgumentTypeClassName.replaceAll("\\[]$", "");
+
+        if (varArgsTypeClassNameList.stream().anyMatch(name -> isArrayDimensionMismatch(name, typeClassName))) {
+            return false;
+        }
+
+        if (varArgsTypeClassNameList.stream().allMatch(name -> name.equals(typeClassName))) {
+            return true;
+        }
+
+        String methodArgumentTypeName = typeClassName.replaceAll("\\[]", "");
+
+        varArgsTypeClassNameList = varArgsTypeClassNameList.stream().distinct().collect(Collectors.toList());
+
+        return varArgsTypeClassNameList.stream().allMatch(varArgTypeName -> {
+            varArgTypeName = varArgTypeName.replaceAll("\\[]", "");
+
+            if (isPrimitiveType(varArgTypeName)) {
+                varArgTypeName = PRIMITIVE_WRAPPER_CLASS_MAP.get(varArgTypeName);
+            }
+
+            Set<String> classNameSet = Collections.singleton(varArgTypeName);
+            boolean matched = false;
+
+            while (!classNameSet.isEmpty()) {
+                classNameSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
+
+                if (classNameSet.contains(methodArgumentTypeName)) {
+                    matched = true;
+                    break;
+                }
+            }
+
+            return matched;
+        });
     }
 
 }

@@ -754,6 +754,34 @@ public class JFreeChartTests {
                 "throws java.lang.NoSuchMethodException, java.lang.SecurityException]").equals(matches.toString());
     }
 
+    @Test
+    public void findMethodWithSuperClassAsVariableArguments() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.util.*",
+                "import java.awt.Graphics2D", "import java.awt.Rectangle", "import java.awt.geom.Rectangle2D",
+                "import java.awt.image.BufferedImage", "import java.io.BufferedOutputStream", "import java.io.File",
+                "import java.io.FileNotFoundException", "import java.io.FileOutputStream", "import java.io.IOException",
+                "import java.io.OutputStream", "import java.lang.reflect.Constructor", "import java.lang.reflect.InvocationTargetException",
+                "import java.lang.reflect.Method", "import javax.imageio.ImageIO", "import org.jfree.ui.Drawable",
+                "import org.jfree.chart.util.ExportUtils");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
+                "newInstance", 2)
+                .setInvokerType("java.lang.reflect.Constructor")
+                .setArgumentType(0, "int")
+                .setArgumentType(1, "int")
+                .getMethodList();
+
+        assert ("[java.lang.reflect.Constructor::public java.lang.Object newInstance(java.lang.Object[])" +
+                " throws java.lang.InstantiationException, java.lang.IllegalAccessException," +
+                " java.lang.IllegalArgumentException, java.lang.reflect.InvocationTargetException]").equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
