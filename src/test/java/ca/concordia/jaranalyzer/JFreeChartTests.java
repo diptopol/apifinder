@@ -782,6 +782,24 @@ public class JFreeChartTests {
                 " java.lang.IllegalArgumentException, java.lang.reflect.InvocationTargetException]").equals(matches.toString());
     }
 
+    @Test
+    public void finMethodsWithDeferredMatching() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import java.awt.geom.Arc2D");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet1, javaVersion, imports, "Double", 1)
+                .setArgumentType(0, "double")
+                .getMethodList();
+
+        assert "[java.lang.Double::public void Double(double)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");

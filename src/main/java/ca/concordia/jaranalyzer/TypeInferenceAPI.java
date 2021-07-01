@@ -119,7 +119,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
                         argumentTypeList, jarVertexIds);
 
-                if (!qualifiedMethodInfoList.isEmpty() && isDeferredMethodList(qualifiedMethodInfoList)) {
+                if (!qualifiedMethodInfoList.isEmpty()
+                        && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
                     deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
                     qualifiedMethodInfoList.clear();
                 }
@@ -130,11 +131,13 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             }
 
             if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
+                int minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(deferredQualifiedMethodInfoSet);
                 int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(deferredQualifiedMethodInfoSet);
 
                 if (deferredQualifiedMethodInfoSet.size() > 1) {
                     deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream()
-                            .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                            .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
+                                    && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
                             .collect(Collectors.toSet());
                 }
 
@@ -155,6 +158,14 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
                 argumentTypeList, jarVertexIds);
 
+        Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+
+        if (!qualifiedMethodInfoList.isEmpty()
+                && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
+            deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+            qualifiedMethodInfoList.clear();
+        }
+
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
         }
@@ -167,6 +178,12 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
                 argumentTypeList, jarVertexIds);
+
+        if (!qualifiedMethodInfoList.isEmpty()
+                && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
+            deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+            qualifiedMethodInfoList.clear();
+        }
 
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
@@ -181,6 +198,13 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
                 argumentTypeList, jarVertexIds);
 
+        if (!qualifiedMethodInfoList.isEmpty()
+                && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
+
+            deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+            qualifiedMethodInfoList.clear();
+        }
+
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
         }
@@ -189,7 +213,6 @@ public class TypeInferenceAPI extends TypeInferenceBase {
           STEP 4
          */
         Set<String> classQNameList = new HashSet<>(importedClassQNameSet);
-        Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
         while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
             classQNameList = getSuperClasses(classQNameList, jarVertexIds, tinkerGraph);
@@ -200,18 +223,21 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
                     argumentTypeList, jarVertexIds);
 
-            if (!qualifiedMethodInfoList.isEmpty() && isDeferredMethodList(qualifiedMethodInfoList)) {
+            if (!qualifiedMethodInfoList.isEmpty()
+                    && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
                 deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
                 qualifiedMethodInfoList.clear();
             }
         }
 
         if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
+            int minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(deferredQualifiedMethodInfoSet);
             int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(deferredQualifiedMethodInfoSet);
 
             if (deferredQualifiedMethodInfoSet.size() > 1) {
                 deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream()
-                        .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                        .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
+                                && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
                         .collect(Collectors.toSet());
             }
 
@@ -257,13 +283,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
 
-            int minArgumentMatchingDistance = Optional.of(methodInfoList)
-                    .orElse(Collections.emptyList())
-                    .stream()
-                    .map(MethodInfo::getArgumentMatchingDistance)
-                    .mapToInt(v->v)
-                    .max()
-                    .orElse(0);
+            int minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
 
             if (methodInfoList.size() > 1) {
                 return methodInfoList.stream()

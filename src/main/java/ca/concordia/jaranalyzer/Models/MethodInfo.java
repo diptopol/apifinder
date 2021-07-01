@@ -348,6 +348,10 @@ public class MethodInfo {
 		return result;
 	}
 
+	public boolean hasDeferredCriteria() {
+		return isAbstract || classInfo.getQualifiedName().equals("java.lang.Object") || argumentMatchingDistance > 0;
+	}
+
 //	public Identification getID(Identification owner){
 //		TypeSignature typeSign = TypeSignature.newBuilder()
 //				.setMthdSign(MethodSign.newBuilder()

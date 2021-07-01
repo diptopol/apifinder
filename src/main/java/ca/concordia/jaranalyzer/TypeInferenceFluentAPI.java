@@ -116,7 +116,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
 
-                if (!qualifiedMethodInfoList.isEmpty() && isDeferredMethodList(qualifiedMethodInfoList)) {
+                if (!qualifiedMethodInfoList.isEmpty()
+                        && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
                     deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
                     qualifiedMethodInfoList.clear();
                 }
@@ -127,11 +128,13 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             }
 
             if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
+                int minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(deferredQualifiedMethodInfoSet);
                 int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(deferredQualifiedMethodInfoSet);
 
                 if (deferredQualifiedMethodInfoSet.size() > 1) {
                     deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream()
-                            .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                            .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
+                                    && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
                             .collect(Collectors.toSet());
                 }
 
@@ -151,6 +154,14 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
 
+        Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+
+        if (!qualifiedMethodInfoList.isEmpty()
+                && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
+            deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+            qualifiedMethodInfoList.clear();
+        }
+
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
         }
@@ -162,6 +173,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+
+        if (!qualifiedMethodInfoList.isEmpty()
+                && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
+            deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+            qualifiedMethodInfoList.clear();
+        }
 
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
@@ -175,6 +192,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
 
+        if (!qualifiedMethodInfoList.isEmpty()
+                && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
+            deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+            qualifiedMethodInfoList.clear();
+        }
+
         if (!qualifiedMethodInfoList.isEmpty()) {
             return qualifiedMethodInfoList;
         }
@@ -183,7 +206,6 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
           STEP 4
          */
         Set<String> classQNameList = new HashSet<>(importedClassQNameSet);
-        Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
         while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
             classQNameList = getSuperClasses(classQNameList, jarVertexIds, tinkerGraph);
@@ -193,18 +215,21 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
             qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
 
-            if (!qualifiedMethodInfoList.isEmpty() && isDeferredMethodList(qualifiedMethodInfoList)) {
+            if (!qualifiedMethodInfoList.isEmpty()
+                    && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
                 deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
                 qualifiedMethodInfoList.clear();
             }
         }
 
         if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
+            int minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(deferredQualifiedMethodInfoSet);
             int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(deferredQualifiedMethodInfoSet);
 
             if (deferredQualifiedMethodInfoSet.size() > 1) {
                 deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream()
-                        .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                        .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
+                                && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
                         .collect(Collectors.toSet());
             }
 
@@ -261,13 +286,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                         tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
 
-            int minArgumentMatchingDistance = Optional.of(methodInfoList)
-                    .orElse(Collections.emptyList())
-                    .stream()
-                    .map(MethodInfo::getArgumentMatchingDistance)
-                    .mapToInt(v->v)
-                    .min()
-                    .orElse(0);
+            int minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
 
             if (methodInfoList.size() > 1) {
                 return methodInfoList.stream()

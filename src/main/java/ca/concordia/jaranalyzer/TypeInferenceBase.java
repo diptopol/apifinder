@@ -232,7 +232,8 @@ public abstract class TypeInferenceBase {
                         }
                     }
 
-                    if (!filteredListByCallerClassName.isEmpty() && isDeferredMethodList(filteredListByCallerClassName)) {
+                    if (!filteredListByCallerClassName.isEmpty()
+                            && filteredListByCallerClassName.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
                         deferredQualifiedMethodInfoSet.addAll(filteredListByCallerClassName);
                         filteredListByCallerClassName.clear();
                     }
@@ -259,11 +260,6 @@ public abstract class TypeInferenceBase {
         } else {
             return methodInfoList;
         }
-    }
-
-    static boolean isDeferredMethodList(List<MethodInfo> methodInfoList) {
-        return methodInfoList.stream().allMatch(MethodInfo::isAbstract)
-                || methodInfoList.stream().allMatch(m -> m.getClassInfo().getQualifiedName().equals("java.lang.Object"));
     }
 
     static boolean matchMethodArguments(List<String> argumentTypeClassNameList,
@@ -605,6 +601,15 @@ public abstract class TypeInferenceBase {
                 .orElse(0);
     }
 
+    static int getMinimumArgumentMatchingDistance(Collection<MethodInfo> methodInfoCollection) {
+        return Optional.of(methodInfoCollection)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(MethodInfo::getArgumentMatchingDistance)
+                .mapToInt(v -> v)
+                .min()
+                .orElse(0);
+    }
 
     private static boolean isNullType(String name) {
         return "null".equals(name);
