@@ -195,6 +195,11 @@ public abstract class TypeInferenceBase {
             if (methodInfoClassNameList.contains(callerClassName) && !isSuperOfCallerClass) {
                 filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
 
+            } else if (callerClassName.contains("[]") && methodInfoClassNameList.contains("java.lang.Object")) {
+                List<MethodInfo> qualifiedMethodInfoList = methodInfoDeclaringClassNameMap.get("java.lang.Object");
+                qualifiedMethodInfoList.forEach(m -> m.setCallerClassMatchingDistance(MAX_SUPER_CLASS_DISTANCE));
+                filteredListByCallerClassName.addAll(qualifiedMethodInfoList);
+
             } else {
                 Set<String> classNameSet = new HashSet<>();
                 classNameSet.add(callerClassName);
