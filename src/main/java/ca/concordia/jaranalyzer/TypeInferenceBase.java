@@ -193,10 +193,7 @@ public abstract class TypeInferenceBase {
             List<MethodInfo> filteredListByCallerClassName = new ArrayList<>();
 
             if (methodInfoClassNameList.contains(callerClassName) && !isSuperOfCallerClass) {
-                List<MethodInfo> qualifiedMethodInfoList = methodInfoDeclaringClassNameMap.get(callerClassName);
-                qualifiedMethodInfoList.forEach(m -> m.setCallerClassExactMatch(true));
-
-                filteredListByCallerClassName.addAll(qualifiedMethodInfoList);
+                filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
 
             } else {
                 Set<String> classNameSet = new HashSet<>();
@@ -209,6 +206,8 @@ public abstract class TypeInferenceBase {
 
                 Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
+                int distance = 0;
+
                 while (!classNameSet.isEmpty()) {
                     classNameSet = tinkerGraph.traversal().V(jarVertexIds)
                             .out("ContainsPkg").out("Contains")
@@ -218,11 +217,18 @@ public abstract class TypeInferenceBase {
                             .<String>values("Name")
                             .toSet();
 
+                    distance++;
+
                     superClassOutGoingEdgeLabels = allOutGoingEdges;
 
                     for (String className : methodInfoClassNameList) {
+                        List<MethodInfo> qualifiedMethodInfoList = methodInfoDeclaringClassNameMap.get(className);
+
                         if (classNameSet.contains(className)) {
-                            filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(className));
+                            int finalDistance = className.equals("java.lang.Object") ? MAX_SUPER_CLASS_DISTANCE : distance;
+
+                            qualifiedMethodInfoList.forEach(m->m.setCallerClassMatchingDistance(finalDistance));
+                            filteredListByCallerClassName.addAll(qualifiedMethodInfoList);
                         }
                     }
 
@@ -241,8 +247,12 @@ public abstract class TypeInferenceBase {
                 }
             }
 
-            if (filteredListByCallerClassName.size() > 1 && filteredListByCallerClassName.stream().anyMatch(MethodInfo::isCallerClassExactMatch)) {
-                return filteredListByCallerClassName.stream().filter(MethodInfo::isCallerClassExactMatch).collect(Collectors.toList());
+            int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(filteredListByCallerClassName);
+
+            if (filteredListByCallerClassName.size() > 1) {
+                filteredListByCallerClassName = filteredListByCallerClassName.stream()
+                        .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                        .collect(Collectors.toList());
             }
 
             return filteredListByCallerClassName;
@@ -584,6 +594,17 @@ public abstract class TypeInferenceBase {
 
         return methodName;
     }
+
+    static int getMinimumCallerClassMatchingDistance(Collection<MethodInfo> methodInfoCollection) {
+        return Optional.of(methodInfoCollection)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(MethodInfo::getCallerClassMatchingDistance)
+                .mapToInt(v -> v)
+                .min()
+                .orElse(0);
+    }
+
 
     private static boolean isNullType(String name) {
         return "null".equals(name);

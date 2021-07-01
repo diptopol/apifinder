@@ -127,8 +127,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             }
 
             if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-                if (deferredQualifiedMethodInfoSet.size() > 1 && deferredQualifiedMethodInfoSet.stream().anyMatch(MethodInfo::isCallerClassExactMatch)) {
-                    deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream().filter(MethodInfo::isCallerClassExactMatch).collect(Collectors.toSet());
+                int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(deferredQualifiedMethodInfoSet);
+
+                if (deferredQualifiedMethodInfoSet.size() > 1) {
+                    deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream()
+                            .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                            .collect(Collectors.toSet());
                 }
 
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
@@ -196,8 +200,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-            if (deferredQualifiedMethodInfoSet.size() > 1 && deferredQualifiedMethodInfoSet.stream().anyMatch(MethodInfo::isCallerClassExactMatch)) {
-                deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream().filter(MethodInfo::isCallerClassExactMatch).collect(Collectors.toSet());
+            int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(deferredQualifiedMethodInfoSet);
+
+            if (deferredQualifiedMethodInfoSet.size() > 1) {
+                deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream()
+                        .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                        .collect(Collectors.toSet());
             }
 
             qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);

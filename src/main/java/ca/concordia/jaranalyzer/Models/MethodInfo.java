@@ -27,7 +27,7 @@ public class MethodInfo {
 	private String qualifiedName;
 	private String internalClassConstructorSuffix;
 
-	private boolean isCallerClassExactMatch;
+	private int callerClassMatchingDistance;
 	private int argumentMatchingDistance;
 
 	public MethodInfo(Vertex vertex) {
@@ -286,12 +286,12 @@ public class MethodInfo {
 		return internalClassConstructorSuffix;
 	}
 
-	public boolean isCallerClassExactMatch() {
-		return isCallerClassExactMatch;
+	public int getCallerClassMatchingDistance() {
+		return callerClassMatchingDistance;
 	}
 
-	public void setCallerClassExactMatch(boolean callerClassExactMatch) {
-		isCallerClassExactMatch = callerClassExactMatch;
+	public void setCallerClassMatchingDistance(int callerClassMatchingDistance) {
+		this.callerClassMatchingDistance = callerClassMatchingDistance;
 	}
 
 	public int getArgumentMatchingDistance() {
