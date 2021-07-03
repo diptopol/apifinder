@@ -579,7 +579,7 @@ public abstract class TypeInferenceBase {
           before method name matching.
          */
         if (methodName.contains("<") && methodName.contains(">")) {
-            int startIndex = methodName.lastIndexOf("<");
+            int startIndex = methodName.indexOf("<");
             int endIndex = methodName.lastIndexOf(">") + 1;
 
             methodName = methodName.replace(methodName.substring(startIndex, endIndex), "");
