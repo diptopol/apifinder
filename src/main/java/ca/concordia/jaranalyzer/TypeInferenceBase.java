@@ -12,6 +12,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.lib.Repository;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -614,6 +615,51 @@ public abstract class TypeInferenceBase {
                 .mapToInt(v -> v)
                 .min()
                 .orElse(0);
+    }
+
+    static void modifyMethodInfoForArray(List<MethodInfo> methodInfoList, String callerClassName) {
+        if (callerClassName != null && callerClassName.endsWith("[]")) {
+            int dimension = StringUtils.countMatches(callerClassName, "[]");
+            String typeName = callerClassName.replaceAll("\\[]", "");
+
+            typeName = isPrimitiveType(typeName)
+                    ? getTypeDescriptorForPrimitive(typeName)
+                    : "L" + typeName.replaceAll("\\.", "/");
+
+            Type returnType = Type.getType(StringUtils.repeat("[", dimension) + typeName);
+
+            methodInfoList.forEach(m -> {
+                m.setReturnType(returnType);
+                m.setThrownInternalClassNames(Collections.emptyList());
+            });
+        }
+    }
+
+    static String getTypeDescriptorForPrimitive(String type) {
+        if (!isPrimitiveType(type)) {
+            return null;
+        }
+
+        switch (type) {
+            case "boolean":
+                return "Z";
+            case "char":
+                return "C";
+            case "byte":
+                return "B";
+            case "short":
+                return "S";
+            case "int":
+                return "I";
+            case "float":
+                return "F";
+            case "long":
+                return "J";
+            case "double":
+                return "D";
+            default:
+                throw new IllegalStateException();
+        }
     }
 
     private static boolean isNullType(String name) {

@@ -300,7 +300,7 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
                 "clone", 0, "int[]", false);
 
-        assert "[java.lang.Object::protected java.lang.Object clone() throws java.lang.CloneNotSupportedException]".equals(matches.toString());
+        assert "[java.lang.Object::protected int[] clone()]".equals(matches.toString());
     }
 
     @Test

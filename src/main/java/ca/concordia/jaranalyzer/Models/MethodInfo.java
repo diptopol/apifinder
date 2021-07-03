@@ -254,6 +254,10 @@ public class MethodInfo {
 		return thrownInternalClassNames;
 	}
 
+	public void setThrownInternalClassNames(List<String> thrownInternalClassNames) {
+		this.thrownInternalClassNames = thrownInternalClassNames;
+	}
+
 	public boolean isPublic() {
 		return isPublic;
 	}

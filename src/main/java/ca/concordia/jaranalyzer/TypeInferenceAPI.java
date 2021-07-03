@@ -260,6 +260,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         populateClassInfo(methodInfoList, tinkerGraph);
+        modifyMethodInfoForArray(methodInfoList, callerClassName);
         methodInfoList = filterByMethodInvoker(methodInfoList, callerClassName, isSuperOfCallerClass, jarVertexIds, tinkerGraph);
 
         methodInfoList = filterByMethodArgumentTypes(methodInfoList, argumentTypeList, jarVertexIds);

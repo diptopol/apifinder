@@ -250,6 +250,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         populateClassInfo(methodInfoList, tinkerGraph);
+        modifyMethodInfoForArray(methodInfoList, criteria.getCallerClassName());
         methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getCallerClassName(),
                 criteria.isSuperOfCallerClass, jarVertexIds, tinkerGraph);
 
