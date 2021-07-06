@@ -255,9 +255,9 @@ public abstract class TypeInferenceBase {
                 }
             }
 
-            int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(filteredListByCallerClassName);
-
             if (filteredListByCallerClassName.size() > 1) {
+                int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(filteredListByCallerClassName);
+
                 filteredListByCallerClassName = filteredListByCallerClassName.stream()
                         .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
                         .collect(Collectors.toList());
@@ -664,6 +664,18 @@ public abstract class TypeInferenceBase {
                 return "D";
             default:
                 throw new IllegalStateException();
+        }
+    }
+
+    static Set<MethodInfo> filteredNonAbstractMethod(Set<MethodInfo> methodInfoSet) {
+        return new HashSet<>(filteredNonAbstractMethod(new ArrayList<>(methodInfoSet)));
+    }
+
+    static List<MethodInfo> filteredNonAbstractMethod(List<MethodInfo> methodInfoList) {
+        if (methodInfoList.size() > 1 && methodInfoList.stream().anyMatch(m -> !m.isAbstract())) {
+            return methodInfoList.stream().filter(m -> !m.isAbstract()).collect(Collectors.toList());
+        } else {
+            return methodInfoList;
         }
     }
 

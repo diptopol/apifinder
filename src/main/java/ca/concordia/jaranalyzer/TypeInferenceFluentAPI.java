@@ -136,6 +136,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                             .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
                                     && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
                             .collect(Collectors.toSet());
+
+                    deferredQualifiedMethodInfoSet = filteredNonAbstractMethod(deferredQualifiedMethodInfoSet);
                 }
 
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
@@ -231,6 +233,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                         .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
                                 && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
                         .collect(Collectors.toSet());
+
+                deferredQualifiedMethodInfoSet = filteredNonAbstractMethod(deferredQualifiedMethodInfoSet);
             }
 
             qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
@@ -256,9 +260,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
 
-        if (methodInfoList.size() > 1 && methodInfoList.stream().anyMatch(m -> !m.isAbstract())) {
-            return methodInfoList.stream().filter(m -> !m.isAbstract()).collect(Collectors.toList());
-        }
+        methodInfoList = filteredNonAbstractMethod(methodInfoList);
 
         return methodInfoList;
     }
@@ -287,9 +289,9 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                         tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
 
-            int minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
-
             if (methodInfoList.size() > 1) {
+                int minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
+
                 return methodInfoList.stream()
                         .filter(m -> m.getArgumentMatchingDistance() == minArgumentMatchingDistance)
                         .collect(Collectors.toList());
