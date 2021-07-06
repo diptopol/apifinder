@@ -368,6 +368,8 @@ public abstract class TypeInferenceBase {
             while (!classNameList.isEmpty()) {
                 classNameList = getSuperClasses(classNameList, jarVertexIds, tinkerGraph);
 
+                distance++;
+
                 if (classNameList.contains(methodArgumentTypeClassName)) {
                     if (methodArgumentTypeClassName.equals("java.lang.Object")) {
                         methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
