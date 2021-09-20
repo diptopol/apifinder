@@ -12,6 +12,7 @@ import org.objectweb.asm.Type;
 
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -298,6 +299,57 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         } else {
             return methodInfoList;
         }
+    }
+
+    public static List<ClassInfo> getAllTypes(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                              String javaVersion,
+                                              List<String> importList,
+                                              String typeName) {
+
+        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion, tinkerGraph);
+        Set<String> importedClassQNameSet = getImportedQNameList(importList);
+        List<String> packageNameList = getPackageNameList(importList);
+        String fullyQualifiedTypeName = StringUtils.countMatches(typeName, ".") > 1 ? typeName : null;
+
+        if (typeName.contains(".")) {
+            if (StringUtils.countMatches(typeName, ".") > 1) {
+                importedClassQNameSet.add(typeName);
+                typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
+            }
+        }
+
+        List<ClassInfo> qualifiedClassInfo = resolveQClassInfoForClass(typeName, jarVertexIds, importedClassQNameSet, packageNameList, tinkerGraph);
+
+        /*
+         * If there are multiple result, we want to give priority for classes who are directly mentioned in import
+         * statement or belongs to 'java.lang' package. Because * package import can have many classes which satisfies
+         * the same condition. But we will only want to consider * package import if there is no directly mentioned class.
+         *
+         * For inner classes, we will be only able to find type name as inner class name if import contains name of inner class
+         * otherwise we will find outer class suffix during type declaration.
+         *
+         * Hierarchy must be maintained. First we have to check type direct import and then java.lang package.
+         */
+        String typeNameFinal = typeName;
+        Predicate<ClassInfo> isClassNameDirectImport = c -> (StringUtils.countMatches(typeNameFinal, ".") == 1
+                ? importedClassQNameSet.contains(c.getQualifiedName().substring(0, c.getQualifiedName().lastIndexOf(".")))
+                : importedClassQNameSet.contains(c.getQualifiedName()));
+
+        if (qualifiedClassInfo.size() > 1 && qualifiedClassInfo.stream().anyMatch(isClassNameDirectImport)) {
+            return qualifiedClassInfo.stream().filter(isClassNameDirectImport).collect(Collectors.toList());
+        }
+
+        if (qualifiedClassInfo.size() > 1 && qualifiedClassInfo.stream().anyMatch(c -> c.getPackageName().equals("java.lang"))) {
+            return qualifiedClassInfo.stream().filter(c -> c.getPackageName().equals("java.lang")).collect(Collectors.toList());
+        }
+
+        if (qualifiedClassInfo.size() > 1 && fullyQualifiedTypeName != null
+                && qualifiedClassInfo.stream().anyMatch(c -> c.getQualifiedName().equals(fullyQualifiedTypeName))) {
+
+            return qualifiedClassInfo.stream().filter(c -> c.getQualifiedName().equals(fullyQualifiedTypeName)).collect(Collectors.toList());
+        }
+
+        return qualifiedClassInfo;
     }
 
     private static List<String> resolveQNameForArgumentTypes(String[] argumentTypes, Object[] jarVertexIds,
