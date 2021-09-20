@@ -49,6 +49,80 @@ public class InferenceUtility {
         return getClosestASTNode(node, TypeDeclaration.class);
     }
 
+    public static String getDeclaringClassQualifiedName(BodyDeclaration declaration) {
+        String declaringClassQualifiedName = "";
+        ASTNode parent = declaration.getParent();
+
+        List<AnonymousClassDeclaration> anonymousClassDeclarationList = getAnonymousClassDeclarationList(declaration);
+
+        while (parent != null) {
+            if (parent instanceof CompilationUnit) {
+                CompilationUnit cu = (CompilationUnit) parent;
+                PackageDeclaration packageDeclaration = cu.getPackage();
+                String packageName = packageDeclaration != null ? packageDeclaration.getName().getFullyQualifiedName() : "";
+
+                //TODO: Need to understand why percentage is needed
+                /*if (declaringClassQualifiedName.equals("")) {
+                    declaringClassQualifiedName = packageDeclaration.getName().getFullyQualifiedName() + "%";
+                } else {
+                    declaringClassQualifiedName = packageDeclaration.getName().getFullyQualifiedName() + "%." + declaringClassQualifiedName;
+                }*/
+
+                if (declaringClassQualifiedName.equals("")) {
+                    declaringClassQualifiedName = packageName;
+                } else {
+                    declaringClassQualifiedName = (!packageName.equals("") ? packageName + "." : "") + declaringClassQualifiedName;
+                }
+
+            } else if (parent instanceof AbstractTypeDeclaration) {
+                AbstractTypeDeclaration typeDeclaration = (AbstractTypeDeclaration) parent;
+                String typeDeclarationName = typeDeclaration.getName().getIdentifier();
+
+                if (declaringClassQualifiedName.equals("")) {
+                    declaringClassQualifiedName = typeDeclarationName;
+                } else {
+                    declaringClassQualifiedName = typeDeclarationName + "#" + declaringClassQualifiedName;
+                }
+            } else if (parent instanceof AnonymousClassDeclaration) {
+                AnonymousClassDeclaration anonymousClassDeclaration = (AnonymousClassDeclaration) parent;
+                String anonymousClassName = anonymousClassDeclarationList.contains(anonymousClassDeclaration)
+                        ? String.valueOf(anonymousClassDeclarationList.indexOf(anonymousClassDeclaration)) : "";
+
+                if (declaringClassQualifiedName.equals("")) {
+                    declaringClassQualifiedName = anonymousClassName;
+                } else {
+                    declaringClassQualifiedName = anonymousClassName + "#" + declaringClassQualifiedName;
+                }
+            }
+            parent = parent.getParent();
+        }
+
+        return declaringClassQualifiedName;
+    }
+
+    public static ASTNode getClosestASTNode(ASTNode node, Class<? extends ASTNode> nodeClazz) {
+        if (nodeClazz.isInstance(node)) {
+            return node;
+        }
+
+        ASTNode parent = node.getParent();
+
+        while (!(nodeClazz.isInstance(parent))) {
+            parent = parent.getParent();
+        }
+
+        return parent;
+    }
+
+    private static List<AnonymousClassDeclaration> getAnonymousClassDeclarationList(BodyDeclaration declaration) {
+        TypeDeclaration typeDeclaration = (TypeDeclaration) getTypeDeclaration(declaration);
+
+        AnonymousClassVisitor anonymousClassVisitor = new AnonymousClassVisitor();
+        typeDeclaration.accept(anonymousClassVisitor);
+
+        return anonymousClassVisitor.getAnonymousClassDeclarationList();
+    }
+
     private static List<VariableDeclarationDto> getVariableDeclarationDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                                               String javaVersion,
                                                                               List<String> importStatementList,
@@ -179,20 +253,5 @@ public class InferenceUtility {
 
         return classInfoList.size() == 0 ? name : classInfoList.get(0).getQualifiedName();
     }
-
-    private static ASTNode getClosestASTNode(ASTNode node, Class<? extends ASTNode> nodeClazz) {
-        if (nodeClazz.isInstance(node)) {
-            return node;
-        }
-
-        ASTNode parent = node.getParent();
-
-        while (!(nodeClazz.isInstance(parent))) {
-            parent = parent.getParent();
-        }
-
-        return parent;
-    }
-
 
 }

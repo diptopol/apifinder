@@ -1,24 +1,16 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.VariableDeclarationDto;
-import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.PropertyReader;
-import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +62,28 @@ public class InferenceUtilityTest {
                             .collect(Collectors.toList())
                             .toString());
                 }
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testQualifiedClassNameExtraction() {
+        String filePath = "testProjectDirectory/jfreechart-fx/jfreechart-fx/src/main/java/org/jfree/chart/fx/interaction/AbstractMouseHandlerFX.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("Args.nullNotPermitted")) {
+                    MethodDeclaration methodDeclaration =
+                            (MethodDeclaration) InferenceUtility.getClosestASTNode(methodInvocation,
+                                    MethodDeclaration.class);
+                    String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
+
+                    assert "org.jfree.chart.fx.interaction.AbstractMouseHandlerFX".equals(className);
+                };
 
                 return false;
             }
