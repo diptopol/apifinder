@@ -59,4 +59,5 @@ public class TypeInferenceAPITest {
 
         assert "java.util.Collections::public static void reverse(java.util.List)".equals(methodInfoList.get(0).toString());
     }
+
 }

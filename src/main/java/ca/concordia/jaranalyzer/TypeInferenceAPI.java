@@ -1,11 +1,13 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.ClassInfo;
+import ca.concordia.jaranalyzer.Models.FieldInfo;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
 import io.vavr.Tuple3;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.lib.Repository;
 import org.objectweb.asm.Type;
@@ -350,6 +352,139 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         return qualifiedClassInfo;
+    }
+
+    public static List<FieldInfo> getAllFieldTypes(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                   String javaVersion,
+                                                   List<String> importList,
+                                                   String fieldName) {
+
+
+        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion, tinkerGraph);
+
+        Set<String> importedClassQNameList = getImportedQNameList(importList);
+        List<String> packageNameList = getPackageNameList(importList);
+
+        String callerClassQName = null;
+
+        if (fieldName.contains(".")) {
+            if (StringUtils.countMatches(fieldName, ".") >= 1) {
+                String callerClassName = fieldName.substring(0, fieldName.lastIndexOf("."));
+                callerClassQName = resolveQNameForClass(callerClassName, jarVertexIds, importedClassQNameList, packageNameList, tinkerGraph);
+
+                importedClassQNameList.add(callerClassQName);
+            }
+
+            if (fieldName.contains("[]") && fieldName.endsWith(".length")) {
+                return Collections.singletonList(FieldInfo.getLengthFieldInfoOfArray());
+            }
+
+            fieldName = fieldName.substring(fieldName.lastIndexOf(".") + 1);
+        }
+
+        List<FieldInfo> qualifiedFieldList = new ArrayList<>();
+        /*
+          STEP 0
+         */
+        if (callerClassQName != null) {
+            Set<String> qCallerClassNameSet = new HashSet<>(Collections.singletonList(callerClassQName));
+
+            while (!qCallerClassNameSet.isEmpty() && qualifiedFieldList.isEmpty()) {
+                qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, qCallerClassNameSet);
+
+                if (qualifiedFieldList.isEmpty()) {
+                    qCallerClassNameSet = tinkerGraph.traversal().V(jarVertexIds)
+                            .out("ContainsPkg").out("Contains")
+                            .has("Kind", "Class")
+                            .has("QName", TextP.within(qCallerClassNameSet))
+                            .out("extends", "implements")
+                            .<String>values("Name")
+                            .toSet();
+                }
+            }
+
+            if (!qualifiedFieldList.isEmpty()) {
+                return populateClassInfoForField(qualifiedFieldList);
+            }
+        }
+
+        /*
+          STEP 1
+         */
+        qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, importedClassQNameList);
+
+        if (!qualifiedFieldList.isEmpty()) {
+            return populateClassInfoForField(qualifiedFieldList);
+        }
+
+        /*
+          STEP 2
+         */
+        Set<String> classNameListForPackgage = tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg")
+                .has("Kind", "Package")
+                .has("Name", TextP.within(packageNameList))
+                .out("Contains")
+                .has("Kind", "Class")
+                .<String>values("QName")
+                .toSet();
+
+        importedClassQNameList.addAll(classNameListForPackgage);
+
+        qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, classNameListForPackgage);
+
+        if (!qualifiedFieldList.isEmpty()) {
+            return populateClassInfoForField(qualifiedFieldList);
+        }
+
+        /*
+          STEP 3
+         */
+        Set<String> classQNameList = new HashSet<>(importedClassQNameList);
+
+        while (!classQNameList.isEmpty() && qualifiedFieldList.isEmpty()) {
+            classQNameList = tinkerGraph.traversal().V(jarVertexIds)
+                    .out("ContainsPkg").out("Contains")
+                    .has("Kind", "Class")
+                    .has("QName", TextP.within(classQNameList))
+                    .out("extends", "implements")
+                    .<String>values("Name")
+                    .toSet();
+
+            qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, classQNameList);
+        }
+
+        return qualifiedFieldList.isEmpty() ? qualifiedFieldList : populateClassInfoForField(qualifiedFieldList);
+    }
+
+    private static List<FieldInfo> getQualifiedFieldInfoList(String fieldName, Object[] jarVertexIds, Set<String> classQNameList) {
+        return tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
+                .has("Kind", "Class")
+                .has("QName", TextP.within(classQNameList))
+                .out("Declares")
+                .has("Kind", "Field")
+                .has("Name", fieldName)
+                .toStream()
+                .map(FieldInfo::new)
+                .collect(Collectors.toList());
+    }
+
+    private static List<FieldInfo> populateClassInfoForField(List<FieldInfo> qualifiedFieldInfoList) {
+        qualifiedFieldInfoList.forEach(f -> {
+            Set<ClassInfo> classInfoSet = tinkerGraph.traversal()
+                    .V(f.getId())
+                    .in("Declares")
+                    .toStream()
+                    .map(ClassInfo::new)
+                    .collect(Collectors.toSet());
+
+            assert classInfoSet.size() == 1;
+
+            f.setClassInfo(classInfoSet.iterator().next());
+        });
+
+        return qualifiedFieldInfoList;
     }
 
     private static List<String> resolveQNameForArgumentTypes(String[] argumentTypes, Object[] jarVertexIds,

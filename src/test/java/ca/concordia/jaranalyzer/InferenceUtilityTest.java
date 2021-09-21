@@ -3,14 +3,13 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.Models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.PropertyReader;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.*;
 import org.junit.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -52,7 +51,7 @@ public class InferenceUtilityTest {
                 if (methodInvocation.toString().startsWith("Args.nullNotPermitted")) {
                     List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
 
-                    List<VariableDeclarationDto> fieldVariableDeclarationDtoList
+                    Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
                             = InferenceUtility.getFieldVariableDeclarationDtoList(Collections.emptySet(), javaVersion,
                             importStatementList, methodInvocation);
 
@@ -83,6 +82,35 @@ public class InferenceUtilityTest {
                     String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
 
                     assert "org.jfree.chart.fx.interaction.AbstractMouseHandlerFX".equals(className);
+                };
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testExtractArgumentClassNameList() {
+        String filePath = "testProjectDirectory/jfreechart-fx/jfreechart-fx/src/main/java/org/jfree/chart/fx/ChartCanvas.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        String javaVersion = PropertyReader.getProperty("java.version");
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("Args.nullNotPermitted(listener,\"listener\")")) {
+                    List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+
+                    Map<String, Set<VariableDeclarationDto>> variableNameMap =
+                            InferenceUtility.getVariableNameMap(Collections.emptySet(), javaVersion,
+                                    importStatementList, methodInvocation);
+
+                    List<Expression> argumentList = methodInvocation.arguments();
+
+                    List<String> argumentClassNameList = InferenceUtility.getArgumentClassNameList(Collections.emptySet(),
+                            javaVersion, importStatementList, variableNameMap, argumentList);
+
+                    assert "[ChartMouseListenerFX, java.lang.String]".equals(argumentClassNameList.toString());
                 };
 
                 return false;

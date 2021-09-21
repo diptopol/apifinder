@@ -18,6 +18,9 @@ public class FieldInfo {
 	private boolean isStatic;
 	private String signature;
 
+	private FieldInfo() {
+	}
+
 	public FieldInfo(Vertex vertex) {
 		this.id = vertex.id();
 		this.name = vertex.<String>property("Name").value();
@@ -60,6 +63,16 @@ public class FieldInfo {
 		this.signature = fieldNode.signature;
 	}
 
+	public static FieldInfo getLengthFieldInfoOfArray() {
+		FieldInfo lengthFieldInfo = new FieldInfo();
+
+		lengthFieldInfo.setName("length");
+		lengthFieldInfo.setPublic(true);
+		lengthFieldInfo.setType(Type.INT_TYPE);
+
+		return lengthFieldInfo;
+	}
+
 	public String toString() {
 		StringBuilder methodDescription = new StringBuilder();
 
@@ -86,12 +99,20 @@ public class FieldInfo {
 		return name;
 	}
 
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public Object getId() {
 		return id;
 	}
 
 	public ClassInfo getClassInfo() {
 		return classInfo;
+	}
+
+	public void setClassInfo(ClassInfo classInfo) {
+		this.classInfo = classInfo;
 	}
 
 	public String getQualifiedClassName() {
@@ -110,8 +131,20 @@ public class FieldInfo {
 		return type;
 	}
 
+	public void setType(Type type) {
+		this.type = type;
+	}
+
+	public String getTypeAsStr() {
+		return type.getClassName();
+	}
+
 	public boolean isPublic() {
 		return isPublic;
+	}
+
+	public void setPublic(boolean aPublic) {
+		isPublic = aPublic;
 	}
 
 	public boolean isPrivate() {
