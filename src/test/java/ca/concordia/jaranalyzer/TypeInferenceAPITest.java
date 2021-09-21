@@ -1,5 +1,6 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.Models.FieldInfo;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import org.eclipse.jgit.lib.Repository;
@@ -58,6 +59,19 @@ public class TypeInferenceAPITest {
         assert methodInfoList.size() == 1;
 
         assert "java.util.Collections::public static void reverse(java.util.List)".equals(methodInfoList.get(0).toString());
+    }
+
+    @Test
+    public void testAllFieldTypes() {
+        String javaVersion = getProperty("java.version");
+
+        List<String> importList = new ArrayList<>();
+        importList.add("import java.awt.*");
+
+        List<FieldInfo> fieldInfoList = TypeInferenceAPI.getAllFieldTypes(new HashSet<>(), javaVersion, importList,
+                "KEY_FRACTIONALMETRICS");
+
+        assert "[public static java.awt.RenderingHints$Key KEY_FRACTIONALMETRICS]".equals(fieldInfoList.toString());
     }
 
 }
