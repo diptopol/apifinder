@@ -93,6 +93,10 @@ public class InferenceUtility {
         return getClosestASTNode(node, TypeDeclaration.class);
     }
 
+    public static ASTNode getCompilationUnit(ASTNode node) {
+        return getClosestASTNode(node, CompilationUnit.class);
+    }
+
     public static String getDeclaringClassQualifiedName(BodyDeclaration declaration) {
         String declaringClassQualifiedName = "";
         ASTNode parent = declaration.getParent();
@@ -158,111 +162,7 @@ public class InferenceUtility {
         return parent;
     }
 
-    private static void populateVariableNameMap(Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                Set<VariableDeclarationDto> variableDeclarationDtoList) {
-
-        for (VariableDeclarationDto declarationDto : variableDeclarationDtoList) {
-            if (variableNameMap.containsKey(declarationDto.getName())) {
-                Set<VariableDeclarationDto> variableDeclarationSet = variableNameMap.get(declarationDto.getName());
-                variableDeclarationSet.add(declarationDto);
-
-                variableNameMap.put(declarationDto.getName(), variableDeclarationSet);
-            } else {
-                variableNameMap.put(declarationDto.getName(), new HashSet<>(Arrays.asList(declarationDto)));
-            }
-        }
-    }
-
-    private static Set<VariableDeclarationDto> getMethodParameterVariableDeclarationDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                                                             String javaVersion,
-                                                                                             List<String> importStatementList,
-                                                                                             MethodDeclaration methodDeclaration) {
-        if (methodDeclaration != null) {
-            List<SingleVariableDeclaration> declarationList = methodDeclaration.parameters();
-
-            return declarationList.stream()
-                    .map(declaration -> getVariableDeclarationDto(dependentJarInformationSet, javaVersion, importStatementList, declaration))
-                    .filter(Objects::nonNull).collect(Collectors.toSet());
-        } else {
-            return Collections.emptySet();
-        }
-    }
-
-    private static Set<VariableDeclarationDto> getMethodLocalVariableDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                                              String javaVersion,
-                                                                              List<String> importStatementList,
-                                                                              MethodDeclaration methodDeclaration) {
-        Set<VariableDeclarationDto> localVariableDtoSet = new HashSet<>();
-
-        methodDeclaration.getBody().accept(new ASTVisitor() {
-            @Override
-            public boolean visit(SingleVariableDeclaration singleVariableDeclaration) {
-                VariableDeclarationDto variableDeclarationDto =
-                        getVariableDeclarationDto(dependentJarInformationSet, javaVersion, importStatementList,
-                                singleVariableDeclaration);
-
-                localVariableDtoSet.add(variableDeclarationDto);
-
-                return true;
-            }
-
-            @Override
-            public void endVisit(VariableDeclarationExpression variableDeclarationExpression) {
-                List<VariableDeclarationFragment> fragmentList = variableDeclarationExpression.fragments();
-
-                List<VariableDeclarationDto> variableDeclarationDtoList =
-                        getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
-                                variableDeclarationExpression.getType(), fragmentList);
-
-                variableDeclarationDtoList.addAll(variableDeclarationDtoList);
-            }
-
-            @Override
-            public void endVisit(VariableDeclarationStatement variableDeclarationStatement) {
-                List<VariableDeclarationFragment> fragmentList = variableDeclarationStatement.fragments();
-
-                List<VariableDeclarationDto> variableDeclarationDtoList =
-                        getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
-                                variableDeclarationStatement.getType(), fragmentList);
-
-                localVariableDtoSet.addAll(variableDeclarationDtoList);
-            }
-        });
-
-        return localVariableDtoSet;
-    }
-
-    private static VariableDeclarationDto getVariableDeclarationDto(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                                    String javaVersion,
-                                                                    List<String> importStatementList,
-                                                                    SingleVariableDeclaration declaration) {
-        String name = declaration.getName().getFullyQualifiedName();
-        Type declarationType = declaration.getType();
-        String declarationTypeClassName = getTypeClassName(dependentJarInformationSet, javaVersion, importStatementList, declarationType);
-
-        ASTNode scopedNode = getVariableDeclarationScopedNode(declaration);
-
-        if (scopedNode != null) {
-            int startOffset = scopedNode.getStartPosition();
-            int endOffSet = startOffset + scopedNode.getLength();
-
-            return new VariableDeclarationDto(name, declarationTypeClassName, new VariableScope(startOffset, endOffSet), declarationType);
-
-        } else {
-            return null;
-        }
-    }
-
-    private static String getClassNameFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                     String javaVersion,
-                                                     List<String> importStatementList,
-                                                     Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                     Expression expression) {
-        return getClassNameFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                expression, null);
-    }
-
-    private static String getClassNameFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+    public static String getClassNameFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                      String javaVersion,
                                                      List<String> importStatementList,
                                                      Map<String, Set<VariableDeclarationDto>> variableNameMap,
@@ -621,6 +521,110 @@ public class InferenceUtility {
         } else {
             return null;
         }
+    }
+
+    private static void populateVariableNameMap(Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                Set<VariableDeclarationDto> variableDeclarationDtoList) {
+
+        for (VariableDeclarationDto declarationDto : variableDeclarationDtoList) {
+            if (variableNameMap.containsKey(declarationDto.getName())) {
+                Set<VariableDeclarationDto> variableDeclarationSet = variableNameMap.get(declarationDto.getName());
+                variableDeclarationSet.add(declarationDto);
+
+                variableNameMap.put(declarationDto.getName(), variableDeclarationSet);
+            } else {
+                variableNameMap.put(declarationDto.getName(), new HashSet<>(Arrays.asList(declarationDto)));
+            }
+        }
+    }
+
+    private static Set<VariableDeclarationDto> getMethodParameterVariableDeclarationDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                                                             String javaVersion,
+                                                                                             List<String> importStatementList,
+                                                                                             MethodDeclaration methodDeclaration) {
+        if (methodDeclaration != null) {
+            List<SingleVariableDeclaration> declarationList = methodDeclaration.parameters();
+
+            return declarationList.stream()
+                    .map(declaration -> getVariableDeclarationDto(dependentJarInformationSet, javaVersion, importStatementList, declaration))
+                    .filter(Objects::nonNull).collect(Collectors.toSet());
+        } else {
+            return Collections.emptySet();
+        }
+    }
+
+    private static Set<VariableDeclarationDto> getMethodLocalVariableDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                                              String javaVersion,
+                                                                              List<String> importStatementList,
+                                                                              MethodDeclaration methodDeclaration) {
+        Set<VariableDeclarationDto> localVariableDtoSet = new HashSet<>();
+
+        methodDeclaration.getBody().accept(new ASTVisitor() {
+            @Override
+            public boolean visit(SingleVariableDeclaration singleVariableDeclaration) {
+                VariableDeclarationDto variableDeclarationDto =
+                        getVariableDeclarationDto(dependentJarInformationSet, javaVersion, importStatementList,
+                                singleVariableDeclaration);
+
+                localVariableDtoSet.add(variableDeclarationDto);
+
+                return true;
+            }
+
+            @Override
+            public void endVisit(VariableDeclarationExpression variableDeclarationExpression) {
+                List<VariableDeclarationFragment> fragmentList = variableDeclarationExpression.fragments();
+
+                List<VariableDeclarationDto> variableDeclarationDtoList =
+                        getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
+                                variableDeclarationExpression.getType(), fragmentList);
+
+                variableDeclarationDtoList.addAll(variableDeclarationDtoList);
+            }
+
+            @Override
+            public void endVisit(VariableDeclarationStatement variableDeclarationStatement) {
+                List<VariableDeclarationFragment> fragmentList = variableDeclarationStatement.fragments();
+
+                List<VariableDeclarationDto> variableDeclarationDtoList =
+                        getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
+                                variableDeclarationStatement.getType(), fragmentList);
+
+                localVariableDtoSet.addAll(variableDeclarationDtoList);
+            }
+        });
+
+        return localVariableDtoSet;
+    }
+
+    private static VariableDeclarationDto getVariableDeclarationDto(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                                    String javaVersion,
+                                                                    List<String> importStatementList,
+                                                                    SingleVariableDeclaration declaration) {
+        String name = declaration.getName().getFullyQualifiedName();
+        Type declarationType = declaration.getType();
+        String declarationTypeClassName = getTypeClassName(dependentJarInformationSet, javaVersion, importStatementList, declarationType);
+
+        ASTNode scopedNode = getVariableDeclarationScopedNode(declaration);
+
+        if (scopedNode != null) {
+            int startOffset = scopedNode.getStartPosition();
+            int endOffSet = startOffset + scopedNode.getLength();
+
+            return new VariableDeclarationDto(name, declarationTypeClassName, new VariableScope(startOffset, endOffSet), declarationType);
+
+        } else {
+            return null;
+        }
+    }
+
+    private static String getClassNameFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                     String javaVersion,
+                                                     List<String> importStatementList,
+                                                     Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                     Expression expression) {
+        return getClassNameFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
+                expression, null);
     }
 
     private static VariableDeclarationDto getClassNameFromVariableMap(String name,
