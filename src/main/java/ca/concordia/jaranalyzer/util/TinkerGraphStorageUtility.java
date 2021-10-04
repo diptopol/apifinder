@@ -3,19 +3,10 @@ package ca.concordia.jaranalyzer.util;
 import ca.concordia.jaranalyzer.JarAnalyzer;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
-import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.jar.JarFile;
 
-import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
 import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
 
 /**

@@ -33,8 +33,6 @@ import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
  */
 public abstract class TypeInferenceBase {
 
-    private static Logger logger = LoggerFactory.getLogger(TypeInferenceBase.class);
-
     private static final int MAX_SUPER_CLASS_DISTANCE = 1000;
     private static final int PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE = 1;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;

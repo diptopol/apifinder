@@ -1,11 +1,6 @@
 package ca.concordia.jaranalyzer.util;
 
-import static ca.concordia.jaranalyzer.util.FileUtils.createFolderIfAbsent;
-import static java.util.stream.Collectors.toMap;
-
-
 import com.jasongoodwin.monads.Try;
-
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
@@ -23,17 +18,18 @@ import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.treewalk.TreeWalk;
 
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.*;
 import java.util.function.Predicate;
+
+import static ca.concordia.jaranalyzer.util.FileUtils.createFolderIfAbsent;
+import static java.util.stream.Collectors.toMap;
 
 public class GitUtil {
 

@@ -5,8 +5,6 @@ import ca.concordia.jaranalyzer.Models.FieldInfo;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
 import io.vavr.Tuple3;
-import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
@@ -247,50 +245,6 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
     }
 
-    private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList, String callerClassName,
-                                                  boolean isSuperOfCallerClass, List<String> argumentTypeList,
-                                                  Object[] jarVertexIds) {
-        if (methodInfoList.isEmpty()) {
-            return methodInfoList;
-        }
-
-        populateClassInfo(methodInfoList, tinkerGraph);
-        modifyMethodInfoForArray(methodInfoList, callerClassName);
-        methodInfoList = filterByMethodInvoker(methodInfoList, callerClassName, isSuperOfCallerClass, jarVertexIds, tinkerGraph);
-
-        methodInfoList = filterByMethodArgumentTypes(methodInfoList, argumentTypeList, jarVertexIds);
-
-        methodInfoList = filteredNonAbstractMethod(methodInfoList);
-
-        return methodInfoList;
-    }
-
-    private static List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, List<String> argumentTypeList,
-                                                                Object[] jarVertexIds) {
-        if (!methodInfoList.isEmpty() && !argumentTypeList.isEmpty()) {
-            methodInfoList = methodInfoList.stream().filter(methodInfo -> {
-                List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
-                List<String> methodArgumentClassNameList = Stream.of(methodInfo.getArgumentTypes())
-                        .map(Type::getClassName)
-                        .collect(Collectors.toList());
-
-                return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph, methodInfo);
-            }).collect(Collectors.toList());
-
-            if (methodInfoList.size() > 1) {
-                int minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
-
-                return methodInfoList.stream()
-                        .filter(m -> m.getArgumentMatchingDistance() >= minArgumentMatchingDistance)
-                        .collect(Collectors.toList());
-            }
-
-            return methodInfoList;
-        } else {
-            return methodInfoList;
-        }
-    }
-
     public static List<ClassInfo> getAllTypes(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                               String javaVersion,
                                               List<String> importList,
@@ -445,6 +399,58 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         return qualifiedFieldList.isEmpty() ? qualifiedFieldList : populateClassInfoForField(qualifiedFieldList);
     }
 
+    public static List<String> getQualifiedClassName(String className) {
+        return tinkerGraph.traversal().V()
+                .has("Kind", "Class")
+                .has("Name", className)
+                .<String>values("QName")
+                .toList();
+    }
+
+    private static List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, List<String> argumentTypeList,
+                                                                Object[] jarVertexIds) {
+        if (!methodInfoList.isEmpty() && !argumentTypeList.isEmpty()) {
+            methodInfoList = methodInfoList.stream().filter(methodInfo -> {
+                List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
+                List<String> methodArgumentClassNameList = Stream.of(methodInfo.getArgumentTypes())
+                        .map(Type::getClassName)
+                        .collect(Collectors.toList());
+
+                return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph, methodInfo);
+            }).collect(Collectors.toList());
+
+            if (methodInfoList.size() > 1) {
+                int minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
+
+                return methodInfoList.stream()
+                        .filter(m -> m.getArgumentMatchingDistance() >= minArgumentMatchingDistance)
+                        .collect(Collectors.toList());
+            }
+
+            return methodInfoList;
+        } else {
+            return methodInfoList;
+        }
+    }
+
+    private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList, String callerClassName,
+                                                  boolean isSuperOfCallerClass, List<String> argumentTypeList,
+                                                  Object[] jarVertexIds) {
+        if (methodInfoList.isEmpty()) {
+            return methodInfoList;
+        }
+
+        populateClassInfo(methodInfoList, tinkerGraph);
+        modifyMethodInfoForArray(methodInfoList, callerClassName);
+        methodInfoList = filterByMethodInvoker(methodInfoList, callerClassName, isSuperOfCallerClass, jarVertexIds, tinkerGraph);
+
+        methodInfoList = filterByMethodArgumentTypes(methodInfoList, argumentTypeList, jarVertexIds);
+
+        methodInfoList = filteredNonAbstractMethod(methodInfoList);
+
+        return methodInfoList;
+    }
+
     private static List<FieldInfo> getQualifiedFieldInfoList(String fieldName, Object[] jarVertexIds, Set<String> classQNameList) {
         return tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg").out("Contains")
@@ -486,14 +492,6 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         } else {
             return new ArrayList<>(Arrays.asList(argumentTypes));
         }
-    }
-
-    public static List<String> getQualifiedClassName(String className) {
-        return tinkerGraph.traversal().V()
-                .has("Kind", "Class")
-                .has("Name", className)
-                .<String>values("QName")
-                .toList();
     }
 
 }
