@@ -4,20 +4,30 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.Models.ClassInfo;
 import ca.concordia.jaranalyzer.Models.JarInformation;
 import ca.concordia.jaranalyzer.Models.PackageInfo;
+import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
+import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.eclipse.jgit.lib.Repository;
 import org.objectweb.asm.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
+import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
+import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
@@ -25,6 +35,8 @@ import static java.util.stream.Stream.ofNullable;
 
 
 public class JarAnalyzer {
+
+    private static Logger logger = LoggerFactory.getLogger(JarAnalyzer.class);
 
     /*
      * After removal of APIFinderImpl, this instance will be made private
@@ -189,9 +201,90 @@ public class JarAnalyzer {
                                 , x.isEnum())));
     }
 
+    public Set<Tuple3<String, String, String>> loadExternalJars(String commitId, String projectName,
+                                                                Repository repository) {
+        Set<Tuple3<String, String, String>> jarArtifactInfoSet =
+                ExternalJarExtractionUtility.getDependenciesFromEffectivePom(commitId, projectName, repository);
+
+        Set<Tuple3<String, String, String>> jarArtifactInfoSetForLoad = jarArtifactInfoSet.stream()
+                .filter(jarArtifactInfo -> !isJarExists(jarArtifactInfo._1, jarArtifactInfo._2, jarArtifactInfo._3))
+                .collect(Collectors.toSet());
+
+        jarArtifactInfoSetForLoad.forEach(jarArtifactInfo -> {
+            JarInformation jarInformation =
+                    ExternalJarExtractionUtility.getJarInfo(jarArtifactInfo._1, jarArtifactInfo._2, jarArtifactInfo._3);
+
+            toGraph(jarInformation);
+        });
+
+        if (jarArtifactInfoSetForLoad.size() > 0) {
+            storeClassStructureGraph();
+        }
+
+        return jarArtifactInfoSet;
+    }
+
+    public void loadJar(String groupId, String artifactId, String version) {
+        if (!isJarExists(groupId, artifactId, version)) {
+            JarInformation jarInformation =
+                    ExternalJarExtractionUtility.getJarInfo(groupId, artifactId, version);
+
+            toGraph(jarInformation);
+            storeClassStructureGraph();
+        }
+    }
+
+    public void storeClassStructureGraph() {
+        logger.info("storing graph");
+
+        graph.traversal().io(getJarStoragePath().toString())
+                .with(IO.writer, IO.gryo)
+                .write().iterate();
+    }
+
+    public void loadClassStructureGraph() {
+        logger.info("loading graph");
+
+        graph.traversal().io(getJarStoragePath().toString())
+                .with(IO.reader, IO.gryo)
+                .read().iterate();
+    }
+
+    public void createClassStructureGraphForJavaJars() {
+        String javaJarDirectory = getProperty("java.jar.directory");
+        String javaVersion = getProperty("java.version");
+
+        logger.info("Java Jar Directory: {}", javaJarDirectory);
+        logger.info("Java Version: {}", javaVersion);
+
+        if (javaJarDirectory != null) {
+            List<String> jarFiles = Utility.getFiles(javaJarDirectory, "jar");
+            for (String jarLocation : jarFiles) {
+                try {
+                    Path path = Paths.get(jarLocation);
+                    if (Files.exists(path)) {
+                        JarFile jarFile = new JarFile(new File(jarLocation));
+                        jarToGraph(jarFile, path.getFileName().toString(), "Java", javaVersion);
+                    }
+                } catch (Exception e) {
+                    logger.error("Could not open the JAR", e);
+                }
+            }
+        }
+    }
 
     public void jarToGraph(JarFile jarFile, String groupId, String artifactId, String version) {
         JarInformation ji = new JarInformation(jarFile, groupId, artifactId, version);
         toGraph(ji);
     }
+
+    private boolean isJarExists(String groupId, String artifactId, String version) {
+        return graph.traversal().V()
+                .has("Kind", "Jar")
+                .has("GroupId", groupId)
+                .has("ArtifactId", artifactId)
+                .has("Version", version)
+                .toSet().size() > 0;
+    }
+
 }

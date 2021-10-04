@@ -2,6 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.ClassInfo;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
+import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import org.apache.commons.configuration.BaseConfiguration;
@@ -11,11 +12,8 @@ import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.lib.Repository;
 import org.objectweb.asm.Type;
 
-import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
 
 /**
  * @author Diptopol
@@ -37,26 +35,16 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
     }
 
     private TypeInferenceFluentAPI() {
-        Configuration configuration = new BaseConfiguration();
-        configuration.addProperty("gremlin.tinkergraph.defaultVertexPropertyCardinality", "list");
-
-        tinkerGraph = TinkerGraph.open(configuration);
-        jarAnalyzer = new JarAnalyzer(tinkerGraph);
-
-        if (!Files.exists(getJarStoragePath())) {
-            createClassStructureGraphForJavaJars(jarAnalyzer);
-            storeClassStructureGraph(tinkerGraph);
-        } else {
-            loadClassStructureGraph(tinkerGraph);
-        }
+        tinkerGraph = TinkerGraphStorageUtility.getTinkerGraph();
+        jarAnalyzer = TinkerGraphStorageUtility.getJarAnalyzer();
     }
 
     public Set<Tuple3<String, String, String>> loadExternalJars(String commitId, String projectName, Repository repository) {
-        return loadExternalJars(commitId, projectName, repository, tinkerGraph, jarAnalyzer);
+        return jarAnalyzer.loadExternalJars(commitId, projectName, repository);
     }
 
     public void loadJar(String groupId, String artifactId, String version) {
-        loadJar(groupId, artifactId, version, tinkerGraph, jarAnalyzer);
+        jarAnalyzer.loadJar(groupId, artifactId, version);
     }
 
     /**
