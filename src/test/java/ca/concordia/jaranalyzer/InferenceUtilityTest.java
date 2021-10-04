@@ -55,11 +55,12 @@ public class InferenceUtilityTest {
                             = InferenceUtility.getFieldVariableDeclarationDtoList(Collections.emptySet(), javaVersion,
                             importStatementList, methodInvocation);
 
-                    assert "[id, enabled, altKey, ctrlKey, metaKey, shiftKey]"
+                    assert "[altKey, ctrlKey, enabled, id, metaKey, shiftKey]"
                             .equals(fieldVariableDeclarationDtoList.stream()
-                            .map(VariableDeclarationDto::getName)
-                            .collect(Collectors.toList())
-                            .toString());
+                                    .map(VariableDeclarationDto::getName)
+                                    .sorted()
+                                    .collect(Collectors.toList())
+                                    .toString());
                 }
 
                 return false;
