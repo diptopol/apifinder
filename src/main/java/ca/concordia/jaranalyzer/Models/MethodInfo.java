@@ -27,6 +27,8 @@ public class MethodInfo {
 	private String qualifiedName;
 	private String internalClassConstructorSuffix;
 
+	private String signature;
+
 	private int callerClassMatchingDistance;
 	private int argumentMatchingDistance;
 
@@ -46,6 +48,12 @@ public class MethodInfo {
 
 		if (internalClassConstructorSuffixProp.isPresent()) {
 			this.internalClassConstructorSuffix = internalClassConstructorSuffixProp.value();
+		}
+
+		VertexProperty<String> signatureProperty = vertex.property("signature");
+
+		if (signatureProperty.isPresent()) {
+			this.signature = signatureProperty.value();
 		}
 
 		this.returnType = Type.getType(vertex.<String>property("returnTypeDescriptor").value());
@@ -103,6 +111,7 @@ public class MethodInfo {
 		}
 		
 		this.thrownInternalClassNames = methodNode.exceptions;
+		this.signature = methodNode.signature;
 
 		if ((methodNode.access & Opcodes.ACC_PUBLIC) != 0) {
 			isPublic = true;
@@ -288,6 +297,10 @@ public class MethodInfo {
 
 	public String getInternalClassConstructorSuffix() {
 		return internalClassConstructorSuffix;
+	}
+
+	public String getSignature() {
+		return signature;
 	}
 
 	public int getCallerClassMatchingDistance() {

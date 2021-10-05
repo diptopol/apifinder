@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.Models;
 
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -33,6 +34,8 @@ public class ClassInfo {
     private boolean isInnerClass;
     private boolean isAnonymousInnerClass;
 
+    private String signature;
+
     public ClassInfo(Vertex vertex) {
         this.name = vertex.<String>property("Name").value();
         this.qualifiedName = vertex.<String>property("QName").value();
@@ -47,6 +50,12 @@ public class ClassInfo {
         this.isInnerClass = vertex.<Boolean>property("isInnerClass").value();
 
         this.type = Type.getType(vertex.<String>property("typeDescriptor").value());
+
+        VertexProperty<String> signatureProperty = vertex.property("signature");
+
+        if (signatureProperty.isPresent()) {
+            this.signature = signatureProperty.value();
+        }
     }
 
     public ClassInfo(ClassNode classNode) {
@@ -56,6 +65,7 @@ public class ClassInfo {
             this.innerClassNameList = new ArrayList<>();
             this.superInterfaceMap = new LinkedHashMap<>();
             this.qualifiedName = classNode.name.replace('/', '.');
+            this.signature = classNode.signature;
 
             this.isInnerClass = qualifiedName.contains("$");
             this.isAnonymousInnerClass = qualifiedName.matches(ANONYMOUS_INNER_CLASS_NAME_REGEX);
@@ -216,17 +226,6 @@ public class ClassInfo {
     public String toString() {
         StringBuilder classDescription = new StringBuilder();
 
-        classDescription.append(getSignature());
-
-		/*for (MethodInfo method : methods) {
-			classDescription.append("\n\t" + method.toString());
-		}*/
-
-        return classDescription.toString();
-    }
-
-    public String getSignature() {
-        StringBuilder classDescription = new StringBuilder();
         if (isPublic) {
             classDescription.append("public ");
         } else if (isProtected) {
@@ -325,4 +324,9 @@ public class ClassInfo {
     public boolean isAnonymousInnerClass() {
         return isAnonymousInnerClass;
     }
+
+    public String getSignature() {
+        return this.signature;
+    }
+
 }

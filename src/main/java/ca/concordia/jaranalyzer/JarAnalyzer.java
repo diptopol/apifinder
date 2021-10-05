@@ -92,6 +92,7 @@ public class JarAnalyzer {
                         .property("isInnerClass", c.isInnerClass())
                         .property("isAnonymousInnerClass", c.isAnonymousInnerClass())
                         .property("typeDescriptor", c.getType().getDescriptor())
+                        .property("signature", c.getSignature())
                         .next();
 
                 graphTraversalSource.addE("Contains").from(pkg).to(cls).iterate();
@@ -130,6 +131,7 @@ public class JarAnalyzer {
                                     .property("isSynchronized", m.isSynchronized())
                                     .property("isVarargs", m.isVarargs())
                                     .property("className", m.getClassName())
+                                    .property("signature", m.getSignature())
                                     .property("returnTypeDescriptor", m.getReturnTypeAsType().getDescriptor())
                                     .next();
 
