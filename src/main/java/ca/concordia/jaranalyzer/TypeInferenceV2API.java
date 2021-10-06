@@ -47,9 +47,10 @@ public class TypeInferenceV2API {
 
         Expression expression = methodInvocation.getExpression();
 
-        Map<String, String> formalTypeParameterMap = new HashMap<>();
+        Map<String, String> classFormalTypeParameterMap = new HashMap<>();
         String callerClassName = expression != null
-                ? InferenceUtility.getClassNameFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap, expression, formalTypeParameterMap)
+                ? InferenceUtility.getClassNameFromExpression(dependentJarInformationSet, javaVersion,
+                importStatementList, variableNameMap, expression, classFormalTypeParameterMap)
                 : (isStaticImport ? null : className.replace("%", "").replace("#", "."));
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -62,6 +63,8 @@ public class TypeInferenceV2API {
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+        InferenceUtility.resolveMethodGenericTypeInfo(dependentJarInformationSet, javaVersion, importStatementList,
+                methodInfoList, argumentList, argumentClassNameList, classFormalTypeParameterMap);
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }

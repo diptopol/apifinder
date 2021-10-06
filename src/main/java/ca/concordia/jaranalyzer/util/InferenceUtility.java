@@ -148,6 +148,62 @@ public class InferenceUtility {
         return declaringClassQualifiedName;
     }
 
+    public static void resolveMethodGenericTypeInfo(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                              String javaVersion,
+                                              List<String> importStatementList,
+                                              List<MethodInfo> methodInfoList,
+                                              List<Expression> methodArgumentList,
+                                              List<String> methodArgumentClassNameList,
+                                              Map<String, String> classFormalTypeParameterMap) {
+
+        for (MethodInfo methodInfo: methodInfoList) {
+            if (methodInfo.getSignature() != null) {
+                List<String> argumentListForFormalTypeParameterExtraction = new ArrayList<>();
+
+                for (int i = 0; i < methodArgumentList.size(); i++) {
+                    Expression argument = methodArgumentList.get(i);
+
+                    if (argument instanceof TypeLiteral) {
+                        Type argumentType = ((TypeLiteral) argument).getType();
+                        String typeName = getTypeClassName(dependentJarInformationSet, javaVersion,
+                                importStatementList, argumentType);
+
+                        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet,
+                                javaVersion, importStatementList, typeName);
+
+                        if (!classInfoList.isEmpty()) {
+                            argumentListForFormalTypeParameterExtraction.add(classInfoList.get(0).getQualifiedName());
+                        } else {
+                            argumentListForFormalTypeParameterExtraction.add(methodArgumentClassNameList.get(i));
+                        }
+
+                    } else {
+                        argumentListForFormalTypeParameterExtraction.add(methodArgumentClassNameList.get(i)
+                                .replaceAll("\\[]", ""));
+                    }
+                }
+
+                MethodSignatureFormalTypeParameterExtractor extractor =
+                        new MethodSignatureFormalTypeParameterExtractor(argumentListForFormalTypeParameterExtraction);
+                SignatureReader reader = new SignatureReader(methodInfo.getSignature());
+
+                reader.accept(extractor);
+
+                classFormalTypeParameterMap.putAll(extractor.getFormalTypeParameterMap());
+
+                if (!classFormalTypeParameterMap.isEmpty()) {
+                    GenericTypeResolutionAdapter genericTypeResolutionAdapter =
+                            new GenericTypeResolutionAdapter(classFormalTypeParameterMap);
+                    reader = new SignatureReader(methodInfo.getSignature());
+                    reader.accept(genericTypeResolutionAdapter);
+
+                    methodInfo.setArgumentTypes(genericTypeResolutionAdapter.getMethodArgumentTypes());
+                    methodInfo.setReturnType(genericTypeResolutionAdapter.getMethodReturnType());
+                }
+            }
+        }
+    }
+
     public static ASTNode getClosestASTNode(ASTNode node, Class<? extends ASTNode> nodeClazz) {
         if (nodeClazz.isInstance(node)) {
             return node;
