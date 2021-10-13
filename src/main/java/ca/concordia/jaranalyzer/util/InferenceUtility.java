@@ -28,16 +28,22 @@ public class InferenceUtility {
     public static Map<String, Set<VariableDeclarationDto>> getVariableNameMap(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                                                 String javaVersion,
                                                                                 List<String> importStatementList,
-                                                                                MethodInvocation methodInvocation) {
+                                                                                ASTNode methodExpression) {
+
+        assert methodExpression instanceof MethodInvocation
+                || methodExpression instanceof SuperMethodInvocation
+                || methodExpression instanceof ClassInstanceCreation
+                || methodExpression instanceof ConstructorInvocation
+                || methodExpression instanceof SuperConstructorInvocation;
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap = new HashMap<>();
 
         Set<VariableDeclarationDto> fieldVariableDeclarationList =
-                getFieldVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList, methodInvocation);
+                getFieldVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList, methodExpression);
 
         populateVariableNameMap(variableNameMap, fieldVariableDeclarationList);
 
-        MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(methodInvocation, MethodDeclaration.class);
+        MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(methodExpression, MethodDeclaration.class);
 
         if (methodDeclaration != null) {
             Set<VariableDeclarationDto> methodParameterVariableDeclarationList =
@@ -74,7 +80,7 @@ public class InferenceUtility {
     }
 
     public static Set<VariableDeclarationDto> getFieldVariableDeclarationDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                                                  String javaVersion,
+                                                                                 String javaVersion,
                                                                                   List<String> importStatementList,
                                                                                   ASTNode node) {
 
@@ -579,6 +585,76 @@ public class InferenceUtility {
         }
     }
 
+    public static String getClassNameFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                    String javaVersion,
+                                                    List<String> importStatementList,
+                                                    Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                    Expression expression) {
+        return getClassNameFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
+                expression, null);
+    }
+
+    public static String getTypeClassName(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                          String javaVersion,
+                                          List<String> importStatementList,
+                                          Type type) {
+        if (type == null) {
+            return null;
+        }
+
+        if (type instanceof PrimitiveType) {
+            return type.toString();
+
+        } else if (type instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) type;
+            Type elementType = arrayType.getElementType();
+            String elementTypeStr;
+
+            if (!elementType.isPrimitiveType()) {
+                if (elementType instanceof SimpleType) {
+                    elementTypeStr = getTypeNameForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) elementType));
+
+                } else if (elementType instanceof QualifiedType) {
+                    elementTypeStr = getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) elementType);
+                } else {
+                    throw new IllegalStateException();
+                }
+
+            } else {
+                elementTypeStr = elementType.toString();
+            }
+
+            StringBuilder elementTypeStrBuilder = new StringBuilder(elementTypeStr);
+            for (int i = 0; i < arrayType.getDimensions(); i++) {
+                elementTypeStrBuilder.append("[]");
+            }
+
+            return elementTypeStrBuilder.toString();
+
+        } else if (type instanceof SimpleType) {
+            return getTypeNameForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) type));
+
+        } else if (type instanceof QualifiedType) {
+            return getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) type);
+
+
+        } else if (type instanceof ParameterizedType) {
+            Type internalType = ((ParameterizedType) type).getType();
+
+            if (internalType instanceof SimpleType) {
+                return getTypeNameForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) internalType));
+
+            } else if (internalType instanceof QualifiedType) {
+                return getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) internalType);
+
+            } else {
+                throw new IllegalStateException();
+            }
+        } else {
+            return type.toString();
+        }
+    }
+
     private static void populateVariableNameMap(Map<String, Set<VariableDeclarationDto>> variableNameMap,
                                                 Set<VariableDeclarationDto> variableDeclarationDtoList) {
 
@@ -672,15 +748,6 @@ public class InferenceUtility {
         } else {
             return null;
         }
-    }
-
-    private static String getClassNameFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                     String javaVersion,
-                                                     List<String> importStatementList,
-                                                     Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                     Expression expression) {
-        return getClassNameFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                expression, null);
     }
 
     private static VariableDeclarationDto getClassNameFromVariableMap(String name,
@@ -804,67 +871,6 @@ public class InferenceUtility {
         }
 
         return null;
-    }
-
-    private static String getTypeClassName(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                           String javaVersion,
-                                           List<String> importStatementList,
-                                           Type type) {
-        if (type == null) {
-            return null;
-        }
-
-        if (type instanceof PrimitiveType) {
-            return type.toString();
-
-        } else if (type instanceof ArrayType) {
-            ArrayType arrayType = (ArrayType) type;
-            Type elementType = arrayType.getElementType();
-            String elementTypeStr;
-
-            if (!elementType.isPrimitiveType()) {
-                if (elementType instanceof SimpleType) {
-                    elementTypeStr = getTypeNameForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) elementType));
-
-                } else if (elementType instanceof QualifiedType) {
-                    elementTypeStr = getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) elementType);
-                } else {
-                    throw new IllegalStateException();
-                }
-
-            } else {
-                elementTypeStr = elementType.toString();
-            }
-
-            StringBuilder elementTypeStrBuilder = new StringBuilder(elementTypeStr);
-            for (int i = 0; i < arrayType.getDimensions(); i++) {
-                elementTypeStrBuilder.append("[]");
-            }
-
-            return elementTypeStrBuilder.toString();
-
-        } else if (type instanceof SimpleType) {
-            return getTypeNameForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) type));
-
-        } else if (type instanceof QualifiedType) {
-            return getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) type);
-
-
-        } else if (type instanceof ParameterizedType) {
-            Type internalType = ((ParameterizedType) type).getType();
-
-            if (internalType instanceof SimpleType) {
-                return getTypeNameForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) internalType));
-
-            } else if (internalType instanceof QualifiedType) {
-                return getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) internalType);
-
-            } else {
-                throw new IllegalStateException();
-            }
-        } else {
-            return type.toString();
-        }
     }
 
     private static String getTypeNameForSimpleType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
