@@ -21,6 +21,7 @@ public class TypeInferenceV2API {
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(methodInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+        importStatementList.add("import java.lang.*");
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList, methodInvocation);
@@ -72,6 +73,7 @@ public class TypeInferenceV2API {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superMethodInvocation);
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+        importStatementList.add("import java.lang.*");
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList, superMethodInvocation);
@@ -113,6 +115,7 @@ public class TypeInferenceV2API {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(classInstanceCreation);
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+        importStatementList.add("import java.lang.*");
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList, classInstanceCreation);
@@ -155,6 +158,7 @@ public class TypeInferenceV2API {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(constructorInvocation);
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+        importStatementList.add("import java.lang.*");
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList, constructorInvocation);
@@ -201,6 +205,7 @@ public class TypeInferenceV2API {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superConstructorInvocation);
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+        importStatementList.add("import java.lang.*");
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion,

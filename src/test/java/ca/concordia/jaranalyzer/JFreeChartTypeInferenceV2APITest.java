@@ -5,6 +5,7 @@ import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.PropertyReader;
 import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jgit.lib.Repository;
@@ -61,6 +62,27 @@ public class JFreeChartTypeInferenceV2APITest {
                     assert ("org.jfree.chart.plot.CategoryPlot::public void CategoryPlot(org.jfree.data.category.CategoryDataset, " +
                             "org.jfree.chart.axis.CategoryAxis, org.jfree.chart.axis.ValueAxis, " +
                             "org.jfree.chart.renderer.category.CategoryItemRenderer)").equals(methodInfo.toString());
+                };
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testDefaultImport() {
+        String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/data/Range.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        String javaVersion = PropertyReader.getProperty("java.version");
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new IllegalArgumentException(msg)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert "java.lang.IllegalArgumentException::public void IllegalArgumentException(java.lang.String)"
+                            .equals(methodInfo.toString());
                 };
 
                 return false;
