@@ -268,11 +268,17 @@ public abstract class TypeInferenceBase {
             if (methodArgumentTypeClassName.contains("$")) {
                 methodArgumentTypeClassName = methodArgumentTypeClassName.replace("$", ".");
                 methodArgumentClassNameList.set(index, methodArgumentTypeClassName);
+
+                if (methodArgumentTypeClassName.equals(argumentTypeClassName)) {
+                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                    continue;
+                }
             }
 
             if (isPrimitiveType(argumentTypeClassName) && methodArgumentTypeClassName.equals("java.lang.Object")) {
                 methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                continue;
             }
 
             Set<String> classNameList = new HashSet<>();
