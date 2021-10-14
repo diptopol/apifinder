@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
@@ -387,13 +388,35 @@ public abstract class TypeInferenceBase {
 
     static String resolveQNameForClass(String typeClassName,
                                        Object[] jarVertexIds,
-                                       Set<String> importedClassQNameList,
+                                       Set<String> importedClassQNameSet,
                                        List<String> packageNameList,
                                        TinkerGraph tinkerGraph) {
         int numberOfArrayDimensions = StringUtils.countMatches(typeClassName, "[]");
 
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
-                importedClassQNameList, packageNameList, tinkerGraph);
+                importedClassQNameSet, packageNameList, tinkerGraph);
+
+        /*
+         * If there are multiple result, we want to give priority for classes who are directly mentioned in import
+         * statement or belongs to 'java.lang' package. Because * package import can have many classes which satisfies
+         * the same condition. But we will only want to consider * package import if there is no directly mentioned class.
+         *
+         * For inner classes, we will be only able to find type name as inner class name if import contains name of inner class
+         * otherwise we will find outer class suffix during type declaration.
+         *
+         * Hierarchy must be maintained. First we have to check type direct import and then java.lang package.
+         */
+        Predicate<ClassInfo> isClassNameDirectImport = c -> (StringUtils.countMatches(typeClassName, ".") == 1
+                ? importedClassQNameSet.contains(c.getQualifiedName().substring(0, c.getQualifiedName().lastIndexOf(".")))
+                : importedClassQNameSet.contains(c.getQualifiedName()));
+
+        if (qualifiedClassInfoList.size() > 1 && qualifiedClassInfoList.stream().anyMatch(isClassNameDirectImport)) {
+            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(isClassNameDirectImport).collect(Collectors.toList());
+        }
+
+        if (qualifiedClassInfoList.size() > 1 && qualifiedClassInfoList.stream().anyMatch(c -> c.getPackageName().equals("java.lang"))) {
+            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(c -> c.getPackageName().equals("java.lang")).collect(Collectors.toList());
+        }
 
         return qualifiedClassInfoList.isEmpty()
                 ? typeClassName
