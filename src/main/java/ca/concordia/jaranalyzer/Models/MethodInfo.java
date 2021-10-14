@@ -24,6 +24,7 @@ public class MethodInfo {
 	private boolean isSynchronized;
 	private boolean isConstructor;
 	private boolean isVarargs;
+	private boolean isFinal;
 	private String qualifiedName;
 	private String internalClassConstructorSuffix;
 
@@ -43,6 +44,7 @@ public class MethodInfo {
 		this.isProtected = vertex.<Boolean>property("isProtected").value();
 		this.isSynchronized = vertex.<Boolean>property("isSynchronized").value();
 		this.isVarargs = vertex.<Boolean>property("isVarargs").value();
+		this.isFinal = vertex.<Boolean>property("isFinal").value();
 
 		VertexProperty<String> internalClassConstructorSuffixProp = vertex.property("internalClassConstructorSuffix");
 
@@ -137,6 +139,10 @@ public class MethodInfo {
 		if ((methodNode.access & Opcodes.ACC_VARARGS) != 0) {
 			isVarargs = true;
 		}
+
+		if ((methodNode.access & Opcodes.ACC_FINAL) != 0) {
+			isFinal = true;
+		}
 	}
 
 	public String toString() {
@@ -164,6 +170,10 @@ public class MethodInfo {
 
 		if (isSynchronized) {
 			methodDescription.append("synchronized ");
+		}
+
+		if (isFinal) {
+			methodDescription.append("final ");
 		}
 
 		methodDescription.append(returnType.getClassName());
@@ -293,6 +303,10 @@ public class MethodInfo {
 
 	public boolean isVarargs() {
 		return isVarargs;
+	}
+
+	public boolean isFinal() {
+		return isFinal;
 	}
 
 	public String getInternalClassConstructorSuffix() {

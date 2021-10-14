@@ -848,6 +848,37 @@ public class JFreeChartTests {
         assert "[org.jfree.chart.renderer.AbstractRenderer::public void setBaseShape(java.awt.Shape)]".equals(matches.toString());
     }
 
+    @Test
+    public void findMethodWithFinalKeyword() {
+        List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.annotations.*",
+                "import java.awt.BasicStroke", "import java.awt.Color", "import java.awt.Graphics2D",
+                "import java.awt.Paint", "import java.awt.Stroke", "import java.awt.geom.GeneralPath",
+                "import java.awt.geom.Rectangle2D", "import java.io.IOException", "import java.io.ObjectInputStream",
+                "import java.io.ObjectOutputStream", "import java.io.Serializable", "import java.util.Arrays",
+                "import org.jfree.chart.HashUtilities", "import org.jfree.chart.axis.ValueAxis",
+                "import org.jfree.chart.plot.Plot", "import org.jfree.chart.plot.PlotOrientation",
+                "import org.jfree.chart.plot.PlotRenderingInfo", "import org.jfree.chart.plot.XYPlot",
+                "import org.jfree.chart.util.ParamChecks", "import org.jfree.io.SerialUtilities",
+                "import org.jfree.ui.RectangleEdge", "import org.jfree.util.ObjectUtilities",
+                "import org.jfree.util.PaintUtilities", "import org.jfree.util.PublicCloneable",
+                "import org.jfree.chart.annotations.XYPolygonAnnotation");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet1, javaVersion, imports, "moveTo", 2)
+                .setInvokerType("java.awt.geom.GeneralPath")
+                .setArgumentType(0, "float")
+                .setArgumentType(1, "float")
+                .getMethodList();
+
+        assert "[java.awt.geom.Path2D.Float::public synchronized final void moveTo(float, float)]".equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
