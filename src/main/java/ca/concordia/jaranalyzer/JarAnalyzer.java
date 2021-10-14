@@ -136,9 +136,9 @@ public class JarAnalyzer {
                                     .property("returnTypeDescriptor", m.getReturnTypeAsType().getDescriptor())
                                     .next();
 
-                            if (Objects.nonNull(m.getInternalClassConstructorSuffix())) {
+                            if (Objects.nonNull(m.getInternalClassConstructorPrefix())) {
                                 graphTraversalSource.V(x.id())
-                                        .property("internalClassConstructorSuffix", m.getInternalClassConstructorSuffix())
+                                        .property("internalClassConstructorPrefix", m.getInternalClassConstructorPrefix())
                                         .next();
                             }
 

@@ -26,7 +26,7 @@ public class MethodInfo {
 	private boolean isVarargs;
 	private boolean isFinal;
 	private String qualifiedName;
-	private String internalClassConstructorSuffix;
+	private String internalClassConstructorPrefix;
 
 	private String signature;
 
@@ -46,10 +46,10 @@ public class MethodInfo {
 		this.isVarargs = vertex.<Boolean>property("isVarargs").value();
 		this.isFinal = vertex.<Boolean>property("isFinal").value();
 
-		VertexProperty<String> internalClassConstructorSuffixProp = vertex.property("internalClassConstructorSuffix");
+		VertexProperty<String> internalClassConstructorPrefixProp = vertex.property("internalClassConstructorPrefix");
 
-		if (internalClassConstructorSuffixProp.isPresent()) {
-			this.internalClassConstructorSuffix = internalClassConstructorSuffixProp.value();
+		if (internalClassConstructorPrefixProp.isPresent()) {
+			this.internalClassConstructorPrefix = internalClassConstructorPrefixProp.value();
 		}
 
 		VertexProperty<String> signatureProperty = vertex.property("signature");
@@ -89,8 +89,8 @@ public class MethodInfo {
 			isConstructor = true;
 
 			if (classInfo.getName().contains("$")) {
-				internalClassConstructorSuffix = classInfo.getName().substring(0, classInfo.getName().lastIndexOf("$") + 1);
-				name = classInfo.getName().replace(internalClassConstructorSuffix, "");
+				internalClassConstructorPrefix = classInfo.getName().substring(0, classInfo.getName().lastIndexOf("$") + 1);
+				name = classInfo.getName().replace(internalClassConstructorPrefix, "");
 			} else {
 				name = classInfo.getName();
 			}
@@ -98,7 +98,7 @@ public class MethodInfo {
 
 		this.classInfo = classInfo;
 		this.returnType = Type.getReturnType(methodNode.desc);
-		if (isConstructor && Objects.nonNull(internalClassConstructorSuffix)) {
+		if (isConstructor && Objects.nonNull(internalClassConstructorPrefix)) {
 			List<Type> types = new ArrayList<Type>();
 			for (Type type : Type.getArgumentTypes(methodNode.desc)) {
 				if (!classInfo.getQualifiedName().startsWith(type.getClassName() + ".")) {
@@ -179,8 +179,8 @@ public class MethodInfo {
 		methodDescription.append(returnType.getClassName());
 		methodDescription.append(" ");
 
-		if (Objects.nonNull(internalClassConstructorSuffix)) {
-			methodDescription.append(internalClassConstructorSuffix);
+		if (Objects.nonNull(internalClassConstructorPrefix)) {
+			methodDescription.append(internalClassConstructorPrefix);
 		}
 
 		methodDescription.append(this.name);
@@ -309,8 +309,8 @@ public class MethodInfo {
 		return isFinal;
 	}
 
-	public String getInternalClassConstructorSuffix() {
-		return internalClassConstructorSuffix;
+	public String getInternalClassConstructorPrefix() {
+		return internalClassConstructorPrefix;
 	}
 
 	public String getSignature() {
@@ -366,14 +366,14 @@ public class MethodInfo {
 				Arrays.equals(argumentTypes, that.argumentTypes) &&
 				Objects.equals(returnType, that.returnType) &&
 				Objects.equals(thrownInternalClassNames, that.thrownInternalClassNames) &&
-				Objects.equals(internalClassConstructorSuffix, that.internalClassConstructorSuffix);
+				Objects.equals(internalClassConstructorPrefix, that.internalClassConstructorPrefix);
 	}
 
 	@Override
 	public int hashCode() {
 		String classInfoQName = classInfo != null ? classInfo.getQualifiedName() : null;
 
-		int result = Objects.hash(name, classInfoQName, returnType, thrownInternalClassNames, internalClassConstructorSuffix);
+		int result = Objects.hash(name, classInfoQName, returnType, thrownInternalClassNames, internalClassConstructorPrefix);
 		result = 31 * result + Arrays.hashCode(argumentTypes);
 
 		return result;
