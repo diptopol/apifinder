@@ -330,20 +330,48 @@ public abstract class TypeInferenceBase {
         if (Objects.nonNull(typeClassName) && !isPrimitiveType(typeClassName)
                 && StringUtils.countMatches(typeClassName, ".") <= 1) {
 
-            typeClassName = typeClassName.replace(".", "$");
+            String postProcessedTypeClassName = typeClassName.replace(".", "$")
+                    .replaceAll("\\[]", "");
 
             List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
                     .out("ContainsPkg").out("Contains")
                     .has("Kind", "Class")
-                    .has("Name", typeClassName)
+                    .has("Name", TextP.containing(postProcessedTypeClassName))
                     .toStream()
                     .map(ClassInfo::new)
                     .collect(Collectors.toList());
 
-            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(classInfo ->
-                    importedClassQNameList.contains(classInfo.getQualifiedName())
-                            || packageNameList.contains(classInfo.getPackageName()))
-                    .collect(Collectors.toList());
+            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(classInfo -> {
+                if (classInfo.isInnerClass()) {
+                    if (classInfo.isPrivate()) {
+                        return false;
+                    }
+
+                    boolean classNameCheck;
+                    if (postProcessedTypeClassName.contains("$")) {
+                        classNameCheck = classInfo.getName().equals(postProcessedTypeClassName);
+                    } else {
+                        classNameCheck = classInfo.getName().endsWith("$" + postProcessedTypeClassName);
+                    }
+
+                    if (classNameCheck) {
+                        String qualifiedClassName = classInfo.getQualifiedName();
+                        String qualifiedOuterClassName = classInfo.getQualifiedName()
+                                .substring(0, classInfo.getQualifiedName().lastIndexOf("."));
+
+                        return importedClassQNameList.contains(qualifiedClassName)
+                                || importedClassQNameList.contains(qualifiedOuterClassName)
+                                || packageNameList.contains(classInfo.getPackageName());
+
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return classInfo.getName().equals(postProcessedTypeClassName)
+                            && (importedClassQNameList.contains(classInfo.getQualifiedName())
+                            || packageNameList.contains(classInfo.getPackageName()));
+                }
+            }).collect(Collectors.toList());
 
             return qualifiedClassInfoList;
         }
