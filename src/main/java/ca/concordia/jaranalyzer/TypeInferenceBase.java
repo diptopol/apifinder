@@ -386,17 +386,18 @@ public abstract class TypeInferenceBase {
     }
 
     static String resolveQNameForClass(String typeClassName,
-                                                 Object[] jarVertexIds,
-                                                 Set<String> importedClassQNameList,
-                                                 List<String> packageNameList,
-                                                 TinkerGraph tinkerGraph) {
+                                       Object[] jarVertexIds,
+                                       Set<String> importedClassQNameList,
+                                       List<String> packageNameList,
+                                       TinkerGraph tinkerGraph) {
+        int numberOfArrayDimensions = StringUtils.countMatches(typeClassName, "[]");
 
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
                 importedClassQNameList, packageNameList, tinkerGraph);
 
         return qualifiedClassInfoList.isEmpty()
                 ? typeClassName
-                : qualifiedClassInfoList.get(0).getQualifiedName();
+                : getQualifiedNameWithArrayDimension(qualifiedClassInfoList.get(0).getQualifiedName(), numberOfArrayDimensions);
     }
 
 
@@ -626,6 +627,16 @@ public abstract class TypeInferenceBase {
         } else {
             return methodInfoList;
         }
+    }
+
+    private static String getQualifiedNameWithArrayDimension(String qualifiedClassName, int arrayDimension) {
+        StringBuilder qualifiedClassNameBuilder = new StringBuilder(qualifiedClassName);
+
+        for (int i = 0; i < arrayDimension; i++) {
+            qualifiedClassNameBuilder.append("[]");
+        }
+
+        return qualifiedClassNameBuilder.toString();
     }
 
     private static boolean isNullType(String name) {
