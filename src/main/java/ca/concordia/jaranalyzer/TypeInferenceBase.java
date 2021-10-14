@@ -427,6 +427,14 @@ public abstract class TypeInferenceBase {
     static List<MethodInfo> getQualifiedMethodInfoList(String methodName, int numberOfParameters,
                                                         Object[] jarVertexIds, Set<String> classQNameList, TinkerGraph tinkerGraph) {
 
+        String outerClassPrefix = StringUtils.countMatches(methodName, ".") == 1
+                ? methodName.substring(0, methodName.indexOf("."))
+                : null;
+
+        methodName = StringUtils.countMatches(methodName, ".") == 1
+                ? methodName.substring(methodName.indexOf(".") + 1)
+                : methodName;
+
         return tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
@@ -436,12 +444,27 @@ public abstract class TypeInferenceBase {
                 .has("Name", methodName)
                 .toStream()
                 .map(MethodInfo::new)
-                .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs())
+                .filter(methodInfo -> {
+                    boolean innerClassConstructorMatching = outerClassPrefix == null
+                            || methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$");
+
+                    return innerClassConstructorMatching
+                            && (methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs());
+                })
                 .collect(Collectors.toList());
     }
 
     static List<MethodInfo> getQualifiedMethodInfoListForInnerClass(String methodName, int numberOfParameters,
                                                                               Object[] jarVertexIds, Set<String> classQNameList, TinkerGraph tinkerGraph) {
+
+        String outerClassPrefix = StringUtils.countMatches(methodName, ".") == 1
+                ? methodName.substring(0, methodName.indexOf("."))
+                : null;
+
+        methodName = StringUtils.countMatches(methodName, ".") == 1
+                ? methodName.substring(methodName.indexOf(".") + 1)
+                : methodName;
+
         return tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
@@ -452,7 +475,13 @@ public abstract class TypeInferenceBase {
                 .has("Name", methodName)
                 .toStream()
                 .map(MethodInfo::new)
-                .filter(methodInfo -> methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs())
+                .filter(methodInfo -> {
+                    boolean innerClassConstructorMatching = outerClassPrefix == null
+                            || methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$");
+
+                    return innerClassConstructorMatching
+                            && (methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs());
+                })
                 .collect(Collectors.toList());
     }
 
@@ -569,7 +598,10 @@ public abstract class TypeInferenceBase {
          */
         if (methodName.contains(".")) {
             importedClassQNameSet.add(methodName);
-            methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
+
+            if (StringUtils.countMatches(methodName, ".") > 1) {
+                methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
+            }
         }
 
         return methodName;
