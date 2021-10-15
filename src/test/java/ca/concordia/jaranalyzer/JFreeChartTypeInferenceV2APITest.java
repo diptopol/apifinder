@@ -51,7 +51,6 @@ public class JFreeChartTypeInferenceV2APITest {
     public void testSuperConstructorMethodExtraction() {
         String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/chart/plot/CombinedRangeCategoryPlot.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
-        String javaVersion = PropertyReader.getProperty("java.version");
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
@@ -73,7 +72,6 @@ public class JFreeChartTypeInferenceV2APITest {
     public void testDefaultImport() {
         String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/data/Range.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
-        String javaVersion = PropertyReader.getProperty("java.version");
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
