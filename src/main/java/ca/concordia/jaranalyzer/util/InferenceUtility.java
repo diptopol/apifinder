@@ -766,9 +766,9 @@ public class InferenceUtility {
                 }
             }
 
-            int size = selectedVariableDeclarationDto.size();
+            selectedVariableDeclarationDto.sort(Comparator.comparingInt(o -> (position - o.getScope().getStartOffset())));
 
-            return selectedVariableDeclarationDto.get(size - 1);
+            return selectedVariableDeclarationDto.get(0);
         } else {
             return null;
         }
