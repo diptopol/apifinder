@@ -711,7 +711,7 @@ public class InferenceUtility {
                         getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
                                 variableDeclarationExpression.getType(), fragmentList);
 
-                variableDeclarationDtoList.addAll(variableDeclarationDtoList);
+                localVariableDtoSet.addAll(variableDeclarationDtoList);
             }
 
             @Override
