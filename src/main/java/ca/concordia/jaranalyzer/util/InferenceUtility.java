@@ -511,8 +511,8 @@ public class InferenceUtility {
                     classInstanceCreation.getType().toString(),
                     classInstanceCreation.arguments().size(), callerClassName, false, argumentClassNames.toArray(new String[0]));
 
-            assert methods != null && methods.size() == 1;
-            return methods.get(0).getClassInfo().getQualifiedName();
+            // if the getAllMethods returns empty, the method can be a private construct.
+            return methods.isEmpty() ? "null" : methods.get(0).getClassInfo().getQualifiedName();
         } else if (expression instanceof MethodInvocation) {
 
             MethodInvocation methodInvocation = (MethodInvocation) expression;
@@ -542,8 +542,8 @@ public class InferenceUtility {
                     methodName,
                     methodInvocation.arguments().size(), callerClassName, false, argumentClassNames.toArray(new String[0]));
 
-            assert methods != null && methods.size() == 1;
-            return methods.get(0).getReturnType();
+            // if the getAllMethods returns empty, the method can be a private construct.
+            return methods.isEmpty() ? "null" : methods.get(0).getReturnType();
 
         } else if (expression instanceof SuperMethodInvocation) {
 
@@ -560,11 +560,8 @@ public class InferenceUtility {
                     methodName,
                     arguments.size(), callerClassName, true, argumentClassNameList.toArray(new String[0]));
 
-            if (methods != null && methods.size() > 0) {
-                return methods.get(0).getReturnType();
-            } else {
-                return "null";
-            }
+            // if the getAllMethods returns empty, the method can be a private construct.
+            return methods.isEmpty() ? "null" : methods.get(0).getReturnType();
 
         } else if (expression instanceof LambdaExpression) {
             LambdaExpression lambdaExpression = (LambdaExpression) expression;
