@@ -634,7 +634,7 @@ public abstract class TypeInferenceBase {
 
             typeName = isPrimitiveType(typeName)
                     ? getTypeDescriptorForPrimitive(typeName)
-                    : "L" + typeName.replaceAll("\\.", "/");
+                    : "L" + typeName.replaceAll("\\.", "/") + ";";
 
             Type returnType = Type.getType(StringUtils.repeat("[", dimension) + typeName);
 
