@@ -1,5 +1,6 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.Models.TypeObject;
 import ca.concordia.jaranalyzer.Models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.PropertyReader;
@@ -108,10 +109,14 @@ public class InferenceUtilityTest {
 
                     List<Expression> argumentList = methodInvocation.arguments();
 
-                    List<String> argumentClassNameList = InferenceUtility.getArgumentClassNameList(Collections.emptySet(),
+                    List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(Collections.emptySet(),
                             javaVersion, importStatementList, variableNameMap, argumentList);
 
-                    assert "[ChartMouseListenerFX, java.lang.String]".equals(argumentClassNameList.toString());
+                    List<String> argumentTypeClassNameList = argumentTypeObjList.stream()
+                            .map(TypeObject::getQualifiedClassName)
+                            .collect(Collectors.toList());
+
+                    assert "[ChartMouseListenerFX, java.lang.String]".equals(argumentTypeClassNameList.toString());
                 };
 
                 return false;

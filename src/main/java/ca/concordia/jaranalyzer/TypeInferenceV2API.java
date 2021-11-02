@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.MethodInfo;
+import ca.concordia.jaranalyzer.Models.TypeObject;
 import ca.concordia.jaranalyzer.Models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import io.vavr.Tuple3;
@@ -30,7 +31,7 @@ public class TypeInferenceV2API {
         int numberOfParameters = methodInvocation.arguments().size();
         List<Expression> argumentList = methodInvocation.arguments();
 
-        List<String> argumentClassNameList = InferenceUtility.getArgumentClassNameList(dependentJarInformationSet,
+        List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
                 javaVersion, importStatementList, variableNameMap, argumentList);
 
         MethodDeclaration methodDeclaration =
@@ -47,8 +48,8 @@ public class TypeInferenceV2API {
 
         Map<String, String> classFormalTypeParameterMap = new HashMap<>();
         String callerClassName = expression != null
-                ? InferenceUtility.getClassNameFromExpression(dependentJarInformationSet, javaVersion,
-                importStatementList, variableNameMap, expression, classFormalTypeParameterMap)
+                ? InferenceUtility.getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
+                importStatementList, variableNameMap, expression, classFormalTypeParameterMap).getQualifiedClassName()
                 : (isStaticImport ? null : className.replace("%", "").replace("#", "."));
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -56,13 +57,13 @@ public class TypeInferenceV2API {
                 importStatementList, methodName, numberOfParameters)
                 .setInvokerType(callerClassName);
 
-        for (int i = 0; i < argumentClassNameList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentClassNameList.get(i));
+        for (int i = 0; i < argumentTypeObjList.size(); i++) {
+            searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
         InferenceUtility.resolveMethodGenericTypeInfo(dependentJarInformationSet, javaVersion, importStatementList,
-                methodInfoList, argumentList, argumentClassNameList, classFormalTypeParameterMap);
+                methodInfoList, argumentList, argumentTypeObjList, classFormalTypeParameterMap);
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }
@@ -89,7 +90,7 @@ public class TypeInferenceV2API {
         String methodName = superMethodInvocation.getName().getIdentifier();
         int numberOfParameters = superMethodInvocation.arguments().size();
 
-        List<String> argumentClassNameList = InferenceUtility.getArgumentClassNameList(dependentJarInformationSet,
+        List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
                 javaVersion, importStatementList, variableNameMap, argumentList);
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -98,13 +99,13 @@ public class TypeInferenceV2API {
                 .setInvokerType(callerClassName)
                 .setSuperInvoker(true);
 
-        for (int i = 0; i < argumentClassNameList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentClassNameList.get(i));
+        for (int i = 0; i < argumentTypeObjList.size(); i++) {
+            searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
         InferenceUtility.resolveMethodGenericTypeInfo(dependentJarInformationSet, javaVersion, importStatementList,
-                methodInfoList, argumentList, argumentClassNameList, Collections.emptyMap());
+                methodInfoList, argumentList, argumentTypeObjList, Collections.emptyMap());
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }
@@ -127,12 +128,12 @@ public class TypeInferenceV2API {
         if (type.isSimpleType()) {
             SimpleType simpleType = (SimpleType) type;
             Expression simpleTypeExpression = simpleType.getName();
-            callerClassName = InferenceUtility.getClassNameFromExpression(dependentJarInformationSet, javaVersion,
-                    importStatementList, variableNameMap, simpleTypeExpression);
+            callerClassName = InferenceUtility.getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
+                    importStatementList, variableNameMap, simpleTypeExpression).getQualifiedClassName();
             callerClassName = (callerClassName == null || callerClassName.equals("null")) ? null : callerClassName;
         }
 
-        List<String> argumentClassNameList = InferenceUtility.getArgumentClassNameList(dependentJarInformationSet,
+        List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
                 javaVersion, importStatementList, variableNameMap, argumentList);
 
         String methodName = classInstanceCreation.getType().toString();
@@ -143,8 +144,8 @@ public class TypeInferenceV2API {
                 importStatementList, methodName, numberOfParameters)
                 .setInvokerType(callerClassName);
 
-        for (int i = 0; i < argumentClassNameList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentClassNameList.get(i));
+        for (int i = 0; i < argumentTypeObjList.size(); i++) {
+            searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
@@ -182,7 +183,7 @@ public class TypeInferenceV2API {
         List<Expression> argumentList = constructorInvocation.arguments();
         int numberOfParameters = argumentList.size();
 
-        List<String> argumentClassNameList = InferenceUtility.getArgumentClassNameList(dependentJarInformationSet,
+        List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
                 javaVersion, importStatementList, variableNameMap, argumentList);
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -190,8 +191,8 @@ public class TypeInferenceV2API {
                 importStatementList, methodName, numberOfParameters)
                 .setInvokerType(callerClassName);
 
-        for (int i = 0; i < argumentClassNameList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentClassNameList.get(i));
+        for (int i = 0; i < argumentTypeObjList.size(); i++) {
+            searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
@@ -218,8 +219,8 @@ public class TypeInferenceV2API {
         if (superClassType == null) {
             superClassName = "java.lang.Object";
         } else {
-            superClassName = InferenceUtility.getTypeClassName(dependentJarInformationSet, javaVersion,
-                    importStatementList, superClassType);
+            superClassName = InferenceUtility.getTypeObj(dependentJarInformationSet, javaVersion,
+                    importStatementList, superClassType).getQualifiedClassName();
         }
 
         MethodDeclaration methodDeclaration =
@@ -231,7 +232,7 @@ public class TypeInferenceV2API {
         List<Expression> argumentList = superConstructorInvocation.arguments();
         int numberOfParameters = argumentList.size();
 
-        List<String> argumentClassNameList = InferenceUtility.getArgumentClassNameList(dependentJarInformationSet,
+        List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
                 javaVersion, importStatementList, variableNameMap, argumentList);
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -240,8 +241,8 @@ public class TypeInferenceV2API {
                 .setInvokerType(callerClassName)
                 .setSuperInvoker(true);
 
-        for (int i = 0; i < argumentClassNameList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentClassNameList.get(i));
+        for (int i = 0; i < argumentTypeObjList.size(); i++) {
+            searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
