@@ -1,9 +1,7 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.util.ClassSignatureFormalTypeParameterExtractor;
-import ca.concordia.jaranalyzer.util.FieldSignatureFormalTypeParameterExtractor;
-import ca.concordia.jaranalyzer.util.GenericTypeResolutionAdapter;
-import ca.concordia.jaranalyzer.util.MethodSignatureFormalTypeParameterExtractor;
+import ca.concordia.jaranalyzer.Models.TypeObject;
+import ca.concordia.jaranalyzer.util.*;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
@@ -152,6 +150,32 @@ public class GenericTypeConversionTest {
 
         assert "[T=org.jfree.chart.plot.dial.DialLayerChangeListener]"
                 .equals(extractor.getFormalTypeParameterMap().entrySet().toString());
+    }
+
+    @Test
+    public void testFormalTypeParameterExtractionFromMethodArguments() {
+        String signature = "<P:Ljava/lang/String;R:Ljava/lang/Object;Q:Ljava/lang/Object;>(Ljava/util/Map<TP;TR;>;TQ;)V";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        List<TypeObject> methodArgumentList = new ArrayList<>();
+
+        TypeObject firstArgument = new TypeObject("java.util.Map");
+
+        LinkedHashMap<String, TypeObject> typeArgumentMap = new LinkedHashMap<>();
+        typeArgumentMap.put("K", new TypeObject("java.lang.String"));
+        typeArgumentMap.put("V", new TypeObject("java.lang.String"));
+
+        firstArgument.setArgumentTypeObjectMap(typeArgumentMap);
+
+        methodArgumentList.add(firstArgument);
+        methodArgumentList.add(new TypeObject("java.lang.Integer"));
+
+        MethodArgumentFormalTypeParameterExtractor extractor =
+                new MethodArgumentFormalTypeParameterExtractor(methodArgumentList);
+        signatureReader.accept(extractor);
+
+        assert "{P=java.lang.String, Q=java.lang.Integer, R=java.lang.String}"
+                .equals(extractor.getFormalTypeParameterMap().toString());
     }
 
 }
