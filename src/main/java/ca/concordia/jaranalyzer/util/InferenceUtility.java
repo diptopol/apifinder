@@ -492,8 +492,11 @@ public class InferenceUtility {
         } else if (expression instanceof ClassInstanceCreation) {
             ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation) expression;
             List<Expression> arguments = classInstanceCreation.arguments();
-            String callerClassName = getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    classInstanceCreation.getExpression(), formalTypeParameterMap).getQualifiedClassName();
+
+            TypeObject callerClassTypeObj = getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
+                    importStatementList, variableNameMap, classInstanceCreation.getExpression(), formalTypeParameterMap);
+
+            String callerClassName = callerClassTypeObj == null ? null : callerClassTypeObj.getQualifiedClassName();
             callerClassName = (callerClassName == null || callerClassName.equals("null")) ? null : callerClassName;
 
             List<TypeObject> argumentTypeObjList = getArgumentTypeObjList(dependentJarInformationSet, javaVersion,
