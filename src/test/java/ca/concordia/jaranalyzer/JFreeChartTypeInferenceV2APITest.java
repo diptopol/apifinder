@@ -106,4 +106,25 @@ public class JFreeChartTypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testEvaluationGenericMethodArguments() {
+        String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/chart/plot/Marker.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        String javaVersion = PropertyReader.getProperty("java.version");
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("this.listenerList.getListeners")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert ("javax.swing.event.EventListenerList::public java.util.EventListener[] " +
+                            "getListeners(java.lang.Class)").equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }

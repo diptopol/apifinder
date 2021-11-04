@@ -62,8 +62,7 @@ public class TypeInferenceV2API {
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
-        InferenceUtility.resolveMethodGenericTypeInfo(dependentJarInformationSet, javaVersion, importStatementList,
-                methodInfoList, argumentList, argumentTypeObjList, classFormalTypeParameterMap);
+        InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, classFormalTypeParameterMap);
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }
@@ -104,8 +103,7 @@ public class TypeInferenceV2API {
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
-        InferenceUtility.resolveMethodGenericTypeInfo(dependentJarInformationSet, javaVersion, importStatementList,
-                methodInfoList, argumentList, argumentTypeObjList, Collections.emptyMap());
+        InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, Collections.emptyMap());
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }

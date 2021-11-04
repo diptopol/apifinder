@@ -14,7 +14,7 @@ public class TypeObject {
     private String qualifiedClassName;
     private String signature;
     private boolean isParameterized;
-    private LinkedHashMap<String, TypeObject> argumentTypeObjectMap;
+    private Map<String, TypeObject> argumentTypeObjectMap;
 
     public TypeObject() {
         this.argumentTypeObjectMap = new LinkedHashMap<>();
@@ -54,7 +54,7 @@ public class TypeObject {
         return new ArrayList<>(this.argumentTypeObjectMap.values());
     }
 
-    public void setArgumentTypeObjectMap(LinkedHashMap<String, TypeObject> argumentTypeObjectMap) {
+    public void setArgumentTypeObjectMap(Map<String, TypeObject> argumentTypeObjectMap) {
         this.isParameterized = true;
         this.argumentTypeObjectMap.putAll(argumentTypeObjectMap);
     }

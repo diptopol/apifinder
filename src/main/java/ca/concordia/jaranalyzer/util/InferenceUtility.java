@@ -9,6 +9,7 @@ import org.objectweb.asm.signature.SignatureReader;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Diptopol
@@ -154,43 +155,14 @@ public class InferenceUtility {
         return declaringClassQualifiedName;
     }
 
-    public static void resolveMethodGenericTypeInfo(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                              String javaVersion,
-                                              List<String> importStatementList,
-                                              List<MethodInfo> methodInfoList,
-                                              List<Expression> methodArgumentList,
+    public static void resolveMethodGenericTypeInfo(List<MethodInfo> methodInfoList,
                                               List<TypeObject> methodArgumentTypeObjList,
                                               Map<String, String> classFormalTypeParameterMap) {
 
         for (MethodInfo methodInfo: methodInfoList) {
             if (methodInfo.getSignature() != null) {
-                List<String> argumentListForFormalTypeParameterExtraction = new ArrayList<>();
-
-                for (int i = 0; i < methodArgumentList.size(); i++) {
-                    Expression argument = methodArgumentList.get(i);
-
-                    if (argument instanceof TypeLiteral) {
-                        Type argumentType = ((TypeLiteral) argument).getType();
-                        String typeName = getTypeObj(dependentJarInformationSet, javaVersion,
-                                importStatementList, argumentType).getQualifiedClassName();
-
-                        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet,
-                                javaVersion, importStatementList, typeName);
-
-                        if (!classInfoList.isEmpty()) {
-                            argumentListForFormalTypeParameterExtraction.add(classInfoList.get(0).getQualifiedName());
-                        } else {
-                            argumentListForFormalTypeParameterExtraction.add(methodArgumentTypeObjList.get(i).getQualifiedClassName());
-                        }
-
-                    } else {
-                        argumentListForFormalTypeParameterExtraction.add(methodArgumentTypeObjList.get(i).getQualifiedClassName()
-                                .replaceAll("\\[]", ""));
-                    }
-                }
-
-                MethodSignatureFormalTypeParameterExtractor extractor =
-                        new MethodSignatureFormalTypeParameterExtractor(argumentListForFormalTypeParameterExtraction);
+                MethodArgumentFormalTypeParameterExtractor extractor =
+                        new MethodArgumentFormalTypeParameterExtractor(methodArgumentTypeObjList);
                 SignatureReader reader = new SignatureReader(methodInfo.getSignature());
 
                 reader.accept(extractor);
@@ -249,7 +221,23 @@ public class InferenceUtility {
             return new TypeObject(className);
 
         } else if (expression instanceof TypeLiteral) {
-            return new TypeObject("java.lang.Class");
+            Type argumentType = ((TypeLiteral) expression).getType();
+            TypeObject argumentTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, argumentType);
+
+            ClassSignatureFormalTypeParameterExtractor extractor =
+                    new ClassSignatureFormalTypeParameterExtractor(Collections.singletonList(argumentTypeObj.getQualifiedClassName()));
+
+            SignatureReader signatureReader = new SignatureReader(argumentTypeObj.getSignature());
+            signatureReader.accept(extractor);
+
+            TypeObject typeObject = new TypeObject("java.lang.Class");
+
+            Map<String, TypeObject> argumentTypeObjMap = extractor.getFormalTypeParameterMap().entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, e -> new TypeObject(e.getValue())));
+
+            typeObject.setArgumentTypeObjectMap(argumentTypeObjMap);
+
+            return typeObject;
 
         } else if (expression instanceof ParenthesizedExpression) {
             ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression) expression;
@@ -896,9 +884,9 @@ public class InferenceUtility {
     }
 
     private static TypeObject getTypeObjForSimpleType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                  String javaVersion,
-                                                  List<String> importStatementList,
-                                                  SimpleType simpleType) {
+                                                      String javaVersion,
+                                                      List<String> importStatementList,
+                                                      SimpleType simpleType) {
         String name = simpleType.getName().getFullyQualifiedName();
 
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList, name);
@@ -911,14 +899,16 @@ public class InferenceUtility {
                     + ", Type Name: " + name);
         }*/
 
-        return classInfoList.size() == 0 ? new TypeObject(name) : new TypeObject(classInfoList.get(0).getQualifiedName());
+        return classInfoList.size() == 0
+                ? new TypeObject(name)
+                : new TypeObject(classInfoList.get(0).getQualifiedName(), classInfoList.get(0).getSignature());
     }
 
     //TODO: check whether query for qualified name is needed or not
     private static TypeObject getTypeNameForQualifiedType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                      String javaVersion,
-                                                      List<String> importStatementList,
-                                                      QualifiedType qualifiedType) {
+                                                          String javaVersion,
+                                                          List<String> importStatementList,
+                                                          QualifiedType qualifiedType) {
 
         String name = qualifiedType.getName().getFullyQualifiedName();
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList, name);
@@ -934,7 +924,7 @@ public class InferenceUtility {
 
         return classInfoList.size() == 0
                 ? new TypeObject(name)
-                : new TypeObject(classInfoList.get(0).getQualifiedName());
+                : new TypeObject(classInfoList.get(0).getQualifiedName(), classInfoList.get(0).getSignature());
     }
 
 }
