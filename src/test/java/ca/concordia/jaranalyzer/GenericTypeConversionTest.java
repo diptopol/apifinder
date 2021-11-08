@@ -178,4 +178,19 @@ public class GenericTypeConversionTest {
                 .equals(extractor.getFormalTypeParameterMap().toString());
     }
 
+    @Test
+    public void testFormalTypeParameterExtractionForArrayArguments() {
+        String signature = "<T:Ljava/lang/Object;>([TT;)[TT;";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        List<TypeObject> methodArgumentList = new ArrayList<>();
+        methodArgumentList.add(new TypeObject("java.net.URL[]"));
+
+        MethodArgumentFormalTypeParameterExtractor extractor =
+                new MethodArgumentFormalTypeParameterExtractor(methodArgumentList);
+        signatureReader.accept(extractor);
+
+        assert "{T=java.net.URL}".equals(extractor.getFormalTypeParameterMap().toString());
+    }
+
 }
