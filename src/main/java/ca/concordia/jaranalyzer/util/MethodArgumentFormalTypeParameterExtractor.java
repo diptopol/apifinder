@@ -102,6 +102,10 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
             return;
         }
 
+        if (currentArgumentIndex >= methodArgumentList.size()) {
+            return;
+        }
+
         traversedFormalTypeParameterList.add(name);
         TypeObject argumentType = methodArgumentList.get(currentArgumentIndex);
 
@@ -136,6 +140,13 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
             currentArgumentIndex++;
             currentFormalTypeParameterIndexPerArgument = 0;
             hasArgumentClassName = false;
+        }
+    }
+
+    @Override
+    public void visitBaseType(char descriptor) {
+        if (argumentStack == 0 && seenParameters) {
+            currentArgumentIndex++;
         }
     }
 
