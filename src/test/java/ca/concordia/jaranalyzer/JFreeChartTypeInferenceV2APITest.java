@@ -93,9 +93,9 @@ public class JFreeChartTypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation classInstanceCreation) {
-                if (classInstanceCreation.toString().startsWith("createNumberArray(high)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("createNumberArray(high)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("org.jfree.data.xy.DefaultHighLowDataset::" +
                             "public static java.lang.Number[] createNumberArray(double[])").equals(methodInfo.toString());
@@ -114,9 +114,9 @@ public class JFreeChartTypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation classInstanceCreation) {
-                if (classInstanceCreation.toString().startsWith("this.listenerList.getListeners")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("this.listenerList.getListeners")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("javax.swing.event.EventListenerList::public java.util.EventListener[] " +
                             "getListeners(java.lang.Class)").equals(methodInfo.toString());
