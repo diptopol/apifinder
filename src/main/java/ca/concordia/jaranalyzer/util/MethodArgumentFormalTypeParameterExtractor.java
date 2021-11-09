@@ -77,8 +77,11 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
             argumentStack *= 2;
             hasArgumentClassName = true;
 
-            TypeObject typeObject = methodArgumentList.get(currentArgumentIndex);
-            assert name.replaceAll("/", ".").equals(typeObject.getQualifiedClassName());
+            if (argumentStack == 0 && seenParameters) {
+                TypeObject typeObject = methodArgumentList.get(currentArgumentIndex);
+
+                assert name.replaceAll("/", ".").equals(typeObject.getQualifiedClassName());
+            }
         }
     }
 
@@ -108,7 +111,6 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
             return;
         }
 
-        traversedFormalTypeParameterList.add(name);
         TypeObject argumentType = methodArgumentList.get(currentArgumentIndex);
 
         if (argumentType.isParameterized()) {
@@ -117,12 +119,14 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
                     argumentTypeList.get(currentFormalTypeParameterIndexPerArgument).getQualifiedClassName());
 
             formalTypeParameterMap.put(name, argumentTypeClassName);
+            traversedFormalTypeParameterList.add(name);
 
             currentFormalTypeParameterIndexPerArgument++;
 
         } else {
             if (!hasArgumentClassName) {
                 formalTypeParameterMap.put(name, resolveArrayDimensions(argumentType.getQualifiedClassName()));
+                traversedFormalTypeParameterList.add(name);
             }
         }
     }

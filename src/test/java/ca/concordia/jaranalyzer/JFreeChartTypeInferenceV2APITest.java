@@ -127,4 +127,26 @@ public class JFreeChartTypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testComplexGenericTypeMethodArguments() {
+        String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/data/DefaultKeyedValues2D.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        String javaVersion = PropertyReader.getProperty("java.version");
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("Collections.binarySearch(this.rowKeys")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert "java.util.Collections::public static int binarySearch(java.util.List, java.lang.Comparable)"
+                            .equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }
