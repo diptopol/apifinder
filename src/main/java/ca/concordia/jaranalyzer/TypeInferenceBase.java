@@ -1,32 +1,18 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.ClassInfo;
-import ca.concordia.jaranalyzer.Models.JarInformation;
 import ca.concordia.jaranalyzer.Models.MethodInfo;
-import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
-import ca.concordia.jaranalyzer.util.Utility;
+import ca.concordia.jaranalyzer.util.InferenceUtility;
 import io.vavr.Tuple3;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import org.eclipse.jgit.lib.Repository;
 import org.objectweb.asm.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-
-import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
-import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
 
 /**
  * @author Diptopol
@@ -37,9 +23,6 @@ public abstract class TypeInferenceBase {
     private static final int MAX_SUPER_CLASS_DISTANCE = 1000;
     private static final int PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE = 1;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;
-
-    private static final List<String> PRIMITIVE_TYPE_LIST =
-            new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
 
     private static Map<String, List<String>> PRIMITIVE_TYPE_WIDENING_MAP = new HashMap<>();
     private static Map<String, List<String>> PRIMITIVE_TYPE_NARROWING_MAP = new HashMap<>();
@@ -207,7 +190,7 @@ public abstract class TypeInferenceBase {
             String argumentTypeClassName = argumentTypeClassNameList.get(index);
             String methodArgumentTypeClassName = methodArgumentClassNameList.get(index);
 
-            if (isPrimitiveType(argumentTypeClassName) && isPrimitiveType(methodArgumentTypeClassName)) {
+            if (InferenceUtility.isPrimitiveType(argumentTypeClassName) && InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)) {
                 if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                     methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
                             + PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE);
@@ -223,7 +206,7 @@ public abstract class TypeInferenceBase {
                 }
             }
 
-            if (isNullType(argumentTypeClassName) && !isPrimitiveType(methodArgumentTypeClassName)) {
+            if (isNullType(argumentTypeClassName) && !InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)) {
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
                 continue;
@@ -243,14 +226,14 @@ public abstract class TypeInferenceBase {
                 return false;
             }
 
-            if (isPrimitiveType(argumentTypeClassName)
+            if (InferenceUtility.isPrimitiveType(argumentTypeClassName)
                     && PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
 
                 methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_WRAPPING_DISTANCE);
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
             }
 
-            if (isPrimitiveType(methodArgumentTypeClassName)
+            if (InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)
                     && PRIMITIVE_UN_WRAPPER_CLASS_MAP.containsKey(argumentTypeClassName)
                     && PRIMITIVE_UN_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
 
@@ -276,7 +259,7 @@ public abstract class TypeInferenceBase {
                 }
             }
 
-            if (isPrimitiveType(argumentTypeClassName) && methodArgumentTypeClassName.equals("java.lang.Object")) {
+            if (InferenceUtility.isPrimitiveType(argumentTypeClassName) && methodArgumentTypeClassName.equals("java.lang.Object")) {
                 methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                 continue;
@@ -334,7 +317,7 @@ public abstract class TypeInferenceBase {
                                                  List<String> packageNameList,
                                                  TinkerGraph tinkerGraph) {
 
-        if (Objects.nonNull(typeClassName) && !isPrimitiveType(typeClassName)
+        if (Objects.nonNull(typeClassName) && !InferenceUtility.isPrimitiveType(typeClassName)
                 && StringUtils.countMatches(typeClassName, ".") <= 1) {
 
             String postProcessedTypeClassName = typeClassName.replace(".", "$")
@@ -632,7 +615,7 @@ public abstract class TypeInferenceBase {
             int dimension = StringUtils.countMatches(callerClassName, "[]");
             String typeName = callerClassName.replaceAll("\\[]", "");
 
-            typeName = isPrimitiveType(typeName)
+            typeName = InferenceUtility.isPrimitiveType(typeName)
                     ? getTypeDescriptorForPrimitive(typeName)
                     : "L" + typeName.replaceAll("\\.", "/") + ";";
 
@@ -646,7 +629,7 @@ public abstract class TypeInferenceBase {
     }
 
     static String getTypeDescriptorForPrimitive(String type) {
-        if (!isPrimitiveType(type)) {
+        if (!InferenceUtility.isPrimitiveType(type)) {
             return null;
         }
 
@@ -696,10 +679,6 @@ public abstract class TypeInferenceBase {
 
     private static boolean isNullType(String name) {
         return "null".equals(name);
-    }
-
-    private static boolean isPrimitiveType(String argumentTypeClassName) {
-        return PRIMITIVE_TYPE_LIST.contains(argumentTypeClassName);
     }
 
     private static boolean isWideningPrimitiveConversion(String type1, String type2) {
@@ -758,7 +737,7 @@ public abstract class TypeInferenceBase {
         return varArgsTypeClassNameList.stream().allMatch(varArgTypeName -> {
             varArgTypeName = varArgTypeName.replaceAll("\\[]", "");
 
-            if (isPrimitiveType(varArgTypeName)) {
+            if (InferenceUtility.isPrimitiveType(varArgTypeName)) {
                 varArgTypeName = PRIMITIVE_WRAPPER_CLASS_MAP.get(varArgTypeName);
             }
 

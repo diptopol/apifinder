@@ -9,13 +9,15 @@ import org.objectweb.asm.signature.SignatureReader;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Diptopol
  * @since 9/19/2021 12:17 PM
  */
 public class InferenceUtility {
+
+    private static final List<String> PRIMITIVE_TYPE_LIST =
+            new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
 
     public static List<String> getImportStatementList(CompilationUnit compilationUnit) {
         List<ImportDeclaration> importDeclarationList = compilationUnit.imports();
@@ -27,9 +29,9 @@ public class InferenceUtility {
     }
 
     public static Map<String, Set<VariableDeclarationDto>> getVariableNameMap(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                                                String javaVersion,
-                                                                                List<String> importStatementList,
-                                                                                ASTNode methodExpression) {
+                                                                              String javaVersion,
+                                                                              List<String> importStatementList,
+                                                                              ASTNode methodExpression) {
 
         assert methodExpression instanceof MethodInvocation
                 || methodExpression instanceof SuperMethodInvocation
@@ -62,10 +64,10 @@ public class InferenceUtility {
     }
 
     public static List<TypeObject> getArgumentTypeObjList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                      String javaVersion,
-                                                      List<String> importStatementList,
-                                                      Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                      List<Expression> argumentList) {
+                                                          String javaVersion,
+                                                          List<String> importStatementList,
+                                                          Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                          List<Expression> argumentList) {
         List<TypeObject> argumentTypeObjList = new ArrayList<>();
 
         for (Expression argument : argumentList) {
@@ -82,8 +84,8 @@ public class InferenceUtility {
 
     public static Set<VariableDeclarationDto> getFieldVariableDeclarationDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                                                  String javaVersion,
-                                                                                  List<String> importStatementList,
-                                                                                  ASTNode node) {
+                                                                                 List<String> importStatementList,
+                                                                                 ASTNode node) {
 
         TypeDeclaration typeDeclaration = (TypeDeclaration) getTypeDeclaration(node);
         FieldDeclaration[] fieldDeclarations = typeDeclaration.getFields();
@@ -156,10 +158,10 @@ public class InferenceUtility {
     }
 
     public static void resolveMethodGenericTypeInfo(List<MethodInfo> methodInfoList,
-                                              List<TypeObject> methodArgumentTypeObjList,
-                                              Map<String, String> classFormalTypeParameterMap) {
+                                                    List<TypeObject> methodArgumentTypeObjList,
+                                                    Map<String, String> classFormalTypeParameterMap) {
 
-        for (MethodInfo methodInfo: methodInfoList) {
+        for (MethodInfo methodInfo : methodInfoList) {
             if (methodInfo.getSignature() != null) {
                 MethodArgumentFormalTypeParameterExtractor extractor =
                         new MethodArgumentFormalTypeParameterExtractor(methodArgumentTypeObjList);
@@ -197,11 +199,11 @@ public class InferenceUtility {
     }
 
     public static TypeObject getTypeObjFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                  String javaVersion,
-                                                  List<String> importStatementList,
-                                                  Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                  Expression expression,
-                                                  Map<String, String> formalTypeParameterMap) {
+                                                      String javaVersion,
+                                                      List<String> importStatementList,
+                                                      Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                      Expression expression,
+                                                      Map<String, String> formalTypeParameterMap) {
         if (expression == null) {
             return null;
         }
@@ -591,18 +593,18 @@ public class InferenceUtility {
     }
 
     public static TypeObject getTypeObjFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                  String javaVersion,
-                                                  List<String> importStatementList,
-                                                  Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                  Expression expression) {
+                                                      String javaVersion,
+                                                      List<String> importStatementList,
+                                                      Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                      Expression expression) {
         return getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
                 expression, null);
     }
 
     public static TypeObject getTypeObj(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                    String javaVersion,
-                                    List<String> importStatementList,
-                                    Type type) {
+                                        String javaVersion,
+                                        List<String> importStatementList,
+                                        Type type) {
         if (type == null) {
             return null;
         }
@@ -666,6 +668,10 @@ public class InferenceUtility {
         }
     }
 
+    public static boolean isPrimitiveType(String argumentTypeClassName) {
+        return PRIMITIVE_TYPE_LIST.contains(argumentTypeClassName);
+    }
+
     private static void populateVariableNameMap(Map<String, Set<VariableDeclarationDto>> variableNameMap,
                                                 Set<VariableDeclarationDto> variableDeclarationDtoList) {
 
@@ -682,9 +688,9 @@ public class InferenceUtility {
     }
 
     private static Set<VariableDeclarationDto> getMethodParameterVariableDeclarationDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                                                             String javaVersion,
-                                                                                             List<String> importStatementList,
-                                                                                             MethodDeclaration methodDeclaration) {
+                                                                                            String javaVersion,
+                                                                                            List<String> importStatementList,
+                                                                                            MethodDeclaration methodDeclaration) {
         if (methodDeclaration != null) {
             List<SingleVariableDeclaration> declarationList = methodDeclaration.parameters();
 
@@ -697,9 +703,9 @@ public class InferenceUtility {
     }
 
     private static Set<VariableDeclarationDto> getMethodLocalVariableDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                                              String javaVersion,
-                                                                              List<String> importStatementList,
-                                                                              MethodDeclaration methodDeclaration) {
+                                                                             String javaVersion,
+                                                                             List<String> importStatementList,
+                                                                             MethodDeclaration methodDeclaration) {
         Set<VariableDeclarationDto> localVariableDtoSet = new HashSet<>();
 
         methodDeclaration.getBody().accept(new ASTVisitor() {
@@ -832,14 +838,12 @@ public class InferenceUtility {
 
     private static String getQualifiedClassName(TypeDeclaration typeDeclaration) {
         String declaringClassQualifiedName = getDeclaringClassQualifiedName(typeDeclaration);
-        if(declaringClassQualifiedName.equals("")) {
+        if (declaringClassQualifiedName.equals("")) {
             return typeDeclaration.getName().getIdentifier();
-        }
-        else {
+        } else {
             if (typeDeclaration.isPackageMemberTypeDeclaration()) {
                 return declaringClassQualifiedName + "." + typeDeclaration.getName().getIdentifier();
-            }
-            else {
+            } else {
                 return declaringClassQualifiedName + "#" + typeDeclaration.getName().getIdentifier();
             }
         }
