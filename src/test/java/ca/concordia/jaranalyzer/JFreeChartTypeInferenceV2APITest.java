@@ -149,4 +149,27 @@ public class JFreeChartTypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testNonFormalArgumentType() {
+        String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/chart/renderer/category/AbstractCategoryItemRenderer.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        String javaVersion = PropertyReader.getProperty("java.version");
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("this.itemLabelGeneratorMap.put(series")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.util.Map::public abstract org.jfree.chart.labels.CategoryItemLabelGenerator " +
+                            "put(java.lang.Integer, org.jfree.chart.labels.CategoryItemLabelGenerator)")
+                            .equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }

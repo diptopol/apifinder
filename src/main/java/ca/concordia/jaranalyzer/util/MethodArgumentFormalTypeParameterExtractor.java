@@ -16,6 +16,7 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
     private boolean hasArgumentClassName;
     private boolean classBoundVisit;
     private boolean interfaceBoundVisit;
+    private boolean formalTypeArgument;
 
     private int argumentStack;
     private int currentArgumentIndex;
@@ -90,6 +91,8 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
         if (argumentStack % 2 == 0) {
             argumentStack |= 1;
         }
+
+        formalTypeArgument = true;
     }
 
     @Override
@@ -97,6 +100,8 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
         if (argumentStack % 2 == 0) {
             argumentStack |= 1;
         }
+
+        formalTypeArgument = true;
 
         return this;
     }
@@ -112,6 +117,10 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
         }
 
         TypeObject argumentType = methodArgumentList.get(currentArgumentIndex);
+
+        if (!formalTypeArgument) {
+            currentArgumentIndex++;
+        }
 
         if (argumentType.isParameterized()) {
             List<TypeObject> argumentTypeList = argumentType.getArgumentTypeObjectList();
@@ -147,6 +156,7 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
             currentFormalTypeParameterIndexPerArgument = 0;
             currentIndexArrayDimension = 0;
             hasArgumentClassName = false;
+            formalTypeArgument = false;
         }
     }
 
