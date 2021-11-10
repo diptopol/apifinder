@@ -169,7 +169,17 @@ public class InferenceUtility {
 
                 reader.accept(extractor);
 
-                classFormalTypeParameterMap.putAll(extractor.getFormalTypeParameterMap());
+                for (String key : extractor.getFormalTypeParameterMap().keySet()) {
+                    String value = extractor.getFormalTypeParameterMap().get(key);
+
+                    if (classFormalTypeParameterMap.containsKey(key)) {
+                        if (!isPrimitiveType(value)) {
+                            classFormalTypeParameterMap.put(key, value);
+                        }
+                    } else {
+                        classFormalTypeParameterMap.put(key, value);
+                    }
+                }
 
                 if (!classFormalTypeParameterMap.isEmpty()) {
                     GenericTypeResolutionAdapter genericTypeResolutionAdapter =
