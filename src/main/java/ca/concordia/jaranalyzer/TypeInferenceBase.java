@@ -222,6 +222,12 @@ public abstract class TypeInferenceBase {
             }
 
             if (!methodArgumentTypeClassName.equals("java.lang.Object")
+                    && matchObjectArrayDimensionForArgument(argumentTypeClassName, methodArgumentTypeClassName)) {
+                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                continue;
+            }
+
+            if (!methodArgumentTypeClassName.equals("java.lang.Object")
                     && isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
                 return false;
             }
@@ -702,6 +708,20 @@ public abstract class TypeInferenceBase {
         }
 
         return commonClassNameList;
+    }
+
+    private static boolean matchObjectArrayDimensionForArgument(String argumentTypeClassName,
+                                                                String methodArgumentTypeClassName) {
+
+        boolean isArgumentTypeArray = argumentTypeClassName.endsWith("[]");
+        int argumentTypeArrayDimension = StringUtils.countMatches(argumentTypeClassName, "[]");
+
+        boolean isMethodArgumentTypeArray = methodArgumentTypeClassName.endsWith("[]");
+        int methodArgumentTypeArrayDimension = StringUtils.countMatches(methodArgumentTypeClassName, "[]");
+
+        return isMethodArgumentTypeArray && isArgumentTypeArray
+                && methodArgumentTypeClassName.startsWith("java.lang.Object")
+                && methodArgumentTypeArrayDimension + 1 == argumentTypeArrayDimension;
     }
 
     private static boolean isArrayDimensionMismatch(String argumentTypeClassName, String methodArgumentTypeClassName) {

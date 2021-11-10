@@ -901,6 +901,29 @@ public class JFreeChartTests {
         assert "[java.awt.geom.Line2D.Double::public void Line2D$Double(double, double, double, double)]".equals(matches.toString());
     }
 
+
+    @Test
+    public void testObjectArrayDimensionMatch() {
+        List<String> imports = Arrays.asList("import java.io.Serializable", "import java.util.Arrays",
+                "import java.util.Collections", "import java.util.Date", "import java.util.List",
+                "import org.jfree.chart.util.ParamChecks", "import org.jfree.util.PublicCloneable");
+
+        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(jarInformationSet1, javaVersion, imports, "seriesNameListFromDataArray", 1)
+                .setInvokerType("org.jfree.data.xy.DefaultWindDataset")
+                .setArgumentType(0, "java.lang.Object[][][]")
+                .getMethodList();
+
+        assert ("[org.jfree.data.xy.DefaultWindDataset::public static java.util.List" +
+                " seriesNameListFromDataArray(java.lang.Object[][])]").equals(matches.toString());
+    }
+
     private static void loadPreviousJFreeChartJar() {
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
         TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
