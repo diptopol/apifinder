@@ -385,6 +385,16 @@ public abstract class TypeInferenceBase {
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
                 importedClassQNameSet, packageNameList, tinkerGraph);
 
+        qualifiedClassInfoList = filtrationBasedOnPrioritization(typeClassName, importedClassQNameSet, qualifiedClassInfoList);
+
+        return qualifiedClassInfoList.isEmpty()
+                ? typeClassName
+                : getQualifiedNameWithArrayDimension(qualifiedClassInfoList.get(0).getQualifiedName(), numberOfArrayDimensions);
+    }
+
+    static List<ClassInfo> filtrationBasedOnPrioritization(String typeClassName,
+                                                           Set<String> importedClassQNameSet,
+                                                           List<ClassInfo> qualifiedClassInfoList) {
         /*
          * If there are multiple result, we want to give priority for classes who are directly mentioned in import
          * statement or belongs to 'java.lang' package. Because * package import can have many classes which satisfies
@@ -400,18 +410,19 @@ public abstract class TypeInferenceBase {
                 : importedClassQNameSet.contains(c.getQualifiedName()));
 
         if (qualifiedClassInfoList.size() > 1 && qualifiedClassInfoList.stream().anyMatch(isClassNameDirectImport)) {
-            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(isClassNameDirectImport).collect(Collectors.toList());
+            qualifiedClassInfoList = qualifiedClassInfoList.stream()
+                    .filter(isClassNameDirectImport)
+                    .collect(Collectors.toList());
         }
 
         if (qualifiedClassInfoList.size() > 1 && qualifiedClassInfoList.stream().anyMatch(c -> c.getPackageName().equals("java.lang"))) {
-            qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(c -> c.getPackageName().equals("java.lang")).collect(Collectors.toList());
+            qualifiedClassInfoList = qualifiedClassInfoList.stream()
+                    .filter(c -> c.getPackageName().equals("java.lang"))
+                    .collect(Collectors.toList());
         }
 
-        return qualifiedClassInfoList.isEmpty()
-                ? typeClassName
-                : getQualifiedNameWithArrayDimension(qualifiedClassInfoList.get(0).getQualifiedName(), numberOfArrayDimensions);
+        return qualifiedClassInfoList;
     }
-
 
     static List<MethodInfo> getQualifiedMethodInfoList(String methodName, int numberOfParameters,
                                                         Object[] jarVertexIds, Set<String> classQNameList, TinkerGraph tinkerGraph) {
