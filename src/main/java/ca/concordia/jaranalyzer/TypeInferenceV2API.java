@@ -171,12 +171,14 @@ public class TypeInferenceV2API {
         String methodName;
 
         if (className.contains("%.")) {
-            methodName = className.substring(className.lastIndexOf("%.") + 2, className.length());
+            methodName = className.substring(className.lastIndexOf("%.") + 2);
         } else if (className.contains(".")) {
-            methodName = className.substring(className.lastIndexOf(".") + 1, className.length());
+            methodName = className.substring(className.lastIndexOf(".") + 1);
         } else {
             methodName = className;
         }
+
+        methodName = methodName.replace("#", ".");
 
         List<Expression> argumentList = constructorInvocation.arguments();
         int numberOfParameters = argumentList.size();
