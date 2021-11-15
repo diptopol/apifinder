@@ -424,8 +424,11 @@ public abstract class TypeInferenceBase {
         return qualifiedClassInfoList;
     }
 
-    static List<MethodInfo> getQualifiedMethodInfoList(String methodName, int numberOfParameters,
-                                                        Object[] jarVertexIds, Set<String> classQNameList, TinkerGraph tinkerGraph) {
+    static List<MethodInfo> getQualifiedMethodInfoList(String methodName,
+                                                       int numberOfParameters,
+                                                       Object[] jarVertexIds,
+                                                       Set<String> classQNameList,
+                                                       TinkerGraph tinkerGraph) {
 
         String outerClassPrefix = StringUtils.countMatches(methodName, ".") == 1
                 ? methodName.substring(0, methodName.indexOf("."))
@@ -444,18 +447,15 @@ public abstract class TypeInferenceBase {
                 .has("Name", methodName)
                 .toStream()
                 .map(MethodInfo::new)
-                .filter(methodInfo -> {
-                    boolean innerClassConstructorMatching = outerClassPrefix == null
-                            || methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$");
-
-                    return innerClassConstructorMatching
-                            && (methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs());
-                })
+                .filter(methodInfo -> filtrationBasedOnCriteria(numberOfParameters, outerClassPrefix, methodInfo))
                 .collect(Collectors.toList());
     }
 
-    static List<MethodInfo> getQualifiedMethodInfoListForInnerClass(String methodName, int numberOfParameters,
-                                                                              Object[] jarVertexIds, Set<String> classQNameList, TinkerGraph tinkerGraph) {
+    static List<MethodInfo> getQualifiedMethodInfoListForInnerClass(String methodName,
+                                                                    int numberOfParameters,
+                                                                    Object[] jarVertexIds,
+                                                                    Set<String> classQNameList,
+                                                                    TinkerGraph tinkerGraph) {
 
         String outerClassPrefix = StringUtils.countMatches(methodName, ".") == 1
                 ? methodName.substring(0, methodName.indexOf("."))
@@ -475,13 +475,7 @@ public abstract class TypeInferenceBase {
                 .has("Name", methodName)
                 .toStream()
                 .map(MethodInfo::new)
-                .filter(methodInfo -> {
-                    boolean innerClassConstructorMatching = outerClassPrefix == null
-                            || methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$");
-
-                    return innerClassConstructorMatching
-                            && (methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs());
-                })
+                .filter(methodInfo -> filtrationBasedOnCriteria(numberOfParameters, outerClassPrefix, methodInfo))
                 .collect(Collectors.toList());
     }
 
@@ -682,6 +676,15 @@ public abstract class TypeInferenceBase {
         } else {
             return methodInfoList;
         }
+    }
+
+    private static boolean filtrationBasedOnCriteria(int numberOfParameters, String outerClassPrefix, MethodInfo methodInfo) {
+        boolean innerClassConstructorMatching = outerClassPrefix == null
+                || (methodInfo.getInternalClassConstructorPrefix() != null
+                && methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$"));
+
+        return innerClassConstructorMatching
+                && (methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs());
     }
 
     private static String getQualifiedNameWithArrayDimension(String qualifiedClassName, int arrayDimension) {
