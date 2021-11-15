@@ -236,18 +236,20 @@ public class InferenceUtility {
             Type argumentType = ((TypeLiteral) expression).getType();
             TypeObject argumentTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, argumentType);
 
-            ClassSignatureFormalTypeParameterExtractor extractor =
-                    new ClassSignatureFormalTypeParameterExtractor(Collections.singletonList(argumentTypeObj.getQualifiedClassName()));
-
-            SignatureReader signatureReader = new SignatureReader(argumentTypeObj.getSignature());
-            signatureReader.accept(extractor);
-
             TypeObject typeObject = new TypeObject("java.lang.Class");
 
-            Map<String, TypeObject> argumentTypeObjMap = extractor.getFormalTypeParameterMap().entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, e -> new TypeObject(e.getValue())));
+            if (argumentTypeObj.getSignature() != null) {
+                ClassSignatureFormalTypeParameterExtractor extractor =
+                        new ClassSignatureFormalTypeParameterExtractor(Collections.singletonList(argumentTypeObj.getQualifiedClassName()));
 
-            typeObject.setArgumentTypeObjectMap(argumentTypeObjMap);
+                SignatureReader signatureReader = new SignatureReader(argumentTypeObj.getSignature());
+                signatureReader.accept(extractor);
+
+                Map<String, TypeObject> argumentTypeObjMap = extractor.getFormalTypeParameterMap().entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> new TypeObject(e.getValue())));
+
+                typeObject.setArgumentTypeObjectMap(argumentTypeObjMap);
+            }
 
             return typeObject;
 
