@@ -265,10 +265,15 @@ public abstract class TypeInferenceBase {
                 }
             }
 
-            if (InferenceUtility.isPrimitiveType(argumentTypeClassName) && methodArgumentTypeClassName.equals("java.lang.Object")) {
-                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
-                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                continue;
+            if (methodArgumentTypeClassName.equals("java.lang.Object")) {
+                if (InferenceUtility.isPrimitiveType(argumentTypeClassName)) {
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
+                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                    continue;
+                } else if (argumentTypeClassName.equals("java.lang.Object")) {
+                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                    continue;
+                }
             }
 
             Set<String> classNameList = new HashSet<>();

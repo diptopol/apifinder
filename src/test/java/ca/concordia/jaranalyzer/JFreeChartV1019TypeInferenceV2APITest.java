@@ -19,7 +19,7 @@ import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
  * @author Diptopol
  * @since 10/12/2021 10:06 PM
  */
-public class JFreeChartTypeInferenceV2APITest {
+public class JFreeChartV1019TypeInferenceV2APITest {
 
     private static Set<Tuple3<String, String, String>> jarInformationSet;
     private static String javaVersion;
