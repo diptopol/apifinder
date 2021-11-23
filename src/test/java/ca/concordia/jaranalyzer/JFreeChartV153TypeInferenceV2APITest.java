@@ -2,6 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
+import ca.concordia.jaranalyzer.util.PropertyReader;
 import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -58,6 +59,28 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
                     assert ("java.lang.System::public static void arraycopy(java.lang.Object, int, " +
                             "java.lang.Object, int, int)").equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testMatchingPrimitiveNumericArgumentAgainstNumber() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xy/CategoryTableXYDataset.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        String javaVersion = PropertyReader.getProperty("java.version");
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("add(x,y,seriesName,true)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("org.jfree.data.xy.CategoryTableXYDataset::public void add(java.lang.Number," +
+                            " java.lang.Number, java.lang.String, boolean)").equals(methodInfo.toString());
                 }
 
                 return false;

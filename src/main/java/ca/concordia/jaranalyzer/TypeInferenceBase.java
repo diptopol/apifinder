@@ -30,6 +30,9 @@ public abstract class TypeInferenceBase {
     private static Map<String, String> PRIMITIVE_WRAPPER_CLASS_MAP = new HashMap<>();
     private static Map<String, String> PRIMITIVE_UN_WRAPPER_CLASS_MAP = new HashMap<>();
 
+    private static final List<String> PRIMITIVE_NUMERIC_TYPE_LIST =
+            new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double"));
+
     static {
         PRIMITIVE_WRAPPER_CLASS_MAP.put("boolean", "java.lang.Boolean");
         PRIMITIVE_WRAPPER_CLASS_MAP.put("byte", "java.lang.Byte");
@@ -274,6 +277,12 @@ public abstract class TypeInferenceBase {
                     matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                     continue;
                 }
+            }
+
+            if (methodArgumentTypeClassName.equals("java.lang.Number")
+                    && PRIMITIVE_NUMERIC_TYPE_LIST.contains(argumentTypeClassName)) {
+                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                continue;
             }
 
             Set<String> classNameList = new HashSet<>();
