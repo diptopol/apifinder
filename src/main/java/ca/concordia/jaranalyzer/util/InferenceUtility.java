@@ -675,6 +675,15 @@ public class InferenceUtility {
             } else {
                 throw new IllegalStateException();
             }
+        } else if (type instanceof UnionType) {
+            List<Type> typeList  = ((UnionType) type).types();
+
+            /*UnionType can be found for multicatch block exception where type is determined based on the common super
+            class of all the types. For simplicity, we will use the first type as type of argument. If we can find
+            scenario where this approach does not work, we will improve our approach.*/
+            Type firstType = typeList.get(0);
+            return getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, firstType);
+
         } else {
             return new TypeObject(type.toString());
         }

@@ -5,6 +5,7 @@ import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.PropertyReader;
 import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jgit.lib.Repository;
@@ -71,7 +72,6 @@ public class JFreeChartV153TypeInferenceV2APITest {
         String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xy/CategoryTableXYDataset.java";
 
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
-        String javaVersion = PropertyReader.getProperty("java.version");
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
@@ -81,6 +81,27 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
                     assert ("org.jfree.data.xy.CategoryTableXYDataset::public void add(java.lang.Number," +
                             " java.lang.Number, java.lang.String, boolean)").equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testMatchingUnionTypeMultiCatchExceptionBlockArgument() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xml/DatasetReader.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new RuntimeException(e)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert "java.lang.RuntimeException::public void RuntimeException(java.lang.Throwable)"
+                            .equals(methodInfo.toString());
                 }
 
                 return false;
