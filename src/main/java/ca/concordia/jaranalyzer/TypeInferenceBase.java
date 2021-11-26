@@ -21,7 +21,8 @@ import java.util.stream.Collectors;
 public abstract class TypeInferenceBase {
 
     private static final int MAX_SUPER_CLASS_DISTANCE = 1000;
-    private static final int PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE = 1;
+    private static final int PRIMITIVE_TYPE_WIDENING_DISTANCE = 1;
+    private static final int PRIMITIVE_TYPE_NARROWING_DISTANCE = 2;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;
 
     /*Increased the distance of matching the wrapped objects to primitives*/
@@ -200,12 +201,12 @@ public abstract class TypeInferenceBase {
             if (InferenceUtility.isPrimitiveType(argumentTypeClassName) && InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)) {
                 if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                     methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
-                            + PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE);
+                            + PRIMITIVE_TYPE_WIDENING_DISTANCE);
                     matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
                 } else if (isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                     methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
-                            + PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE);
+                            + PRIMITIVE_TYPE_NARROWING_DISTANCE);
                     matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
                 } else {
