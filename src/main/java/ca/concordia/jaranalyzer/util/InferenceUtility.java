@@ -623,85 +623,31 @@ public class InferenceUtility {
 
         } else if (expression instanceof ClassInstanceCreation) {
             ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation) expression;
-            List<Expression> arguments = classInstanceCreation.arguments();
 
-            TypeObject callerClassTypeObj = getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
-                    importStatementList, variableNameMap, classInstanceCreation.getExpression(), formalTypeParameterMap);
-
-            String callerClassName = callerClassTypeObj == null ? null : callerClassTypeObj.getQualifiedClassName();
-            callerClassName = (callerClassName == null || callerClassName.equals("null")) ? null : callerClassName;
-
-            List<TypeObject> argumentTypeObjList = getArgumentTypeObjList(dependentJarInformationSet, javaVersion,
-                    importStatementList, variableNameMap, arguments);
-
-            List<String> argumentTypeClassNameList = argumentTypeObjList.stream()
-                    .map(TypeObject::getQualifiedClassName)
-                    .collect(Collectors.toList());
-
-            List<MethodInfo> methods = TypeInferenceAPI.getAllMethods(dependentJarInformationSet, javaVersion, importStatementList,
-                    classInstanceCreation.getType().toString(),
-                    classInstanceCreation.arguments().size(), callerClassName, false,
-                    argumentTypeClassNameList.toArray(new String[0]));
+            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
+                    classInstanceCreation, importStatementList, variableNameMap);
 
             // if the getAllMethods returns empty, the method can be a private construct.
-            return new TypeObject(methods.isEmpty() ? "null" : methods.get(0).getClassInfo().getQualifiedName());
+            return new TypeObject(methodInfoList.isEmpty()
+                    ? "null"
+                    : methodInfoList.get(0).getClassInfo().getQualifiedName());
+
         } else if (expression instanceof MethodInvocation) {
-
             MethodInvocation methodInvocation = (MethodInvocation) expression;
-            List<Expression> arguments = methodInvocation.arguments();
-            String methodName = methodInvocation.getName().getIdentifier();
 
-            boolean isStaticImport = false;
-            for (String importPackage : importStatementList) {
-                if (importPackage.startsWith("import static") && importPackage.endsWith(methodName)) {
-                    isStaticImport = true;
-                }
-            }
-
-            String className = getQualifiedClassName(typeDeclaration);
-            Expression callerClassExpression = methodInvocation.getExpression();
-            String callerClassName = callerClassExpression != null
-                    ? getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    callerClassExpression, formalTypeParameterMap).getQualifiedClassName()
-                    : (isStaticImport ? null : className.replace("%", "").replace("#", "."));
-
-            callerClassName = (callerClassName == null || callerClassName.equals("null")) ? null : callerClassName;
-
-            List<TypeObject> argumentTypeObjList = getArgumentTypeObjList(dependentJarInformationSet, javaVersion,
-                    importStatementList, variableNameMap, arguments);
-
-            List<String> argumentTypeClassNameList = argumentTypeObjList.stream()
-                    .map(TypeObject::getQualifiedClassName)
-                    .collect(Collectors.toList());
-
-            List<MethodInfo> methods = TypeInferenceAPI.getAllMethods(dependentJarInformationSet, javaVersion, importStatementList,
-                    methodName,
-                    methodInvocation.arguments().size(), callerClassName, false, argumentTypeClassNameList.toArray(new String[0]));
+            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
+                    methodInvocation, importStatementList, formalTypeParameterMap, variableNameMap);
 
             // if the getAllMethods returns empty, the method can be a private construct.
-            return new TypeObject(methods.isEmpty() ? "null" : methods.get(0).getReturnType());
+            return new TypeObject(methodInfoList.isEmpty() ? "null" : methodInfoList.get(0).getReturnType());
 
         } else if (expression instanceof SuperMethodInvocation) {
-
             SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) expression;
-            List<Expression> arguments = superMethodInvocation.arguments();
-            String methodName = superMethodInvocation.getName().getIdentifier();
-
-            String className = getQualifiedClassName(typeDeclaration);
-            String callerClassName = className.replace("%", "").replace("#", ".");
-            List<TypeObject> argumentTypeObjList = getArgumentTypeObjList(dependentJarInformationSet, javaVersion,
-                    importStatementList, variableNameMap, arguments);
-
-            List<String> argumentTypeClassNameList = argumentTypeObjList.stream()
-                    .map(TypeObject::getQualifiedClassName)
-                    .collect(Collectors.toList());
-
-            List<MethodInfo> methods = TypeInferenceAPI.getAllMethods(dependentJarInformationSet, javaVersion, importStatementList,
-                    methodName,
-                    arguments.size(), callerClassName, true, argumentTypeClassNameList.toArray(new String[0]));
+            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
+                    superMethodInvocation, importStatementList, variableNameMap);
 
             // if the getAllMethods returns empty, the method can be a private construct.
-            return new TypeObject(methods.isEmpty() ? "null" : methods.get(0).getReturnType());
+            return new TypeObject(methodInfoList.isEmpty() ? "null" : methodInfoList.get(0).getReturnType());
 
         } else if (expression instanceof LambdaExpression) {
             LambdaExpression lambdaExpression = (LambdaExpression) expression;
