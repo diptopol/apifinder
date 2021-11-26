@@ -2,6 +2,7 @@ package ca.concordia.jaranalyzer.util;
 
 import ca.concordia.jaranalyzer.Models.*;
 import ca.concordia.jaranalyzer.TypeInferenceAPI;
+import ca.concordia.jaranalyzer.TypeInferenceFluentAPI;
 import io.vavr.Tuple3;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jdt.core.dom.*;
@@ -26,6 +27,123 @@ public class InferenceUtility {
                 .map(ImportObject::new)
                 .map(ImportObject::getImportStatement)
                 .collect(Collectors.toList());
+    }
+
+    public static List<MethodInfo> getEligibleMethodInfoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                             String javaVersion,
+                                                             MethodInvocation methodInvocation,
+                                                             List<String> importStatementList,
+                                                             Map<String, String> formalTypeParameterMap,
+                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+
+        String methodName = methodInvocation.getName().getIdentifier();
+        int numberOfParameters = methodInvocation.arguments().size();
+        List<Expression> argumentList = methodInvocation.arguments();
+
+        List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
+                javaVersion, importStatementList, variableNameMap, argumentList);
+
+        MethodDeclaration methodDeclaration =
+                (MethodDeclaration) InferenceUtility.getClosestASTNode(methodInvocation,
+                        MethodDeclaration.class);
+
+        String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
+
+        boolean isStaticImport = importStatementList.stream()
+                .anyMatch(importStatement -> importStatement.startsWith("import static")
+                        && importStatement.endsWith(methodName));
+
+        Expression expression = methodInvocation.getExpression();
+
+        String callerClassName = expression != null
+                ? InferenceUtility.getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
+                importStatementList, variableNameMap, expression, formalTypeParameterMap).getQualifiedClassName()
+                : (isStaticImport ? null : className.replace("%", "").replace("#", "."));
+
+        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(dependentJarInformationSet, javaVersion,
+                importStatementList, methodName, numberOfParameters)
+                .setInvokerType(callerClassName);
+
+        for (int i = 0; i < argumentTypeObjList.size(); i++) {
+            searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
+        }
+
+        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+        InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, formalTypeParameterMap);
+
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> getEligibleMethodInfoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                             String javaVersion,
+                                                             SuperMethodInvocation superMethodInvocation,
+                                                             List<String> importStatementList,
+                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+
+        String methodName = superMethodInvocation.getName().getIdentifier();
+        int numberOfParameters = superMethodInvocation.arguments().size();
+        List<Expression> argumentList = superMethodInvocation.arguments();
+
+        List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
+                javaVersion, importStatementList, variableNameMap, argumentList);
+
+        MethodDeclaration methodDeclaration =
+                (MethodDeclaration) InferenceUtility.getClosestASTNode(superMethodInvocation, MethodDeclaration.class);
+
+        String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
+        String callerClassName = className.replace("%", "").replace("#", ".");
+
+        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(dependentJarInformationSet, javaVersion,
+                importStatementList, methodName, numberOfParameters)
+                .setInvokerType(callerClassName)
+                .setSuperInvoker(true);
+
+        for (int i = 0; i < argumentTypeObjList.size(); i++) {
+            searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
+        }
+
+        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+        InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, Collections.emptyMap());
+
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> getEligibleMethodInfoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                             String javaVersion,
+                                                             ClassInstanceCreation classInstanceCreation,
+                                                             List<String> importStatementList,
+                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+
+        String methodName = classInstanceCreation.getType().toString();
+        int numberOfParameters = classInstanceCreation.arguments().size();
+        List<Expression> argumentList = classInstanceCreation.arguments();
+
+        List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
+                javaVersion, importStatementList, variableNameMap, argumentList);
+
+        Type type = classInstanceCreation.getType();
+        String callerClassName = null;
+
+        if (type.isSimpleType()) {
+            SimpleType simpleType = (SimpleType) type;
+            Expression simpleTypeExpression = simpleType.getName();
+            callerClassName = InferenceUtility.getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
+                    importStatementList, variableNameMap, simpleTypeExpression).getQualifiedClassName();
+            callerClassName = (callerClassName == null || callerClassName.equals("null")) ? null : callerClassName;
+        }
+
+        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(dependentJarInformationSet, javaVersion,
+                importStatementList, methodName, numberOfParameters)
+                .setInvokerType(callerClassName);
+
+        for (int i = 0; i < argumentTypeObjList.size(); i++) {
+            searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
+        }
+
+        return searchCriteria.getMethodList();
     }
 
     public static Map<String, Set<VariableDeclarationDto>> getVariableNameMap(Set<Tuple3<String, String, String>> dependentJarInformationSet,
@@ -636,7 +754,7 @@ public class InferenceUtility {
                     elementTypeStr = elementTypeObj.getQualifiedClassName();
 
                 } else if (elementType instanceof QualifiedType) {
-                    elementTypeObj = getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) elementType);
+                    elementTypeObj = getTypeObjForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) elementType);
                     elementTypeStr = elementTypeObj.getQualifiedClassName();
                 } else {
                     throw new IllegalStateException();
@@ -660,7 +778,7 @@ public class InferenceUtility {
             return getTypeObjForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) type));
 
         } else if (type instanceof QualifiedType) {
-            return getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) type);
+            return getTypeObjForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) type);
 
 
         } else if (type instanceof ParameterizedType) {
@@ -670,13 +788,13 @@ public class InferenceUtility {
                 return getTypeObjForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) internalType));
 
             } else if (internalType instanceof QualifiedType) {
-                return getTypeNameForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) internalType);
+                return getTypeObjForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) internalType);
 
             } else {
                 throw new IllegalStateException();
             }
         } else if (type instanceof UnionType) {
-            List<Type> typeList  = ((UnionType) type).types();
+            List<Type> typeList = ((UnionType) type).types();
 
             /*UnionType can be found for multicatch block exception where type is determined based on the common super
             class of all the types. For simplicity, we will use the first type as type of argument. If we can find
@@ -933,10 +1051,10 @@ public class InferenceUtility {
     }
 
     //TODO: check whether query for qualified name is needed or not
-    private static TypeObject getTypeNameForQualifiedType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                          String javaVersion,
-                                                          List<String> importStatementList,
-                                                          QualifiedType qualifiedType) {
+    private static TypeObject getTypeObjForQualifiedType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                         String javaVersion,
+                                                         List<String> importStatementList,
+                                                         QualifiedType qualifiedType) {
 
         String name = qualifiedType.getName().getFullyQualifiedName();
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList, name);
