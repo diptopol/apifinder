@@ -23,6 +23,7 @@ public abstract class TypeInferenceBase {
     private static final int MAX_SUPER_CLASS_DISTANCE = 1000;
     private static final int PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE = 1;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;
+    private static final int PRIMITIVE_TYPE_NUMBER_DISTANCE = 1;
 
     private static Map<String, List<String>> PRIMITIVE_TYPE_WIDENING_MAP = new HashMap<>();
     private static Map<String, List<String>> PRIMITIVE_TYPE_NARROWING_MAP = new HashMap<>();
@@ -281,6 +282,7 @@ public abstract class TypeInferenceBase {
 
             if (methodArgumentTypeClassName.equals("java.lang.Number")
                     && PRIMITIVE_NUMERIC_TYPE_LIST.contains(argumentTypeClassName)) {
+                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_NUMBER_DISTANCE);
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                 continue;
             }
