@@ -23,6 +23,9 @@ public abstract class TypeInferenceBase {
     private static final int MAX_SUPER_CLASS_DISTANCE = 1000;
     private static final int PRIMITIVE_TYPE_WIDENING_NARROWING_DISTANCE = 1;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;
+
+    /*Increased the distance of matching the wrapped objects to primitives*/
+    private static final int PRIMITIVE_TYPE_UNWRAPPING_DISTANCE = 2;
     private static final int PRIMITIVE_TYPE_NUMBER_DISTANCE = 1;
 
     private static Map<String, List<String>> PRIMITIVE_TYPE_WIDENING_MAP = new HashMap<>();
@@ -247,7 +250,7 @@ public abstract class TypeInferenceBase {
                     && PRIMITIVE_UN_WRAPPER_CLASS_MAP.containsKey(argumentTypeClassName)
                     && PRIMITIVE_UN_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
 
-                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_WRAPPING_DISTANCE);
+                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_UNWRAPPING_DISTANCE);
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                 continue;
             }

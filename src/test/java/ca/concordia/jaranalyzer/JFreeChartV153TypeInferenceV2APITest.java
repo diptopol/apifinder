@@ -4,10 +4,7 @@ import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.PropertyReader;
 import io.vavr.Tuple3;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -102,6 +99,28 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
                     assert "java.lang.RuntimeException::public void RuntimeException(java.lang.Throwable)"
                             .equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testMatchingPrioritizationOfWrappedPrimitiveArguments() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/statistics/BoxAndWhiskerItem.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ConstructorInvocation constructorInvocation) {
+                if (constructorInvocation.toString().startsWith("this(Double.valueOf(mean),Double.valueOf(median),Double.valueOf(q1)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert ("org.jfree.data.statistics.BoxAndWhiskerItem::public void BoxAndWhiskerItem(java.lang.Number, " +
+                            "java.lang.Number, java.lang.Number, java.lang.Number, java.lang.Number, java.lang.Number, " +
+                            "java.lang.Number, java.lang.Number, java.util.List)").equals(methodInfo.toString());
                 }
 
                 return false;
