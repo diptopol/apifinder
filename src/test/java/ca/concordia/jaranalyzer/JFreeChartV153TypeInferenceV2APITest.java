@@ -2,7 +2,6 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
-import ca.concordia.jaranalyzer.util.PropertyReader;
 import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jgit.lib.Repository;
@@ -128,7 +127,6 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
-
     @Test
     public void testMatchingPrimitiveTypeWithComparable() {
         String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xy/XYIntervalDataItem.java";
@@ -143,6 +141,26 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
                     assert ("org.jfree.data.ComparableObjectItem::public void " +
                             "ComparableObjectItem(java.lang.Comparable, java.lang.Object)").equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testInnerClassAsInvokerType() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/time/DynamicTimeSeriesCollection.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("this.valueHistory[s].getData(this.oldestAt)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert "org.jfree.data.time.DynamicTimeSeriesCollection.ValueSequence::public float getData(int)".equals(methodInfo.toString());
                 }
 
                 return false;

@@ -407,6 +407,10 @@ public abstract class TypeInferenceBase {
                                        Set<String> importedClassQNameSet,
                                        List<String> packageNameList,
                                        TinkerGraph tinkerGraph) {
+        if (Objects.nonNull(typeClassName)) {
+            typeClassName = typeClassName.replace("$", ".");
+        }
+
         int numberOfArrayDimensions = StringUtils.countMatches(typeClassName, "[]");
 
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
