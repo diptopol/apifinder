@@ -128,4 +128,26 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+
+    @Test
+    public void testMatchingPrimitiveTypeWithComparable() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xy/XYIntervalDataItem.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(SuperConstructorInvocation superConstructorInvocation) {
+                if (superConstructorInvocation.toString().startsWith("super(x,new XYInterval(xLow,xHigh")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superConstructorInvocation);
+
+                    assert ("org.jfree.data.ComparableObjectItem::public void " +
+                            "ComparableObjectItem(java.lang.Comparable, java.lang.Object)").equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }

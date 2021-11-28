@@ -24,6 +24,7 @@ public abstract class TypeInferenceBase {
     private static final int PRIMITIVE_TYPE_WIDENING_DISTANCE = 1;
     private static final int PRIMITIVE_TYPE_NARROWING_DISTANCE = 2;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;
+    private static final int PRIMITIVE_TYPE_COMPARABLE_DISTANCE = 1;
 
     /*Increased the distance of matching the wrapped objects to primitives*/
     private static final int PRIMITIVE_TYPE_UNWRAPPING_DISTANCE = 2;
@@ -51,8 +52,8 @@ public abstract class TypeInferenceBase {
         PRIMITIVE_WRAPPER_CLASS_MAP = Collections.unmodifiableMap(PRIMITIVE_WRAPPER_CLASS_MAP);
 
         PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Boolean", "boolean");
-        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put( "java.lang.Byte", "byte");
-        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put( "java.lang.Character", "char");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Byte", "byte");
+        PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Character", "char");
         PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Float", "float");
         PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Integer", "int");
         PRIMITIVE_UN_WRAPPER_CLASS_MAP.put("java.lang.Long", "long");
@@ -80,9 +81,11 @@ public abstract class TypeInferenceBase {
         PRIMITIVE_TYPE_NARROWING_MAP = Collections.unmodifiableMap(PRIMITIVE_TYPE_NARROWING_MAP);
     }
 
-    static List<MethodInfo> filterByMethodInvoker(List<MethodInfo> methodInfoList, String callerClassName,
-                                                          boolean isSuperOfCallerClass, Object[] jarVertexIds,
-                                                            TinkerGraph tinkerGraph) {
+    static List<MethodInfo> filterByMethodInvoker(List<MethodInfo> methodInfoList,
+                                                  String callerClassName,
+                                                  boolean isSuperOfCallerClass,
+                                                  Object[] jarVertexIds,
+                                                  TinkerGraph tinkerGraph) {
         if (!methodInfoList.isEmpty() && Objects.nonNull(callerClassName) && !callerClassName.equals("")) {
             Map<String, List<MethodInfo>> methodInfoDeclaringClassNameMap = new HashMap<>();
 
@@ -141,7 +144,7 @@ public abstract class TypeInferenceBase {
                         if (classNameSet.contains(className)) {
                             int finalDistance = className.equals("java.lang.Object") ? MAX_SUPER_CLASS_DISTANCE : distance;
 
-                            qualifiedMethodInfoList.forEach(m->m.setCallerClassMatchingDistance(finalDistance));
+                            qualifiedMethodInfoList.forEach(m -> m.setCallerClassMatchingDistance(finalDistance));
                             filteredListByCallerClassName.addAll(qualifiedMethodInfoList);
                         }
                     }
@@ -240,11 +243,15 @@ public abstract class TypeInferenceBase {
                 return false;
             }
 
-            if (InferenceUtility.isPrimitiveType(argumentTypeClassName)
-                    && PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
+            if (InferenceUtility.isPrimitiveType(argumentTypeClassName)) {
+                if (PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_WRAPPING_DISTANCE);
+                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
 
-                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_WRAPPING_DISTANCE);
-                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                } else if ("java.lang.Comparable".equals(methodArgumentTypeClassName)) {
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_COMPARABLE_DISTANCE);
+                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                }
             }
 
             if (InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)
@@ -338,10 +345,10 @@ public abstract class TypeInferenceBase {
 
 
     static List<ClassInfo> resolveQClassInfoForClass(String typeClassName,
-                                                 Object[] jarVertexIds,
-                                                 Set<String> importedClassQNameList,
-                                                 List<String> packageNameList,
-                                                 TinkerGraph tinkerGraph) {
+                                                     Object[] jarVertexIds,
+                                                     Set<String> importedClassQNameList,
+                                                     List<String> packageNameList,
+                                                     TinkerGraph tinkerGraph) {
 
         if (Objects.nonNull(typeClassName) && !InferenceUtility.isPrimitiveType(typeClassName)
                 && StringUtils.countMatches(typeClassName, ".") <= 1) {
@@ -501,11 +508,11 @@ public abstract class TypeInferenceBase {
 
 
     static List<MethodInfo> getQualifiedMethodInfoListForPackageImport(String methodName,
-                                                                        int numberOfParameters,
-                                                                        List<String> packageNameList,
-                                                                        Set<String> importedClassQNameSet,
-                                                                        Object[] jarVertexIds,
-                                                                        TinkerGraph tinkerGraph) {
+                                                                       int numberOfParameters,
+                                                                       List<String> packageNameList,
+                                                                       Set<String> importedClassQNameSet,
+                                                                       Object[] jarVertexIds,
+                                                                       TinkerGraph tinkerGraph) {
         Set<String> classNameListForPackgage = tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg")
                 .has("Kind", "Package")
@@ -522,8 +529,8 @@ public abstract class TypeInferenceBase {
 
 
     static Set<String> getSuperClasses(Set<String> classQNameList,
-                                                 Object[] jarVertexIds,
-                                                 TinkerGraph tinkerGraph) {
+                                       Object[] jarVertexIds,
+                                       TinkerGraph tinkerGraph) {
         return tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
@@ -534,7 +541,7 @@ public abstract class TypeInferenceBase {
     }
 
     static Object[] getJarVertexIds(Set<Tuple3<String, String, String>> jarInformationSet,
-                                              String javaVersion, TinkerGraph tinkerGraph) {
+                                    String javaVersion, TinkerGraph tinkerGraph) {
         Set<Object> jarVertexIdSet = new HashSet<>();
 
         jarInformationSet.forEach(j -> {
