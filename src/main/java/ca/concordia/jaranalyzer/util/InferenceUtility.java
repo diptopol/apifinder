@@ -562,7 +562,7 @@ public class InferenceUtility {
                 VariableDeclarationDto selected = getClassNameFromVariableMap(name, expression, variableNameMap);
                 String className = selected != null ? selected.getTypeStr() : null;
 
-                if (selected != null) {
+                if (selected != null && className != null) {
                     Type typeOfSelected = selected.getType();
 
                     if (typeOfSelected.isParameterizedType()) {
@@ -909,15 +909,17 @@ public class InferenceUtility {
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList,
                 formalTypeParameterExtractor.getTypeClassName());
 
-        ClassInfo classInfo = classInfoList.get(0);
+        if (!classInfoList.isEmpty()) {
+            ClassInfo classInfo = classInfoList.get(0);
 
-        ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractorFromClass =
-                new ClassSignatureFormalTypeParameterExtractor(formalTypeParameterExtractor.getTypeArgumentClassNameList());
-        reader = new SignatureReader(classInfo.getSignature());
-        reader.accept(formalTypeParameterExtractorFromClass);
+            ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractorFromClass =
+                    new ClassSignatureFormalTypeParameterExtractor(formalTypeParameterExtractor.getTypeArgumentClassNameList());
+            reader = new SignatureReader(classInfo.getSignature());
+            reader.accept(formalTypeParameterExtractorFromClass);
 
-        if (formalTypeParameterMap != null) {
-            formalTypeParameterMap.putAll(formalTypeParameterExtractorFromClass.getFormalTypeParameterMap());
+            if (formalTypeParameterMap != null) {
+                formalTypeParameterMap.putAll(formalTypeParameterExtractorFromClass.getFormalTypeParameterMap());
+            }
         }
     }
 

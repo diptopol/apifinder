@@ -228,6 +228,9 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                               String javaVersion,
                                               List<String> importList,
                                               String typeName) {
+        if (Objects.isNull(typeName)) {
+            return Collections.emptyList();
+        }
 
         Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion, tinkerGraph);
         Set<String> importedClassQNameSet = getImportedQNameList(importList);
