@@ -455,6 +455,29 @@ public abstract class TypeInferenceBase {
         return qualifiedClassInfoList;
     }
 
+    static Set<MethodInfo> prioritizeMethodInfoSet(Set<MethodInfo> methodInfoSet) {
+        int minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoSet);
+        int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(methodInfoSet);
+
+        if (methodInfoSet.size() > 1) {
+            if (minimumArgumentMatchingDistance == 0
+                    && !methodInfoSet.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
+                methodInfoSet = methodInfoSet.stream()
+                        .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance)
+                        .collect(Collectors.toSet());
+            } else {
+                methodInfoSet = methodInfoSet.stream()
+                        .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
+                                && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                        .collect(Collectors.toSet());
+            }
+
+            methodInfoSet = filteredNonAbstractMethod(methodInfoSet);
+        }
+
+        return methodInfoSet;
+    }
+
     static List<MethodInfo> getQualifiedMethodInfoList(String methodName,
                                                        int numberOfParameters,
                                                        Object[] jarVertexIds,

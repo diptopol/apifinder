@@ -120,18 +120,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             }
 
             if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-                int minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(deferredQualifiedMethodInfoSet);
-                int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(deferredQualifiedMethodInfoSet);
-
-                if (deferredQualifiedMethodInfoSet.size() > 1) {
-                    deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream()
-                            .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
-                                    && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
-                            .collect(Collectors.toSet());
-
-                    deferredQualifiedMethodInfoSet = filteredNonAbstractMethod(deferredQualifiedMethodInfoSet);
-                }
-
+                deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 
@@ -222,17 +211,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-            int minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(deferredQualifiedMethodInfoSet);
-            int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(deferredQualifiedMethodInfoSet);
-
-            if (deferredQualifiedMethodInfoSet.size() > 1) {
-                deferredQualifiedMethodInfoSet = deferredQualifiedMethodInfoSet.stream()
-                        .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
-                                && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
-                        .collect(Collectors.toSet());
-
-                deferredQualifiedMethodInfoSet = filteredNonAbstractMethod(deferredQualifiedMethodInfoSet);
-            }
+            deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
 
             qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
         }
@@ -419,7 +398,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
 
-            if (methodInfoList.size() > 1) {
+            if (methodInfoList.size() > 1 && !methodInfoList.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
                 int minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
 
                 return methodInfoList.stream()
