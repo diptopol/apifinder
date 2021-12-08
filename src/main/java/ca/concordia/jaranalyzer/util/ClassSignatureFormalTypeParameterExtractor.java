@@ -31,10 +31,14 @@ public class ClassSignatureFormalTypeParameterExtractor extends SignatureVisitor
     public void visitFormalTypeParameter(final String name) {
         seenFormalTypeParameter = true;
 
-        formalTypeParameterMap.put(name, typeClassNameList.get(currentTypeClassNameIndex));
+        if (!typeClassNameList.isEmpty()) {
+            formalTypeParameterMap.put(name, typeClassNameList.get(currentTypeClassNameIndex));
 
-        if (seenFormalTypeParameter) {
-            currentTypeClassNameIndex++;
+            if (seenFormalTypeParameter) {
+                currentTypeClassNameIndex++;
+            }
+        } else {
+            formalTypeParameterMap.put(name, "java.lang.Object");
         }
     }
 

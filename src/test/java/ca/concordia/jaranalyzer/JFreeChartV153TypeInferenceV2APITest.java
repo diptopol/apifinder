@@ -2,6 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
+import ca.concordia.jaranalyzer.util.PropertyReader;
 import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jgit.lib.Repository;
@@ -161,6 +162,28 @@ public class JFreeChartV153TypeInferenceV2APITest {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert "org.jfree.data.time.DynamicTimeSeriesCollection.ValueSequence::public float getData(int)".equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testTypeExtractionFromNonParameterizedFieldAccess() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/labels/MultipleXYSeriesLabelGenerator.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        String javaVersion = PropertyReader.getProperty("java.version");
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("this.seriesLabelLists.put(key,null)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert "java.util.Map::public abstract java.lang.Object put(java.lang.Object, java.lang.Object)"
+                            .equals(methodInfo.toString());
                 }
 
                 return false;

@@ -290,11 +290,7 @@ public class InferenceUtility {
                 for (String key : extractor.getFormalTypeParameterMap().keySet()) {
                     String value = extractor.getFormalTypeParameterMap().get(key);
 
-                    if (classFormalTypeParameterMap.containsKey(key)) {
-                        if (!isPrimitiveType(value)) {
-                            classFormalTypeParameterMap.put(key, value);
-                        }
-                    } else {
+                    if (!classFormalTypeParameterMap.containsKey(key)) {
                         classFormalTypeParameterMap.put(key, value);
                     }
                 }
@@ -898,27 +894,35 @@ public class InferenceUtility {
                                                                     List<String> importStatementList,
                                                                     FieldInfo fieldInfo,
                                                                     Map<String, String> formalTypeParameterMap) {
+        String className;
+        List<String> typeArgumentClassNameList;
+
         if (fieldInfo.getSignature() == null) {
-            return;
+            className = fieldInfo.getTypeAsStr();
+            typeArgumentClassNameList = Collections.emptyList();
+        } else {
+            FieldSignatureFormalTypeParameterExtractor formalTypeParameterExtractor = new FieldSignatureFormalTypeParameterExtractor();
+            SignatureReader reader = new SignatureReader(fieldInfo.getSignature());
+            reader.accept(formalTypeParameterExtractor);
+            className = formalTypeParameterExtractor.getTypeClassName();
+            typeArgumentClassNameList = formalTypeParameterExtractor.getTypeArgumentClassNameList();
         }
 
-        FieldSignatureFormalTypeParameterExtractor formalTypeParameterExtractor = new FieldSignatureFormalTypeParameterExtractor();
-        SignatureReader reader = new SignatureReader(fieldInfo.getSignature());
-        reader.accept(formalTypeParameterExtractor);
-
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList,
-                formalTypeParameterExtractor.getTypeClassName());
+                className);
 
         if (!classInfoList.isEmpty()) {
             ClassInfo classInfo = classInfoList.get(0);
 
-            ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractorFromClass =
-                    new ClassSignatureFormalTypeParameterExtractor(formalTypeParameterExtractor.getTypeArgumentClassNameList());
-            reader = new SignatureReader(classInfo.getSignature());
-            reader.accept(formalTypeParameterExtractorFromClass);
+            if (Objects.nonNull(classInfo.getSignature())) {
+                ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractorFromClass =
+                        new ClassSignatureFormalTypeParameterExtractor(typeArgumentClassNameList);
+                SignatureReader reader = new SignatureReader(classInfo.getSignature());
+                reader.accept(formalTypeParameterExtractorFromClass);
 
-            if (formalTypeParameterMap != null) {
-                formalTypeParameterMap.putAll(formalTypeParameterExtractorFromClass.getFormalTypeParameterMap());
+                if (formalTypeParameterMap != null) {
+                    formalTypeParameterMap.putAll(formalTypeParameterExtractorFromClass.getFormalTypeParameterMap());
+                }
             }
         }
     }
