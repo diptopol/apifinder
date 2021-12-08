@@ -560,31 +560,31 @@ public class InferenceUtility {
 
                 if (selected != null && className != null) {
                     Type typeOfSelected = selected.getType();
+                    List<String> typeClassNameList = new ArrayList();
 
                     if (typeOfSelected.isParameterizedType()) {
-                        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList, className);
+                        ParameterizedType parameterizedType = (ParameterizedType) typeOfSelected;
+                        List<Type> types = parameterizedType.typeArguments();
 
-                        ClassInfo classInfo = classInfoList.get(0);
+                        for (Type type : types) {
+                            typeClassNameList.add(getTypeObj(dependentJarInformationSet, javaVersion,
+                                    importStatementList, type).getQualifiedClassName());
+                        }
+                    }
 
-                        if (classInfo.getSignature() != null) {
-                            ParameterizedType parameterizedType = (ParameterizedType) typeOfSelected;
-                            List<Type> types = parameterizedType.typeArguments();
+                    List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion,
+                            importStatementList, className);
+                    ClassInfo classInfo = classInfoList.get(0);
 
-                            List<String> typeClassNameList = new ArrayList();
+                    if (classInfo.getSignature() != null) {
+                        ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractor =
+                                new ClassSignatureFormalTypeParameterExtractor(typeClassNameList);
+                        SignatureReader signatureReader = new SignatureReader(classInfo.getSignature());
 
-                            for (Type type : types) {
-                                typeClassNameList.add(getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, type).getQualifiedClassName());
-                            }
+                        signatureReader.accept(formalTypeParameterExtractor);
 
-                            ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractor =
-                                    new ClassSignatureFormalTypeParameterExtractor(typeClassNameList);
-                            SignatureReader signatureReader = new SignatureReader(classInfo.getSignature());
-
-                            signatureReader.accept(formalTypeParameterExtractor);
-
-                            if (formalTypeParameterMap != null) {
-                                formalTypeParameterMap.putAll(formalTypeParameterExtractor.getFormalTypeParameterMap());
-                            }
+                        if (formalTypeParameterMap != null) {
+                            formalTypeParameterMap.putAll(formalTypeParameterExtractor.getFormalTypeParameterMap());
                         }
                     }
                 }

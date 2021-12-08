@@ -191,4 +191,25 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testTypeExtractionFromNonParameterizedLocalVariable() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/labels/MultipleXYSeriesLabelGenerator.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        String javaVersion = PropertyReader.getProperty("java.version");
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("labelList.add(label)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert "java.util.List::public abstract boolean add(java.lang.Object)".equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }
