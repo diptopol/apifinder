@@ -572,21 +572,8 @@ public class InferenceUtility {
                         }
                     }
 
-                    List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion,
-                            importStatementList, className);
-                    ClassInfo classInfo = classInfoList.get(0);
-
-                    if (classInfo.getSignature() != null) {
-                        ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractor =
-                                new ClassSignatureFormalTypeParameterExtractor(typeClassNameList);
-                        SignatureReader signatureReader = new SignatureReader(classInfo.getSignature());
-
-                        signatureReader.accept(formalTypeParameterExtractor);
-
-                        if (formalTypeParameterMap != null) {
-                            formalTypeParameterMap.putAll(formalTypeParameterExtractor.getFormalTypeParameterMap());
-                        }
-                    }
+                    populateFormalTypeParameterMapFromClassInfo(dependentJarInformationSet, javaVersion,
+                            importStatementList, formalTypeParameterMap, className, typeClassNameList);
                 }
 
                 if (className != null) {
@@ -635,16 +622,34 @@ public class InferenceUtility {
                     methodInvocation, importStatementList, formalTypeParameterMap, variableNameMap);
 
             // if the getAllMethods returns empty, the method can be a private construct.
-            return new TypeObject(methodInfoList.isEmpty() ? "null" : methodInfoList.get(0).getReturnType());
+            if (methodInfoList.isEmpty()) {
+                return new TypeObject("null");
+            } else {
+                String returnTypeClassName = methodInfoList.get(0).getReturnType();
 
+                //Need to change typeArgumentClassNameList if we want to facilitate parameterized type of return type
+                populateFormalTypeParameterMapFromClassInfo(dependentJarInformationSet, javaVersion, importStatementList,
+                        formalTypeParameterMap, returnTypeClassName, Collections.emptyList());
+
+                return new TypeObject(returnTypeClassName);
+            }
         } else if (expression instanceof SuperMethodInvocation) {
             SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) expression;
             List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
                     superMethodInvocation, importStatementList, variableNameMap);
 
             // if the getAllMethods returns empty, the method can be a private construct.
-            return new TypeObject(methodInfoList.isEmpty() ? "null" : methodInfoList.get(0).getReturnType());
+            if (methodInfoList.isEmpty()) {
+                return new TypeObject("null");
+            } else {
+                String returnTypeClassName = methodInfoList.get(0).getReturnType();
 
+                //Need to change typeArgumentClassNameList if we want to facilitate parameterized type of return type
+                populateFormalTypeParameterMapFromClassInfo(dependentJarInformationSet, javaVersion, importStatementList,
+                        formalTypeParameterMap, returnTypeClassName, Collections.emptyList());
+
+                return new TypeObject(returnTypeClassName);
+            }
         } else if (expression instanceof LambdaExpression) {
             LambdaExpression lambdaExpression = (LambdaExpression) expression;
 
@@ -908,6 +913,16 @@ public class InferenceUtility {
             typeArgumentClassNameList = formalTypeParameterExtractor.getTypeArgumentClassNameList();
         }
 
+        populateFormalTypeParameterMapFromClassInfo(dependentJarInformationSet, javaVersion, importStatementList,
+                formalTypeParameterMap, className, typeArgumentClassNameList);
+    }
+
+    private static void populateFormalTypeParameterMapFromClassInfo(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                                    String javaVersion,
+                                                                    List<String> importStatementList,
+                                                                    Map<String, String> formalTypeParameterMap,
+                                                                    String className,
+                                                                    List<String> typeArgumentClassNameList) {
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList,
                 className);
 
