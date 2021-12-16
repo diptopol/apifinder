@@ -77,7 +77,10 @@ public class InferenceUtility {
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
-        if (Objects.nonNull(callerClassTypeObj)) {
+        /*
+         * To make the generic classes backward compatible, for raw type any kind of inference will not be conducted.
+         */
+        if (Objects.nonNull(callerClassTypeObj) && !callerClassTypeObj.isRawType()) {
             InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, callerClassTypeObj.getArgumentTypeObjectMap());
         }
 
@@ -919,23 +922,12 @@ public class InferenceUtility {
         }
 
         TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
-                fieldInfo.getTypeAsStr());
+                fieldInfo.getTypeAsStr())
+                .setParameterized(!typeArgumentClassObjList.isEmpty());
+
         classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
         return classTypeObj;
-    }
-
-    private static void setFormalTypeParameterMap(TypeObject classTypeObj,
-                                                  List<TypeObject> typeArgumentObjList) {
-
-        if (Objects.nonNull(classTypeObj.getSignature())) {
-            ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractorFromClass =
-                    new ClassSignatureFormalTypeParameterExtractor(typeArgumentObjList);
-            SignatureReader reader = new SignatureReader(classTypeObj.getSignature());
-            reader.accept(formalTypeParameterExtractorFromClass);
-
-            classTypeObj.setArgumentTypeObjectMap(formalTypeParameterExtractorFromClass.getFormalTypeParameterMap());
-        }
     }
 
     private static List<TypeObject> getTypeObjList(Set<Tuple3<String, String, String>> dependentJarInformationSet,

@@ -43,6 +43,10 @@ public class TypeObject {
         return isParameterized;
     }
 
+    public boolean isRawType() {
+        return !isParameterized && !argumentTypeObjectMap.isEmpty();
+    }
+
     public TypeObject setParameterized(boolean parameterized) {
         isParameterized = parameterized;
 
