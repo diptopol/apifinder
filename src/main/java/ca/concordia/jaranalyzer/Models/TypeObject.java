@@ -52,4 +52,10 @@ public class TypeObject {
         this.argumentTypeObjectMap.putAll(argumentTypeObjectMap);
     }
 
+    @Override
+    public String toString() {
+        return "TypeObject{" +
+                "qualifiedClassName='" + qualifiedClassName + '\'' +
+                '}';
+    }
 }

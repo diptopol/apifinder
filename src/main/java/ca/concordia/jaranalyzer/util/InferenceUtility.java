@@ -530,7 +530,7 @@ public class InferenceUtility {
             if (expression instanceof QualifiedName) {
                 String firstPart = name.substring(0, name.indexOf("."));
                 VariableDeclarationDto selected = getClassNameFromVariableMap(firstPart, expression, variableNameMap);
-                String className = selected != null ? selected.getTypeStr() : null;
+                String className = selected != null ? selected.getTypeObj().getQualifiedClassName() : null;
 
                 if (className != null) {
                     name = className + name.substring(name.indexOf("."));
@@ -556,7 +556,7 @@ public class InferenceUtility {
                 }
             } else if (expression instanceof SimpleName) {
                 VariableDeclarationDto selected = getClassNameFromVariableMap(name, expression, variableNameMap);
-                String className = selected != null ? selected.getTypeStr() : null;
+                String className = selected != null ? selected.getTypeObj().getQualifiedClassName() : null;
 
                 if (selected != null && className != null) {
                     Type typeOfSelected = selected.getType();
@@ -838,7 +838,7 @@ public class InferenceUtility {
                                                                     SingleVariableDeclaration declaration) {
         String name = declaration.getName().getFullyQualifiedName();
         Type declarationType = declaration.getType();
-        String declarationTypeClassName = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, declarationType).getQualifiedClassName();
+        TypeObject declarationTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, declarationType);
 
         ASTNode scopedNode = getVariableDeclarationScopedNode(declaration);
 
@@ -846,7 +846,7 @@ public class InferenceUtility {
             int startOffset = scopedNode.getStartPosition();
             int endOffSet = startOffset + scopedNode.getLength();
 
-            return new VariableDeclarationDto(name, declarationTypeClassName, new VariableScope(startOffset, endOffSet), declarationType);
+            return new VariableDeclarationDto(name, declarationTypeObj, new VariableScope(startOffset, endOffSet), declarationType);
 
         } else {
             return null;
@@ -970,9 +970,8 @@ public class InferenceUtility {
                                                                               Type declarationType,
                                                                               List<VariableDeclarationFragment> fragmentList) {
 
-        String declarationTypeClassName = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList,
-                declarationType)
-                .getQualifiedClassName();
+        TypeObject declarationTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList,
+                declarationType);
 
         return fragmentList.stream().map(fragment -> {
             ASTNode scopedNode = getVariableDeclarationScopedNode(fragment);
@@ -981,7 +980,7 @@ public class InferenceUtility {
             int startOffset = fragment.getStartPosition();
             int endOffSet = startOffset + (scopedNode != null ? scopedNode.getLength() : 0);
 
-            return new VariableDeclarationDto(name, declarationTypeClassName, new VariableScope(startOffset, endOffSet), declarationType);
+            return new VariableDeclarationDto(name, declarationTypeObj, new VariableScope(startOffset, endOffSet), declarationType);
 
         }).collect(Collectors.toList());
     }

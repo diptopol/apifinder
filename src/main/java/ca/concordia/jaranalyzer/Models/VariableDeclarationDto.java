@@ -12,13 +12,13 @@ public class VariableDeclarationDto {
 
     private Type type;
 
-    private String typeStr;
+    private TypeObject typeObj;
 
     private VariableScope scope;
 
-    public VariableDeclarationDto(String name, String typeStr, VariableScope scope, Type type) {
+    public VariableDeclarationDto(String name, TypeObject typeObj, VariableScope scope, Type type) {
         this.name = name;
-        this.typeStr = typeStr;
+        this.typeObj = typeObj;
         this.scope = scope;
         this.type = type;
     }
@@ -28,8 +28,8 @@ public class VariableDeclarationDto {
     }
 
 
-    public String getTypeStr() {
-        return typeStr;
+    public TypeObject getTypeObj() {
+        return typeObj;
     }
 
     public VariableScope getScope() {
@@ -75,7 +75,7 @@ public class VariableDeclarationDto {
     public String toString() {
         return "VariableDeclarationDto{" +
                 "name='" + name + '\'' +
-                ", typeStr='" + typeStr + '\'' +
+                ", typeObj='" + typeObj + '\'' +
                 ", scope=" + scope +
                 '}';
     }
