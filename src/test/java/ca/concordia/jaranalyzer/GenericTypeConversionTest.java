@@ -20,9 +20,9 @@ public class GenericTypeConversionTest {
         String methodSignature = "()Ljava/util/Set<Ljava/util/Map$Entry<TK;TV;>;>;";
         SignatureReader signatureReader = new SignatureReader(methodSignature);
 
-        Map<String, String> map = new HashMap<>();
-        map.put("K", "java.lang.String");
-        map.put("V", "java.lang.String");
+        Map<String, TypeObject> map = new HashMap<>();
+        map.put("K", new TypeObject("java.lang.String"));
+        map.put("V", new TypeObject("java.lang.String"));
 
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
         signatureReader.accept(genericTypeResolutionAdapter);
@@ -37,9 +37,9 @@ public class GenericTypeConversionTest {
 
         SignatureReader signatureReader = new SignatureReader(methodSignature);
 
-        Map<String, String> map = new HashMap<>();
-        map.put("K", "java.lang.Object");
-        map.put("V", "java.lang.Object");
+        Map<String, TypeObject> map = new HashMap<>();
+        map.put("K", new TypeObject("java.lang.Object"));
+        map.put("V", new TypeObject("java.lang.Object"));
 
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
         signatureReader.accept(genericTypeResolutionAdapter);
@@ -58,8 +58,8 @@ public class GenericTypeConversionTest {
 
         SignatureReader signatureReader = new SignatureReader(methodSignature);
 
-        Map<String, String> map = new HashMap<>();
-        map.put("T", "org.jfree.chart.plot.dial.DialLayerChangeListener");
+        Map<String, TypeObject> map = new HashMap<>();
+        map.put("T", new TypeObject("org.jfree.chart.plot.dial.DialLayerChangeListener"));
 
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
         signatureReader.accept(genericTypeResolutionAdapter);
@@ -78,8 +78,8 @@ public class GenericTypeConversionTest {
 
         SignatureReader signatureReader = new SignatureReader(methodSignature);
 
-        Map<String, String> map = new HashMap<>();
-        map.put("E", "java.lang.String");
+        Map<String, TypeObject> map = new HashMap<>();
+        map.put("E", new TypeObject("java.lang.String"));
 
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
         signatureReader.accept(genericTypeResolutionAdapter);
@@ -96,8 +96,8 @@ public class GenericTypeConversionTest {
     public void testNonFormalTypeArgument() {
         String signature = "(Ljava/lang/Object;)TV;";
 
-        Map<String, String> map = new HashMap<>();
-        map.put("V", "java.lang.String");
+        Map<String, TypeObject> map = new HashMap<>();
+        map.put("V", new TypeObject("java.lang.String"));
 
         SignatureReader signatureReader = new SignatureReader(signature);
         GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
@@ -192,7 +192,9 @@ public class GenericTypeConversionTest {
                 new MethodArgumentFormalTypeParameterExtractor(methodArgumentList);
         signatureReader.accept(extractor);
 
-        assert "{P=java.lang.String, Q=java.lang.Integer, R=java.lang.String}"
+        assert ("{P=TypeObject{qualifiedClassName='java.lang.String'}," +
+                " Q=TypeObject{qualifiedClassName='java.lang.Integer'}," +
+                " R=TypeObject{qualifiedClassName='java.lang.String'}}")
                 .equals(extractor.getFormalTypeParameterMap().toString());
     }
 
@@ -208,7 +210,7 @@ public class GenericTypeConversionTest {
                 new MethodArgumentFormalTypeParameterExtractor(methodArgumentList);
         signatureReader.accept(extractor);
 
-        assert "{T=java.net.URL}".equals(extractor.getFormalTypeParameterMap().toString());
+        assert "{T=TypeObject{qualifiedClassName='java.net.URL'}}".equals(extractor.getFormalTypeParameterMap().toString());
     }
 
 }

@@ -4,7 +4,6 @@ import ca.concordia.jaranalyzer.util.ClassSignatureFormalTypeParameterExtractor;
 import org.objectweb.asm.signature.SignatureReader;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Diptopol
@@ -54,12 +53,8 @@ public class TypeObject {
         return new ArrayList<>(this.argumentTypeObjectMap.values());
     }
 
-    public Map<String, String> getArgumentTypeMap() {
-        return argumentTypeObjectMap.entrySet()
-                .stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().getQualifiedClassName()));
+    public Map<String, TypeObject> getArgumentTypeObjectMap() {
+        return argumentTypeObjectMap;
     }
 
     public void setArgumentTypeObjectMap(Map<String, TypeObject> argumentTypeObjectMap) {

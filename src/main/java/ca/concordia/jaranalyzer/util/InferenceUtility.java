@@ -78,7 +78,7 @@ public class InferenceUtility {
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
         if (Objects.nonNull(callerClassTypeObj)) {
-            InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, callerClassTypeObj.getArgumentTypeMap());
+            InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, callerClassTypeObj.getArgumentTypeObjectMap());
         }
 
         return methodInfoList;
@@ -286,7 +286,7 @@ public class InferenceUtility {
 
     public static void resolveMethodGenericTypeInfo(List<MethodInfo> methodInfoList,
                                                     List<TypeObject> methodArgumentTypeObjList,
-                                                    Map<String, String> classFormalTypeParameterMap) {
+                                                    Map<String, TypeObject> classFormalTypeParameterMap) {
 
         for (MethodInfo methodInfo : methodInfoList) {
             if (methodInfo.getSignature() != null) {
@@ -297,7 +297,7 @@ public class InferenceUtility {
                 reader.accept(extractor);
 
                 for (String key : extractor.getFormalTypeParameterMap().keySet()) {
-                    String value = extractor.getFormalTypeParameterMap().get(key);
+                    TypeObject value = extractor.getFormalTypeParameterMap().get(key);
 
                     if (!classFormalTypeParameterMap.containsKey(key)) {
                         classFormalTypeParameterMap.put(key, value);

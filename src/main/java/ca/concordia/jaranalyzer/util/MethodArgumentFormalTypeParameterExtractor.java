@@ -27,7 +27,7 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
     private List<String> traversedFormalTypeParameterList;
     private Stack<String> formalTypeParameterNameStack;
 
-    private Map<String, String> formalTypeParameterMap;
+    private Map<String, TypeObject> formalTypeParameterMap;
 
 
     public MethodArgumentFormalTypeParameterExtractor(List<TypeObject> methodArgumentList) {
@@ -68,11 +68,11 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
     public void visitClassType(String name) {
         if (classBoundVisit) {
             String typeParameter = formalTypeParameterNameStack.pop();
-            formalTypeParameterMap.put(typeParameter, name.replaceAll("/", "."));
+            formalTypeParameterMap.put(typeParameter, new TypeObject(name.replaceAll("/", ".")));
             classBoundVisit = false;
         } else if (interfaceBoundVisit) {
             String typeParameter = formalTypeParameterNameStack.pop();
-            formalTypeParameterMap.put(typeParameter, name.replaceAll("/", "."));
+            formalTypeParameterMap.put(typeParameter, new TypeObject(name.replaceAll("/", ".")));
             interfaceBoundVisit = false;
         } else {
             argumentStack *= 2;
@@ -124,17 +124,18 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
 
         if (argumentType.isParameterized()) {
             List<TypeObject> argumentTypeList = argumentType.getArgumentTypeObjectList();
-            String argumentTypeClassName = resolveArrayDimensions(
-                    argumentTypeList.get(currentFormalTypeParameterIndexPerArgument).getQualifiedClassName());
+            TypeObject argumentTypeClassObj = argumentTypeList.get(currentFormalTypeParameterIndexPerArgument);
+            argumentTypeClassObj.setQualifiedClassName(resolveArrayDimensions(argumentTypeClassObj.getQualifiedClassName()));
 
-            formalTypeParameterMap.put(name, argumentTypeClassName);
+            formalTypeParameterMap.put(name, argumentTypeClassObj);
             traversedFormalTypeParameterList.add(name);
 
             currentFormalTypeParameterIndexPerArgument++;
 
         } else {
             if (!hasArgumentClassName) {
-                formalTypeParameterMap.put(name, resolveArrayDimensions(argumentType.getQualifiedClassName()));
+                argumentType.setQualifiedClassName(resolveArrayDimensions(argumentType.getQualifiedClassName()));
+                formalTypeParameterMap.put(name, argumentType);
                 traversedFormalTypeParameterList.add(name);
             }
         }
@@ -177,7 +178,7 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
         return this;
     }
 
-    public Map<String, String> getFormalTypeParameterMap() {
+    public Map<String, TypeObject> getFormalTypeParameterMap() {
         return formalTypeParameterMap;
     }
 
