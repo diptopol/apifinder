@@ -149,8 +149,8 @@ public class GenericTypeConversionTest {
         signatureReader.accept(fieldSignatureFormalTypeParameterExtractor);
 
         assert "java.util.Map".equals(fieldSignatureFormalTypeParameterExtractor.getTypeClassName())
-                && "[java.lang.Integer, org.jfree.data.xy.XYDataset]"
-                .equals(fieldSignatureFormalTypeParameterExtractor.getTypeArgumentClassNameList().toString());
+                && "[TypeObject{qualifiedClassName='java.lang.Integer'}, TypeObject{qualifiedClassName='org.jfree.data.xy.XYDataset'}]"
+                .equals(fieldSignatureFormalTypeParameterExtractor.getTypeArgumentClassObjList().toString());
     }
 
     @Test

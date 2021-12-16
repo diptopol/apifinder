@@ -909,7 +909,7 @@ public class InferenceUtility {
 
         FieldInfo fieldInfo = fieldInfoList.get(0);
 
-        List<String> typeArgumentClassNameList = new ArrayList<>();
+        List<TypeObject> typeArgumentClassObjList = new ArrayList<>();
 
         if (Objects.nonNull(fieldInfo.getSignature())) {
             FieldSignatureFormalTypeParameterExtractor formalTypeParameterExtractor
@@ -917,15 +917,11 @@ public class InferenceUtility {
 
             SignatureReader reader = new SignatureReader(fieldInfo.getSignature());
             reader.accept(formalTypeParameterExtractor);
-            typeArgumentClassNameList = formalTypeParameterExtractor.getTypeArgumentClassNameList();
+            typeArgumentClassObjList = formalTypeParameterExtractor.getTypeArgumentClassObjList();
         }
 
         TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
                 fieldInfo.getTypeAsStr());
-
-        List<TypeObject> typeArgumentClassObjList = typeArgumentClassNameList.stream()
-                .map(TypeObject::new)
-                .collect(Collectors.toList());
 
         setFormalTypeParameterMap(classTypeObj, typeArgumentClassObjList);
 

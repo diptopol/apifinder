@@ -1,5 +1,6 @@
 package ca.concordia.jaranalyzer.util;
 
+import ca.concordia.jaranalyzer.Models.TypeObject;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureVisitor;
 
@@ -16,11 +17,11 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
 
     private String typeClassName;
 
-    private List<String> typeArgumentClassNameList;
+    private List<TypeObject> typeArgumentClassObjList;
 
     public FieldSignatureFormalTypeParameterExtractor() {
         super(Opcodes.ASM9);
-        this.typeArgumentClassNameList = new ArrayList<>();
+        this.typeArgumentClassObjList = new ArrayList<>();
     }
 
     @Override
@@ -28,7 +29,7 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
         if (!seenTypeArgument) {
             typeClassName = name.replaceAll("/", ".");
         } else {
-            typeArgumentClassNameList.add(name.replaceAll("/", "."));
+            typeArgumentClassObjList.add(new TypeObject(name.replaceAll("/", ".")));
         }
     }
 
@@ -37,7 +38,7 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
         if (!seenTypeArgument) {
             typeClassName = name.replaceAll("/", ".");
         } else {
-            typeArgumentClassNameList.add(name.replaceAll("/", "."));
+            typeArgumentClassObjList.add(new TypeObject(name.replaceAll("/", ".")));
         }
     }
 
@@ -51,8 +52,8 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
         return typeClassName;
     }
 
-    public List<String> getTypeArgumentClassNameList() {
-        return typeArgumentClassNameList;
+    public List<TypeObject> getTypeArgumentClassObjList() {
+        return typeArgumentClassObjList;
     }
 
 }
