@@ -28,7 +28,7 @@ public class TypeInferenceV2API {
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList, methodInvocation);
 
         List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
-                methodInvocation, importStatementList, new HashMap<>(), variableNameMap);
+                methodInvocation, importStatementList, variableNameMap);
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }

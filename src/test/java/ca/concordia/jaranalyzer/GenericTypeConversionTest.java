@@ -175,7 +175,8 @@ public class GenericTypeConversionTest {
 
         List<TypeObject> methodArgumentList = new ArrayList<>();
 
-        TypeObject firstArgument = new TypeObject("java.util.Map");
+        TypeObject firstArgument = new TypeObject("java.util.Map")
+                .setParameterized(true);
 
         LinkedHashMap<String, TypeObject> typeArgumentMap = new LinkedHashMap<>();
         typeArgumentMap.put("K", new TypeObject("java.lang.String"));

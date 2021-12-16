@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Diptopol
@@ -43,12 +44,25 @@ public class TypeObject {
         return isParameterized;
     }
 
+    public TypeObject setParameterized(boolean parameterized) {
+        isParameterized = parameterized;
+
+        return this;
+    }
+
     public List<TypeObject> getArgumentTypeObjectList() {
         return new ArrayList<>(this.argumentTypeObjectMap.values());
     }
 
+    public Map<String, String> getArgumentTypeMap() {
+        return argumentTypeObjectMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().getQualifiedClassName()));
+    }
+
     public void setArgumentTypeObjectMap(Map<String, TypeObject> argumentTypeObjectMap) {
-        this.isParameterized = true;
         this.argumentTypeObjectMap.putAll(argumentTypeObjectMap);
     }
 
