@@ -16,18 +16,9 @@ public class TypeObject {
     private boolean isParameterized;
     private Map<String, TypeObject> argumentTypeObjectMap;
 
-    public TypeObject() {
-        this.argumentTypeObjectMap = new LinkedHashMap<>();
-    }
-
     public TypeObject(String qualifiedClassName) {
-        this();
+        this.argumentTypeObjectMap = new LinkedHashMap<>();
         this.qualifiedClassName = qualifiedClassName;
-    }
-
-    public TypeObject(String qualifiedClassName, String signature) {
-        this(qualifiedClassName);
-        this.signature = signature;
     }
 
     public String getQualifiedClassName() {
@@ -42,8 +33,10 @@ public class TypeObject {
         return signature;
     }
 
-    public void setSignature(String signature) {
+    public TypeObject setSignature(String signature) {
         this.signature = signature;
+
+        return this;
     }
 
     public boolean isParameterized() {

@@ -1014,7 +1014,7 @@ public class InferenceUtility {
 
         return classInfoList.size() == 0
                 ? new TypeObject(name)
-                : new TypeObject(classInfoList.get(0).getQualifiedName(), classInfoList.get(0).getSignature());
+                : new TypeObject(classInfoList.get(0).getQualifiedName()).setSignature(classInfoList.get(0).getSignature());
     }
 
     //TODO: check whether query for qualified name is needed or not
@@ -1037,7 +1037,7 @@ public class InferenceUtility {
 
         return classInfoList.size() == 0
                 ? new TypeObject(name)
-                : new TypeObject(classInfoList.get(0).getQualifiedName(), classInfoList.get(0).getSignature());
+                : new TypeObject(classInfoList.get(0).getQualifiedName()).setSignature(classInfoList.get(0).getSignature());
     }
 
 }
