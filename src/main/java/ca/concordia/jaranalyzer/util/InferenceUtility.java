@@ -551,16 +551,16 @@ public class InferenceUtility {
 
                 if (selected != null && classTypeObj != null) {
                     Type typeOfSelected = selected.getType();
-                    List<TypeObject> typeObjList = new ArrayList();
+                    List<TypeObject> typeArgumentClassObjList = new ArrayList();
 
                     if (typeOfSelected.isParameterizedType()) {
                         ParameterizedType parameterizedType = (ParameterizedType) typeOfSelected;
-                        typeObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
+                        typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
                                 importStatementList, parameterizedType.typeArguments());
                         classTypeObj.setParameterized(true);
                     }
 
-                    setFormalTypeParameterMap(classTypeObj, typeObjList);
+                    classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
                 }
 
                 if (Objects.nonNull(classTypeObj)) {
@@ -595,8 +595,7 @@ public class InferenceUtility {
             } else {
                 String className = methodInfoList.get(0).getClassInfo().getQualifiedName();
                 TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, className);
-
-                setFormalTypeParameterMap(classTypeObj, typeArgumentClassObjList);
+                classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
                 return classTypeObj;
             }
@@ -617,8 +616,7 @@ public class InferenceUtility {
 
                 TypeObject returnTypeClassTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion,
                         importStatementList, returnTypeClassName);
-
-                setFormalTypeParameterMap(returnTypeClassTypeObj, typeArgumentClassObjList);
+                returnTypeClassTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
                 return returnTypeClassTypeObj;
             }
@@ -639,7 +637,7 @@ public class InferenceUtility {
 
                 TypeObject returnTypeClassTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion,
                         importStatementList, returnTypeClassName);
-                setFormalTypeParameterMap(returnTypeClassTypeObj, typeArgumentClassObjList);
+                returnTypeClassTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
                 return returnTypeClassTypeObj;
             }
@@ -922,8 +920,7 @@ public class InferenceUtility {
 
         TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
                 fieldInfo.getTypeAsStr());
-
-        setFormalTypeParameterMap(classTypeObj, typeArgumentClassObjList);
+        classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
         return classTypeObj;
     }

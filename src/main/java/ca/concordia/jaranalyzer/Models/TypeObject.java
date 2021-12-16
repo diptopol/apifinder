@@ -1,9 +1,9 @@
 package ca.concordia.jaranalyzer.Models;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import ca.concordia.jaranalyzer.util.ClassSignatureFormalTypeParameterExtractor;
+import org.objectweb.asm.signature.SignatureReader;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -64,6 +64,17 @@ public class TypeObject {
 
     public void setArgumentTypeObjectMap(Map<String, TypeObject> argumentTypeObjectMap) {
         this.argumentTypeObjectMap.putAll(argumentTypeObjectMap);
+    }
+
+    public void setArgumentTypeObjectList(List<TypeObject> argumentTypeObjectList) {
+        if (Objects.nonNull(this.signature)) {
+            ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractorFromClass =
+                    new ClassSignatureFormalTypeParameterExtractor(argumentTypeObjectList);
+            SignatureReader reader = new SignatureReader(this.signature);
+            reader.accept(formalTypeParameterExtractorFromClass);
+
+            setArgumentTypeObjectMap(formalTypeParameterExtractorFromClass.getFormalTypeParameterMap());
+        }
     }
 
     @Override
