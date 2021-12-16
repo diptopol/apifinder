@@ -452,6 +452,15 @@ public abstract class TypeInferenceBase {
                     .collect(Collectors.toList());
         }
 
+        String fullyQualifiedTypeName = StringUtils.countMatches(typeClassName, ".") > 1 ? typeClassName : null;
+        if (qualifiedClassInfoList.size() > 1 && fullyQualifiedTypeName != null
+                && qualifiedClassInfoList.stream().anyMatch(c -> c.getQualifiedName().equals(fullyQualifiedTypeName))) {
+
+            return qualifiedClassInfoList.stream()
+                    .filter(c -> c.getQualifiedName().equals(fullyQualifiedTypeName))
+                    .collect(Collectors.toList());
+        }
+
         return qualifiedClassInfoList;
     }
 

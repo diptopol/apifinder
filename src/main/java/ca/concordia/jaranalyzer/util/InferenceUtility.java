@@ -682,11 +682,11 @@ public class InferenceUtility {
 
             if (!elementType.isPrimitiveType()) {
                 if (elementType instanceof SimpleType) {
-                    elementTypeObj = getTypeObjForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) elementType));
+                    elementTypeObj = getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) elementType));
                     elementTypeStr = elementTypeObj.getQualifiedClassName();
 
                 } else if (elementType instanceof QualifiedType) {
-                    elementTypeObj = getTypeObjForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) elementType);
+                    elementTypeObj = getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) elementType);
                     elementTypeStr = elementTypeObj.getQualifiedClassName();
                 } else {
                     throw new IllegalStateException();
@@ -707,20 +707,20 @@ public class InferenceUtility {
             return elementTypeObj;
 
         } else if (type instanceof SimpleType) {
-            return getTypeObjForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) type));
+            return getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) type));
 
         } else if (type instanceof QualifiedType) {
-            return getTypeObjForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) type);
+            return getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) type);
 
 
         } else if (type instanceof ParameterizedType) {
             Type internalType = ((ParameterizedType) type).getType();
 
             if (internalType instanceof SimpleType) {
-                return getTypeObjForSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) internalType));
+                return getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) internalType));
 
             } else if (internalType instanceof QualifiedType) {
-                return getTypeObjForQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) internalType);
+                return getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) internalType);
 
             } else {
                 throw new IllegalStateException();
@@ -864,70 +864,24 @@ public class InferenceUtility {
 
     private static String getPrimitiveType(NumberLiteral numberLiteral) {
         String token = numberLiteral.getToken();
-        if (token.contains(".")) {
-            if (token.endsWith("f") || token.endsWith("F"))
-                return "float";
-            else
-                return "double";
-        }
-        if (!token.contains(".")) {
-            if (token.endsWith("l") || token.endsWith("L"))
-                return "long";
-            else
-                return "int";
-        }
-        return null;
-    }
 
-    private static TypeObject getTypeObjFromClassName(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                              String javaVersion,
-                                              List<String> importStatementList,
-                                              String className) {
-
-        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList,
-                className);
-
-        if (classInfoList.isEmpty()) {
-            return new TypeObject(className);
-        }
-
-        ClassInfo classInfo = classInfoList.get(0);
-
-        return new TypeObject(classInfo.getQualifiedName()).setSignature(classInfo.getSignature());
-    }
-
-    private static TypeObject getTypeObjFromFieldName(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                              String javaVersion,
-                                              List<String> importStatementList,
-                                              String fieldName) {
-
-        List<FieldInfo> fieldInfoList = TypeInferenceAPI.getAllFieldTypes(dependentJarInformationSet,
-                javaVersion, importStatementList, fieldName);
-
-        if (fieldInfoList.isEmpty()) {
+        if (StringUtils.isEmpty(token)) {
             return null;
         }
 
-        FieldInfo fieldInfo = fieldInfoList.get(0);
-
-        List<TypeObject> typeArgumentClassObjList = new ArrayList<>();
-
-        if (Objects.nonNull(fieldInfo.getSignature())) {
-            FieldSignatureFormalTypeParameterExtractor formalTypeParameterExtractor
-                    = new FieldSignatureFormalTypeParameterExtractor();
-
-            SignatureReader reader = new SignatureReader(fieldInfo.getSignature());
-            reader.accept(formalTypeParameterExtractor);
-            typeArgumentClassObjList = formalTypeParameterExtractor.getTypeArgumentClassObjList();
+        if (token.contains(".")) {
+            if (token.endsWith("f") || token.endsWith("F")) {
+                return "float";
+            } else {
+                return "double";
+            }
+        } else {
+            if (token.endsWith("l") || token.endsWith("L")) {
+                return "long";
+            } else {
+                return "int";
+            }
         }
-
-        TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
-                fieldInfo.getTypeAsStr())
-                .setParameterized(!typeArgumentClassObjList.isEmpty());
-
-        classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
-
-        return classTypeObj;
     }
 
     private static List<TypeObject> getTypeObjList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
@@ -997,48 +951,72 @@ public class InferenceUtility {
         return null;
     }
 
-    private static TypeObject getTypeObjForSimpleType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                      String javaVersion,
-                                                      List<String> importStatementList,
-                                                      SimpleType simpleType) {
+    private static TypeObject getTypeObjFromSimpleType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                       String javaVersion,
+                                                       List<String> importStatementList,
+                                                       SimpleType simpleType) {
         String name = simpleType.getName().getFullyQualifiedName();
-
-        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList, name);
-
-/*        if (classInfoList.size() > 1) {
-            logger.debug("Fetch Type : "
-                    + ", ClassInfoList : " + classInfoList.toString()
-                    + ", File Name : " + fileName
-                    + ", Import List : " + importedPackages_
-                    + ", Type Name: " + name);
-        }*/
-
-        return classInfoList.size() == 0
-                ? new TypeObject(name)
-                : new TypeObject(classInfoList.get(0).getQualifiedName()).setSignature(classInfoList.get(0).getSignature());
+        return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name);
     }
 
-    //TODO: check whether query for qualified name is needed or not
-    private static TypeObject getTypeObjForQualifiedType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                         String javaVersion,
-                                                         List<String> importStatementList,
-                                                         QualifiedType qualifiedType) {
+    private static TypeObject getTypeObjFromQualifiedType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                          String javaVersion,
+                                                          List<String> importStatementList,
+                                                          QualifiedType qualifiedType) {
 
         String name = qualifiedType.getName().getFullyQualifiedName();
-        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList, name);
+        return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name);
+    }
 
-        /*if (classInfoList.size() > 1) {
-            logger.debug("Fetch Type : "
-                    + ", ClassInfoList : " + classInfoList.toString()
-                    + ", File Name : " + fileName
-                    + ", Import List : " + importedPackages_
-                    + ", Type Name: " + name);
+    private static TypeObject getTypeObjFromFieldName(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                      String javaVersion,
+                                                      List<String> importStatementList,
+                                                      String fieldName) {
 
-        }*/
+        List<FieldInfo> fieldInfoList = TypeInferenceAPI.getAllFieldTypes(dependentJarInformationSet,
+                javaVersion, importStatementList, fieldName);
 
-        return classInfoList.size() == 0
-                ? new TypeObject(name)
-                : new TypeObject(classInfoList.get(0).getQualifiedName()).setSignature(classInfoList.get(0).getSignature());
+        if (fieldInfoList.isEmpty()) {
+            return null;
+        }
+
+        FieldInfo fieldInfo = fieldInfoList.get(0);
+
+        List<TypeObject> typeArgumentClassObjList = new ArrayList<>();
+
+        if (Objects.nonNull(fieldInfo.getSignature())) {
+            FieldSignatureFormalTypeParameterExtractor formalTypeParameterExtractor
+                    = new FieldSignatureFormalTypeParameterExtractor();
+
+            SignatureReader reader = new SignatureReader(fieldInfo.getSignature());
+            reader.accept(formalTypeParameterExtractor);
+            typeArgumentClassObjList = formalTypeParameterExtractor.getTypeArgumentClassObjList();
+        }
+
+        TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
+                fieldInfo.getTypeAsStr())
+                .setParameterized(!typeArgumentClassObjList.isEmpty());
+
+        classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
+
+        return classTypeObj;
+    }
+
+    private static TypeObject getTypeObjFromClassName(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                      String javaVersion,
+                                                      List<String> importStatementList,
+                                                      String className) {
+
+        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList,
+                className);
+
+        if (classInfoList.isEmpty()) {
+            return new TypeObject(className);
+        }
+
+        ClassInfo classInfo = classInfoList.get(0);
+
+        return new TypeObject(classInfo.getQualifiedName()).setSignature(classInfo.getSignature());
     }
 
 }
