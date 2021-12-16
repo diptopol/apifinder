@@ -111,14 +111,15 @@ public class GenericTypeConversionTest {
         String classSignature = "<K:Ljava/lang/Object;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/util/Map<TK;TV;>;Ljava/lang/Cloneable;Ljava/io/Serializable;";
 
         SignatureReader signatureReader = new SignatureReader(classSignature);
-        List<String> typeClassNameList = new ArrayList<>(Arrays.asList("java.lang.String", "java.lang.Integer"));
+        List<TypeObject> typeClassNameList = new ArrayList<>(Arrays.asList(new TypeObject("java.lang.String"),
+                new TypeObject("java.lang.Integer")));
 
         ClassSignatureFormalTypeParameterExtractor classSignatureFormalTypeParameterExtractor =
                 new ClassSignatureFormalTypeParameterExtractor(typeClassNameList);
 
         signatureReader.accept(classSignatureFormalTypeParameterExtractor);
 
-        assert "[V=java.lang.Integer, K=java.lang.String]"
+        assert "[V=TypeObject{qualifiedClassName='java.lang.Integer'}, K=TypeObject{qualifiedClassName='java.lang.String'}]"
                 .equals(classSignatureFormalTypeParameterExtractor.getFormalTypeParameterMap().entrySet().toString());
     }
 
@@ -127,14 +128,14 @@ public class GenericTypeConversionTest {
         String classSignature = "<K::Ljava/lang/Comparable<TK;>;>Ljava/lang/Object;Lorg/jfree/data/KeyedValues<TK;>;Ljava/lang/Cloneable;Lorg/jfree/chart/util/PublicCloneable;Ljava/io/Serializable;";
 
         SignatureReader signatureReader = new SignatureReader(classSignature);
-        List<String> typeClassNameList = new ArrayList<>();
+        List<TypeObject> typeClassObjList = new ArrayList<>();
 
         ClassSignatureFormalTypeParameterExtractor classSignatureFormalTypeParameterExtractor =
-                new ClassSignatureFormalTypeParameterExtractor(typeClassNameList);
+                new ClassSignatureFormalTypeParameterExtractor(typeClassObjList);
 
         signatureReader.accept(classSignatureFormalTypeParameterExtractor);
 
-        assert "{K=java.lang.Comparable}"
+        assert "{K=TypeObject{qualifiedClassName='java.lang.Comparable'}}"
                 .equals(classSignatureFormalTypeParameterExtractor.getFormalTypeParameterMap().toString());
     }
 

@@ -362,15 +362,12 @@ public class InferenceUtility {
 
             if (argumentTypeObj.getSignature() != null) {
                 ClassSignatureFormalTypeParameterExtractor extractor =
-                        new ClassSignatureFormalTypeParameterExtractor(Collections.singletonList(argumentTypeObj.getQualifiedClassName()));
+                        new ClassSignatureFormalTypeParameterExtractor(Collections.singletonList(argumentTypeObj));
 
                 SignatureReader signatureReader = new SignatureReader(argumentTypeObj.getSignature());
                 signatureReader.accept(extractor);
 
-                Map<String, TypeObject> argumentTypeObjMap = extractor.getFormalTypeParameterMap().entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, e -> new TypeObject(e.getValue())));
-
-                typeObject.setArgumentTypeObjectMap(argumentTypeObjMap);
+                typeObject.setArgumentTypeObjectMap(extractor.getFormalTypeParameterMap());
             }
 
             return typeObject;
@@ -554,16 +551,16 @@ public class InferenceUtility {
 
                 if (selected != null && classTypeObj != null) {
                     Type typeOfSelected = selected.getType();
-                    List<String> typeClassNameList = new ArrayList();
+                    List<TypeObject> typeObjList = new ArrayList();
 
                     if (typeOfSelected.isParameterizedType()) {
                         ParameterizedType parameterizedType = (ParameterizedType) typeOfSelected;
-                        typeClassNameList = getTypeClassNameList(dependentJarInformationSet, javaVersion,
+                        typeObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
                                 importStatementList, parameterizedType.typeArguments());
                         classTypeObj.setParameterized(true);
                     }
 
-                    setFormalTypeParameterMap(classTypeObj, typeClassNameList);
+                    setFormalTypeParameterMap(classTypeObj, typeObjList);
                 }
 
                 if (Objects.nonNull(classTypeObj)) {
@@ -586,7 +583,7 @@ public class InferenceUtility {
         } else if (expression instanceof ClassInstanceCreation) {
             ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation) expression;
 
-            List<String> typeArgumentClassNameList = getTypeClassNameList(dependentJarInformationSet, javaVersion,
+            List<TypeObject> typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
                     importStatementList, classInstanceCreation.typeArguments());
 
             List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
@@ -599,14 +596,14 @@ public class InferenceUtility {
                 String className = methodInfoList.get(0).getClassInfo().getQualifiedName();
                 TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, className);
 
-                setFormalTypeParameterMap(classTypeObj, typeArgumentClassNameList);
+                setFormalTypeParameterMap(classTypeObj, typeArgumentClassObjList);
 
                 return classTypeObj;
             }
         } else if (expression instanceof MethodInvocation) {
             MethodInvocation methodInvocation = (MethodInvocation) expression;
 
-            List<String> typeArgumentClassNameList = getTypeClassNameList(dependentJarInformationSet, javaVersion,
+            List<TypeObject> typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
                     importStatementList, methodInvocation.typeArguments());
 
             List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
@@ -621,14 +618,14 @@ public class InferenceUtility {
                 TypeObject returnTypeClassTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion,
                         importStatementList, returnTypeClassName);
 
-                setFormalTypeParameterMap(returnTypeClassTypeObj, typeArgumentClassNameList);
+                setFormalTypeParameterMap(returnTypeClassTypeObj, typeArgumentClassObjList);
 
                 return returnTypeClassTypeObj;
             }
         } else if (expression instanceof SuperMethodInvocation) {
             SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) expression;
 
-            List<String> typeArgumentClassNameList = getTypeClassNameList(dependentJarInformationSet, javaVersion,
+            List<TypeObject> typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
                     importStatementList, superMethodInvocation.typeArguments());
 
             List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
@@ -642,7 +639,7 @@ public class InferenceUtility {
 
                 TypeObject returnTypeClassTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion,
                         importStatementList, returnTypeClassName);
-                setFormalTypeParameterMap(returnTypeClassTypeObj, typeArgumentClassNameList);
+                setFormalTypeParameterMap(returnTypeClassTypeObj, typeArgumentClassObjList);
 
                 return returnTypeClassTypeObj;
             }
@@ -926,39 +923,40 @@ public class InferenceUtility {
         TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
                 fieldInfo.getTypeAsStr());
 
-        setFormalTypeParameterMap(classTypeObj, typeArgumentClassNameList);
+        List<TypeObject> typeArgumentClassObjList = typeArgumentClassNameList.stream()
+                .map(TypeObject::new)
+                .collect(Collectors.toList());
+
+        setFormalTypeParameterMap(classTypeObj, typeArgumentClassObjList);
 
         return classTypeObj;
     }
 
     private static void setFormalTypeParameterMap(TypeObject classTypeObj,
-                                                  List<String> typeArgumentClassNameList) {
+                                                  List<TypeObject> typeArgumentObjList) {
 
         if (Objects.nonNull(classTypeObj.getSignature())) {
             ClassSignatureFormalTypeParameterExtractor formalTypeParameterExtractorFromClass =
-                    new ClassSignatureFormalTypeParameterExtractor(typeArgumentClassNameList);
+                    new ClassSignatureFormalTypeParameterExtractor(typeArgumentObjList);
             SignatureReader reader = new SignatureReader(classTypeObj.getSignature());
             reader.accept(formalTypeParameterExtractorFromClass);
 
-            Map<String, TypeObject> argumentTypeObjMap = formalTypeParameterExtractorFromClass.getFormalTypeParameterMap().entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, e -> new TypeObject(e.getValue())));
-
-            classTypeObj.setArgumentTypeObjectMap(argumentTypeObjMap);
+            classTypeObj.setArgumentTypeObjectMap(formalTypeParameterExtractorFromClass.getFormalTypeParameterMap());
         }
     }
 
-    private static List<String> getTypeClassNameList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
-                                                     String javaVersion,
-                                                     List<String> importStatementList,
-                                                     List<Type> typeList) {
-        List<String> typeClassNameList = new ArrayList<>();
+    private static List<TypeObject> getTypeObjList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                   String javaVersion,
+                                                   List<String> importStatementList,
+                                                   List<Type> typeList) {
+        List<TypeObject> typeObjList = new ArrayList<>();
 
         for (Type type : typeList) {
-            typeClassNameList.add(getTypeObj(dependentJarInformationSet, javaVersion,
-                    importStatementList, type).getQualifiedClassName());
+            typeObjList.add(getTypeObj(dependentJarInformationSet, javaVersion,
+                    importStatementList, type));
         }
 
-        return typeClassNameList;
+        return typeObjList;
     }
 
     private static String getQualifiedClassName(TypeDeclaration typeDeclaration) {
