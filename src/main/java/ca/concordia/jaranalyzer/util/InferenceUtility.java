@@ -743,6 +743,19 @@ public class InferenceUtility {
         return PRIMITIVE_TYPE_LIST.contains(argumentTypeClassName);
     }
 
+    public static String getQualifiedClassName(TypeDeclaration typeDeclaration) {
+        String declaringClassQualifiedName = getDeclaringClassQualifiedName(typeDeclaration);
+        if (declaringClassQualifiedName.equals("")) {
+            return typeDeclaration.getName().getIdentifier();
+        } else {
+            if (typeDeclaration.isPackageMemberTypeDeclaration()) {
+                return declaringClassQualifiedName + "." + typeDeclaration.getName().getIdentifier();
+            } else {
+                return declaringClassQualifiedName + "#" + typeDeclaration.getName().getIdentifier();
+            }
+        }
+    }
+
     private static void populateVariableNameMap(Map<String, Set<VariableDeclarationDto>> variableNameMap,
                                                 Set<VariableDeclarationDto> variableDeclarationDtoList) {
 
@@ -896,19 +909,6 @@ public class InferenceUtility {
         }
 
         return typeObjList;
-    }
-
-    private static String getQualifiedClassName(TypeDeclaration typeDeclaration) {
-        String declaringClassQualifiedName = getDeclaringClassQualifiedName(typeDeclaration);
-        if (declaringClassQualifiedName.equals("")) {
-            return typeDeclaration.getName().getIdentifier();
-        } else {
-            if (typeDeclaration.isPackageMemberTypeDeclaration()) {
-                return declaringClassQualifiedName + "." + typeDeclaration.getName().getIdentifier();
-            } else {
-                return declaringClassQualifiedName + "#" + typeDeclaration.getName().getIdentifier();
-            }
-        }
     }
 
     private static List<AnonymousClassDeclaration> getAnonymousClassDeclarationList(BodyDeclaration declaration) {

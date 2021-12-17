@@ -172,4 +172,27 @@ public class JFreeChartV1019TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testCurrentPackageImports() {
+        String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/chart/renderer/xy/DeviationRenderer.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new State(info)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert ("org.jfree.chart.renderer.xy.DeviationRenderer.State" +
+                            "::public void DeviationRenderer$State(org.jfree.chart.plot.PlotRenderingInfo)")
+                            .equals(methodInfo.toString());
+
+                }
+
+                return false;
+            }
+        });
+    }
+
 }
