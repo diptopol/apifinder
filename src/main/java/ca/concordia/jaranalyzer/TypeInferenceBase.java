@@ -403,6 +403,7 @@ public abstract class TypeInferenceBase {
     }
 
     static String resolveQNameForClass(String typeClassName,
+                                       String owningPackageName,
                                        Object[] jarVertexIds,
                                        Set<String> importedClassQNameSet,
                                        List<String> packageNameList,
@@ -416,7 +417,8 @@ public abstract class TypeInferenceBase {
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
                 importedClassQNameSet, packageNameList, tinkerGraph);
 
-        qualifiedClassInfoList = filtrationBasedOnPrioritization(typeClassName, importedClassQNameSet, qualifiedClassInfoList);
+        qualifiedClassInfoList = filtrationBasedOnPrioritization(typeClassName, owningPackageName,
+                importedClassQNameSet, qualifiedClassInfoList);
 
         return qualifiedClassInfoList.isEmpty()
                 ? typeClassName
@@ -424,6 +426,7 @@ public abstract class TypeInferenceBase {
     }
 
     static List<ClassInfo> filtrationBasedOnPrioritization(String typeClassName,
+                                                           String owningPackageName,
                                                            Set<String> importedClassQNameSet,
                                                            List<ClassInfo> qualifiedClassInfoList) {
         /*
@@ -443,6 +446,14 @@ public abstract class TypeInferenceBase {
         if (qualifiedClassInfoList.size() > 1 && qualifiedClassInfoList.stream().anyMatch(isClassNameDirectImport)) {
             qualifiedClassInfoList = qualifiedClassInfoList.stream()
                     .filter(isClassNameDirectImport)
+                    .collect(Collectors.toList());
+        }
+
+        if (StringUtils.isNotEmpty(owningPackageName)
+                && qualifiedClassInfoList.stream().anyMatch(c -> c.getPackageName().equals(owningPackageName))) {
+
+            return qualifiedClassInfoList.stream()
+                    .filter(c -> c.getPackageName().equals(owningPackageName))
                     .collect(Collectors.toList());
         }
 

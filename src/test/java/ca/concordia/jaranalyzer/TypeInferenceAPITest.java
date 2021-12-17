@@ -69,7 +69,7 @@ public class TypeInferenceAPITest {
         importList.add("import java.awt.*");
 
         List<FieldInfo> fieldInfoList = TypeInferenceAPI.getAllFieldTypes(new HashSet<>(), javaVersion, importList,
-                "KEY_FRACTIONALMETRICS");
+                "KEY_FRACTIONALMETRICS", null);
 
         assert "[public static java.awt.RenderingHints$Key KEY_FRACTIONALMETRICS]".equals(fieldInfoList.toString());
     }

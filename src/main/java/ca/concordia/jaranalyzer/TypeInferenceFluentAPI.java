@@ -77,7 +77,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         String previousCallerClass = criteria.getCallerClassName();
 
         criteria.setInvokerType(
-                resolveQNameForClass(criteria.getCallerClassName(), jarVertexIds, importedClassQNameSet,
+                resolveQNameForClass(criteria.getCallerClassName(), criteria.getOwningPackageName(), jarVertexIds, importedClassQNameSet,
                         packageNameList, tinkerGraph));
         resolveQNameForArgumentTypes(criteria, jarVertexIds, importedClassQNameSet, packageNameList);
 
@@ -268,8 +268,10 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
     }
 
-    private void resolveQNameForArgumentTypes(Criteria criteria, Object[] jarVertexIds,
-                                              Set<String> importedClassQNameList, List<String> packageNameList) {
+    private void resolveQNameForArgumentTypes(Criteria criteria,
+                                              Object[] jarVertexIds,
+                                              Set<String> importedClassQNameList,
+                                              List<String> packageNameList) {
         if (!criteria.getArgumentTypeWithIndexList().isEmpty()) {
             List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList().stream()
                     .map(argumentTypeWithIndex -> {
@@ -280,8 +282,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                                 resolveQClassInfoForClass(argumentType, jarVertexIds, importedClassQNameList,
                                         packageNameList, tinkerGraph);
 
-                        qualifiedClassInfoList = filtrationBasedOnPrioritization(argumentType, importedClassQNameList,
-                                qualifiedClassInfoList);
+                        qualifiedClassInfoList = filtrationBasedOnPrioritization(argumentType, criteria.getOwningPackageName(),
+                                importedClassQNameList, qualifiedClassInfoList);
 
                         return qualifiedClassInfoList.isEmpty()
                                 ? argumentTypeWithIndex
@@ -299,6 +301,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private String methodName;
         private int numberOfParameters;
         private String callerClassName;
+        private String owningPackageName;
         private boolean isSuperOfCallerClass;
         private Map<Integer, String> argumentTypeMap;
 
@@ -324,6 +327,10 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         private String getCallerClassName() {
             return callerClassName;
+        }
+
+        public String getOwningPackageName() {
+            return owningPackageName;
         }
 
         private boolean isSuperOfCallerClass() {
@@ -370,6 +377,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         public Criteria setSuperInvoker(boolean isSuperOfCallerClass) {
             this.isSuperOfCallerClass = isSuperOfCallerClass;
+
+            return this;
+        }
+
+        public Criteria setOwningPackageName(String owningPackageName) {
+            this.owningPackageName = owningPackageName;
 
             return this;
         }

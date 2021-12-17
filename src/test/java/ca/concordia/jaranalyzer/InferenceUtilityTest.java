@@ -54,7 +54,7 @@ public class InferenceUtilityTest {
 
                     Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
                             = InferenceUtility.getFieldVariableDeclarationDtoList(Collections.emptySet(), javaVersion,
-                            importStatementList, methodInvocation);
+                            importStatementList, methodInvocation, null);
 
                     assert "[altKey, ctrlKey, enabled, id, metaKey, shiftKey]"
                             .equals(fieldVariableDeclarationDtoList.stream()
@@ -105,12 +105,12 @@ public class InferenceUtilityTest {
 
                     Map<String, Set<VariableDeclarationDto>> variableNameMap =
                             InferenceUtility.getVariableNameMap(Collections.emptySet(), javaVersion,
-                                    importStatementList, methodInvocation);
+                                    importStatementList, methodInvocation, null);
 
                     List<Expression> argumentList = methodInvocation.arguments();
 
                     List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(Collections.emptySet(),
-                            javaVersion, importStatementList, variableNameMap, argumentList);
+                            javaVersion, importStatementList, variableNameMap, argumentList, null);
 
                     List<String> argumentTypeClassNameList = argumentTypeObjList.stream()
                             .map(TypeObject::getQualifiedClassName)

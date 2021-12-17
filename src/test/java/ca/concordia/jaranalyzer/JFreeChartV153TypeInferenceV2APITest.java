@@ -233,4 +233,25 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testMatchingPrioritizationOfCurrentPackageImport() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/renderer/xy/DeviationStepRenderer.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation constructorInvocation) {
+                if (constructorInvocation.toString().startsWith("s.setLastPointGood(false)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert "org.jfree.chart.renderer.xy.XYLineAndShapeRenderer.State::public void setLastPointGood(boolean)"
+                            .equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }

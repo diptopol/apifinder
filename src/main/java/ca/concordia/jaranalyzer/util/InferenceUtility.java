@@ -33,14 +33,15 @@ public class InferenceUtility {
                                                              String javaVersion,
                                                              MethodInvocation methodInvocation,
                                                              List<String> importStatementList,
-                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                             String owningPackageName) {
 
         String methodName = methodInvocation.getName().getIdentifier();
         int numberOfParameters = methodInvocation.arguments().size();
         List<Expression> argumentList = methodInvocation.arguments();
 
         List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
-                javaVersion, importStatementList, variableNameMap, argumentList);
+                javaVersion, importStatementList, variableNameMap, argumentList, owningPackageName);
 
         MethodDeclaration methodDeclaration =
                 (MethodDeclaration) InferenceUtility.getClosestASTNode(methodInvocation,
@@ -59,7 +60,7 @@ public class InferenceUtility {
 
         if (Objects.nonNull(expression)) {
             callerClassTypeObj = InferenceUtility.getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
-                    importStatementList, variableNameMap, expression);
+                    importStatementList, variableNameMap, expression, owningPackageName);
 
             callerClassName = callerClassTypeObj.getQualifiedClassName();
         } else {
@@ -69,7 +70,8 @@ public class InferenceUtility {
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentJarInformationSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerType(callerClassName);
+                .setInvokerType(callerClassName)
+                .setOwningPackageName(owningPackageName);
 
         for (int i = 0; i < argumentTypeObjList.size(); i++) {
             searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
@@ -91,14 +93,15 @@ public class InferenceUtility {
                                                              String javaVersion,
                                                              SuperMethodInvocation superMethodInvocation,
                                                              List<String> importStatementList,
-                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                             String owningPackageName) {
 
         String methodName = superMethodInvocation.getName().getIdentifier();
         int numberOfParameters = superMethodInvocation.arguments().size();
         List<Expression> argumentList = superMethodInvocation.arguments();
 
         List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
-                javaVersion, importStatementList, variableNameMap, argumentList);
+                javaVersion, importStatementList, variableNameMap, argumentList, owningPackageName);
 
         MethodDeclaration methodDeclaration =
                 (MethodDeclaration) InferenceUtility.getClosestASTNode(superMethodInvocation, MethodDeclaration.class);
@@ -110,6 +113,7 @@ public class InferenceUtility {
                 .new Criteria(dependentJarInformationSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
                 .setInvokerType(callerClassName)
+                .setOwningPackageName(owningPackageName)
                 .setSuperInvoker(true);
 
         for (int i = 0; i < argumentTypeObjList.size(); i++) {
@@ -126,14 +130,15 @@ public class InferenceUtility {
                                                              String javaVersion,
                                                              ClassInstanceCreation classInstanceCreation,
                                                              List<String> importStatementList,
-                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                             String owningPackageName) {
 
         String methodName = classInstanceCreation.getType().toString();
         int numberOfParameters = classInstanceCreation.arguments().size();
         List<Expression> argumentList = classInstanceCreation.arguments();
 
         List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
-                javaVersion, importStatementList, variableNameMap, argumentList);
+                javaVersion, importStatementList, variableNameMap, argumentList, owningPackageName);
 
         Type type = classInstanceCreation.getType();
         String callerClassName = null;
@@ -142,14 +147,15 @@ public class InferenceUtility {
             SimpleType simpleType = (SimpleType) type;
             Expression simpleTypeExpression = simpleType.getName();
             callerClassName = InferenceUtility.getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
-                    importStatementList, variableNameMap, simpleTypeExpression).getQualifiedClassName();
+                    importStatementList, variableNameMap, simpleTypeExpression, owningPackageName).getQualifiedClassName();
             callerClassName = (callerClassName == null || callerClassName.equals("null")) ? null : callerClassName;
         }
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentJarInformationSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerType(callerClassName);
+                .setInvokerType(callerClassName)
+                .setOwningPackageName(owningPackageName);
 
         for (int i = 0; i < argumentTypeObjList.size(); i++) {
             searchCriteria.setArgumentType(i, argumentTypeObjList.get(i).getQualifiedClassName());
@@ -161,7 +167,8 @@ public class InferenceUtility {
     public static Map<String, Set<VariableDeclarationDto>> getVariableNameMap(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                                               String javaVersion,
                                                                               List<String> importStatementList,
-                                                                              ASTNode methodExpression) {
+                                                                              ASTNode methodExpression,
+                                                                              String owningPackageName) {
 
         assert methodExpression instanceof MethodInvocation
                 || methodExpression instanceof SuperMethodInvocation
@@ -172,7 +179,8 @@ public class InferenceUtility {
         Map<String, Set<VariableDeclarationDto>> variableNameMap = new HashMap<>();
 
         Set<VariableDeclarationDto> fieldVariableDeclarationList =
-                getFieldVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList, methodExpression);
+                getFieldVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
+                        methodExpression, owningPackageName);
 
         populateVariableNameMap(variableNameMap, fieldVariableDeclarationList);
 
@@ -180,12 +188,14 @@ public class InferenceUtility {
 
         if (methodDeclaration != null) {
             Set<VariableDeclarationDto> methodParameterVariableDeclarationList =
-                    getMethodParameterVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList, methodDeclaration);
+                    getMethodParameterVariableDeclarationDtoList(dependentJarInformationSet, javaVersion,
+                            importStatementList, methodDeclaration, owningPackageName);
 
             populateVariableNameMap(variableNameMap, methodParameterVariableDeclarationList);
 
             Set<VariableDeclarationDto> localVariableDeclarationList =
-                    getMethodLocalVariableDtoList(dependentJarInformationSet, javaVersion, importStatementList, methodDeclaration);
+                    getMethodLocalVariableDtoList(dependentJarInformationSet, javaVersion, importStatementList,
+                            methodDeclaration, owningPackageName);
 
             populateVariableNameMap(variableNameMap, localVariableDeclarationList);
         }
@@ -197,12 +207,13 @@ public class InferenceUtility {
                                                           String javaVersion,
                                                           List<String> importStatementList,
                                                           Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                          List<Expression> argumentList) {
+                                                          List<Expression> argumentList,
+                                                          String owningPackageName) {
         List<TypeObject> argumentTypeObjList = new ArrayList<>();
 
         for (Expression argument : argumentList) {
             TypeObject typeObject = getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList,
-                    variableNameMap, argument);
+                    variableNameMap, argument, owningPackageName);
 
             if (typeObject != null) {
                 argumentTypeObjList.add(typeObject);
@@ -215,7 +226,8 @@ public class InferenceUtility {
     public static Set<VariableDeclarationDto> getFieldVariableDeclarationDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                                                  String javaVersion,
                                                                                  List<String> importStatementList,
-                                                                                 ASTNode node) {
+                                                                                 ASTNode node,
+                                                                                 String owningPackageName) {
 
         TypeDeclaration typeDeclaration = (TypeDeclaration) getTypeDeclaration(node);
         FieldDeclaration[] fieldDeclarations = typeDeclaration.getFields();
@@ -224,7 +236,7 @@ public class InferenceUtility {
             List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
 
             return getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
-                    fieldDeclaration.getType(), fragmentList);
+                    fieldDeclaration.getType(), fragmentList, owningPackageName);
         }).flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
@@ -338,7 +350,8 @@ public class InferenceUtility {
                                                       String javaVersion,
                                                       List<String> importStatementList,
                                                       Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                      Expression expression) {
+                                                      Expression expression,
+                                                      String owningPackageName) {
         if (expression == null) {
             return null;
         }
@@ -359,7 +372,8 @@ public class InferenceUtility {
 
         } else if (expression instanceof TypeLiteral) {
             Type argumentType = ((TypeLiteral) expression).getType();
-            TypeObject argumentTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, argumentType);
+            TypeObject argumentTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList,
+                    argumentType, owningPackageName);
 
             TypeObject typeObject = new TypeObject("java.lang.Class");
 
@@ -379,7 +393,7 @@ public class InferenceUtility {
             ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression) expression;
 
             return getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    parenthesizedExpression.getExpression());
+                    parenthesizedExpression.getExpression(), owningPackageName);
 
 
         } else if (expression instanceof FieldAccess) {
@@ -387,7 +401,7 @@ public class InferenceUtility {
 
             Expression fieldAccessExpression = fieldAccess.getExpression();
             TypeObject fieldAccessClassObj = getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList,
-                    variableNameMap, fieldAccessExpression);
+                    variableNameMap, fieldAccessExpression, owningPackageName);
 
             String className = fieldAccessClassObj.getQualifiedClassName();
 
@@ -397,7 +411,8 @@ public class InferenceUtility {
                 name = className + "." + name;
             }
 
-            TypeObject fieldTypeObj = getTypeObjFromFieldName(dependentJarInformationSet, javaVersion, importStatementList, name);
+            TypeObject fieldTypeObj = getTypeObjFromFieldName(dependentJarInformationSet, javaVersion,
+                    importStatementList, name, owningPackageName);
 
             if (Objects.nonNull(fieldTypeObj)) {
                 return fieldTypeObj;
@@ -409,7 +424,8 @@ public class InferenceUtility {
 
             String name = superFieldAccess.getName().getFullyQualifiedName();
 
-            TypeObject fieldTypeObj = getTypeObjFromFieldName(dependentJarInformationSet, javaVersion, importStatementList, name);
+            TypeObject fieldTypeObj = getTypeObjFromFieldName(dependentJarInformationSet, javaVersion,
+                    importStatementList, name, owningPackageName);
 
             if (Objects.nonNull(fieldTypeObj)) {
                 return fieldTypeObj;
@@ -432,9 +448,9 @@ public class InferenceUtility {
             Expression elseExp = conditionalExpression.getElseExpression();
 
             String thenClassName = getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    then).getQualifiedClassName();
+                    then, owningPackageName).getQualifiedClassName();
             String elseClassName = getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    elseExp).getQualifiedClassName();
+                    elseExp, owningPackageName).getQualifiedClassName();
 
             return new TypeObject(!thenClassName.equals("null") ? thenClassName : elseClassName);
 
@@ -449,14 +465,14 @@ public class InferenceUtility {
 
             ArrayType arrayType = arrayCreation.getType();
 
-            return getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, arrayType);
+            return getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, arrayType, owningPackageName);
 
         } else if (expression instanceof ArrayAccess) {
             ArrayAccess arrayAccess = (ArrayAccess) expression;
 
             Expression array = arrayAccess.getArray();
             TypeObject arrayType = getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList,
-                    variableNameMap, array);
+                    variableNameMap, array, owningPackageName);
 
             if (arrayAccess.getIndex() != null) {
                 arrayType.setQualifiedClassName(StringUtils.substringBeforeLast(arrayType.getQualifiedClassName(),
@@ -472,10 +488,10 @@ public class InferenceUtility {
             Expression right = infixExpression.getRightOperand();
             InfixExpression.Operator operator = infixExpression.getOperator();
 
-            TypeObject leftExpressionTypeObj = getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    left);
-            TypeObject rightExpressionClassNameTypeObj = getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    right);
+            TypeObject leftExpressionTypeObj = getTypeObjFromExpression(dependentJarInformationSet, javaVersion,
+                    importStatementList, variableNameMap, left, owningPackageName);
+            TypeObject rightExpressionClassNameTypeObj = getTypeObjFromExpression(dependentJarInformationSet,
+                    javaVersion, importStatementList, variableNameMap, right, owningPackageName);
 
             if (operator.equals(InfixExpression.Operator.CONDITIONAL_AND)
                     || operator.equals(InfixExpression.Operator.CONDITIONAL_OR)
@@ -520,13 +536,13 @@ public class InferenceUtility {
         } else if (expression instanceof PrefixExpression) {
             PrefixExpression prefixExpression = (PrefixExpression) expression;
             return getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    prefixExpression.getOperand());
+                    prefixExpression.getOperand(), owningPackageName);
 
         } else if (expression instanceof PostfixExpression) {
             PostfixExpression postfixExpression = (PostfixExpression) expression;
 
             return getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                    postfixExpression.getOperand());
+                    postfixExpression.getOperand(), owningPackageName);
 
         } else if (expression instanceof Name) {
             String name = ((Name) expression).getFullyQualifiedName();
@@ -541,12 +557,13 @@ public class InferenceUtility {
                 }
 
                 TypeObject fieldTypeObj = getTypeObjFromFieldName(dependentJarInformationSet, javaVersion,
-                        importStatementList, name);
+                        importStatementList, name, owningPackageName);
 
                 if (Objects.nonNull(fieldTypeObj)) {
                     return fieldTypeObj;
                 } else {
-                    return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name);
+                    return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name,
+                            owningPackageName);
                 }
             } else if (expression instanceof SimpleName) {
                 VariableDeclarationDto selected = getClassNameFromVariableMap(name, expression, variableNameMap);
@@ -559,7 +576,7 @@ public class InferenceUtility {
                     if (typeOfSelected.isParameterizedType()) {
                         ParameterizedType parameterizedType = (ParameterizedType) typeOfSelected;
                         typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
-                                importStatementList, parameterizedType.typeArguments());
+                                importStatementList, parameterizedType.typeArguments(), owningPackageName);
                         classTypeObj.setParameterized(true);
                     }
 
@@ -570,12 +587,13 @@ public class InferenceUtility {
                     return classTypeObj;
                 } else {
                     TypeObject fieldTypeObj = getTypeObjFromFieldName(dependentJarInformationSet, javaVersion,
-                            importStatementList, name);
+                            importStatementList, name, owningPackageName);
 
                     if (Objects.nonNull(fieldTypeObj)) {
                         return fieldTypeObj;
                     } else {
-                        return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name);
+                        return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
+                                name, owningPackageName);
                     }
 
                 }
@@ -587,17 +605,18 @@ public class InferenceUtility {
             ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation) expression;
 
             List<TypeObject> typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
-                    importStatementList, classInstanceCreation.typeArguments());
+                    importStatementList, classInstanceCreation.typeArguments(), owningPackageName);
 
             List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
-                    classInstanceCreation, importStatementList, variableNameMap);
+                    classInstanceCreation, importStatementList, variableNameMap, owningPackageName);
 
             // if the getAllMethods returns empty, the method can be a private construct.
             if (methodInfoList.isEmpty()) {
                 return new TypeObject("null");
             } else {
                 String className = methodInfoList.get(0).getClassInfo().getQualifiedName();
-                TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, className);
+                TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion,
+                        importStatementList, className, owningPackageName);
                 classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
                 return classTypeObj;
@@ -606,10 +625,10 @@ public class InferenceUtility {
             MethodInvocation methodInvocation = (MethodInvocation) expression;
 
             List<TypeObject> typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
-                    importStatementList, methodInvocation.typeArguments());
+                    importStatementList, methodInvocation.typeArguments(), owningPackageName);
 
             List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
-                    methodInvocation, importStatementList, variableNameMap);
+                    methodInvocation, importStatementList, variableNameMap, owningPackageName);
 
             // if the getAllMethods returns empty, the method can be a private construct.
             if (methodInfoList.isEmpty()) {
@@ -618,7 +637,7 @@ public class InferenceUtility {
                 String returnTypeClassName = methodInfoList.get(0).getReturnType();
 
                 TypeObject returnTypeClassTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion,
-                        importStatementList, returnTypeClassName);
+                        importStatementList, returnTypeClassName, owningPackageName);
                 returnTypeClassTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
                 return returnTypeClassTypeObj;
@@ -627,10 +646,10 @@ public class InferenceUtility {
             SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) expression;
 
             List<TypeObject> typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
-                    importStatementList, superMethodInvocation.typeArguments());
+                    importStatementList, superMethodInvocation.typeArguments(), owningPackageName);
 
             List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentJarInformationSet, javaVersion,
-                    superMethodInvocation, importStatementList, variableNameMap);
+                    superMethodInvocation, importStatementList, variableNameMap, owningPackageName);
 
             // if the getAllMethods returns empty, the method can be a private construct.
             if (methodInfoList.isEmpty()) {
@@ -639,7 +658,7 @@ public class InferenceUtility {
                 String returnTypeClassName = methodInfoList.get(0).getReturnType();
 
                 TypeObject returnTypeClassTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion,
-                        importStatementList, returnTypeClassName);
+                        importStatementList, returnTypeClassName, owningPackageName);
                 returnTypeClassTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
                 return returnTypeClassTypeObj;
@@ -653,7 +672,7 @@ public class InferenceUtility {
                 Expression bodyExpression = (Expression) body;
 
                 return getTypeObjFromExpression(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                        bodyExpression);
+                        bodyExpression, owningPackageName);
             } else {
                 return new TypeObject("null");
             }
@@ -666,7 +685,8 @@ public class InferenceUtility {
     public static TypeObject getTypeObj(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                         String javaVersion,
                                         List<String> importStatementList,
-                                        Type type) {
+                                        Type type,
+                                        String owningPackageName) {
         if (type == null) {
             return null;
         }
@@ -682,11 +702,13 @@ public class InferenceUtility {
 
             if (!elementType.isPrimitiveType()) {
                 if (elementType instanceof SimpleType) {
-                    elementTypeObj = getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) elementType));
+                    elementTypeObj = getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion,
+                            importStatementList, ((SimpleType) elementType), owningPackageName);
                     elementTypeStr = elementTypeObj.getQualifiedClassName();
 
                 } else if (elementType instanceof QualifiedType) {
-                    elementTypeObj = getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) elementType);
+                    elementTypeObj = getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion,
+                            importStatementList, (QualifiedType) elementType, owningPackageName);
                     elementTypeStr = elementTypeObj.getQualifiedClassName();
                 } else {
                     throw new IllegalStateException();
@@ -707,20 +729,24 @@ public class InferenceUtility {
             return elementTypeObj;
 
         } else if (type instanceof SimpleType) {
-            return getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) type));
+            return getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion, importStatementList,
+                    (SimpleType) type, owningPackageName);
 
         } else if (type instanceof QualifiedType) {
-            return getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) type);
+            return getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion, importStatementList,
+                    (QualifiedType) type, owningPackageName);
 
 
         } else if (type instanceof ParameterizedType) {
             Type internalType = ((ParameterizedType) type).getType();
 
             if (internalType instanceof SimpleType) {
-                return getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion, importStatementList, ((SimpleType) internalType));
+                return getTypeObjFromSimpleType(dependentJarInformationSet, javaVersion, importStatementList,
+                        (SimpleType) internalType, owningPackageName);
 
             } else if (internalType instanceof QualifiedType) {
-                return getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion, importStatementList, (QualifiedType) internalType);
+                return getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion, importStatementList,
+                        (QualifiedType) internalType, owningPackageName);
 
             } else {
                 throw new IllegalStateException();
@@ -732,7 +758,7 @@ public class InferenceUtility {
             class of all the types. For simplicity, we will use the first type as type of argument. If we can find
             scenario where this approach does not work, we will improve our approach.*/
             Type firstType = typeList.get(0);
-            return getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, firstType);
+            return getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, firstType, owningPackageName);
 
         } else {
             return new TypeObject(type.toString());
@@ -774,12 +800,14 @@ public class InferenceUtility {
     private static Set<VariableDeclarationDto> getMethodParameterVariableDeclarationDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                                                             String javaVersion,
                                                                                             List<String> importStatementList,
-                                                                                            MethodDeclaration methodDeclaration) {
+                                                                                            MethodDeclaration methodDeclaration,
+                                                                                            String owningPackageName) {
         if (methodDeclaration != null) {
             List<SingleVariableDeclaration> declarationList = methodDeclaration.parameters();
 
             return declarationList.stream()
-                    .map(declaration -> getVariableDeclarationDto(dependentJarInformationSet, javaVersion, importStatementList, declaration))
+                    .map(declaration -> getVariableDeclarationDto(dependentJarInformationSet, javaVersion,
+                            importStatementList, declaration, owningPackageName))
                     .filter(Objects::nonNull).collect(Collectors.toSet());
         } else {
             return Collections.emptySet();
@@ -789,7 +817,8 @@ public class InferenceUtility {
     private static Set<VariableDeclarationDto> getMethodLocalVariableDtoList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                                              String javaVersion,
                                                                              List<String> importStatementList,
-                                                                             MethodDeclaration methodDeclaration) {
+                                                                             MethodDeclaration methodDeclaration,
+                                                                             String owningPackageName) {
         Set<VariableDeclarationDto> localVariableDtoSet = new HashSet<>();
 
         methodDeclaration.getBody().accept(new ASTVisitor() {
@@ -797,7 +826,7 @@ public class InferenceUtility {
             public boolean visit(SingleVariableDeclaration singleVariableDeclaration) {
                 VariableDeclarationDto variableDeclarationDto =
                         getVariableDeclarationDto(dependentJarInformationSet, javaVersion, importStatementList,
-                                singleVariableDeclaration);
+                                singleVariableDeclaration, owningPackageName);
 
                 localVariableDtoSet.add(variableDeclarationDto);
 
@@ -810,7 +839,7 @@ public class InferenceUtility {
 
                 List<VariableDeclarationDto> variableDeclarationDtoList =
                         getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
-                                variableDeclarationExpression.getType(), fragmentList);
+                                variableDeclarationExpression.getType(), fragmentList, owningPackageName);
 
                 localVariableDtoSet.addAll(variableDeclarationDtoList);
             }
@@ -821,7 +850,7 @@ public class InferenceUtility {
 
                 List<VariableDeclarationDto> variableDeclarationDtoList =
                         getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
-                                variableDeclarationStatement.getType(), fragmentList);
+                                variableDeclarationStatement.getType(), fragmentList, owningPackageName);
 
                 localVariableDtoSet.addAll(variableDeclarationDtoList);
             }
@@ -833,10 +862,12 @@ public class InferenceUtility {
     private static VariableDeclarationDto getVariableDeclarationDto(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                                     String javaVersion,
                                                                     List<String> importStatementList,
-                                                                    SingleVariableDeclaration declaration) {
+                                                                    SingleVariableDeclaration declaration,
+                                                                    String owningPackageName) {
         String name = declaration.getName().getFullyQualifiedName();
         Type declarationType = declaration.getType();
-        TypeObject declarationTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, declarationType);
+        TypeObject declarationTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList,
+                declarationType, owningPackageName);
 
         ASTNode scopedNode = getVariableDeclarationScopedNode(declaration);
 
@@ -900,12 +931,12 @@ public class InferenceUtility {
     private static List<TypeObject> getTypeObjList(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                    String javaVersion,
                                                    List<String> importStatementList,
-                                                   List<Type> typeList) {
+                                                   List<Type> typeList, String owningPackageName) {
         List<TypeObject> typeObjList = new ArrayList<>();
 
         for (Type type : typeList) {
             typeObjList.add(getTypeObj(dependentJarInformationSet, javaVersion,
-                    importStatementList, type));
+                    importStatementList, type, owningPackageName));
         }
 
         return typeObjList;
@@ -924,10 +955,11 @@ public class InferenceUtility {
                                                                               String javaVersion,
                                                                               List<String> importStatementList,
                                                                               Type declarationType,
-                                                                              List<VariableDeclarationFragment> fragmentList) {
+                                                                              List<VariableDeclarationFragment> fragmentList,
+                                                                              String owningPackageName) {
 
         TypeObject declarationTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList,
-                declarationType);
+                declarationType, owningPackageName);
 
         return fragmentList.stream().map(fragment -> {
             ASTNode scopedNode = getVariableDeclarationScopedNode(fragment);
@@ -954,27 +986,30 @@ public class InferenceUtility {
     private static TypeObject getTypeObjFromSimpleType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                        String javaVersion,
                                                        List<String> importStatementList,
-                                                       SimpleType simpleType) {
+                                                       SimpleType simpleType,
+                                                       String owningPackageName) {
         String name = simpleType.getName().getFullyQualifiedName();
-        return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name);
+        return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name, owningPackageName);
     }
 
     private static TypeObject getTypeObjFromQualifiedType(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                           String javaVersion,
                                                           List<String> importStatementList,
-                                                          QualifiedType qualifiedType) {
+                                                          QualifiedType qualifiedType,
+                                                          String owningPackageName) {
 
         String name = qualifiedType.getName().getFullyQualifiedName();
-        return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name);
+        return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList, name, owningPackageName);
     }
 
     private static TypeObject getTypeObjFromFieldName(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                       String javaVersion,
                                                       List<String> importStatementList,
-                                                      String fieldName) {
+                                                      String fieldName,
+                                                      String owningPackageName) {
 
         List<FieldInfo> fieldInfoList = TypeInferenceAPI.getAllFieldTypes(dependentJarInformationSet,
-                javaVersion, importStatementList, fieldName);
+                javaVersion, importStatementList, fieldName, owningPackageName);
 
         if (fieldInfoList.isEmpty()) {
             return null;
@@ -994,7 +1029,7 @@ public class InferenceUtility {
         }
 
         TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
-                fieldInfo.getTypeAsStr())
+                fieldInfo.getTypeAsStr(), owningPackageName)
                 .setParameterized(!typeArgumentClassObjList.isEmpty());
 
         classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
@@ -1005,10 +1040,11 @@ public class InferenceUtility {
     private static TypeObject getTypeObjFromClassName(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                       String javaVersion,
                                                       List<String> importStatementList,
-                                                      String className) {
+                                                      String className,
+                                                      String owningPackageName) {
 
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList,
-                className);
+                className, owningPackageName);
 
         if (classInfoList.isEmpty()) {
             return new TypeObject(className);
