@@ -254,4 +254,24 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testPopulatingArrayDimensionDuringFieldAccess() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/util/AbstractObjectList.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation constructorInvocation) {
+                if (constructorInvocation.toString().startsWith("Arrays.fill(this.objects,")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert "java.util.Arrays::public static void fill(java.lang.Object[], java.lang.Object)".equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }

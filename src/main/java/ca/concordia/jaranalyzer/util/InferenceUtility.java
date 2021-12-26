@@ -1018,6 +1018,7 @@ public class InferenceUtility {
         FieldInfo fieldInfo = fieldInfoList.get(0);
 
         List<TypeObject> typeArgumentClassObjList = new ArrayList<>();
+        String typeClassName;
 
         if (Objects.nonNull(fieldInfo.getSignature())) {
             FieldSignatureFormalTypeParameterExtractor formalTypeParameterExtractor
@@ -1025,14 +1026,25 @@ public class InferenceUtility {
 
             SignatureReader reader = new SignatureReader(fieldInfo.getSignature());
             reader.accept(formalTypeParameterExtractor);
+            typeClassName = formalTypeParameterExtractor.getTypeClassName();
             typeArgumentClassObjList = formalTypeParameterExtractor.getTypeArgumentClassObjList();
+        } else {
+            typeClassName = fieldInfo.getTypeAsStr();
         }
 
         TypeObject classTypeObj = getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
-                fieldInfo.getTypeAsStr(), owningPackageName)
+                typeClassName, owningPackageName)
                 .setParameterized(!typeArgumentClassObjList.isEmpty());
 
         classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
+
+        //if fieldType is array populate array dimension
+        if (typeClassName.contains("[]")) {
+            int numberOfDimension = StringUtils.countMatches(fieldInfo.getTypeAsStr(), "[]");
+            classTypeObj.setQualifiedClassName(classTypeObj.getQualifiedClassName()
+                    .replaceAll("\\[]", "") //replace any existing dimension (primitive types)
+                    .concat(StringUtils.repeat("[]", numberOfDimension)));
+        }
 
         return classTypeObj;
     }
