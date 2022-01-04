@@ -234,7 +234,7 @@ public class JFreeChartV153TypeInferenceV2APITest {
     }
 
     @Test
-    public void testMatchingPrioritizationOfCurrentPackageImport() {
+    public void testMatchingPrioritizationOfCurrentClassHierarchyImport() {
         String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/renderer/xy/DeviationStepRenderer.java";
 
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

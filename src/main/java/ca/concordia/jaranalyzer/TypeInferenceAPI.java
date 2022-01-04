@@ -72,7 +72,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                  int numberOfParameters,
                                                  String callerClassName,
                                                  boolean isSuperOfCallerClass,
-                                                 String owningPackageName,
+                                                 String owningClassQualifiedName,
                                                  String... argumentTypes) {
 
         Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion, tinkerGraph);
@@ -83,8 +83,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         List<MethodInfo> qualifiedMethodInfoList = new ArrayList<>();
 
         String previousCallerClass = callerClassName;
-        callerClassName = resolveQNameForClass(callerClassName, owningPackageName, jarVertexIds, importedClassQNameSet, packageNameList, tinkerGraph);
-        List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, owningPackageName, jarVertexIds, importedClassQNameSet, packageNameList);
+        callerClassName = resolveQNameForClass(callerClassName, owningClassQualifiedName, jarVertexIds, importedClassQNameSet, packageNameList, tinkerGraph);
+        List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, owningClassQualifiedName, jarVertexIds, importedClassQNameSet, packageNameList);
 
         methodName = processMethodName(methodName, importedClassQNameSet);
 
@@ -228,7 +228,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                               String javaVersion,
                                               List<String> importList,
                                               String typeName,
-                                              String owningPackageName) {
+                                              String owningClassQualifiedName) {
         if (Objects.isNull(typeName)) {
             return Collections.emptyList();
         }
@@ -245,7 +245,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeName, jarVertexIds, importedClassQNameSet, packageNameList, tinkerGraph);
-        qualifiedClassInfoList = filtrationBasedOnPrioritization(typeName, owningPackageName, importedClassQNameSet, qualifiedClassInfoList);
+        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeName, owningClassQualifiedName,
+                importedClassQNameSet, qualifiedClassInfoList, tinkerGraph);
 
         return qualifiedClassInfoList;
     }
@@ -254,7 +255,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                    String javaVersion,
                                                    List<String> importList,
                                                    String fieldName,
-                                                   String owningPackageName) {
+                                                   String owningClassQualifiedName) {
 
 
         Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion, tinkerGraph);
@@ -267,7 +268,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         if (fieldName.contains(".")) {
             if (StringUtils.countMatches(fieldName, ".") >= 1) {
                 String callerClassName = fieldName.substring(0, fieldName.lastIndexOf("."));
-                callerClassQName = resolveQNameForClass(callerClassName, owningPackageName, jarVertexIds,
+                callerClassQName = resolveQNameForClass(callerClassName, owningClassQualifiedName, jarVertexIds,
                         importedClassQNameList, packageNameList, tinkerGraph);
 
                 importedClassQNameList.add(callerClassQName);

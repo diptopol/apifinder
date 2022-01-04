@@ -403,7 +403,7 @@ public abstract class TypeInferenceBase {
     }
 
     static String resolveQNameForClass(String typeClassName,
-                                       String owningPackageName,
+                                       String owningClassQualifiedName,
                                        Object[] jarVertexIds,
                                        Set<String> importedClassQNameSet,
                                        List<String> packageNameList,
@@ -417,18 +417,20 @@ public abstract class TypeInferenceBase {
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
                 importedClassQNameSet, packageNameList, tinkerGraph);
 
-        qualifiedClassInfoList = filtrationBasedOnPrioritization(typeClassName, owningPackageName,
-                importedClassQNameSet, qualifiedClassInfoList);
+        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeClassName, owningClassQualifiedName,
+                importedClassQNameSet, qualifiedClassInfoList, tinkerGraph);
 
         return qualifiedClassInfoList.isEmpty()
                 ? typeClassName
                 : getQualifiedNameWithArrayDimension(qualifiedClassInfoList.get(0).getQualifiedName(), numberOfArrayDimensions);
     }
 
-    static List<ClassInfo> filtrationBasedOnPrioritization(String typeClassName,
-                                                           String owningPackageName,
+    static List<ClassInfo> filtrationBasedOnPrioritization(Object[] jarVertexIds,
+                                                           String typeClassName,
+                                                           String owningClassQualifiedName,
                                                            Set<String> importedClassQNameSet,
-                                                           List<ClassInfo> qualifiedClassInfoList) {
+                                                           List<ClassInfo> qualifiedClassInfoList,
+                                                           TinkerGraph tinkerGraph) {
         /*
          * If there are multiple result, we want to give priority for classes who are directly mentioned in import
          * statement or belongs to 'java.lang' package. Because * package import can have many classes which satisfies
@@ -449,12 +451,26 @@ public abstract class TypeInferenceBase {
                     .collect(Collectors.toList());
         }
 
-        if (StringUtils.isNotEmpty(owningPackageName)
-                && qualifiedClassInfoList.stream().anyMatch(c -> c.getPackageName().equals(owningPackageName))) {
+        if (StringUtils.isNotEmpty(owningClassQualifiedName) && qualifiedClassInfoList.size() > 1) {
+            Set<String> classNameSet = Collections.singleton(owningClassQualifiedName);
 
-            return qualifiedClassInfoList.stream()
-                    .filter(c -> c.getPackageName().equals(owningPackageName))
-                    .collect(Collectors.toList());
+            while (!classNameSet.isEmpty()) {
+                Set<String> superClassSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
+
+                if (qualifiedClassInfoList.stream().anyMatch(c -> superClassSet.contains(c.getQualifiedName()))) {
+                    return qualifiedClassInfoList.stream().filter(c -> superClassSet.contains(c.getQualifiedName()))
+                            .collect(Collectors.toList());
+                }
+
+                Set<String> innerClassNameSet = getInnerClassNameSet(jarVertexIds, superClassSet, tinkerGraph);
+
+                if (qualifiedClassInfoList.stream().anyMatch(c -> innerClassNameSet.contains(c.getName()))) {
+                    return qualifiedClassInfoList.stream().filter(c -> innerClassNameSet.contains(c.getName()))
+                            .collect(Collectors.toList());
+                }
+
+                classNameSet = superClassSet;
+            }
         }
 
         if (qualifiedClassInfoList.size() > 1 && qualifiedClassInfoList.stream().anyMatch(c -> c.getPackageName().equals("java.lang"))) {
@@ -578,11 +594,33 @@ public abstract class TypeInferenceBase {
     static Set<String> getSuperClasses(Set<String> classQNameList,
                                        Object[] jarVertexIds,
                                        TinkerGraph tinkerGraph) {
+
+        if (classQNameList.isEmpty()) {
+            return Collections.emptySet();
+        }
+
         return tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
                 .has("QName", TextP.within(classQNameList))
                 .out("extends", "implements")
+                .<String>values("Name")
+                .toSet();
+    }
+
+    static Set<String> getInnerClassNameSet(Object[] jarVertexIds,
+                                            Set<String> classQNameList,
+                                            TinkerGraph tinkerGraph) {
+
+        if (classQNameList.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
+                .has("Kind", "Class")
+                .has("QName", TextP.within(classQNameList))
+                .out("ContainsInnerClass")
                 .<String>values("Name")
                 .toSet();
     }

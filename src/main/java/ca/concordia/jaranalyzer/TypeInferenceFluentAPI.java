@@ -77,7 +77,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         String previousCallerClass = criteria.getCallerClassName();
 
         criteria.setInvokerType(
-                resolveQNameForClass(criteria.getCallerClassName(), criteria.getOwningPackageName(), jarVertexIds, importedClassQNameSet,
+                resolveQNameForClass(criteria.getCallerClassName(), criteria.getOwningClassQualifiedName(), jarVertexIds, importedClassQNameSet,
                         packageNameList, tinkerGraph));
         resolveQNameForArgumentTypes(criteria, jarVertexIds, importedClassQNameSet, packageNameList);
 
@@ -282,8 +282,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                                 resolveQClassInfoForClass(argumentType, jarVertexIds, importedClassQNameList,
                                         packageNameList, tinkerGraph);
 
-                        qualifiedClassInfoList = filtrationBasedOnPrioritization(argumentType, criteria.getOwningPackageName(),
-                                importedClassQNameList, qualifiedClassInfoList);
+                        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, argumentType, criteria.getOwningClassQualifiedName(),
+                                importedClassQNameList, qualifiedClassInfoList, tinkerGraph);
 
                         return qualifiedClassInfoList.isEmpty()
                                 ? argumentTypeWithIndex
@@ -301,7 +301,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private String methodName;
         private int numberOfParameters;
         private String callerClassName;
-        private String owningPackageName;
+        private String owningClassQualifiedName;
         private boolean isSuperOfCallerClass;
         private Map<Integer, String> argumentTypeMap;
 
@@ -329,8 +329,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return callerClassName;
         }
 
-        public String getOwningPackageName() {
-            return owningPackageName;
+        public String getOwningClassQualifiedName() {
+            return owningClassQualifiedName;
         }
 
         private boolean isSuperOfCallerClass() {
@@ -381,8 +381,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return this;
         }
 
-        public Criteria setOwningPackageName(String owningPackageName) {
-            this.owningPackageName = owningPackageName;
+        public Criteria setOwningClassQualifiedName(String owningClassQualifiedName) {
+            this.owningClassQualifiedName = owningClassQualifiedName;
 
             return this;
         }
