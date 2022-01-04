@@ -274,4 +274,32 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    /*
+     * Java allows to override method with a return type that is a subtype of the return type of the overridden
+     * method (covariant return type). But to facilitate that javac create an extra method (bridge method)
+     * with return type of the overridden method. We need to exclude the bridge method from the result.
+     *
+     * @see <a href="https://docs.oracle.com/javase/tutorial/java/generics/bridgeMethods.html">Bridge Method</a>
+     */
+    @Test
+    public void testExclusionOfBridgeMethod() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xml/ValueHandler.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation constructorInvocation) {
+                if (constructorInvocation.toString().contains("this.currentText.delete(0,")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert "java.lang.StringBuffer::public synchronized java.lang.StringBuffer delete(int, int)"
+                            .equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }

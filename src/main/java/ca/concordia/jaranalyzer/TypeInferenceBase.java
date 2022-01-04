@@ -796,6 +796,7 @@ public abstract class TypeInferenceBase {
                 && methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$"));
 
         return innerClassConstructorMatching
+                && !methodInfo.isBridgeMethod()
                 && (methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs());
     }
 

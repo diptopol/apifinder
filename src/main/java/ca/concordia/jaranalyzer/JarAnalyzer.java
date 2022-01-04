@@ -131,6 +131,7 @@ public class JarAnalyzer {
                                     .property("isSynchronized", m.isSynchronized())
                                     .property("isFinal", m.isFinal())
                                     .property("isVarargs", m.isVarargs())
+                                    .property("isBridgeMethod", m.isBridgeMethod())
                                     .property("className", m.getClassName())
                                     .property("signature", m.getSignature())
                                     .property("returnTypeDescriptor", m.getReturnTypeAsType().getDescriptor())

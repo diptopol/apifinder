@@ -25,6 +25,7 @@ public class MethodInfo {
 	private boolean isConstructor;
 	private boolean isVarargs;
 	private boolean isFinal;
+	private boolean isBridgeMethod;
 	private String qualifiedName;
 	private String internalClassConstructorPrefix;
 
@@ -45,6 +46,7 @@ public class MethodInfo {
 		this.isSynchronized = vertex.<Boolean>property("isSynchronized").value();
 		this.isVarargs = vertex.<Boolean>property("isVarargs").value();
 		this.isFinal = vertex.<Boolean>property("isFinal").value();
+		this.isBridgeMethod = vertex.<Boolean>property("isBridgeMethod").value();
 
 		VertexProperty<String> internalClassConstructorPrefixProp = vertex.property("internalClassConstructorPrefix");
 
@@ -142,6 +144,10 @@ public class MethodInfo {
 
 		if ((methodNode.access & Opcodes.ACC_FINAL) != 0) {
 			isFinal = true;
+		}
+
+		if ((methodNode.access & Opcodes.ACC_BRIDGE) != 0) {
+			isBridgeMethod = true;
 		}
 	}
 
@@ -307,6 +313,10 @@ public class MethodInfo {
 
 	public boolean isFinal() {
 		return isFinal;
+	}
+
+	public boolean isBridgeMethod() {
+		return isBridgeMethod;
 	}
 
 	public String getInternalClassConstructorPrefix() {
