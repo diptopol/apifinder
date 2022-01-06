@@ -302,4 +302,25 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testArgumentAsMethodInvocationWithArrayReturnType() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/category/DefaultIntervalCategoryDataset.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ConstructorInvocation constructorInvocation) {
+                if (constructorInvocation.toString().contains("this(DataUtils.createNumberArray2D(starts)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert ("org.jfree.data.category.DefaultIntervalCategoryDataset::public void" +
+                            " DefaultIntervalCategoryDataset(java.lang.Number[][], java.lang.Number[][])").equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }

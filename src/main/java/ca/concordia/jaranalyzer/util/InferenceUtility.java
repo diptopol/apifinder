@@ -1038,14 +1038,6 @@ public class InferenceUtility {
 
         classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
 
-        //if fieldType is array populate array dimension
-        if (typeClassName.contains("[]")) {
-            int numberOfDimension = StringUtils.countMatches(fieldInfo.getTypeAsStr(), "[]");
-            classTypeObj.setQualifiedClassName(classTypeObj.getQualifiedClassName()
-                    .replaceAll("\\[]", "") //replace any existing dimension (primitive types)
-                    .concat(StringUtils.repeat("[]", numberOfDimension)));
-        }
-
         return classTypeObj;
     }
 
@@ -1064,7 +1056,17 @@ public class InferenceUtility {
 
         ClassInfo classInfo = classInfoList.get(0);
 
-        return new TypeObject(classInfo.getQualifiedName()).setSignature(classInfo.getSignature());
+        TypeObject typeObject = new TypeObject(classInfo.getQualifiedName()).setSignature(classInfo.getSignature());
+
+        //if className is array populate array dimension
+        if (className.contains("[]")) {
+            int numberOfDimension = StringUtils.countMatches(className, "[]");
+            typeObject.setQualifiedClassName(typeObject.getQualifiedClassName()
+                    .replaceAll("\\[]", "") //replace any existing dimension (primitive types)
+                    .concat(StringUtils.repeat("[]", numberOfDimension)));
+        }
+
+        return typeObject;
     }
 
 }
