@@ -43,11 +43,11 @@ public class InferenceUtility {
         List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassQualifiedName);
 
-        MethodDeclaration methodDeclaration =
-                (MethodDeclaration) InferenceUtility.getClosestASTNode(methodInvocation,
-                        MethodDeclaration.class);
+        BodyDeclaration bodyDeclaration =
+                (BodyDeclaration) InferenceUtility.getClosestASTNode(methodInvocation,
+                        BodyDeclaration.class);
 
-        String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
+        String className = InferenceUtility.getDeclaringClassQualifiedName(bodyDeclaration);
 
         boolean isStaticImport = importStatementList.stream()
                 .anyMatch(importStatement -> importStatement.startsWith("import static")
@@ -103,10 +103,10 @@ public class InferenceUtility {
         List<TypeObject> argumentTypeObjList = InferenceUtility.getArgumentTypeObjList(dependentJarInformationSet,
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassQualifiedName);
 
-        MethodDeclaration methodDeclaration =
-                (MethodDeclaration) InferenceUtility.getClosestASTNode(superMethodInvocation, MethodDeclaration.class);
+        BodyDeclaration bodyDeclaration =
+                (BodyDeclaration) InferenceUtility.getClosestASTNode(superMethodInvocation, BodyDeclaration.class);
 
-        String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
+        String className = InferenceUtility.getDeclaringClassQualifiedName(bodyDeclaration);
         String callerClassName = className.replace("%", "").replace("#", ".");
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -339,7 +339,7 @@ public class InferenceUtility {
 
         ASTNode parent = node.getParent();
 
-        while (!(nodeClazz.isInstance(parent))) {
+        while (Objects.nonNull(parent) && !(nodeClazz.isInstance(parent))) {
             parent = parent.getParent();
         }
 

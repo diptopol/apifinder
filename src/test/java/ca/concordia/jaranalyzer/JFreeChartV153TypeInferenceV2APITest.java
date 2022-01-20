@@ -323,4 +323,24 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testClassInstanceCreationOutsideMethodDeclaration() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/plot/DialShape.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation constructorInvocation) {
+                if (constructorInvocation.toString().startsWith("new DialShape(\"DialShape.CIRCLE\")")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert "org.jfree.chart.plot.DialShape::private void DialShape(java.lang.String)".equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }
