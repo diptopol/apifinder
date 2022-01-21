@@ -717,6 +717,14 @@ public class InferenceUtility {
                     elementTypeObj = getTypeObjFromQualifiedType(dependentJarInformationSet, javaVersion,
                             importStatementList, (QualifiedType) elementType, owningClassQualifiedName);
                     elementTypeStr = elementTypeObj.getQualifiedClassName();
+
+                } else if (elementType instanceof ParameterizedType) {
+                    ParameterizedType parameterizedType = (ParameterizedType) elementType;
+
+                    elementTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList,
+                            parameterizedType.getType(), owningClassQualifiedName);
+                    elementTypeStr = elementTypeObj.getQualifiedClassName();
+
                 } else {
                     throw new IllegalStateException();
                 }
