@@ -192,20 +192,25 @@ public class TypeInferenceV2API {
         importStatementList.add("import " + packageDeclaration.getName().getFullyQualifiedName() + ".*");
 
         // added inner classes of the current file in the import statement
-        TypeDeclaration typeDeclaration = (TypeDeclaration) InferenceUtility.getTypeDeclaration(methodNode);
-        importStatementList.add("import " + InferenceUtility.getQualifiedClassName(typeDeclaration));
-        TypeDeclaration[] innerTypeDeclarationArray = typeDeclaration.getTypes();
+        AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) InferenceUtility.getAbstractTypeDeclaration(methodNode);
+        importStatementList.add("import " + InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration));
 
-        for (TypeDeclaration innerClassDeclaration : innerTypeDeclarationArray) {
-            importStatementList.add("import " +
-                    InferenceUtility.getQualifiedClassName(innerClassDeclaration).replaceAll("#", "."));
-        }
+        if (abstractTypeDeclaration instanceof TypeDeclaration) {
+            TypeDeclaration typeDeclaration = (TypeDeclaration) abstractTypeDeclaration;
+
+            TypeDeclaration[] innerTypeDeclarationArray = typeDeclaration.getTypes();
+
+            for (TypeDeclaration innerClassDeclaration : innerTypeDeclarationArray) {
+                importStatementList.add("import " +
+                        InferenceUtility.getDeclaringClassQualifiedName(innerClassDeclaration).replaceAll("#", "."));
+            }
+         }
     }
 
     private static  String getOwingClassQualifiedName(ASTNode methodNode) {
-        TypeDeclaration typeDeclaration = (TypeDeclaration) InferenceUtility.getTypeDeclaration(methodNode);
+        AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) InferenceUtility.getAbstractTypeDeclaration(methodNode);
 
-        return InferenceUtility.getQualifiedClassName(typeDeclaration);
+        return InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration);
     }
 
 }

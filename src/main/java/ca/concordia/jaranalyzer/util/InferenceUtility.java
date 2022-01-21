@@ -229,34 +229,47 @@ public class InferenceUtility {
                                                                                  ASTNode node,
                                                                                  String owningClassQualifiedName) {
 
-        TypeDeclaration typeDeclaration = (TypeDeclaration) getTypeDeclaration(node);
-        FieldDeclaration[] fieldDeclarations = typeDeclaration.getFields();
+        AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(node);
 
-        return Arrays.stream(fieldDeclarations).map(fieldDeclaration -> {
-            List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
+        if (abstractTypeDeclaration instanceof TypeDeclaration) {
+            TypeDeclaration typeDeclaration = (TypeDeclaration) abstractTypeDeclaration;
 
-            return getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
-                    fieldDeclaration.getType(), fragmentList, owningClassQualifiedName);
-        }).flatMap(Collection::stream).collect(Collectors.toSet());
+            FieldDeclaration[] fieldDeclarations = typeDeclaration.getFields();
+
+            return Arrays.stream(fieldDeclarations).map(fieldDeclaration -> {
+                List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
+
+                return getVariableDeclarationDtoList(dependentJarInformationSet, javaVersion, importStatementList,
+                        fieldDeclaration.getType(), fragmentList, owningClassQualifiedName);
+            }).flatMap(Collection::stream).collect(Collectors.toSet());
+
+        } else {
+            return Collections.emptySet();
+        }
+
     }
 
     public static ASTNode getTypeDeclaration(ASTNode node) {
         return getClosestASTNode(node, TypeDeclaration.class);
     }
 
+    public static ASTNode getAbstractTypeDeclaration(ASTNode node) {
+        return getClosestASTNode(node, AbstractTypeDeclaration.class);
+    }
+
     public static ASTNode getCompilationUnit(ASTNode node) {
         return getClosestASTNode(node, CompilationUnit.class);
     }
 
-    public static String getDeclaringClassQualifiedName(BodyDeclaration declaration) {
+    public static String getDeclaringClassQualifiedName(BodyDeclaration bodyDeclaration) {
         String declaringClassQualifiedName = "";
-        ASTNode parent = declaration.getParent();
+        ASTNode node = bodyDeclaration;
 
-        List<AnonymousClassDeclaration> anonymousClassDeclarationList = getAnonymousClassDeclarationList(declaration);
+        while (node != null) {
+            List<AnonymousClassDeclaration> anonymousClassDeclarationList = getAnonymousClassDeclarationList(bodyDeclaration);
 
-        while (parent != null) {
-            if (parent instanceof CompilationUnit) {
-                CompilationUnit cu = (CompilationUnit) parent;
+            if (node instanceof CompilationUnit) {
+                CompilationUnit cu = (CompilationUnit) node;
                 PackageDeclaration packageDeclaration = cu.getPackage();
                 String packageName = packageDeclaration != null ? packageDeclaration.getName().getFullyQualifiedName() : "";
 
@@ -273,8 +286,8 @@ public class InferenceUtility {
                     declaringClassQualifiedName = (!packageName.equals("") ? packageName + "." : "") + declaringClassQualifiedName;
                 }
 
-            } else if (parent instanceof AbstractTypeDeclaration) {
-                AbstractTypeDeclaration typeDeclaration = (AbstractTypeDeclaration) parent;
+            } else if (node instanceof AbstractTypeDeclaration) {
+                AbstractTypeDeclaration typeDeclaration = (AbstractTypeDeclaration) node;
                 String typeDeclarationName = typeDeclaration.getName().getIdentifier();
 
                 if (declaringClassQualifiedName.equals("")) {
@@ -282,8 +295,8 @@ public class InferenceUtility {
                 } else {
                     declaringClassQualifiedName = typeDeclarationName + "#" + declaringClassQualifiedName;
                 }
-            } else if (parent instanceof AnonymousClassDeclaration) {
-                AnonymousClassDeclaration anonymousClassDeclaration = (AnonymousClassDeclaration) parent;
+            } else if (node instanceof AnonymousClassDeclaration) {
+                AnonymousClassDeclaration anonymousClassDeclaration = (AnonymousClassDeclaration) node;
                 String anonymousClassName = anonymousClassDeclarationList.contains(anonymousClassDeclaration)
                         ? String.valueOf(anonymousClassDeclarationList.indexOf(anonymousClassDeclaration)) : "";
 
@@ -293,7 +306,7 @@ public class InferenceUtility {
                     declaringClassQualifiedName = anonymousClassName + "#" + declaringClassQualifiedName;
                 }
             }
-            parent = parent.getParent();
+            node = node.getParent();
         }
 
         return declaringClassQualifiedName;
@@ -333,17 +346,11 @@ public class InferenceUtility {
     }
 
     public static ASTNode getClosestASTNode(ASTNode node, Class<? extends ASTNode> nodeClazz) {
-        if (nodeClazz.isInstance(node)) {
-            return node;
+        while (Objects.nonNull(node) && !(nodeClazz.isInstance(node))) {
+            node = node.getParent();
         }
 
-        ASTNode parent = node.getParent();
-
-        while (Objects.nonNull(parent) && !(nodeClazz.isInstance(parent))) {
-            parent = parent.getParent();
-        }
-
-        return parent;
+        return node;
     }
 
     public static TypeObject getTypeObjFromExpression(Set<Tuple3<String, String, String>> dependentJarInformationSet,
@@ -364,7 +371,7 @@ public class InferenceUtility {
         } else if (expression instanceof ThisExpression) {
             ThisExpression thisExpression = (ThisExpression) expression;
             String className = thisExpression.getQualifier() != null ? thisExpression.getQualifier().getFullyQualifiedName()
-                    : getQualifiedClassName(typeDeclaration);
+                    : getDeclaringClassQualifiedName(typeDeclaration);
 
             className = className.replace("%", "").replace("#", ".");
 
@@ -769,19 +776,6 @@ public class InferenceUtility {
         return PRIMITIVE_TYPE_LIST.contains(argumentTypeClassName);
     }
 
-    public static String getQualifiedClassName(TypeDeclaration typeDeclaration) {
-        String declaringClassQualifiedName = getDeclaringClassQualifiedName(typeDeclaration);
-        if (declaringClassQualifiedName.equals("")) {
-            return typeDeclaration.getName().getIdentifier();
-        } else {
-            if (typeDeclaration.isPackageMemberTypeDeclaration()) {
-                return declaringClassQualifiedName + "." + typeDeclaration.getName().getIdentifier();
-            } else {
-                return declaringClassQualifiedName + "#" + typeDeclaration.getName().getIdentifier();
-            }
-        }
-    }
-
     private static void populateVariableNameMap(Map<String, Set<VariableDeclarationDto>> variableNameMap,
                                                 Set<VariableDeclarationDto> variableDeclarationDtoList) {
 
@@ -943,10 +937,10 @@ public class InferenceUtility {
     }
 
     private static List<AnonymousClassDeclaration> getAnonymousClassDeclarationList(BodyDeclaration declaration) {
-        TypeDeclaration typeDeclaration = (TypeDeclaration) getTypeDeclaration(declaration);
+        AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(declaration);
 
         AnonymousClassVisitor anonymousClassVisitor = new AnonymousClassVisitor();
-        typeDeclaration.accept(anonymousClassVisitor);
+        abstractTypeDeclaration.accept(anonymousClassVisitor);
 
         return anonymousClassVisitor.getAnonymousClassDeclarationList();
     }
