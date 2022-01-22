@@ -383,19 +383,8 @@ public class InferenceUtility {
             TypeObject argumentTypeObj = getTypeObj(dependentJarInformationSet, javaVersion, importStatementList,
                     argumentType, owningClassQualifiedName);
 
-            TypeObject typeObject = new TypeObject("java.lang.Class");
-
-            if (argumentTypeObj.getSignature() != null) {
-                ClassSignatureFormalTypeParameterExtractor extractor =
-                        new ClassSignatureFormalTypeParameterExtractor(Collections.singletonList(argumentTypeObj));
-
-                SignatureReader signatureReader = new SignatureReader(argumentTypeObj.getSignature());
-                signatureReader.accept(extractor);
-
-                typeObject.setArgumentTypeObjectMap(extractor.getFormalTypeParameterMap());
-            }
-
-            return typeObject;
+            return new TypeObject("java.lang.Class")
+                    .setArgumentTypeObjectMap(argumentTypeObj.getArgumentTypeObjectMap());
 
         } else if (expression instanceof ParenthesizedExpression) {
             ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression) expression;
@@ -577,20 +566,6 @@ public class InferenceUtility {
                 VariableDeclarationDto selected = getClassNameFromVariableMap(name, expression, variableNameMap);
                 TypeObject classTypeObj = selected != null ? selected.getTypeObj() : null;
 
-                if (selected != null && classTypeObj != null) {
-                    Type typeOfSelected = selected.getType();
-                    List<TypeObject> typeArgumentClassObjList = new ArrayList();
-
-                    if (typeOfSelected.isParameterizedType()) {
-                        ParameterizedType parameterizedType = (ParameterizedType) typeOfSelected;
-                        typeArgumentClassObjList = getTypeObjList(dependentJarInformationSet, javaVersion,
-                                importStatementList, parameterizedType.typeArguments(), owningClassQualifiedName);
-                        classTypeObj.setParameterized(true);
-                    }
-
-                    classTypeObj.setArgumentTypeObjectList(typeArgumentClassObjList);
-                }
-
                 if (Objects.nonNull(classTypeObj)) {
                     return classTypeObj;
                 } else {
@@ -603,7 +578,6 @@ public class InferenceUtility {
                         return getTypeObjFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
                                 name, owningClassQualifiedName);
                     }
-
                 }
             } else {
                 return new TypeObject("null");
@@ -1111,9 +1085,21 @@ public class InferenceUtility {
             return new TypeObject(className);
         }
 
-        ClassInfo classInfo = classInfoList.get(0);
+        return getTypeObjFromClassInfo(className, classInfoList.get(0));
+    }
 
+    private static TypeObject getTypeObjFromClassInfo(String className, ClassInfo classInfo) {
         TypeObject typeObject = new TypeObject(classInfo.getQualifiedName()).setSignature(classInfo.getSignature());
+
+        if (StringUtils.isNotEmpty(classInfo.getSignature())) {
+            ClassSignatureFormalTypeParameterExtractor extractor =
+                    new ClassSignatureFormalTypeParameterExtractor(Collections.emptyList());
+
+            SignatureReader signatureReader = new SignatureReader(classInfo.getSignature());
+            signatureReader.accept(extractor);
+
+            typeObject.setArgumentTypeObjectMap(extractor.getFormalTypeParameterMap());
+        }
 
         //if className is array populate array dimension
         if (className.contains("[]")) {

@@ -76,8 +76,10 @@ public class TypeObject {
         return argumentTypeObjectMap;
     }
 
-    public void setArgumentTypeObjectMap(Map<String, TypeObject> argumentTypeObjectMap) {
+    public TypeObject setArgumentTypeObjectMap(Map<String, TypeObject> argumentTypeObjectMap) {
         this.argumentTypeObjectMap.putAll(argumentTypeObjectMap);
+
+        return this;
     }
 
     public void setArgumentTypeObjectList(List<TypeObject> argumentTypeObjectList) {
