@@ -81,7 +81,8 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
             if (argumentStack == 0 && seenParameters) {
                 TypeObject typeObject = methodArgumentList.get(currentArgumentIndex);
 
-                assert name.replaceAll("/", ".").equals(typeObject.getQualifiedClassName());
+                assert name.replaceAll("/", ".")
+                        .equals(resolveArrayDimensions(typeObject.getQualifiedClassName()));
             }
         }
     }

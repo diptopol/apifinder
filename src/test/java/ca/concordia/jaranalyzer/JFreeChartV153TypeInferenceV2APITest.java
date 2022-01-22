@@ -383,4 +383,26 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void tesMethodInvocationFortWildCardParameterizedCallerClass() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/util/ExportUtils.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("c1.newInstance(w")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.lang.reflect.Constructor::public java.lang.Object newInstance(java.lang.Object[]) " +
+                            "throws java.lang.InstantiationException, java.lang.IllegalAccessException," +
+                            " java.lang.IllegalArgumentException, java.lang.reflect.InvocationTargetException").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }

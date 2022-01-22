@@ -78,12 +78,13 @@ public class InferenceUtility {
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+        populateArgumentTypeObjListForMethodInfo(methodInfoList, argumentTypeObjList);
 
         /*
          * To make the generic classes backward compatible, for raw type any kind of inference will not be conducted.
          */
         if (Objects.nonNull(callerClassTypeObj) && !callerClassTypeObj.isRawType()) {
-            InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, callerClassTypeObj.getArgumentTypeObjectMap());
+            InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, callerClassTypeObj.getArgumentTypeObjectMap());
         }
 
         return methodInfoList;
@@ -121,7 +122,8 @@ public class InferenceUtility {
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
-        InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, argumentTypeObjList, Collections.emptyMap());
+        populateArgumentTypeObjListForMethodInfo(methodInfoList, argumentTypeObjList);
+        InferenceUtility.resolveMethodGenericTypeInfo(methodInfoList, Collections.emptyMap());
 
         return methodInfoList;
     }
@@ -313,13 +315,12 @@ public class InferenceUtility {
     }
 
     public static void resolveMethodGenericTypeInfo(List<MethodInfo> methodInfoList,
-                                                    List<TypeObject> methodArgumentTypeObjList,
                                                     Map<String, TypeObject> classFormalTypeParameterMap) {
 
         for (MethodInfo methodInfo : methodInfoList) {
             if (methodInfo.getSignature() != null) {
                 MethodArgumentFormalTypeParameterExtractor extractor =
-                        new MethodArgumentFormalTypeParameterExtractor(methodArgumentTypeObjList);
+                        new MethodArgumentFormalTypeParameterExtractor(methodInfo.getArgumentTypeObjList());
                 SignatureReader reader = new SignatureReader(methodInfo.getSignature());
 
                 reader.accept(extractor);
@@ -775,6 +776,16 @@ public class InferenceUtility {
             Type firstType = typeList.get(0);
             return getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, firstType, owningClassQualifiedName);
 
+        } else if (type instanceof WildcardType) {
+            WildcardType wildCardType = (WildcardType) type;
+
+            Type boundType = wildCardType.getBound();
+
+            if (Objects.nonNull(boundType)) {
+                return getTypeObj(dependentJarInformationSet, javaVersion, importStatementList, boundType, owningClassQualifiedName);
+            } else {
+                return new TypeObject("java.lang.Object");
+            }
         } else {
             return new TypeObject(type.toString());
         }
@@ -795,6 +806,50 @@ public class InferenceUtility {
                 variableNameMap.put(declarationDto.getName(), variableDeclarationSet);
             } else {
                 variableNameMap.put(declarationDto.getName(), new HashSet<>(Arrays.asList(declarationDto)));
+            }
+        }
+    }
+
+    private static void populateArgumentTypeObjListForMethodInfo(List<MethodInfo> methodInfoList,
+                                                                 List<TypeObject> argumentTypeObjList) {
+
+        for (MethodInfo methodInfo : methodInfoList) {
+            if (methodInfo.isVarargs()) {
+                org.objectweb.asm.Type[] argumentTypes = methodInfo.getArgumentTypes();
+                int indexOfFirstVarargItem = 0;
+                String varargClassName = "";
+
+                for (int i = 0; i < argumentTypes.length; i++) {
+                    org.objectweb.asm.Type argumentType = argumentTypes[i];
+
+                    if (argumentType.getClassName().endsWith("[]")) {
+                        indexOfFirstVarargItem = i;
+                        varargClassName = argumentType.getClassName();
+                    }
+                }
+
+                boolean isAllVarargClass = true;
+                for (int i = indexOfFirstVarargItem; i < argumentTypeObjList.size(); i++) {
+                    String argumentClassName = argumentTypeObjList.get(i).getQualifiedClassName().replaceAll("\\[]", "");
+                    String varargClassNameTrimmingArrayDimension = varargClassName.replaceAll("\\[]", "");
+
+                    if (!argumentClassName.equals(varargClassNameTrimmingArrayDimension)
+                            && !varargClassNameTrimmingArrayDimension.equals("java.lang.Object")) {
+                        isAllVarargClass = false;
+                        break;
+                    }
+                }
+
+                if (isAllVarargClass) {
+                    List<TypeObject> modifiedArgumentTypeObjList = argumentTypeObjList.subList(0, indexOfFirstVarargItem + 1);
+                    modifiedArgumentTypeObjList.get(indexOfFirstVarargItem)
+                            .setQualifiedClassName(varargClassName)
+                            .setVararg(true);
+
+                    methodInfo.setArgumentTypeObjList(modifiedArgumentTypeObjList);
+                }
+            } else {
+                methodInfo.setArgumentTypeObjList(argumentTypeObjList);
             }
         }
     }

@@ -34,6 +34,8 @@ public class MethodInfo {
     private int callerClassMatchingDistance;
     private int argumentMatchingDistance;
 
+    private List<TypeObject> argumentTypeObjList;
+
     public MethodInfo(Vertex vertex) {
         this.id = vertex.id();
         this.name = vertex.<String>property("Name").value();
@@ -72,6 +74,7 @@ public class MethodInfo {
         }
 
         this.argumentTypes = argumentTypeList.toArray(new Type[0]);
+        this.argumentTypeObjList = getArgumentTypeObjList(this.argumentTypes);
 
         Iterator<VertexProperty<String>> thrownInternalClassNamesIterator =
                 vertex.properties("thrownInternalClassNames");
@@ -113,6 +116,7 @@ public class MethodInfo {
             this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
         }
 
+        this.argumentTypeObjList = getArgumentTypeObjList(this.argumentTypes);
         this.thrownInternalClassNames = methodNode.exceptions;
         this.signature = methodNode.signature;
 
@@ -336,6 +340,14 @@ public class MethodInfo {
         this.argumentMatchingDistance = argumentMatchingDistance;
     }
 
+    public List<TypeObject> getArgumentTypeObjList() {
+        return argumentTypeObjList;
+    }
+
+    public void setArgumentTypeObjList(List<TypeObject> argumentTypeObjList) {
+        this.argumentTypeObjList = argumentTypeObjList;
+    }
+
     public boolean matches(String methodName, int numberOfParameters) {
         if (argumentTypes.length != numberOfParameters)
             return false;
@@ -385,6 +397,16 @@ public class MethodInfo {
 
     public boolean hasDeferredCriteria() {
         return isAbstract || classInfo.getQualifiedName().equals("java.lang.Object") || argumentMatchingDistance > 0;
+    }
+
+    private List<TypeObject> getArgumentTypeObjList(Type[] argumentTypes) {
+        List<TypeObject> argumentTypeObjList = new ArrayList<>();
+
+        for (Type argumentType: argumentTypes) {
+            argumentTypeObjList.add(new TypeObject(argumentType.getClassName()));
+        }
+
+        return argumentTypeObjList;
     }
 
 }

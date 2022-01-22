@@ -13,7 +13,10 @@ public class TypeObject {
 
     private String qualifiedClassName;
     private String signature;
+
+    private boolean isVararg;
     private boolean isParameterized;
+
     private Map<String, TypeObject> argumentTypeObjectMap;
 
     public TypeObject(String qualifiedClassName) {
@@ -25,8 +28,10 @@ public class TypeObject {
         return qualifiedClassName;
     }
 
-    public void setQualifiedClassName(String qualifiedClassName) {
+    public TypeObject setQualifiedClassName(String qualifiedClassName) {
         this.qualifiedClassName = qualifiedClassName;
+
+        return this;
     }
 
     public String getSignature() {
@@ -35,6 +40,16 @@ public class TypeObject {
 
     public TypeObject setSignature(String signature) {
         this.signature = signature;
+
+        return this;
+    }
+
+    public boolean isVararg() {
+        return isVararg;
+    }
+
+    public TypeObject setVararg(boolean vararg) {
+        isVararg = vararg;
 
         return this;
     }
