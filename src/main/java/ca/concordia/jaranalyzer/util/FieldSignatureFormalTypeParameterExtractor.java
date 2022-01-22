@@ -34,6 +34,15 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
     }
 
     @Override
+    public void visitTypeVariable(String name) {
+        if (!seenTypeArgument) {
+            typeClassName = name;
+        } else {
+            typeArgumentClassObjList.add(new TypeObject(name));
+        }
+    }
+
+    @Override
     public void visitInnerClassType(final String name) {
         if (!seenTypeArgument) {
             typeClassName = name.replaceAll("/", ".");

@@ -213,4 +213,15 @@ public class GenericTypeConversionTest {
         assert "{T=TypeObject{qualifiedClassName='java.net.URL'}}".equals(extractor.getFormalTypeParameterMap().toString());
     }
 
+    @Test
+    public void testTypeParameterAsTypeClass() {
+        String signature = "TR;";
+
+        SignatureReader signatureReader = new SignatureReader(signature);
+        FieldSignatureFormalTypeParameterExtractor fieldSignatureFormalTypeParameterExtractor = new FieldSignatureFormalTypeParameterExtractor();
+        signatureReader.accept(fieldSignatureFormalTypeParameterExtractor);
+
+        assert "R".equals(fieldSignatureFormalTypeParameterExtractor.getTypeClassName());
+    }
+
 }
