@@ -427,4 +427,24 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testNonParameterizedArgumentForGenericMethodSignature() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/encoders/SunJPEGEncoderAdapter.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("ImageIO.getImageWritersByFormatName")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert "javax.imageio.ImageIO::public static java.util.Iterator getImageWritersByFormatName(java.lang.String)".equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }

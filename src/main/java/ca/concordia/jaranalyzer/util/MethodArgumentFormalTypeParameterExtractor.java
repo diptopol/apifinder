@@ -108,6 +108,13 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
     }
 
     @Override
+    public SignatureVisitor visitReturnType() {
+        seenParameters = false;
+
+        return this;
+    }
+
+    @Override
     public void visitTypeVariable(String name) {
         if (traversedFormalTypeParameterList.contains(name)) {
             return;
