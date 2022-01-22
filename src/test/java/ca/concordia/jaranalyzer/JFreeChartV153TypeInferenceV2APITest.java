@@ -241,9 +241,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation constructorInvocation) {
-                if (constructorInvocation.toString().startsWith("s.setLastPointGood(false)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("s.setLastPointGood(false)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert "org.jfree.chart.renderer.xy.XYLineAndShapeRenderer.State::public void setLastPointGood(boolean)"
                             .equals(methodInfo.toString());
@@ -262,9 +262,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation constructorInvocation) {
-                if (constructorInvocation.toString().startsWith("Arrays.fill(this.objects,")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("Arrays.fill(this.objects,")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert "java.util.Arrays::public static void fill(java.lang.Object[], java.lang.Object)".equals(methodInfo.toString());
                 }
@@ -289,9 +289,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation constructorInvocation) {
-                if (constructorInvocation.toString().contains("this.currentText.delete(0,")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("this.currentText.delete(0,")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert "java.lang.StringBuffer::public synchronized java.lang.StringBuffer delete(int, int)"
                             .equals(methodInfo.toString());
@@ -331,9 +331,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(ClassInstanceCreation constructorInvocation) {
-                if (constructorInvocation.toString().startsWith("new DialShape(\"DialShape.CIRCLE\")")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new DialShape(\"DialShape.CIRCLE\")")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
 
                     assert "org.jfree.chart.plot.DialShape::private void DialShape(java.lang.String)".equals(methodInfo.toString());
                 }
@@ -371,9 +371,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation constructorInvocation) {
-                if (constructorInvocation.toString().startsWith("this.keys.size()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("this.keys.size()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert "java.util.List::public abstract int size()".equals(methodInfo.toString());
                 }
