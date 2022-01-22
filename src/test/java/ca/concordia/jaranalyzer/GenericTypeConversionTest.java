@@ -224,4 +224,27 @@ public class GenericTypeConversionTest {
         assert "R".equals(fieldSignatureFormalTypeParameterExtractor.getTypeClassName());
     }
 
+    @Test
+    public void testClassNameReplacementForFormalParameterAsArgument() {
+        String signature = "<K::Ljava/lang/Comparable<TK;>;>(Lorg/jfree/data/flow/FlowDataset<TK;>;TK;I)D";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        List<TypeObject> methodArgumentList = new ArrayList<>();
+
+        TypeObject first = new TypeObject("org.jfree.data.flow.FlowDataset");
+        TypeObject second = new TypeObject("java.lang.Comparable");
+        TypeObject third = new TypeObject("int");
+
+        methodArgumentList.add(first);
+        methodArgumentList.add(second);
+        methodArgumentList.add(third);
+
+        MethodArgumentFormalTypeParameterExtractor extractor =
+                new MethodArgumentFormalTypeParameterExtractor(methodArgumentList);
+        signatureReader.accept(extractor);
+
+        assert "{K=TypeObject{qualifiedClassName='java.lang.Comparable'}}"
+                .equals(extractor.getFormalTypeParameterMap().toString());
+    }
+
 }

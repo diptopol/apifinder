@@ -134,7 +134,7 @@ public class MethodArgumentFormalTypeParameterExtractor extends SignatureVisitor
             currentFormalTypeParameterIndexPerArgument++;
 
         } else {
-            if (!hasArgumentClassName) {
+            if (!hasArgumentClassName && (argumentStack == 0 && seenParameters)) {
                 argumentType.setQualifiedClassName(resolveArrayDimensions(argumentType.getQualifiedClassName()));
                 formalTypeParameterMap.put(name, argumentType);
                 traversedFormalTypeParameterList.add(name);

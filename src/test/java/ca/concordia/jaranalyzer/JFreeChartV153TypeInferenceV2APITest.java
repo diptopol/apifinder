@@ -405,4 +405,26 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testClassNameReplacementForFormalParameterAsArgument() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/plot/flow/FlowPlot.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("FlowDatasetUtils.calculateInflow(this.dataset,source,stage)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("org.jfree.data.flow.FlowDatasetUtils::public static double"
+                            + " calculateInflow(org.jfree.data.flow.FlowDataset, java.lang.Comparable, int)")
+                            .equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
 }
