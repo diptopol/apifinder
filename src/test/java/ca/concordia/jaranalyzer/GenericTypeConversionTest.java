@@ -119,7 +119,8 @@ public class GenericTypeConversionTest {
 
         signatureReader.accept(classSignatureFormalTypeParameterExtractor);
 
-        assert "[V=TypeObject{qualifiedClassName='java.lang.Integer'}, K=TypeObject{qualifiedClassName='java.lang.String'}]"
+        assert ("[V=TypeObject{qualifiedClassName='java.lang.Integer', argumentTypeObjectMap={}}," +
+                " K=TypeObject{qualifiedClassName='java.lang.String', argumentTypeObjectMap={}}]")
                 .equals(classSignatureFormalTypeParameterExtractor.getFormalTypeParameterMap().entrySet().toString());
     }
 
@@ -135,7 +136,7 @@ public class GenericTypeConversionTest {
 
         signatureReader.accept(classSignatureFormalTypeParameterExtractor);
 
-        assert "{K=TypeObject{qualifiedClassName='java.lang.Comparable'}}"
+        assert "{K=TypeObject{qualifiedClassName='java.lang.Comparable', argumentTypeObjectMap={}}}"
                 .equals(classSignatureFormalTypeParameterExtractor.getFormalTypeParameterMap().toString());
     }
 
@@ -149,7 +150,8 @@ public class GenericTypeConversionTest {
         signatureReader.accept(fieldSignatureFormalTypeParameterExtractor);
 
         assert "java.util.Map".equals(fieldSignatureFormalTypeParameterExtractor.getTypeClassName())
-                && "[TypeObject{qualifiedClassName='java.lang.Integer'}, TypeObject{qualifiedClassName='org.jfree.data.xy.XYDataset'}]"
+                && ("[TypeObject{qualifiedClassName='java.lang.Integer', argumentTypeObjectMap={}}," +
+                " TypeObject{qualifiedClassName='org.jfree.data.xy.XYDataset', argumentTypeObjectMap={}}]")
                 .equals(fieldSignatureFormalTypeParameterExtractor.getTypeArgumentClassObjList().toString());
     }
 
@@ -192,9 +194,9 @@ public class GenericTypeConversionTest {
                 new MethodArgumentFormalTypeParameterExtractor(methodArgumentList);
         signatureReader.accept(extractor);
 
-        assert ("{P=TypeObject{qualifiedClassName='java.lang.String'}," +
-                " Q=TypeObject{qualifiedClassName='java.lang.Integer'}," +
-                " R=TypeObject{qualifiedClassName='java.lang.String'}}")
+        assert ("{P=TypeObject{qualifiedClassName='java.lang.String', argumentTypeObjectMap={}}," +
+                " Q=TypeObject{qualifiedClassName='java.lang.Integer', argumentTypeObjectMap={}}," +
+                " R=TypeObject{qualifiedClassName='java.lang.String', argumentTypeObjectMap={}}}")
                 .equals(extractor.getFormalTypeParameterMap().toString());
     }
 
@@ -210,7 +212,7 @@ public class GenericTypeConversionTest {
                 new MethodArgumentFormalTypeParameterExtractor(methodArgumentList);
         signatureReader.accept(extractor);
 
-        assert "{T=TypeObject{qualifiedClassName='java.net.URL'}}".equals(extractor.getFormalTypeParameterMap().toString());
+        assert "{T=TypeObject{qualifiedClassName='java.net.URL', argumentTypeObjectMap={}}}".equals(extractor.getFormalTypeParameterMap().toString());
     }
 
     @Test
@@ -243,8 +245,25 @@ public class GenericTypeConversionTest {
                 new MethodArgumentFormalTypeParameterExtractor(methodArgumentList);
         signatureReader.accept(extractor);
 
-        assert "{K=TypeObject{qualifiedClassName='java.lang.Comparable'}}"
+        assert "{K=TypeObject{qualifiedClassName='java.lang.Comparable', argumentTypeObjectMap={}}}"
                 .equals(extractor.getFormalTypeParameterMap().toString());
+    }
+
+    @Test
+    public void testMethodArgumentExtraction() {
+        String methodSignature = "<K::Ljava/lang/Comparable<TK;>;>(Lorg/jfree/data/flow/FlowDataset<TK;>;TK;I)D";
+
+        SignatureReader signatureReader = new SignatureReader(methodSignature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[TypeObject{qualifiedClassName='org.jfree.data.flow.FlowDataset'," +
+                " argumentTypeObjectMap={K=TypeObject{qualifiedClassName='java.lang.Comparable', argumentTypeObjectMap={}}}}," +
+                " TypeObject{qualifiedClassName='java.lang.Comparable', argumentTypeObjectMap={}}," +
+                " TypeObject{qualifiedClassName='int', argumentTypeObjectMap={}}]")
+                .equals(methodArgumentExtractor.getArgumentList().toString());
+
     }
 
 }

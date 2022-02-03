@@ -97,6 +97,7 @@ public class TypeObject {
     public String toString() {
         return "TypeObject{" +
                 "qualifiedClassName='" + qualifiedClassName + '\'' +
+                ", argumentTypeObjectMap=" + argumentTypeObjectMap +
                 '}';
     }
 }

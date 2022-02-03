@@ -1,9 +1,11 @@
 package ca.concordia.jaranalyzer.Models;
 
+import ca.concordia.jaranalyzer.util.MethodArgumentExtractor;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.*;
@@ -401,6 +403,15 @@ public class MethodInfo {
 
     private List<TypeObject> getArgumentTypeObjList(Type[] argumentTypes) {
         List<TypeObject> argumentTypeObjList = new ArrayList<>();
+
+        if (Objects.nonNull(this.signature)) {
+            MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+            SignatureReader signatureReader = new SignatureReader(this.signature);
+
+            signatureReader.accept(methodArgumentExtractor);
+
+            return methodArgumentExtractor.getArgumentList();
+        }
 
         for (Type argumentType: argumentTypes) {
             argumentTypeObjList.add(new TypeObject(argumentType.getClassName()));
