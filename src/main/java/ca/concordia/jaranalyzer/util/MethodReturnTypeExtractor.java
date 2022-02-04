@@ -9,37 +9,33 @@ import java.util.*;
 
 /**
  * @author Diptopol
- * @since 1/30/2022 4:03 PM
+ * @since 2/7/2022 2:40 PM
  */
-public class MethodArgumentExtractor extends SignatureVisitor {
+public class MethodReturnTypeExtractor extends SignatureVisitor {
 
     private boolean classBoundVisit;
     private boolean interfaceBoundVisit;
-    private boolean visitingMethodArguments;
+    private boolean visitingReturnType;
     private boolean visitingFormalTypeParameter;
 
-    private int argumentStack;
-    private int currentArgumentIndex;
     private int currentIndexArrayDimension;
+    private int visitingTypeStack;
 
     private TypeInfo currentType;
 
-    private List<TypeInfo> argumentList;
+    private TypeInfo returnTypeInfo;
+
     private List<TypeInfo> typeArgumentList;
 
     private Stack<String> formalTypeParameterNameStack;
 
     private Map<String, TypeInfo> formalTypeParameterMap;
 
-    public MethodArgumentExtractor() {
+    public MethodReturnTypeExtractor() {
         super(Opcodes.ASM9);
-        this.argumentList = new ArrayList<>();
         this.formalTypeParameterNameStack = new Stack<>();
         this.formalTypeParameterMap = new LinkedHashMap<>();
         this.typeArgumentList = new ArrayList<>();
-
-        currentArgumentIndex = 0;
-        this.currentIndexArrayDimension = 0;
     }
 
     @Override
@@ -62,15 +58,19 @@ public class MethodArgumentExtractor extends SignatureVisitor {
 
     @Override
     public void visitInnerClassType(final String name) {
-        argumentStack /= 2;
-        argumentStack *= 2;
+        visitingTypeStack /= 2;
+        visitingTypeStack *= 2;
     }
 
     @Override
     public void visitBaseType(char descriptor) {
-        if (visitingMethodArguments && Objects.isNull(this.currentType)) {
-            this.argumentList.add(convertToArrayTypeIfRequired(new PrimitiveTypeInfo(
-                    Type.getType(Character.toString(descriptor)).getClassName())));
+        if (visitingReturnType && Objects.isNull(this.currentType)) {
+            if (descriptor == 'V') {
+                this.returnTypeInfo = new VoidTypeInfo();
+
+            } else {
+                this.returnTypeInfo = convertToArrayTypeIfRequired(new PrimitiveTypeInfo(Type.getType(Character.toString(descriptor)).getClassName()));
+            }
         }
     }
 
@@ -85,17 +85,21 @@ public class MethodArgumentExtractor extends SignatureVisitor {
             currentType = new FormalTypeParameterInfo(typeParameter, new QualifiedTypeInfo(name.replaceAll("/", ".")));
             interfaceBoundVisit = false;
         } else {
-            argumentStack *= 2;
+            visitingTypeStack *= 2;
 
-            if (visitingFormalTypeParameter || visitingMethodArguments) {
-                currentType = convertToArrayTypeIfRequired(new QualifiedTypeInfo(name.replaceAll("/", ".")));
+            if (visitingFormalTypeParameter || visitingReturnType) {
+                if (Objects.nonNull(this.currentType)) {
+                    this.typeArgumentList.add(new QualifiedTypeInfo(name.replaceAll("/", ".")));
+                } else {
+                    currentType = convertToArrayTypeIfRequired(new QualifiedTypeInfo(name.replaceAll("/", ".")));
+                }
             }
         }
     }
 
     @Override
     public void visitEnd() {
-        argumentStack /= 2;
+        visitingTypeStack /= 2;
 
         // ignoring internal parameterized type for formalTypeParameter
         //assuming class for formaTypeParameter cannot be an array.
@@ -110,31 +114,28 @@ public class MethodArgumentExtractor extends SignatureVisitor {
             currentType = null;
         }
 
-        if (argumentStack == 0 && visitingMethodArguments) {
+        if (visitingTypeStack == 0 && visitingReturnType) {
             if (Objects.nonNull(this.currentType)) {
                 if (this.currentType.isQualifiedTypeInfo() && !this.typeArgumentList.isEmpty()) {
                     QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) this.currentType;
                     ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedTypeInfo);
                     parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(this.typeArgumentList));
 
-                    this.argumentList.add(currentArgumentIndex, parameterizedTypeInfo);
+                    this.returnTypeInfo = parameterizedTypeInfo;
                     this.typeArgumentList.clear();
                 } else {
-                    this.argumentList.add(currentArgumentIndex, this.currentType);
+                    this.returnTypeInfo = this.currentType;
                 }
 
                 this.currentType = null;
             }
-
-            currentArgumentIndex++;
-            this.currentIndexArrayDimension = 0;
         }
     }
 
     @Override
     public SignatureVisitor visitTypeArgument(final char tag) {
-        if (argumentStack % 2 == 0) {
-            argumentStack |= 1;
+        if (visitingTypeStack % 2 == 0) {
+            visitingTypeStack |= 1;
         }
 
         return this;
@@ -142,7 +143,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
 
     @Override
     public void visitTypeVariable(String name) {
-        if (!visitingMethodArguments) {
+        if (!visitingReturnType) {
             return;
         }
 
@@ -156,7 +157,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
                 typeInfo = convertToArrayTypeIfRequired(new FormalTypeParameterInfo(name, new QualifiedTypeInfo("java.lang.Object")));
             }
 
-            this.argumentList.add(currentArgumentIndex, typeInfo);
+            this.returnTypeInfo = typeInfo;
         } else {
             TypeInfo typeInfo;
 
@@ -171,31 +172,37 @@ public class MethodArgumentExtractor extends SignatureVisitor {
     }
 
     @Override
+    public SignatureVisitor visitReturnType() {
+        visitingReturnType = true;
+
+        return this;
+    }
+
+    @Override
     public SignatureVisitor visitParameterType() {
-        visitingMethodArguments = true;
         visitingFormalTypeParameter = false;
 
         return this;
     }
 
     @Override
-    public SignatureVisitor visitReturnType() {
-        visitingMethodArguments = false;
+    public SignatureVisitor visitExceptionType() {
+        visitingReturnType = false;
 
         return this;
     }
 
     @Override
     public SignatureVisitor visitArrayType() {
-        if (argumentStack == 0 && visitingMethodArguments) {
+        if (visitingTypeStack == 0 && visitingReturnType) {
             this.currentIndexArrayDimension++;
         }
 
         return this;
     }
 
-    public List<TypeInfo> getArgumentList() {
-        return argumentList;
+    public TypeInfo getReturnTypeInfo() {
+        return returnTypeInfo;
     }
 
     private TypeInfo convertToArrayTypeIfRequired(TypeInfo typeInfo) {

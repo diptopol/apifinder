@@ -1,6 +1,9 @@
 package ca.concordia.jaranalyzer.Models;
 
+import ca.concordia.jaranalyzer.Models.typeInfo.*;
+import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.MethodArgumentExtractor;
+import ca.concordia.jaranalyzer.util.MethodReturnTypeExtractor;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.objectweb.asm.Opcodes;
@@ -36,7 +39,8 @@ public class MethodInfo {
     private int callerClassMatchingDistance;
     private int argumentMatchingDistance;
 
-    private List<TypeObject> argumentTypeObjList;
+    private List<TypeInfo> argumentTypeInfoList;
+    private TypeInfo returnTypeInfo;
 
     public MethodInfo(Vertex vertex) {
         this.id = vertex.id();
@@ -66,6 +70,8 @@ public class MethodInfo {
 
         this.returnType = Type.getType(vertex.<String>property("returnTypeDescriptor").value());
 
+        this.returnTypeInfo = getMethodReturnType(this.returnType);
+
         Iterator<VertexProperty<String>> argumentTypeDescriptorListIterator
                 = vertex.properties("argumentTypeDescriptorList");
 
@@ -76,7 +82,7 @@ public class MethodInfo {
         }
 
         this.argumentTypes = argumentTypeList.toArray(new Type[0]);
-        this.argumentTypeObjList = getArgumentTypeObjList(this.argumentTypes);
+        this.argumentTypeInfoList = getMethodArgumentTypeInfoList(this.argumentTypes);
 
         Iterator<VertexProperty<String>> thrownInternalClassNamesIterator =
                 vertex.properties("thrownInternalClassNames");
@@ -105,6 +111,8 @@ public class MethodInfo {
 
         this.classInfo = classInfo;
         this.returnType = Type.getReturnType(methodNode.desc);
+        this.returnTypeInfo = getMethodReturnType(this.returnType);
+
         if (isConstructor && Objects.nonNull(internalClassConstructorPrefix)) {
             List<Type> types = new ArrayList<Type>();
             for (Type type : Type.getArgumentTypes(methodNode.desc)) {
@@ -118,7 +126,7 @@ public class MethodInfo {
             this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
         }
 
-        this.argumentTypeObjList = getArgumentTypeObjList(this.argumentTypes);
+        this.argumentTypeInfoList = getMethodArgumentTypeInfoList(this.argumentTypes);
         this.thrownInternalClassNames = methodNode.exceptions;
         this.signature = methodNode.signature;
 
@@ -342,12 +350,20 @@ public class MethodInfo {
         this.argumentMatchingDistance = argumentMatchingDistance;
     }
 
-    public List<TypeObject> getArgumentTypeObjList() {
-        return argumentTypeObjList;
+    public List<TypeInfo> getArgumentTypeInfoList() {
+        return argumentTypeInfoList;
     }
 
-    public void setArgumentTypeObjList(List<TypeObject> argumentTypeObjList) {
-        this.argumentTypeObjList = argumentTypeObjList;
+    public void setArgumentTypeInfoList(List<TypeInfo> argumentTypeInfoList) {
+        this.argumentTypeInfoList = argumentTypeInfoList;
+    }
+
+    public TypeInfo getReturnTypeInfo() {
+        return returnTypeInfo;
+    }
+
+    public void setReturnTypeInfo(TypeInfo returnTypeInfo) {
+        this.returnTypeInfo = returnTypeInfo;
     }
 
     public boolean matches(String methodName, int numberOfParameters) {
@@ -401,8 +417,26 @@ public class MethodInfo {
         return isAbstract || classInfo.getQualifiedName().equals("java.lang.Object") || argumentMatchingDistance > 0;
     }
 
-    private List<TypeObject> getArgumentTypeObjList(Type[] argumentTypes) {
-        List<TypeObject> argumentTypeObjList = new ArrayList<>();
+    private TypeInfo getMethodReturnType(Type returnType) {
+        if (Objects.nonNull(this.signature)) {
+            MethodReturnTypeExtractor extractor = new MethodReturnTypeExtractor();
+
+            SignatureReader reader = new SignatureReader(this.signature);
+            reader.accept(extractor);
+
+            return extractor.getReturnTypeInfo();
+
+        } else {
+            if (Type.VOID_TYPE.equals(returnType)) {
+                return new VoidTypeInfo();
+            }
+
+            return new QualifiedTypeInfo(returnType.getClassName());
+        }
+    }
+
+    private List<TypeInfo> getMethodArgumentTypeInfoList(Type[] argumentTypes) {
+        List<TypeInfo> argumentTypeInfoList = new ArrayList<>();
 
         if (Objects.nonNull(this.signature)) {
             MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
@@ -414,10 +448,27 @@ public class MethodInfo {
         }
 
         for (Type argumentType: argumentTypes) {
-            argumentTypeObjList.add(new TypeObject(argumentType.getClassName()));
+            if (argumentType.getClassName().endsWith("[]")) {
+                int dimension = argumentType.getDimensions();
+                String className = argumentType.getClassName().replaceAll("\\[]", "");
+
+                if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(className)) {
+                    argumentTypeInfoList.add(new ArrayTypeInfo(new PrimitiveTypeInfo(className), dimension));
+                } else {
+                    argumentTypeInfoList.add(new ArrayTypeInfo(new QualifiedTypeInfo(className), dimension));
+                }
+
+            } else {
+                if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(argumentType.getClassName())) {
+                    argumentTypeInfoList.add(new PrimitiveTypeInfo(argumentType.getClassName()));
+                } else {
+                    argumentTypeInfoList.add(new QualifiedTypeInfo(argumentType.getClassName()));
+                }
+            }
+
         }
 
-        return argumentTypeObjList;
+        return argumentTypeInfoList;
     }
 
 }

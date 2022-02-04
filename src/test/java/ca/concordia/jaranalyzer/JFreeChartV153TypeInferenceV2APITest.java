@@ -316,6 +316,12 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
                     assert ("org.jfree.data.category.DefaultIntervalCategoryDataset::public void" +
                             " DefaultIntervalCategoryDataset(java.lang.Number[][], java.lang.Number[][])").equals(methodInfo.toString());
+
+                    assert ("[ArrayTypeInfo{elementTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Number'}, dimension=2}," +
+                            " ArrayTypeInfo{elementTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Number'}, dimension=2}]")
+                            .equals(methodInfo.getArgumentTypeInfoList().toString());
+
+                    assert "VoidTypeInfo{}".equals(methodInfo.getReturnTypeInfo().toString());
                 }
 
                 return false;
@@ -398,6 +404,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
                     assert ("java.lang.reflect.Constructor::public java.lang.Object newInstance(java.lang.Object[]) " +
                             "throws java.lang.InstantiationException, java.lang.IllegalAccessException," +
                             " java.lang.IllegalArgumentException, java.lang.reflect.InvocationTargetException").equals(methodInfo.toString());
+
+                    assert ("[VarargTypeInfo{qualifiedClassName='int'}]").equals(methodInfo.getArgumentTypeInfoList().toString());
+                    assert ("QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}").equals(methodInfo.getReturnTypeInfo().toString());
                 }
 
                 return true;
@@ -405,6 +414,12 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    /*
+     * In this test there is a scope for further improvement, we can explicitly provide
+     * information of parameterized type of method arguments.
+     *
+     * TODO: will consider for further improvement
+     */
     @Test
     public void testClassNameReplacementForFormalParameterAsArgument() {
         String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/plot/flow/FlowPlot.java";
@@ -420,6 +435,12 @@ public class JFreeChartV153TypeInferenceV2APITest {
                     assert ("org.jfree.data.flow.FlowDatasetUtils::public static double"
                             + " calculateInflow(org.jfree.data.flow.FlowDataset, java.lang.Comparable, int)")
                             .equals(methodInfo.toString());
+
+                    assert ("[ParameterizedTypeInfo{qualifiedClassName='org.jfree.data.flow.FlowDataset'," +
+                            " isParameterized=false, typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.Comparable'}]}," +
+                            " QualifiedTypeInfo{qualifiedClassName='java.lang.Comparable'}," +
+                            " PrimitiveTypeInfo{qualifiedClassName='int'}]").equals(methodInfo.getArgumentTypeInfoList().toString());
+
                 }
 
                 return false;
@@ -440,6 +461,91 @@ public class JFreeChartV153TypeInferenceV2APITest {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert "javax.imageio.ImageIO::public static java.util.Iterator getImageWritersByFormatName(java.lang.String)".equals(methodInfo.toString());
+                    assert "[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}]".equals(methodInfo.getArgumentTypeInfoList().toString());
+
+                    assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Iterator'," +
+                            " isParameterized=false," +
+                            " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='javax.imageio.ImageWriter'}]}")
+                            .equals(methodInfo.getReturnTypeInfo().toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testFormalTypeAsMethodArgument() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/KeyedValues2DItemKey.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation constructorInvocation) {
+                if (constructorInvocation.toString().contains("this.rowKey.compareTo(key.rowKey)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert "java.lang.Comparable::public abstract int compareTo(R)".equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
+    @Test
+    public void testFormalTypeAsMethodArgument2() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/DefaultKeyedValues.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("getIndex(key)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert "org.jfree.data.DefaultKeyedValues::public int getIndex(K)".equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+    @Test
+    public void testFormalTypeAsMethodReturnType() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/general/DefaultPieDataset.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation constructorInvocation) {
+                if (constructorInvocation.toString().startsWith("source.getKey(i)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert "org.jfree.data.KeyedValues::public abstract K getKey(int)".equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testMethodWithQualfiedArgumentMatchingFormalTypeArgument() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xy/XYItemKey.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation constructorInvocation) {
+                if (constructorInvocation.toString().startsWith("ObjectUtils.hashCode(this.seriesKey)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert "org.jfree.chart.util.ObjectUtils::public static int hashCode(java.lang.Object)".equals(methodInfo.toString());
                 }
 
                 return true;

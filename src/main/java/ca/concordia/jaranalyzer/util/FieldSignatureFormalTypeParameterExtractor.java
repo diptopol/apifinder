@@ -1,6 +1,9 @@
 package ca.concordia.jaranalyzer.util;
 
-import ca.concordia.jaranalyzer.Models.TypeObject;
+import ca.concordia.jaranalyzer.Models.typeInfo.FormalTypeParameterInfo;
+import ca.concordia.jaranalyzer.Models.typeInfo.QualifiedTypeInfo;
+import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
+import io.vavr.Tuple3;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureVisitor;
 
@@ -9,45 +12,45 @@ import java.util.List;
 
 /**
  * @author Diptopol
- * @since 6/28/2021 12:36 AM
+ * @since 2/5/2022 12:16 PM
  */
 public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor {
 
     private boolean seenTypeArgument;
 
-    private String typeClassName;
-
-    private List<TypeObject> typeArgumentClassObjList;
+    private String fieldFormalTypeParameterName;
+    private String fieldTypeClassName;
+    private List<TypeInfo> typeArgumentList;
 
     public FieldSignatureFormalTypeParameterExtractor() {
         super(Opcodes.ASM9);
-        this.typeArgumentClassObjList = new ArrayList<>();
+        this.typeArgumentList = new ArrayList<>();
     }
 
     @Override
     public void visitClassType(final String name) {
         if (!seenTypeArgument) {
-            typeClassName = name.replaceAll("/", ".");
+            fieldTypeClassName = name.replaceAll("/", ".");
         } else {
-            typeArgumentClassObjList.add(new TypeObject(name.replaceAll("/", ".")));
+            typeArgumentList.add(new QualifiedTypeInfo(name.replaceAll("/", ".")));
         }
     }
 
     @Override
     public void visitTypeVariable(String name) {
         if (!seenTypeArgument) {
-            typeClassName = name;
+            fieldFormalTypeParameterName = name;
         } else {
-            typeArgumentClassObjList.add(new TypeObject(name));
+            typeArgumentList.add(new FormalTypeParameterInfo(name, new QualifiedTypeInfo("java.lang.Object")));
         }
     }
 
     @Override
     public void visitInnerClassType(final String name) {
         if (!seenTypeArgument) {
-            typeClassName = name.replaceAll("/", ".");
+            fieldTypeClassName = name.replaceAll("/", ".");
         } else {
-            typeArgumentClassObjList.add(new TypeObject(name.replaceAll("/", ".")));
+            typeArgumentList.add(new QualifiedTypeInfo(name.replaceAll("/", ".")));
         }
     }
 
@@ -57,12 +60,11 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
         return this;
     }
 
-    public String getTypeClassName() {
-        return typeClassName;
-    }
-
-    public List<TypeObject> getTypeArgumentClassObjList() {
-        return typeArgumentClassObjList;
+    /*
+    '* TODO: JAVADOC
+     */
+    public Tuple3<String, String, List<TypeInfo>> getFieldSignatureInfo() {
+        return new Tuple3<>(this.fieldTypeClassName, this.fieldFormalTypeParameterName, this.typeArgumentList);
     }
 
 }

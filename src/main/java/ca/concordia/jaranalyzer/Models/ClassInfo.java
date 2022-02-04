@@ -1,9 +1,12 @@
 package ca.concordia.jaranalyzer.Models;
 
+import ca.concordia.jaranalyzer.Models.typeInfo.ParameterizedTypeInfo;
+import ca.concordia.jaranalyzer.util.ClassSignatureFormalTypeParameterExtractor;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InnerClassNode;
@@ -327,6 +330,23 @@ public class ClassInfo {
 
     public String getSignature() {
         return this.signature;
+    }
+
+    public ParameterizedTypeInfo getParameterizedType() {
+        if (Objects.isNull(this.signature)) {
+            return null;
+        }
+
+        ClassSignatureFormalTypeParameterExtractor extractor = new ClassSignatureFormalTypeParameterExtractor();
+
+        SignatureReader signatureReader = new SignatureReader(this.getSignature());
+        signatureReader.accept(extractor);
+
+        String qualifiedClassName = this.qualifiedName;
+        ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedClassName);
+        parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
+
+        return parameterizedTypeInfo;
     }
 
 }

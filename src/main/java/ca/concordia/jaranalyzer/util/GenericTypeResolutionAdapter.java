@@ -1,6 +1,6 @@
 package ca.concordia.jaranalyzer.util;
 
-import ca.concordia.jaranalyzer.Models.TypeObject;
+import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -16,7 +16,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     private SignatureWriter signatureWriter;
 
-    private Map<String, TypeObject> formalParameterMap;
+    private Map<String, TypeInfo> formalParameterMap;
 
     private int argumentStack;
 
@@ -25,7 +25,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
     /**
      * @param formalTypeParameterMap : This map will be used to resolve formal types
      */
-    public GenericTypeResolutionAdapter(Map<String, TypeObject> formalTypeParameterMap) {
+    public GenericTypeResolutionAdapter(Map<String, TypeInfo> formalTypeParameterMap) {
         super(Opcodes.ASM9);
         this.signatureWriter = new SignatureWriter();
         this.formalParameterMap = formalTypeParameterMap;
@@ -60,7 +60,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
     @Override
     public void visitTypeVariable(final String name) {
         if (argumentStack == 0) {
-            String className = formalParameterMap.get(name).getQualifiedClassName().replaceAll("\\.", "/");
+            String className = formalParameterMap.get(name).getName().replaceAll("\\.", "/");
             signatureWriter.visitClassType(className);
             signatureWriter.visitEnd();
         }

@@ -1,10 +1,11 @@
 package ca.concordia.jaranalyzer.Models;
 
+import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
 import org.eclipse.jdt.core.dom.Type;
 
 /**
  * @author Diptopol
- * @since 9/19/2021 6:29 PM
+ * @since 2/7/2022 11:05 AM
  */
 public class VariableDeclarationDto {
 
@@ -12,13 +13,13 @@ public class VariableDeclarationDto {
 
     private Type type;
 
-    private TypeObject typeObj;
+    private TypeInfo typeInfo;
 
     private VariableScope scope;
 
-    public VariableDeclarationDto(String name, TypeObject typeObj, VariableScope scope, Type type) {
+    public VariableDeclarationDto(String name, TypeInfo typeInfo, VariableScope scope, Type type) {
         this.name = name;
-        this.typeObj = typeObj;
+        this.typeInfo = typeInfo;
         this.scope = scope;
         this.type = type;
     }
@@ -27,17 +28,16 @@ public class VariableDeclarationDto {
         return name;
     }
 
-
-    public TypeObject getTypeObj() {
-        return typeObj;
+    public TypeInfo getTypeInfo() {
+        return this.typeInfo;
     }
 
     public VariableScope getScope() {
-        return scope;
+        return this.scope;
     }
 
     public Type getType() {
-        return type;
+        return this.type;
     }
 
     @Override
@@ -59,14 +59,14 @@ public class VariableDeclarationDto {
             return false;
         VariableDeclarationDto other = (VariableDeclarationDto) obj;
         if (name == null) {
-            if (other.name != null)
+            if (other.getName() != null)
                 return false;
-        } else if (!name.equals(other.name))
+        } else if (!name.equals(other.getName()))
             return false;
         if (scope == null) {
-            if (other.scope != null)
+            if (other.getScope() != null)
                 return false;
-        } else if (!scope.equals(other.scope))
+        } else if (!scope.equals(other.getScope()))
             return false;
         return true;
     }
@@ -75,7 +75,7 @@ public class VariableDeclarationDto {
     public String toString() {
         return "VariableDeclarationDto{" +
                 "name='" + name + '\'' +
-                ", typeObj='" + typeObj + '\'' +
+                ", typeInfo='" + typeInfo + '\'' +
                 ", scope=" + scope +
                 '}';
     }

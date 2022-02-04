@@ -1,52 +1,38 @@
 package ca.concordia.jaranalyzer.util;
 
-import ca.concordia.jaranalyzer.Models.TypeObject;
+import ca.concordia.jaranalyzer.Models.typeInfo.FormalTypeParameterInfo;
+import ca.concordia.jaranalyzer.Models.typeInfo.QualifiedTypeInfo;
+import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureVisitor;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 /**
  * @author Diptopol
- * @since 6/28/2021 12:39 AM
+ * @since 2/5/2022 4:01 AM
  */
 public class ClassSignatureFormalTypeParameterExtractor extends SignatureVisitor {
 
-    private List<TypeObject> typeClassObjList;
-
-    private Map<String, TypeObject> formalTypeParameterMap;
+    private LinkedHashMap<String, TypeInfo> formalTypeParameterMap;
     private Stack<String> formalTypeParameterNameStack;
 
-    private boolean seenFormalTypeParameter;
     private boolean classBoundVisit;
     private boolean interfaceBoundVisit;
 
-    private int currentTypeClassNameIndex;
-
-    public ClassSignatureFormalTypeParameterExtractor(List<TypeObject> typeClassObjList) {
+    public ClassSignatureFormalTypeParameterExtractor() {
         super(Opcodes.ASM9);
-        this.formalTypeParameterMap = new HashMap<>();
+        this.formalTypeParameterMap = new LinkedHashMap<>();
         this.formalTypeParameterNameStack = new Stack<>();
-        this.typeClassObjList = typeClassObjList;
     }
 
     @Override
     public void visitFormalTypeParameter(final String name) {
-        seenFormalTypeParameter = true;
         formalTypeParameterNameStack.push(name);
-
-        if (!typeClassObjList.isEmpty()) {
-            formalTypeParameterMap.put(name, typeClassObjList.get(currentTypeClassNameIndex));
-
-            if (seenFormalTypeParameter) {
-                currentTypeClassNameIndex++;
-            }
-        } else {
-            formalTypeParameterMap.put(name, new TypeObject("java.lang.Object"));
-        }
+        formalTypeParameterMap.put(name, new FormalTypeParameterInfo(name, new QualifiedTypeInfo("java.lang.Object")));
     }
 
     @Override
@@ -64,20 +50,6 @@ public class ClassSignatureFormalTypeParameterExtractor extends SignatureVisitor
     }
 
     @Override
-    public SignatureVisitor visitSuperclass() {
-        seenFormalTypeParameter = false;
-
-        return this;
-    }
-
-    @Override
-    public SignatureVisitor visitInterface() {
-        seenFormalTypeParameter = false;
-
-        return this;
-    }
-
-    @Override
     public SignatureVisitor visitClassBound() {
         classBoundVisit = true;
         return super.visitClassBound();
@@ -89,14 +61,16 @@ public class ClassSignatureFormalTypeParameterExtractor extends SignatureVisitor
         return super.visitInterfaceBound();
     }
 
-    public Map<String, TypeObject> getFormalTypeParameterMap() {
+    public LinkedHashMap<String, TypeInfo> getFormalTypeParameterMap() {
         return formalTypeParameterMap;
     }
 
+    public List<TypeInfo> getTypeArgumentList() {
+        return new ArrayList<>(this.formalTypeParameterMap.values());
+    }
+
     private void updateByBoundClassOrInterface(String typeParameter, String name) {
-        if ("java.lang.Object".equals(formalTypeParameterMap.get(typeParameter).getQualifiedClassName())) {
-            formalTypeParameterMap.put(typeParameter, new TypeObject(name.replaceAll("/", ".")));
-        }
+        formalTypeParameterMap.put(typeParameter, new FormalTypeParameterInfo(typeParameter, new QualifiedTypeInfo(name.replaceAll("/", "."))));
     }
 
 }
