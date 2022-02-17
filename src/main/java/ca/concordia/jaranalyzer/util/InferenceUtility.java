@@ -1221,6 +1221,34 @@ public class InferenceUtility {
                                                        String owningClassQualifiedName) {
         String name = simpleType.getName().getFullyQualifiedName();
 
+        MethodDeclaration methodDeclaration = (MethodDeclaration) InferenceUtility.getClosestASTNode(simpleType, MethodDeclaration.class);
+
+        /*
+         * Checking formal type parameter of thw owning method
+         */
+        if (Objects.nonNull(methodDeclaration) && !methodDeclaration.typeParameters().isEmpty()) {
+            List<TypeParameter> typeParameterList = methodDeclaration.typeParameters();
+
+            for (TypeParameter typeParameter: typeParameterList) {
+                String typeParameterName = typeParameter.getName().getFullyQualifiedName();
+
+                if (name.equals(typeParameterName)) {
+                    List<Type> boundTypeList = typeParameter.typeBounds();
+                    Type boundType = boundTypeList.get(0) instanceof ParameterizedType
+                            ? ((ParameterizedType) boundTypeList.get(0)).getType()
+                            : (ParameterizedType) boundTypeList.get(0);
+
+                    TypeInfo boundTypeInfo = getTypeInfo(dependentJarInformationSet, javaVersion, importStatementList,
+                            boundType, owningClassQualifiedName);
+
+                    return new FormalTypeParameterInfo(name, new QualifiedTypeInfo(boundTypeInfo.getQualifiedClassName()));
+                }
+            }
+        }
+
+        /*
+         * Checking formal type parameter of thw owning class
+         */
         TypeInfo owningClassTypeInfo = getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
                 importStatementList, owningClassQualifiedName, owningClassQualifiedName);
 

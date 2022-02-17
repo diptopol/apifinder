@@ -553,4 +553,24 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testFormalTypeAsMethodArgumentFromMethodTypeParameter() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/flow/FlowDatasetUtils.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation constructorInvocation) {
+                if (constructorInvocation.toString().startsWith("dataset.getFlow(stage,source,destination)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert ("org.jfree.data.flow.FlowDataset::public abstract java.lang.Number getFlow(int, K, K)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }
