@@ -590,11 +590,13 @@ public class InferenceUtility {
                 TypeInfo classTypeInfo = getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
                         importStatementList, className, owningClassQualifiedName);
 
-                if (classTypeInfo.isParameterizedTypeInfo()) {
+                if (Objects.nonNull(classTypeInfo) && classTypeInfo.isParameterizedTypeInfo()) {
                     ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
 
-                    parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
-                    parameterizedTypeInfo.setParameterized(true);
+                    if (!typeArgumentList.isEmpty()) {
+                        parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                        parameterizedTypeInfo.setParameterized(true);
+                    }
                 }
 
                 return classTypeInfo;
