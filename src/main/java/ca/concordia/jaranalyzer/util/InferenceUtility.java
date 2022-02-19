@@ -832,7 +832,7 @@ public class InferenceUtility {
         for (MethodInfo methodInfo : methodInfoList) {
             Map<String, TypeInfo> replacedTypeInfoMap = new HashMap<>();
 
-            if (invokerTypeInfo.isParameterizedTypeInfo()) {
+            if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isParameterizedTypeInfo()) {
                 ParameterizedTypeInfo invokerParameterizedTypeInfo = (ParameterizedTypeInfo) invokerTypeInfo;
 
                 /*
@@ -899,7 +899,7 @@ public class InferenceUtility {
                 /*
                  * When invoker is not parameterized type but method has formal type parameter.
                  */
-            } else if (invokerTypeInfo.isQualifiedTypeInfo()) {
+            } else if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isQualifiedTypeInfo()) {
                 List<TypeInfo> methodArgumentTypeInfoList = methodInfo.getArgumentTypeInfoList();
 
                 for (int i = 0; i < methodArgumentTypeInfoList.size(); i++) {
@@ -932,7 +932,7 @@ public class InferenceUtility {
                     methodInfo.setReturnTypeInfo(formalTypeParameterMethodReturnTypeInfo.getBaseTypeInfo());
                     replacedTypeInfoMap.put(formalTypeParameterMethodReturnTypeInfo.getTypeParameter(), formalTypeParameterMethodReturnTypeInfo.getBaseTypeInfo());
                 }
-            } else if (invokerTypeInfo.isFormalTypeParameterInfo()) {
+            } else if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isFormalTypeParameterInfo()) {
                 FormalTypeParameterInfo invokerFormalTypeParameterInfo = (FormalTypeParameterInfo) invokerTypeInfo;
                 processFormalTypeParameter(dependentJarInformationSet, javaVersion, importStatementList,
                         owningClassQualifiedName, methodInfo, replacedTypeInfoMap, invokerFormalTypeParameterInfo);
