@@ -92,8 +92,8 @@ public class InferenceUtility {
          * According to my current understanding we do not need arguments for any type inference.This may change with
          * any unanticipated scenario.
          */
-        transformTypeInfoRepresentation(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                owningClassQualifiedName, methodInfoList, callerClassTypeInfo);
+        transformTypeInfoRepresentation(dependentJarInformationSet, javaVersion, importStatementList,
+                owningClassQualifiedName, methodInfoList, argumentTypeInfoList, callerClassTypeInfo);
         conversionToVarargsMethodArgument(methodInfoList, argumentTypeInfoList);
 
         return methodInfoList;
@@ -136,8 +136,8 @@ public class InferenceUtility {
          * According to my current understanding we do not need arguments for any type inference.This may change with
          * any unanticipated scenario.
          */
-        transformTypeInfoRepresentation(dependentJarInformationSet, javaVersion, importStatementList, variableNameMap,
-                owningClassQualifiedName, methodInfoList, null);
+        transformTypeInfoRepresentation(dependentJarInformationSet, javaVersion, importStatementList,
+                owningClassQualifiedName, methodInfoList, argumentTypeInfoList, null);
         conversionToVarargsMethodArgument(methodInfoList, argumentTypeInfoList);
 
         return methodInfoList;
@@ -824,9 +824,9 @@ public class InferenceUtility {
     public static void transformTypeInfoRepresentation(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                        String javaVersion,
                                                        List<String> importStatementList,
-                                                       Map<String, Set<VariableDeclarationDto>> variableNameMap,
                                                        String owningClassQualifiedName,
                                                        List<MethodInfo> methodInfoList,
+                                                       List<TypeInfo> argumentTypeInfoList,
                                                        TypeInfo invokerTypeInfo) {
 
         for (MethodInfo methodInfo : methodInfoList) {
@@ -897,19 +897,38 @@ public class InferenceUtility {
                     }
                 }
                 /*
-                 * When invoker is not parameterized type but method has formal type parameter.
+                 * When invoker is Qualified type but method has formal type parameter.
+                 *
+                 * We can infer from argument type or use base type
+                 *
                  */
             } else if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isQualifiedTypeInfo()) {
                 List<TypeInfo> methodArgumentTypeInfoList = methodInfo.getArgumentTypeInfoList();
+
+                Map<String, TypeInfo> inferredFormalTypeParameterValueMap = new HashMap<>();
+
+                for (int i = 0; i < methodArgumentTypeInfoList.size(); i++) {
+                    TypeInfo methodArgument = methodArgumentTypeInfoList.get(i);
+                    TypeInfo argument = argumentTypeInfoList.get(i);
+
+                    if (methodArgument.isFormalTypeParameterInfo()) {
+                        FormalTypeParameterInfo formalTypeParameterMethodArgInfo = (FormalTypeParameterInfo) methodArgument;
+                        inferredFormalTypeParameterValueMap.put(formalTypeParameterMethodArgInfo.getTypeParameter(), argument);
+                    }
+                }
 
                 for (int i = 0; i < methodArgumentTypeInfoList.size(); i++) {
                     TypeInfo methodArgument = methodArgumentTypeInfoList.get(i);
 
                     if (methodArgument.isFormalTypeParameterInfo()) {
                         FormalTypeParameterInfo formalTypeParameterMethodArgInfo = (FormalTypeParameterInfo) methodArgument;
-                        methodArgumentTypeInfoList.set(i, formalTypeParameterMethodArgInfo.getBaseTypeInfo());
 
-                        replacedTypeInfoMap.put(formalTypeParameterMethodArgInfo.getTypeParameter(), formalTypeParameterMethodArgInfo.getBaseTypeInfo());
+                        TypeInfo baseTypeInfo = inferredFormalTypeParameterValueMap.containsKey(formalTypeParameterMethodArgInfo.getTypeParameter())
+                                ? inferredFormalTypeParameterValueMap.get(formalTypeParameterMethodArgInfo.getTypeParameter())
+                                : formalTypeParameterMethodArgInfo.getBaseTypeInfo();
+                        methodArgumentTypeInfoList.set(i, baseTypeInfo);
+
+                        replacedTypeInfoMap.put(formalTypeParameterMethodArgInfo.getTypeParameter(), baseTypeInfo);
                     } else if (methodArgument.isParameterizedTypeInfo()) {
                         ParameterizedTypeInfo parameterizedMethodArgument = (ParameterizedTypeInfo) methodArgument;
                         List<TypeInfo> typeArgumentList = parameterizedMethodArgument.getTypeArgumentList();
@@ -919,9 +938,14 @@ public class InferenceUtility {
 
                             if (typeArgument.isFormalTypeParameterInfo()) {
                                 FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeArgument;
-                                typeArgumentList.set(j, formalTypeParameterInfo.getBaseTypeInfo());
 
-                                replacedTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo.getBaseTypeInfo());
+                                TypeInfo baseTypeInfo = inferredFormalTypeParameterValueMap.containsKey(formalTypeParameterInfo.getTypeParameter())
+                                        ? inferredFormalTypeParameterValueMap.get(formalTypeParameterInfo.getTypeParameter())
+                                        : formalTypeParameterInfo.getBaseTypeInfo();
+
+                                typeArgumentList.set(j, baseTypeInfo);
+
+                                replacedTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), baseTypeInfo);
                             }
                         }
                     }
@@ -929,8 +953,13 @@ public class InferenceUtility {
 
                 if (methodInfo.getReturnTypeInfo().isFormalTypeParameterInfo()) {
                     FormalTypeParameterInfo formalTypeParameterMethodReturnTypeInfo = (FormalTypeParameterInfo) methodInfo.getReturnTypeInfo();
-                    methodInfo.setReturnTypeInfo(formalTypeParameterMethodReturnTypeInfo.getBaseTypeInfo());
-                    replacedTypeInfoMap.put(formalTypeParameterMethodReturnTypeInfo.getTypeParameter(), formalTypeParameterMethodReturnTypeInfo.getBaseTypeInfo());
+
+                    TypeInfo baseTypeInfo = inferredFormalTypeParameterValueMap.containsKey(formalTypeParameterMethodReturnTypeInfo.getTypeParameter())
+                            ? inferredFormalTypeParameterValueMap.get(formalTypeParameterMethodReturnTypeInfo.getTypeParameter())
+                            : formalTypeParameterMethodReturnTypeInfo.getBaseTypeInfo();
+
+                    methodInfo.setReturnTypeInfo(baseTypeInfo);
+                    replacedTypeInfoMap.put(formalTypeParameterMethodReturnTypeInfo.getTypeParameter(), baseTypeInfo);
                 }
             } else if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isFormalTypeParameterInfo()) {
                 FormalTypeParameterInfo invokerFormalTypeParameterInfo = (FormalTypeParameterInfo) invokerTypeInfo;

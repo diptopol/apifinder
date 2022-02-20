@@ -415,10 +415,12 @@ public class JFreeChartV153TypeInferenceV2APITest {
     }
 
     /*
-     * In this test there is a scope for further improvement, we can explicitly provide
-     * information of parameterized type of method arguments.
+     * Now we are trying to find type arguments with more information. Here the first argument is FlowDataset with type
+     * argument K, where K is <K extends Comparable<K>>. So we can deduce that the base class for K would be a
+     * Parameterized typeInfo with type argument K where K would be 'java.lang.Object'. Since in the argument,
+     * type argument for K is not provided, we cannot infer the type of K, hence it would be 'java.lang.Object'.
      *
-     * TODO: will consider for further improvement
+     * TODO: need to check when type argument is provided whether we can resolve the type accordingly.
      */
     @Test
     public void testClassNameReplacementForFormalParameterAsArgument() {
@@ -436,10 +438,15 @@ public class JFreeChartV153TypeInferenceV2APITest {
                             + " calculateInflow(org.jfree.data.flow.FlowDataset, java.lang.Comparable, int)")
                             .equals(methodInfo.toString());
 
-                    assert ("[ParameterizedTypeInfo{qualifiedClassName='org.jfree.data.flow.FlowDataset'," +
-                            " isParameterized=false, typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.Comparable'}]}," +
-                            " QualifiedTypeInfo{qualifiedClassName='java.lang.Comparable'}," +
-                            " PrimitiveTypeInfo{qualifiedClassName='int'}]").equals(methodInfo.getArgumentTypeInfoList().toString());
+                    assert ("[ParameterizedTypeInfo{qualifiedClassName='org.jfree.data.flow.FlowDataset', isParameterized=false," +
+                            " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable', isParameterized=false," +
+                            " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}," +
+                            " ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable', isParameterized=false," +
+                            " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
+                            " PrimitiveTypeInfo{qualifiedClassName='int'}]")
+                            .equals(methodInfo.getArgumentTypeInfoList().toString());
 
                 }
 

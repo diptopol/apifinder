@@ -140,10 +140,17 @@ public class JFreeChartV1019TypeInferenceV2APITest {
                 if (methodInvocation.toString().startsWith("Collections.binarySearch(this.rowKeys")) {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
-                    System.out.println(methodInfo);
+                    assert "java.util.Collections::public static int binarySearch(java.util.List, java.lang.Comparable)"
+                            .equals(methodInfo.toString());
 
-                    /*assert "java.util.Collections::public static int binarySearch(java.util.List, java.lang.Comparable)"
-                            .equals(methodInfo.toString());*/
+                    assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=false," +
+                            " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable'," +
+                            " isParameterized=false, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}," +
+                            " ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable', isParameterized=false," +
+                            " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
+                            .equals(methodInfo.getArgumentTypeInfoList().toString());
                 }
 
                 return false;
