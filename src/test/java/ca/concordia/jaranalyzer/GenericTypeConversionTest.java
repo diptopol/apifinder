@@ -283,4 +283,26 @@ public class GenericTypeConversionTest {
         assert "PrimitiveTypeInfo{qualifiedClassName='double'}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
     }
 
+    @Test
+    public void testNestedParameterizedTypesAsArgument() {
+        String signature = "<T:Ljava/lang/Object;>(Ljava/util/List<+Ljava/lang/Comparable<-TT;>;>;TT;)I";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=false," +
+                " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable'," +
+                " isParameterized=false, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}," +
+                " FormalTypeParameterInfo{typeParameter='T'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]")
+                .equals(methodArgumentExtractor.getArgumentList().toString());
+
+        MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
+        signatureReader.accept(methodReturnTypeExtractor);
+
+        assert "PrimitiveTypeInfo{qualifiedClassName='int'}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
+    }
+
 }

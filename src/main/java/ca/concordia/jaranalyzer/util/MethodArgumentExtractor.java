@@ -8,6 +8,9 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import java.util.*;
 
 /**
+ * For Formal parameter <K::Ljava/lang/Comparable<TK;> we are currently considering only java/lang/Comparable as
+ * base Type of formal type parameter K.
+ *
  * @author Diptopol
  * @since 1/30/2022 4:03 PM
  */
@@ -19,26 +22,19 @@ public class MethodArgumentExtractor extends SignatureVisitor {
     private boolean visitingFormalTypeParameter;
 
     private int argumentStack;
-    private int currentArgumentIndex;
     private int currentIndexArrayDimension;
 
-    private TypeInfo currentType;
-
-    private List<TypeInfo> argumentList;
-    private List<TypeInfo> typeArgumentList;
-
+    private Stack<TypeInfo> methodArgumentTypeInfoStack;
     private Stack<String> formalTypeParameterNameStack;
 
     private Map<String, TypeInfo> formalTypeParameterMap;
 
     public MethodArgumentExtractor() {
         super(Opcodes.ASM9);
-        this.argumentList = new ArrayList<>();
         this.formalTypeParameterNameStack = new Stack<>();
         this.formalTypeParameterMap = new LinkedHashMap<>();
-        this.typeArgumentList = new ArrayList<>();
+        this.methodArgumentTypeInfoStack = new Stack<>();
 
-        currentArgumentIndex = 0;
         this.currentIndexArrayDimension = 0;
     }
 
@@ -62,14 +58,14 @@ public class MethodArgumentExtractor extends SignatureVisitor {
 
     @Override
     public void visitInnerClassType(final String name) {
-        argumentStack /= 2;
+        endArguments();
         argumentStack *= 2;
     }
 
     @Override
     public void visitBaseType(char descriptor) {
-        if (visitingMethodArguments && Objects.isNull(this.currentType)) {
-            this.argumentList.add(convertToArrayTypeIfRequired(new PrimitiveTypeInfo(
+        if (visitingMethodArguments) {
+            this.methodArgumentTypeInfoStack.add(convertToArrayTypeIfRequired(new PrimitiveTypeInfo(
                     Type.getType(Character.toString(descriptor)).getClassName())));
         }
     }
@@ -77,56 +73,42 @@ public class MethodArgumentExtractor extends SignatureVisitor {
     @Override
     public void visitClassType(String name) {
         if (classBoundVisit) {
-            String typeParameter = formalTypeParameterNameStack.peek();
-            currentType = new FormalTypeParameterInfo(typeParameter, new QualifiedTypeInfo(name.replaceAll("/", ".")));
+            String typeParameter = formalTypeParameterNameStack.pop();
+            TypeInfo baseType = new FormalTypeParameterInfo(typeParameter,
+                    new QualifiedTypeInfo(name.replaceAll("/", ".")));
+            formalTypeParameterMap.put(typeParameter, baseType);
+
             classBoundVisit = false;
         } else if (interfaceBoundVisit) {
-            String typeParameter = formalTypeParameterNameStack.peek();
-            currentType = new FormalTypeParameterInfo(typeParameter, new QualifiedTypeInfo(name.replaceAll("/", ".")));
+            String typeParameter = formalTypeParameterNameStack.pop();
+
+            TypeInfo baseType = new FormalTypeParameterInfo(typeParameter,
+                    new QualifiedTypeInfo(name.replaceAll("/", ".")));
+            formalTypeParameterMap.put(typeParameter, baseType);
+
             interfaceBoundVisit = false;
         } else {
             argumentStack *= 2;
 
-            if (visitingFormalTypeParameter || visitingMethodArguments) {
-                currentType = convertToArrayTypeIfRequired(new QualifiedTypeInfo(name.replaceAll("/", ".")));
+            if (visitingMethodArguments) {
+                this.methodArgumentTypeInfoStack.add(
+                        convertToArrayTypeIfRequired(new QualifiedTypeInfo(name.replaceAll("/", "."))));
             }
         }
     }
 
     @Override
     public void visitEnd() {
-        argumentStack /= 2;
+        endArguments();
 
-        // ignoring internal parameterized type for formalTypeParameter
-        //assuming class for formaTypeParameter cannot be an array.
-        if (visitingFormalTypeParameter) {
+        if (visitingFormalTypeParameter && !formalTypeParameterNameStack.isEmpty()) {
             String typeParameter = formalTypeParameterNameStack.pop();
 
-            currentType = Objects.nonNull(currentType)
-                    ? currentType
-                    : new FormalTypeParameterInfo(typeParameter, new QualifiedTypeInfo("java.lang.Object"));
-
-            formalTypeParameterMap.put(typeParameter, currentType);
-            currentType = null;
+            formalTypeParameterMap.put(typeParameter,
+                    new FormalTypeParameterInfo(typeParameter, new QualifiedTypeInfo("java.lang.Object")));
         }
 
         if (argumentStack == 0 && visitingMethodArguments) {
-            if (Objects.nonNull(this.currentType)) {
-                if (this.currentType.isQualifiedTypeInfo() && !this.typeArgumentList.isEmpty()) {
-                    QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) this.currentType;
-                    ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedTypeInfo);
-                    parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(this.typeArgumentList));
-
-                    this.argumentList.add(currentArgumentIndex, parameterizedTypeInfo);
-                    this.typeArgumentList.clear();
-                } else {
-                    this.argumentList.add(currentArgumentIndex, this.currentType);
-                }
-
-                this.currentType = null;
-            }
-
-            currentArgumentIndex++;
             this.currentIndexArrayDimension = 0;
         }
     }
@@ -135,9 +117,20 @@ public class MethodArgumentExtractor extends SignatureVisitor {
     public SignatureVisitor visitTypeArgument(final char tag) {
         if (argumentStack % 2 == 0) {
             argumentStack |= 1;
+
+            processForTypeArgumentVisit();
         }
 
         return this;
+    }
+
+    @Override
+    public void visitTypeArgument() {
+        if (argumentStack % 2 == 0) {
+            argumentStack |= 1;
+
+            processForTypeArgumentVisit();
+        }
     }
 
     @Override
@@ -146,28 +139,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
             return;
         }
 
-        if (Objects.isNull(this.currentType)) {
-            TypeInfo typeInfo;
-
-            if (formalTypeParameterMap.containsKey(name)) {
-                typeInfo = convertToArrayTypeIfRequired(formalTypeParameterMap.get(name));
-
-            } else {
-                typeInfo = convertToArrayTypeIfRequired(new FormalTypeParameterInfo(name, new QualifiedTypeInfo("java.lang.Object")));
-            }
-
-            this.argumentList.add(currentArgumentIndex, typeInfo);
-        } else {
-            TypeInfo typeInfo;
-
-            if (formalTypeParameterMap.containsKey(name)) {
-                typeInfo = formalTypeParameterMap.get(name);
-            } else {
-                typeInfo = new FormalTypeParameterInfo(name, new QualifiedTypeInfo("java.lang.Object"));
-            }
-
-            this.typeArgumentList.add(typeInfo);
-        }
+        processForTypeVariableVisit(name);
     }
 
     @Override
@@ -195,7 +167,95 @@ public class MethodArgumentExtractor extends SignatureVisitor {
     }
 
     public List<TypeInfo> getArgumentList() {
-        return argumentList;
+        return new ArrayList<>(this.methodArgumentTypeInfoStack);
+    }
+
+    private void processForTypeArgumentVisit() {
+        if (!visitingMethodArguments) {
+            return;
+        }
+
+        TypeInfo typeInfo = this.methodArgumentTypeInfoStack.pop();
+
+        if (typeInfo.isArrayTypeInfo()) {
+            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
+
+            assert arrayTypeInfo.getElementTypeInfo().isQualifiedTypeInfo();
+
+            ParameterizedTypeInfo parameterizedTypeInfo =
+                    new ParameterizedTypeInfo(arrayTypeInfo.getElementTypeInfo().getQualifiedClassName());
+
+            this.methodArgumentTypeInfoStack.push(new ArrayTypeInfo(parameterizedTypeInfo, arrayTypeInfo.getDimension()));
+        } else if (typeInfo.isQualifiedTypeInfo()) {
+            QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) typeInfo;
+
+            methodArgumentTypeInfoStack.push(new ParameterizedTypeInfo(qualifiedTypeInfo));
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    private void processForTypeVariableVisit(String name) {
+        if (!visitingMethodArguments) {
+            return;
+        }
+
+        TypeInfo typeInfo;
+
+        if (formalTypeParameterMap.containsKey(name)) {
+            typeInfo = convertToArrayTypeIfRequired(formalTypeParameterMap.get(name));
+
+        } else {
+            typeInfo = convertToArrayTypeIfRequired(new FormalTypeParameterInfo(name,
+                    new QualifiedTypeInfo("java.lang.Object")));
+        }
+
+        this.methodArgumentTypeInfoStack.push(typeInfo);
+    }
+
+    private void processEndOfTypeArguments() {
+        if (!visitingMethodArguments) {
+            return;
+        }
+
+        int indexOfParameterizedType = 0;
+        for (int i = 0; i < this.methodArgumentTypeInfoStack.size(); i++) {
+            TypeInfo currentTypeInfo = this.methodArgumentTypeInfoStack.get(i);
+
+            if (currentTypeInfo.isParameterizedTypeInfo()
+                    && ((ParameterizedTypeInfo) currentTypeInfo).getTypeArgumentList().isEmpty()) {
+                indexOfParameterizedType = i;
+            }
+        }
+
+        List<TypeInfo> argumentTypeList = new ArrayList<>(this.methodArgumentTypeInfoStack.subList(indexOfParameterizedType + 1,
+                this.methodArgumentTypeInfoStack.size()));
+        this.methodArgumentTypeInfoStack.subList(indexOfParameterizedType + 1, this.methodArgumentTypeInfoStack.size()).clear();
+
+        TypeInfo typeInfo = this.methodArgumentTypeInfoStack.peek();
+
+        if (typeInfo.isArrayTypeInfo()) {
+            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
+            assert arrayTypeInfo.getElementTypeInfo().isParameterizedTypeInfo();
+
+            ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) arrayTypeInfo.getElementTypeInfo();
+            parameterizedTypeInfo.setTypeArgumentList(argumentTypeList);
+
+        } else if (typeInfo.isParameterizedTypeInfo()) {
+            ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
+            parameterizedTypeInfo.setTypeArgumentList(argumentTypeList);
+
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    private void endArguments() {
+        if (argumentStack % 2 == 1) {
+            processEndOfTypeArguments();
+        }
+
+        argumentStack /= 2;
     }
 
     private TypeInfo convertToArrayTypeIfRequired(TypeInfo typeInfo) {

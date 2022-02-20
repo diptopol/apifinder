@@ -31,6 +31,10 @@ public class ArrayTypeInfo extends TypeInfo {
         return elementTypeInfo;
     }
 
+    public int getDimension() {
+        return dimension;
+    }
+
     @Override
     public String getName() {
         return this.elementTypeInfo.getName().concat(StringUtils.repeat("[]", this.dimension));
