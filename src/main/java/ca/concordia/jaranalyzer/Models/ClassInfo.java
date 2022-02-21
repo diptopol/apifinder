@@ -1,7 +1,8 @@
 package ca.concordia.jaranalyzer.Models;
 
-import ca.concordia.jaranalyzer.Models.typeInfo.ParameterizedTypeInfo;
+import ca.concordia.jaranalyzer.Models.typeInfo.*;
 import ca.concordia.jaranalyzer.util.ClassSignatureFormalTypeParameterExtractor;
+import ca.concordia.jaranalyzer.util.InferenceUtility;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.objectweb.asm.Opcodes;
@@ -22,6 +23,9 @@ public class ClassInfo {
     private String name;
     private String packageName;
     private Type type;
+
+    private TypeInfo typeInfo;
+
     private boolean isPublic;
     private boolean isPrivate;
     private boolean isProtected;
@@ -59,6 +63,8 @@ public class ClassInfo {
         if (signatureProperty.isPresent()) {
             this.signature = signatureProperty.value();
         }
+
+        this.typeInfo = getClassTypeInfo(this.type, this.qualifiedName, this.signature);
     }
 
     public ClassInfo(ClassNode classNode) {
@@ -90,6 +96,7 @@ public class ClassInfo {
             }
 
             this.type = Type.getObjectType(classNode.name);
+            this.typeInfo = getClassTypeInfo(this.type, this.qualifiedName, this.signature);
 
             int access = classNode.access;
 
@@ -166,6 +173,10 @@ public class ClassInfo {
 
     public Type getType() {
         return type;
+    }
+
+    public TypeInfo getTypeInfo() {
+        return typeInfo;
     }
 
     public boolean isPublic() {
@@ -347,6 +358,34 @@ public class ClassInfo {
         parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
 
         return parameterizedTypeInfo;
+    }
+
+    private TypeInfo getClassTypeInfo(Type type, String qualifiedName, String signature) {
+        if (Objects.isNull(signature)) {
+            return getTypeInfo(type);
+        } else {
+            ClassSignatureFormalTypeParameterExtractor extractor = new ClassSignatureFormalTypeParameterExtractor();
+
+            SignatureReader signatureReader = new SignatureReader(signature);
+            signatureReader.accept(extractor);
+
+            ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedName);
+            parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
+
+            return parameterizedTypeInfo;
+        }
+    }
+
+    /*
+     * The current assumption is that type of classInfo can only be a primitive type, or qualified if it is not
+     * parameterized type.
+     */
+    private TypeInfo getTypeInfo(Type type) {
+        if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(type.getClassName())) {
+            return new PrimitiveTypeInfo(type.getClassName());
+        } else {
+            return new QualifiedTypeInfo(type.getClassName());
+        }
     }
 
 }

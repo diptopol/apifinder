@@ -869,8 +869,16 @@ public class InferenceUtility {
                         }
                     }
                 } else {
-                    if (methodInfo.getClassInfo().getQualifiedName().equals(owningClassQualifiedName)) {
-                        ParameterizedTypeInfo classParameterizedType = methodInfo.getClassInfo().getParameterizedType();
+                    /*
+                     * If callerClass is ParameterizedTypeInfo but parameterized=false, then there can be two scenarios.
+                     *
+                     * Scenario 1. the callerClass can be owning class, then we should show the formalTypeParameterInfo
+                     * as it is.
+                     *
+                     * Scenario 2. the callerClass can be another class, then we have to show the base type of formalTypeParameterInfo
+                     */
+                    if (methodInfo.getClassInfo().getTypeInfo().isParameterizedTypeInfo()) {
+                        ParameterizedTypeInfo classParameterizedType = (ParameterizedTypeInfo) methodInfo.getClassInfo().getTypeInfo();
                         Map<String, FormalTypeParameterInfo> invokerFormalTypeParameterMap = classParameterizedType.getTypeArgumentList()
                                 .stream()
                                 .filter(TypeInfo::isFormalTypeParameterInfo)
@@ -878,6 +886,9 @@ public class InferenceUtility {
                                 .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
                                         formalTypeParameterInfo -> formalTypeParameterInfo));
 
+                        /*
+                         * Method Arguments:
+                         */
                         for (int i = 0; i < methodInfo.getArgumentTypeInfoList().size(); i++) {
                             TypeInfo methodArgument = methodInfo.getArgumentTypeInfoList().get(i);
 
@@ -888,10 +899,34 @@ public class InferenceUtility {
                                     FormalTypeParameterInfo invokerFormalTypeParameter =
                                             invokerFormalTypeParameterMap.get(formalTypeParameterInfo.getTypeParameter());
 
-                                    methodInfo.getArgumentTypeInfoList().set(i, invokerFormalTypeParameter);
+                                    TypeInfo typeInfo = methodInfo.getClassInfo().getQualifiedName().equals(owningClassQualifiedName)
+                                            ? invokerFormalTypeParameter
+                                            : invokerFormalTypeParameter.getBaseTypeInfo();
 
-                                    replacedTypeInfoMap.put(invokerFormalTypeParameter.getTypeParameter(), invokerFormalTypeParameter);
+                                    methodInfo.getArgumentTypeInfoList().set(i, typeInfo);
+
+                                    replacedTypeInfoMap.put(invokerFormalTypeParameter.getTypeParameter(), typeInfo);
                                 }
+                            }
+                        }
+
+                        /*
+                         * Method return type:
+                         */
+                        if (methodInfo.getReturnTypeInfo().isFormalTypeParameterInfo()) {
+                            FormalTypeParameterInfo formalTypeParameterMethodReturnTypeInfo = (FormalTypeParameterInfo) methodInfo.getReturnTypeInfo();
+
+                            if (invokerFormalTypeParameterMap.containsKey(formalTypeParameterMethodReturnTypeInfo.getTypeParameter())) {
+                                FormalTypeParameterInfo invokerFormalTypeParameterInfo =
+                                        invokerFormalTypeParameterMap.get(formalTypeParameterMethodReturnTypeInfo.getTypeParameter());
+
+                                TypeInfo typeInfo = methodInfo.getClassInfo().getQualifiedName().equals(owningClassQualifiedName)
+                                        ? invokerFormalTypeParameterInfo
+                                        : invokerFormalTypeParameterInfo.getBaseTypeInfo();
+
+                                methodInfo.setReturnTypeInfo(typeInfo);
+
+                                replacedTypeInfoMap.put(invokerFormalTypeParameterInfo.getTypeParameter(), typeInfo);
                             }
                         }
                     }

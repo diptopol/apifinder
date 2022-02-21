@@ -580,4 +580,25 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testResolutionOfFormalTypeArgumentOfNonOwningClass() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/labels/StandardFlowLabelGenerator.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation constructorInvocation) {
+                if (constructorInvocation.toString().startsWith("dataset.getFlow(key.getStage()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+
+                    assert ("org.jfree.data.flow.FlowDataset::public abstract java.lang.Number getFlow(int," +
+                            " java.lang.Comparable, java.lang.Comparable)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }
