@@ -528,9 +528,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation constructorInvocation) {
-                if (constructorInvocation.toString().startsWith("source.getKey(i)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("source.getKey(i)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert "org.jfree.data.KeyedValues::public abstract K getKey(int)".equals(methodInfo.toString());
                 }
@@ -548,9 +548,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation constructorInvocation) {
-                if (constructorInvocation.toString().startsWith("ObjectUtils.hashCode(this.seriesKey)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("ObjectUtils.hashCode(this.seriesKey)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert "org.jfree.chart.util.ObjectUtils::public static int hashCode(java.lang.Object)".equals(methodInfo.toString());
                 }
@@ -568,9 +568,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation constructorInvocation) {
-                if (constructorInvocation.toString().startsWith("dataset.getFlow(stage,source,destination)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("dataset.getFlow(stage,source,destination)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("org.jfree.data.flow.FlowDataset::public abstract java.lang.Number getFlow(int, K, K)").equals(methodInfo.toString());
                 }
@@ -588,9 +588,9 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation constructorInvocation) {
-                if (constructorInvocation.toString().startsWith("dataset.getFlow(key.getStage()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, constructorInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("dataset.getFlow(key.getStage()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("org.jfree.data.flow.FlowDataset::public abstract java.lang.Number getFlow(int," +
                             " java.lang.Comparable, java.lang.Comparable)").equals(methodInfo.toString());
