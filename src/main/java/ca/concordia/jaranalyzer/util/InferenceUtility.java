@@ -451,8 +451,14 @@ public class InferenceUtility {
             ArrayType arrayType = arrayCreation.getType();
 
             return getTypeInfo(dependentJarInformationSet, javaVersion, importStatementList, arrayType, owningClassQualifiedName);
-
         } else if (expression instanceof ArrayAccess) {
+            /*
+             * In array access, we are trying to determine the type of the variable. There can be two scenarios.
+             * Scenario 1: for single dimension array access (e.g., obj[i]) we will get the type of obj.
+             *
+             * Scenario 2: for multiple dimension array access (e.g., obj[i][j]) we will get reduced dimension array.
+             */
+
             ArrayAccess arrayAccess = (ArrayAccess) expression;
 
             Expression array = arrayAccess.getArray();
@@ -463,7 +469,9 @@ public class InferenceUtility {
 
             ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
 
-            return arrayTypeInfo.getElementTypeInfo();
+            return arrayTypeInfo.getDimension() > 1
+                    ? new ArrayTypeInfo(arrayTypeInfo.getElementTypeInfo(), arrayTypeInfo.getDimension() - 1)
+                    : arrayTypeInfo.getElementTypeInfo();
 
         } else if (expression instanceof InfixExpression) {
             InfixExpression infixExpression = (InfixExpression) expression;
