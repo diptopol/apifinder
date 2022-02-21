@@ -82,7 +82,7 @@ public class MethodInfo {
         }
 
         this.argumentTypes = argumentTypeList.toArray(new Type[0]);
-        this.argumentTypeInfoList = getMethodArgumentTypeInfoList(this.argumentTypes);
+        this.argumentTypeInfoList = getMethodArgumentTypeInfoList(this.argumentTypes, this.signature);
 
         Iterator<VertexProperty<String>> thrownInternalClassNamesIterator =
                 vertex.properties("thrownInternalClassNames");
@@ -126,9 +126,10 @@ public class MethodInfo {
             this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
         }
 
-        this.argumentTypeInfoList = getMethodArgumentTypeInfoList(this.argumentTypes);
         this.thrownInternalClassNames = methodNode.exceptions;
         this.signature = methodNode.signature;
+
+        this.argumentTypeInfoList = getMethodArgumentTypeInfoList(this.argumentTypes, this.signature);
 
         if ((methodNode.access & Opcodes.ACC_PUBLIC) != 0) {
             isPublic = true;
@@ -435,12 +436,12 @@ public class MethodInfo {
         }
     }
 
-    private List<TypeInfo> getMethodArgumentTypeInfoList(Type[] argumentTypes) {
+    private List<TypeInfo> getMethodArgumentTypeInfoList(Type[] argumentTypes, String signature) {
         List<TypeInfo> argumentTypeInfoList = new ArrayList<>();
 
-        if (Objects.nonNull(this.signature)) {
+        if (Objects.nonNull(signature)) {
             MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
-            SignatureReader signatureReader = new SignatureReader(this.signature);
+            SignatureReader signatureReader = new SignatureReader(signature);
 
             signatureReader.accept(methodArgumentExtractor);
 
@@ -448,27 +449,30 @@ public class MethodInfo {
         }
 
         for (Type argumentType: argumentTypes) {
-            if (argumentType.getClassName().endsWith("[]")) {
-                int dimension = argumentType.getDimensions();
-                String className = argumentType.getClassName().replaceAll("\\[]", "");
-
-                if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(className)) {
-                    argumentTypeInfoList.add(new ArrayTypeInfo(new PrimitiveTypeInfo(className), dimension));
-                } else {
-                    argumentTypeInfoList.add(new ArrayTypeInfo(new QualifiedTypeInfo(className), dimension));
-                }
-
-            } else {
-                if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(argumentType.getClassName())) {
-                    argumentTypeInfoList.add(new PrimitiveTypeInfo(argumentType.getClassName()));
-                } else {
-                    argumentTypeInfoList.add(new QualifiedTypeInfo(argumentType.getClassName()));
-                }
-            }
+            argumentTypeInfoList.add(getTypeInfo(argumentType));
 
         }
 
         return argumentTypeInfoList;
+    }
+
+    private TypeInfo getTypeInfo(Type type) {
+        if (type.getClassName().endsWith("[]")) {
+            int dimension = type.getDimensions();
+            String className = type.getClassName().replaceAll("\\[]", "");
+
+            if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(className)) {
+                return new ArrayTypeInfo(new PrimitiveTypeInfo(className), dimension);
+            } else {
+                return new ArrayTypeInfo(new QualifiedTypeInfo(className), dimension);
+            }
+        } else {
+            if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(type.getClassName())) {
+                return new PrimitiveTypeInfo(type.getClassName());
+            } else {
+                return new QualifiedTypeInfo(type.getClassName());
+            }
+        }
     }
 
 }
