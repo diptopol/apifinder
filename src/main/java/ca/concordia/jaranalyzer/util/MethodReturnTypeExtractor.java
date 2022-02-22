@@ -56,8 +56,10 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
 
     @Override
     public void visitInnerClassType(final String name) {
-        visitingTypeStack /= 2;
+        endArguments();
         visitingTypeStack *= 2;
+
+        processInnerClassVisit(name);
     }
 
     @Override
@@ -84,6 +86,18 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
 
             classBoundVisit = false;
         } else if (interfaceBoundVisit) {
+            /*
+             * Formal type parameter can consist of single class and multiple interfaces. Here we are ignoring the other
+             * interfaces for simplicity's sake. If we face any issue with this approach, we will facilitate the storing
+             * process of all the classes and interfaces.
+             *
+             * TODO: facilitate the storing process of all the classes and interfaces of formal type parameter
+             */
+            if (formalTypeParameterNameStack.isEmpty()) {
+                interfaceBoundVisit = false;
+                return;
+            }
+
             String typeParameter = formalTypeParameterNameStack.pop();
             TypeInfo baseType = new FormalTypeParameterInfo(typeParameter,
                     new QualifiedTypeInfo(name.replaceAll("/", ".")));
@@ -128,13 +142,30 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
             visitingTypeStack |= 1;
 
             processForTypeArgumentVisit();
+
+            if (visitingReturnType) {
+                this.methodReturnTypeInfoStack.push(new QualifiedTypeInfo("java.lang.Object"));
+            }
         }
     }
 
     @Override
     public void visitTypeVariable(String name) {
-        if (!visitingReturnType) {
-            return;
+        if (visitingFormalTypeParameter && classBoundVisit) {
+            String typeParameter = formalTypeParameterNameStack.pop();
+
+            if (formalTypeParameterMap.containsKey(name)) {
+                TypeInfo typeInfo = formalTypeParameterMap.get(name);
+
+                formalTypeParameterMap.put(typeParameter, typeInfo);
+            } else {
+                TypeInfo typeInfo = new FormalTypeParameterInfo(typeParameter,
+                        new QualifiedTypeInfo("java.lang.Object"));
+
+                formalTypeParameterMap.put(typeParameter, typeInfo);
+            }
+
+            classBoundVisit = false;
         }
 
         processForTypeVariableVisit(name);
@@ -176,6 +207,33 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
         return this.methodReturnTypeInfoStack.peek();
     }
 
+    /*
+     * For inner class (Lcom/sun/beans/util/Cache<TK;TV;>.CacheEntry<TK;TV;>) we are currently replacing parent class
+     * with inner class with full name including child class name. We are also removing type arguments of parent class
+     * for simplicity. We will change our approach if required.
+     */
+    private void processInnerClassVisit(String name) {
+        if (!visitingReturnType) {
+            return;
+        }
+
+        TypeInfo typeInfo = this.methodReturnTypeInfoStack.pop();
+        String qualifiedName = typeInfo.getQualifiedClassName() + "." + name;
+
+        if (typeInfo.isArrayTypeInfo()) {
+            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
+
+            this.methodReturnTypeInfoStack.push(new ArrayTypeInfo(new QualifiedTypeInfo(qualifiedName),
+                    arrayTypeInfo.getDimension()));
+
+        } else if (typeInfo.isParameterizedTypeInfo() || typeInfo.isQualifiedTypeInfo()) {
+            this.methodReturnTypeInfoStack.push(new QualifiedTypeInfo(qualifiedName));
+
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
     private void processForTypeArgumentVisit() {
         if (!visitingReturnType) {
             return;
@@ -196,7 +254,7 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
             QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) typeInfo;
 
             methodReturnTypeInfoStack.push(new ParameterizedTypeInfo(qualifiedTypeInfo));
-        } else {
+        } else if (!typeInfo.isParameterizedTypeInfo()) {
             throw new IllegalStateException();
         }
     }
@@ -219,6 +277,22 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
         this.methodReturnTypeInfoStack.push(typeInfo);
     }
 
+    private boolean isParameterizedType(TypeInfo typeInfo) {
+        if (typeInfo.isParameterizedTypeInfo()) {
+            return ((ParameterizedTypeInfo) typeInfo).getTypeArgumentList().isEmpty();
+        } else if (typeInfo.isArrayTypeInfo()) {
+            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
+
+            TypeInfo elementTypeInfo = arrayTypeInfo.getElementTypeInfo();
+
+            return elementTypeInfo.isParameterizedTypeInfo()
+                    && ((ParameterizedTypeInfo) elementTypeInfo).getTypeArgumentList().isEmpty();
+
+        }
+
+        return false;
+    }
+
     private void processEndOfTypeArguments() {
         if (!visitingReturnType) {
             return;
@@ -228,8 +302,7 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
         for (int i = 0; i < this.methodReturnTypeInfoStack.size(); i++) {
             TypeInfo currentTypeInfo = this.methodReturnTypeInfoStack.get(i);
 
-            if (currentTypeInfo.isParameterizedTypeInfo()
-                    && ((ParameterizedTypeInfo) currentTypeInfo).getTypeArgumentList().isEmpty()) {
+            if (isParameterizedType(currentTypeInfo)) {
                 indexOfParameterizedType = i;
             }
         }
@@ -266,7 +339,10 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
 
     private TypeInfo convertToArrayTypeIfRequired(TypeInfo typeInfo) {
         if (this.currentIndexArrayDimension > 0) {
-            return new ArrayTypeInfo(typeInfo, this.currentIndexArrayDimension);
+            ArrayTypeInfo arrayTypeInfo = new ArrayTypeInfo(typeInfo, this.currentIndexArrayDimension);
+            this.currentIndexArrayDimension = 0;
+
+            return arrayTypeInfo;
         }
 
         return typeInfo;

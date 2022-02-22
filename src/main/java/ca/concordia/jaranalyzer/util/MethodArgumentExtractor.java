@@ -60,6 +60,8 @@ public class MethodArgumentExtractor extends SignatureVisitor {
     public void visitInnerClassType(final String name) {
         endArguments();
         argumentStack *= 2;
+
+        processInnerClassVisit(name);
     }
 
     @Override
@@ -80,6 +82,18 @@ public class MethodArgumentExtractor extends SignatureVisitor {
 
             classBoundVisit = false;
         } else if (interfaceBoundVisit) {
+            /*
+             * Formal type parameter can consist of single class and multiple interfaces. Here we are ignoring the other
+             * interfaces for simplicity's sake. If we face any issue with this approach, we will facilitate the storing
+             * process of all the classes and interfaces.
+             *
+             * TODO: facilitate the storing process of all the classes and interfaces of formal type parameter
+             */
+            if (formalTypeParameterNameStack.isEmpty()) {
+                interfaceBoundVisit = false;
+                return;
+            }
+
             String typeParameter = formalTypeParameterNameStack.pop();
 
             TypeInfo baseType = new FormalTypeParameterInfo(typeParameter,
@@ -130,13 +144,33 @@ public class MethodArgumentExtractor extends SignatureVisitor {
             argumentStack |= 1;
 
             processForTypeArgumentVisit();
+
+            if (visitingMethodArguments) {
+                this.methodArgumentTypeInfoStack.push(new QualifiedTypeInfo("java.lang.Object"));
+            }
         }
     }
 
+    /*
+     * during visitFormalParameter this method can be invoked.
+     */
     @Override
     public void visitTypeVariable(String name) {
-        if (!visitingMethodArguments) {
-            return;
+        if (visitingFormalTypeParameter && classBoundVisit) {
+            String typeParameter = formalTypeParameterNameStack.pop();
+
+            if (formalTypeParameterMap.containsKey(name)) {
+                TypeInfo typeInfo = formalTypeParameterMap.get(name);
+
+                formalTypeParameterMap.put(typeParameter, typeInfo);
+            } else {
+                TypeInfo typeInfo = new FormalTypeParameterInfo(typeParameter,
+                        new QualifiedTypeInfo("java.lang.Object"));
+
+                formalTypeParameterMap.put(typeParameter, typeInfo);
+            }
+
+            classBoundVisit = false;
         }
 
         processForTypeVariableVisit(name);
@@ -170,6 +204,33 @@ public class MethodArgumentExtractor extends SignatureVisitor {
         return new ArrayList<>(this.methodArgumentTypeInfoStack);
     }
 
+    /*
+     * For inner class (Lcom/sun/beans/util/Cache<TK;TV;>.CacheEntry<TK;TV;>) we are currently replacing parent class
+     * with inner class with full name including child class name. We are also removing type arguments of parent class
+     * for simplicity. We will change our approach if required.
+     */
+    private void processInnerClassVisit(String name) {
+        if (!visitingMethodArguments) {
+            return;
+        }
+
+        TypeInfo typeInfo = this.methodArgumentTypeInfoStack.pop();
+        String qualifiedName = typeInfo.getQualifiedClassName() + "." + name;
+
+        if (typeInfo.isArrayTypeInfo()) {
+            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
+
+            this.methodArgumentTypeInfoStack.push(new ArrayTypeInfo(new QualifiedTypeInfo(qualifiedName),
+                    arrayTypeInfo.getDimension()));
+
+        } else if (typeInfo.isParameterizedTypeInfo() || typeInfo.isQualifiedTypeInfo()) {
+            this.methodArgumentTypeInfoStack.push(new QualifiedTypeInfo(qualifiedName));
+
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
     private void processForTypeArgumentVisit() {
         if (!visitingMethodArguments) {
             return;
@@ -190,7 +251,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
             QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) typeInfo;
 
             methodArgumentTypeInfoStack.push(new ParameterizedTypeInfo(qualifiedTypeInfo));
-        } else {
+        } else if (!typeInfo.isParameterizedTypeInfo()) {
             throw new IllegalStateException();
         }
     }
@@ -213,6 +274,22 @@ public class MethodArgumentExtractor extends SignatureVisitor {
         this.methodArgumentTypeInfoStack.push(typeInfo);
     }
 
+    private boolean isParameterizedType(TypeInfo typeInfo) {
+        if (typeInfo.isParameterizedTypeInfo()) {
+            return ((ParameterizedTypeInfo) typeInfo).getTypeArgumentList().isEmpty();
+        } else if (typeInfo.isArrayTypeInfo()) {
+            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
+
+            TypeInfo elementTypeInfo = arrayTypeInfo.getElementTypeInfo();
+
+            return elementTypeInfo.isParameterizedTypeInfo()
+                    && ((ParameterizedTypeInfo) elementTypeInfo).getTypeArgumentList().isEmpty();
+
+        }
+
+        return false;
+    }
+
     private void processEndOfTypeArguments() {
         if (!visitingMethodArguments) {
             return;
@@ -222,8 +299,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
         for (int i = 0; i < this.methodArgumentTypeInfoStack.size(); i++) {
             TypeInfo currentTypeInfo = this.methodArgumentTypeInfoStack.get(i);
 
-            if (currentTypeInfo.isParameterizedTypeInfo()
-                    && ((ParameterizedTypeInfo) currentTypeInfo).getTypeArgumentList().isEmpty()) {
+            if (isParameterizedType(currentTypeInfo)) {
                 indexOfParameterizedType = i;
             }
         }
@@ -260,7 +336,10 @@ public class MethodArgumentExtractor extends SignatureVisitor {
 
     private TypeInfo convertToArrayTypeIfRequired(TypeInfo typeInfo) {
         if (this.currentIndexArrayDimension > 0) {
-            return new ArrayTypeInfo(typeInfo, this.currentIndexArrayDimension);
+            ArrayTypeInfo arrayTypeInfo = new ArrayTypeInfo(typeInfo, this.currentIndexArrayDimension);
+            this.currentIndexArrayDimension = 0;
+
+            return arrayTypeInfo;
         }
 
         return typeInfo;

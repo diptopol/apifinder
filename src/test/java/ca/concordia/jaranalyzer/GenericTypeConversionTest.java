@@ -6,6 +6,7 @@ import ca.concordia.jaranalyzer.util.*;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -303,6 +304,117 @@ public class GenericTypeConversionTest {
         signatureReader.accept(methodReturnTypeExtractor);
 
         assert "PrimitiveTypeInfo{qualifiedClassName='int'}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
+    }
+
+    @Test
+    public void testArrayIndexReset() {
+        String signature = "<T:Ljava/lang/Object;>([TT;IILjava/util/Comparator<-TT;>;)V";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[ArrayTypeInfo{elementTypeInfo=FormalTypeParameterInfo{typeParameter='T'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}, dimension=1}," +
+                " PrimitiveTypeInfo{qualifiedClassName='int'}, PrimitiveTypeInfo{qualifiedClassName='int'}," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.Comparator', isParameterized=false," +
+                " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
+                .equals(methodArgumentExtractor.getArgumentList().toString());
+
+        MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
+        signatureReader.accept(methodReturnTypeExtractor);
+
+        assert "VoidTypeInfo{}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
+    }
+
+    @Test
+    public void testWildCardTypeArgument() {
+        String signature = "(Ljava/lang/String;[Ljava/lang/Class<*>;)Ljava/lang/reflect/Method;";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}," +
+                " ArrayTypeInfo{elementTypeInfo=ParameterizedTypeInfo{qualifiedClassName='java.lang.Class'," +
+                " isParameterized=false, typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}]}," +
+                " dimension=1}]").equals(methodArgumentExtractor.getArgumentList().toString());
+
+        MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
+        signatureReader.accept(methodReturnTypeExtractor);
+
+        assert "QualifiedTypeInfo{qualifiedClassName='java.lang.reflect.Method'}"
+                .equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
+    }
+
+    @Test
+    public void testInnerClassMethodArgument() {
+        String signature = "(ITK;TV;Lcom/sun/beans/util/Cache<TK;TV;>.CacheEntry<TK;TV;>;)V";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[PrimitiveTypeInfo{qualifiedClassName='int'}," +
+                " FormalTypeParameterInfo{typeParameter='K', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='V', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " ParameterizedTypeInfo{qualifiedClassName='com.sun.beans.util.Cache.CacheEntry', isParameterized=false," +
+                " typeArgumentList=[FormalTypeParameterInfo{typeParameter='K', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='V', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
+                .equals(methodArgumentExtractor.getArgumentList().toString());
+
+        MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
+        signatureReader.accept(methodReturnTypeExtractor);
+
+        assert "VoidTypeInfo{}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
+    }
+
+    @Test
+    public void testFormalTypeMultipleInterfaces() {
+        String signature = "<T::Ljdk/nashorn/internal/ir/LexicalContextNode;:Ljdk/nashorn/internal/ir/Flags<TT;>;>(TT;)TT;";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[FormalTypeParameterInfo{typeParameter='T'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='jdk.nashorn.internal.ir.LexicalContextNode'}}]")
+                .equals(methodArgumentExtractor.getArgumentList().toString());
+
+        MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
+        signatureReader.accept(methodReturnTypeExtractor);
+
+        assert ("FormalTypeParameterInfo{typeParameter='T'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='jdk.nashorn.internal.ir.LexicalContextNode'}}")
+                .equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
+    }
+
+    @Test
+    public void testMultipleFormalTypeParameterWithTypeVariable() {
+        String signature = "<R:Ljava/lang/Object;S:TR;>(Ljava/util/concurrent/CompletableFuture<TR;>;Ljava/util/concurrent/CompletableFuture<TS;>;Ljava/util/function/Function<-TR;+TT;>;Ljava/util/concurrent/CompletableFuture$OrApply<TR;TS;TT;>;)Z";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture', isParameterized=false," +
+                " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture', isParameterized=false," +
+                " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.function.Function', isParameterized=false," +
+                " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture$OrApply', isParameterized=false," +
+                " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
+                .equals(methodArgumentExtractor.getArgumentList().toString());
+
+        MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
+        signatureReader.accept(methodReturnTypeExtractor);
+
+        assert "PrimitiveTypeInfo{qualifiedClassName='boolean'}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
     }
 
 }
