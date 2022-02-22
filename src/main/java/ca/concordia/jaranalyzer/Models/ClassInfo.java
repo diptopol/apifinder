@@ -96,7 +96,6 @@ public class ClassInfo {
             }
 
             this.type = Type.getObjectType(classNode.name);
-            this.typeInfo = getClassTypeInfo(this.type, this.qualifiedName, this.signature);
 
             int access = classNode.access;
 

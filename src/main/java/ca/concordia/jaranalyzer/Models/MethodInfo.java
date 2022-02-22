@@ -70,7 +70,7 @@ public class MethodInfo {
 
         this.returnType = Type.getType(vertex.<String>property("returnTypeDescriptor").value());
 
-        this.returnTypeInfo = getMethodReturnType(this.returnType);
+        this.returnTypeInfo = getMethodReturnType(this.returnType, this.signature);
 
         Iterator<VertexProperty<String>> argumentTypeDescriptorListIterator
                 = vertex.properties("argumentTypeDescriptorList");
@@ -111,7 +111,6 @@ public class MethodInfo {
 
         this.classInfo = classInfo;
         this.returnType = Type.getReturnType(methodNode.desc);
-        this.returnTypeInfo = getMethodReturnType(this.returnType);
 
         if (isConstructor && Objects.nonNull(internalClassConstructorPrefix)) {
             List<Type> types = new ArrayList<Type>();
@@ -128,8 +127,6 @@ public class MethodInfo {
 
         this.thrownInternalClassNames = methodNode.exceptions;
         this.signature = methodNode.signature;
-
-        this.argumentTypeInfoList = getMethodArgumentTypeInfoList(this.argumentTypes, this.signature);
 
         if ((methodNode.access & Opcodes.ACC_PUBLIC) != 0) {
             isPublic = true;
@@ -418,11 +415,11 @@ public class MethodInfo {
         return isAbstract || classInfo.getQualifiedName().equals("java.lang.Object") || argumentMatchingDistance > 0;
     }
 
-    private TypeInfo getMethodReturnType(Type returnType) {
-        if (Objects.nonNull(this.signature)) {
+    private TypeInfo getMethodReturnType(Type returnType, String signature) {
+        if (Objects.nonNull(signature)) {
             MethodReturnTypeExtractor extractor = new MethodReturnTypeExtractor();
 
-            SignatureReader reader = new SignatureReader(this.signature);
+            SignatureReader reader = new SignatureReader(signature);
             reader.accept(extractor);
 
             return extractor.getReturnTypeInfo();
