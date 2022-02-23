@@ -384,6 +384,12 @@ public class InferenceUtility {
 
 
         } else if (expression instanceof FieldAccess) {
+            /*
+             * There is a scope of fetching fieldAccess from variableNameMap. For that we need to keep origin of the
+             * variable (e.g., field instance, local variable, method argument).
+             *
+             * TODO: store origin of variable
+             */
             FieldAccess fieldAccess = (FieldAccess) expression;
 
             Expression fieldAccessExpression = fieldAccess.getExpression();
@@ -1425,13 +1431,20 @@ public class InferenceUtility {
             return null;
         }
 
+        if (PRIMITIVE_TYPE_LIST.contains(className.replaceAll("\\[]", ""))) {
+            int dimension = StringUtils.countMatches(className, "[]");
+
+            if (dimension > 0) {
+                return new ArrayTypeInfo(new PrimitiveTypeInfo(className.replaceAll("\\[]", "")), dimension);
+            } else {
+                return new PrimitiveTypeInfo(className);
+            }
+        }
+
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentJarInformationSet, javaVersion, importStatementList,
                 className, owningClassQualifiedName);
 
-        //TODO: separate primitive and QualifiedTypeInfo
-        if (classInfoList.isEmpty()) {
-            return new QualifiedTypeInfo(className);
-        }
+        assert !classInfoList.isEmpty();
 
         return getTypeInfoFromClassInfo(className, classInfoList.get(0));
     }
