@@ -1,23 +1,53 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.Models.VariableDeclarationDto;
+import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
-import ca.concordia.jaranalyzer.util.PropertyReader;
+import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jgit.lib.Repository;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
+
 /**
  * @author Diptopol
  * @since 9/19/2021 12:17 PM
  */
 public class InferenceUtilityTest {
+
+    private static Set<Tuple3<String, String, String>> jarInformationSet;
+    private static String javaVersion;
+
+    @BeforeClass
+    public static void loadExternalLibrary() {
+        javaVersion = getProperty("java.version");
+
+        String projectName = "jfreechart-fx";
+        Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
+        String projectUrl = "https://github.com/jfree/jfreechart-fx.git";
+        // Also need to manually check-out the project to this commit.
+        String commitId = "35d53459e854a2bb39d6f012ce9b78ec8ab7f0f9";
+
+        Repository repository = GitUtil.getRepository(projectName, projectUrl, projectDirectory);
+        jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, repository);
+
+        String jFreeChartGroupId = "org.jfree";
+        String jFreeChartArtifactId = "org.jfree.chart.fx";
+        String jFreeChartVersion = "2.0";
+        TypeInferenceFluentAPI.getInstance().loadJar(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion);
+        jarInformationSet.add(new Tuple3<>(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
+    }
 
     @Test
     public void testImportStatementExtraction() {
@@ -44,16 +74,15 @@ public class InferenceUtilityTest {
         String filePath = "testProjectDirectory/jfreechart-fx/jfreechart-fx/src/main/java/org/jfree/chart/fx/interaction/AbstractMouseHandlerFX.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
 
-        String javaVersion = PropertyReader.getProperty("java.version");
-
         compilationUnit.accept(new ASTVisitor() {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Args.nullNotPermitted")) {
                     List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+                    InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, methodInvocation);
 
                     Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
-                            = InferenceUtility.getFieldVariableDeclarationDtoList(Collections.emptySet(), javaVersion,
+                            = InferenceUtility.getFieldVariableDeclarationDtoList(jarInformationSet, javaVersion,
                             importStatementList, methodInvocation, null);
 
                     assert "[altKey, ctrlKey, enabled, id, metaKey, shiftKey]"
@@ -95,16 +124,16 @@ public class InferenceUtilityTest {
     public void testExtractArgumentClassNameList() {
         String filePath = "testProjectDirectory/jfreechart-fx/jfreechart-fx/src/main/java/org/jfree/chart/fx/ChartCanvas.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
-        String javaVersion = PropertyReader.getProperty("java.version");
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Args.nullNotPermitted(listener,\"listener\")")) {
                     List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+                    InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, methodInvocation);
 
                     Map<String, Set<VariableDeclarationDto>> variableNameMap =
-                            InferenceUtility.getVariableNameMap(Collections.emptySet(), javaVersion,
+                            InferenceUtility.getVariableNameMap(jarInformationSet, javaVersion,
                                     importStatementList, methodInvocation, null);
 
                     List<Expression> argumentList = methodInvocation.arguments();
@@ -116,7 +145,7 @@ public class InferenceUtilityTest {
                             .map(TypeInfo::getQualifiedClassName)
                             .collect(Collectors.toList());
 
-                    assert "[ChartMouseListenerFX, java.lang.String]".equals(argumentTypeClassNameList.toString());
+                    assert "[org.jfree.chart.fx.interaction.ChartMouseListenerFX, java.lang.String]".equals(argumentTypeClassNameList.toString());
                 };
 
                 return false;
