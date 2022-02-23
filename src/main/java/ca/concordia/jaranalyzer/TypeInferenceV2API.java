@@ -22,7 +22,7 @@ public class TypeInferenceV2API {
         String owningClassQualifiedName = getOwingClassQualifiedName(methodInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        addSpecialImportStatements(importStatementList, compilationUnit, methodInvocation);
+        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, methodInvocation);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList,
@@ -42,7 +42,7 @@ public class TypeInferenceV2API {
         String owningClassQualifiedName = getOwingClassQualifiedName(superMethodInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        addSpecialImportStatements(importStatementList, compilationUnit, superMethodInvocation);
+        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, superMethodInvocation);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList,
@@ -62,7 +62,7 @@ public class TypeInferenceV2API {
         String owingClassQualifiedName = getOwingClassQualifiedName(classInstanceCreation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        addSpecialImportStatements(importStatementList, compilationUnit, classInstanceCreation);
+        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, classInstanceCreation);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList,
@@ -82,7 +82,7 @@ public class TypeInferenceV2API {
         String owingClassQualifiedName = getOwingClassQualifiedName(constructorInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        addSpecialImportStatements(importStatementList, compilationUnit, constructorInvocation);
+        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, constructorInvocation);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion, importStatementList,
@@ -135,7 +135,7 @@ public class TypeInferenceV2API {
         String owingClassQualifiedName = getOwingClassQualifiedName(superConstructorInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        addSpecialImportStatements(importStatementList, compilationUnit, superConstructorInvocation);
+        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, superConstructorInvocation);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentJarInformationSet, javaVersion,
@@ -178,32 +178,6 @@ public class TypeInferenceV2API {
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
-    }
-
-    private static void addSpecialImportStatements(List<String> importStatementList,
-                                                                CompilationUnit compilationUnit,
-                                                                ASTNode methodNode) {
-        // all java classes can access methods and classes of java.lang package without import statement
-        importStatementList.add("import java.lang.*");
-
-        // all classes under the current package can be accessed without import statement
-        PackageDeclaration packageDeclaration = compilationUnit.getPackage();
-        importStatementList.add("import " + packageDeclaration.getName().getFullyQualifiedName() + ".*");
-
-        // added inner classes of the current file in the import statement
-        AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) InferenceUtility.getAbstractTypeDeclaration(methodNode);
-        importStatementList.add("import " + InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration));
-
-        if (abstractTypeDeclaration instanceof TypeDeclaration) {
-            TypeDeclaration typeDeclaration = (TypeDeclaration) abstractTypeDeclaration;
-
-            TypeDeclaration[] innerTypeDeclarationArray = typeDeclaration.getTypes();
-
-            for (TypeDeclaration innerClassDeclaration : innerTypeDeclarationArray) {
-                importStatementList.add("import " +
-                        InferenceUtility.getDeclaringClassQualifiedName(innerClassDeclaration).replaceAll("#", "."));
-            }
-         }
     }
 
     private static  String getOwingClassQualifiedName(ASTNode methodNode) {

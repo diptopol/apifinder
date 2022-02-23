@@ -30,6 +30,32 @@ public class InferenceUtility {
                 .collect(Collectors.toList());
     }
 
+    public static void addSpecialImportStatements(List<String> importStatementList,
+                                                   CompilationUnit compilationUnit,
+                                                   ASTNode methodNode) {
+        // all java classes can access methods and classes of java.lang package without import statement
+        importStatementList.add("import java.lang.*");
+
+        // all classes under the current package can be accessed without import statement
+        PackageDeclaration packageDeclaration = compilationUnit.getPackage();
+        importStatementList.add("import " + packageDeclaration.getName().getFullyQualifiedName() + ".*");
+
+        // added inner classes of the current file in the import statement
+        AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) InferenceUtility.getAbstractTypeDeclaration(methodNode);
+        importStatementList.add("import " + InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration));
+
+        if (abstractTypeDeclaration instanceof TypeDeclaration) {
+            TypeDeclaration typeDeclaration = (TypeDeclaration) abstractTypeDeclaration;
+
+            TypeDeclaration[] innerTypeDeclarationArray = typeDeclaration.getTypes();
+
+            for (TypeDeclaration innerClassDeclaration : innerTypeDeclarationArray) {
+                importStatementList.add("import " +
+                        InferenceUtility.getDeclaringClassQualifiedName(innerClassDeclaration).replaceAll("#", "."));
+            }
+        }
+    }
+
     /*
      * TODO: Need to think about method type argument.
      */
