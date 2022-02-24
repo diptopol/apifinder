@@ -405,8 +405,10 @@ public class JFreeChartV153TypeInferenceV2APITest {
                             "throws java.lang.InstantiationException, java.lang.IllegalAccessException," +
                             " java.lang.IllegalArgumentException, java.lang.reflect.InvocationTargetException").equals(methodInfo.toString());
 
-                    assert ("[VarargTypeInfo{qualifiedClassName='int'}]").equals(methodInfo.getArgumentTypeInfoList().toString());
-                    assert ("QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}").equals(methodInfo.getReturnTypeInfo().toString());
+                    assert ("[VarargTypeInfo{elementTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]")
+                            .equals(methodInfo.getArgumentTypeInfoList().toString());
+                    assert ("QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}")
+                            .equals(methodInfo.getReturnTypeInfo().toString());
                 }
 
                 return true;

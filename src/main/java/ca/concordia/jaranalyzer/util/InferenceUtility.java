@@ -117,10 +117,13 @@ public class InferenceUtility {
         /*
          * According to my current understanding we do not need arguments for any type inference.This may change with
          * any unanticipated scenario.
+         *
+         * Order of transformTypeInfoRepresentation and conversionToVarargsMethodArgument matters. since we are
+         * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentJarInformationSet, javaVersion, importStatementList,
                 owningClassQualifiedName, methodInfoList, argumentTypeInfoList, callerClassTypeInfo);
-        conversionToVarargsMethodArgument(methodInfoList, argumentTypeInfoList);
+        conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
     }
@@ -161,10 +164,13 @@ public class InferenceUtility {
         /*
          * According to my current understanding we do not need arguments for any type inference.This may change with
          * any unanticipated scenario.
+         *
+         * Order of transformTypeInfoRepresentation and conversionToVarargsMethodArgument matters. since we are
+         * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentJarInformationSet, javaVersion, importStatementList,
                 owningClassQualifiedName, methodInfoList, argumentTypeInfoList, null);
-        conversionToVarargsMethodArgument(methodInfoList, argumentTypeInfoList);
+        conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
     }
@@ -984,9 +990,11 @@ public class InferenceUtility {
 
                 for (int i = 0; i < methodArgumentTypeInfoList.size(); i++) {
                     TypeInfo methodArgument = methodArgumentTypeInfoList.get(i);
-                    TypeInfo argument = argumentTypeInfoList.get(i);
+                    TypeInfo argument = methodInfo.isVarargs() && methodArgument.isArrayTypeInfo() && i == argumentTypeInfoList.size()
+                            ? null
+                            : argumentTypeInfoList.get(i);
 
-                    if (methodArgument.isFormalTypeParameterInfo()) {
+                    if (methodArgument.isFormalTypeParameterInfo() && Objects.nonNull(argument)) {
                         FormalTypeParameterInfo formalTypeParameterMethodArgInfo = (FormalTypeParameterInfo) methodArgument;
                         inferredFormalTypeParameterValueMap.put(formalTypeParameterMethodArgInfo.getTypeParameter(), argument);
                     }
@@ -1089,47 +1097,20 @@ public class InferenceUtility {
         }
     }
 
-    private static void conversionToVarargsMethodArgument(List<MethodInfo> methodInfoList,
-                                                          List<TypeInfo> argumentTypeInfoList) {
+    /*
+     * There are 3 scenarios for varargs
+     * 1: There may be no argument passed
+     * 2: An array can be passed
+     * 3: Same type of multiple arguments can be passed
+     */
+    private static void conversionToVarargsMethodArgument(List<MethodInfo> methodInfoList) {
 
         for (MethodInfo methodInfo : methodInfoList) {
-            assert methodInfo.isVarargs() || methodInfo.getArgumentTypeInfoList().size() == argumentTypeInfoList.size();
-
             if (methodInfo.isVarargs()) {
-                org.objectweb.asm.Type[] argumentTypes = methodInfo.getArgumentTypes();
-                int indexOfFirstVarargItem = 0;
-                String varargClassName = "";
-
-                for (int i = 0; i < argumentTypes.length; i++) {
-                    org.objectweb.asm.Type argumentType = argumentTypes[i];
-
-                    if (argumentType.getClassName().endsWith("[]")) {
-                        indexOfFirstVarargItem = i;
-                        varargClassName = argumentType.getClassName();
-                    }
-                }
-
-                boolean isAllVarargClass = true;
-                for (int i = indexOfFirstVarargItem; i < argumentTypeInfoList.size(); i++) {
-                    String argumentClassName = argumentTypeInfoList.get(i).getQualifiedClassName().replaceAll("\\[]", "");
-                    String varargClassNameTrimmingArrayDimension = varargClassName.replaceAll("\\[]", "");
-
-                    if (!argumentClassName.equals(varargClassNameTrimmingArrayDimension)
-                            && !varargClassNameTrimmingArrayDimension.equals("java.lang.Object")) {
-                        isAllVarargClass = false;
-                        break;
-                    }
-                }
-
-                if (isAllVarargClass) {
-                    List<TypeInfo> modifiedArgumentTypeInfoList = argumentTypeInfoList.subList(0, indexOfFirstVarargItem + 1);
-                    TypeInfo firstVarargTypeInfo = modifiedArgumentTypeInfoList.get(indexOfFirstVarargItem);
-
-                    VarargTypeInfo varargTypeInfo = new VarargTypeInfo(firstVarargTypeInfo.getQualifiedClassName());
-                    modifiedArgumentTypeInfoList.set(indexOfFirstVarargItem, varargTypeInfo);
-
-                    methodInfo.setArgumentTypeInfoList(modifiedArgumentTypeInfoList);
-                }
+                int lastIndex = methodInfo.getArgumentTypeInfoList().size() - 1;
+                ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) methodInfo.getArgumentTypeInfoList().get(lastIndex);
+                methodInfo.getArgumentTypeInfoList().set(lastIndex,
+                        new VarargTypeInfo(arrayTypeInfo.getElementTypeInfo()));
             }
         }
     }

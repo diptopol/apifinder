@@ -6,31 +6,40 @@ package ca.concordia.jaranalyzer.Models.typeInfo;
  */
 public class VarargTypeInfo extends TypeInfo {
 
-    private String qualifiedClassName;
+    private TypeInfo elementTypeInfo;
 
-    public VarargTypeInfo(String qualifiedClassName) {
-        this.qualifiedClassName = qualifiedClassName;
+    public VarargTypeInfo(TypeInfo elementTypeInfo) {
+        this.elementTypeInfo = elementTypeInfo;
     }
 
     @Override
     public String getQualifiedClassName() {
-        return this.qualifiedClassName;
+        return this.elementTypeInfo.getQualifiedClassName();
     }
 
     @Override
     public void setQualifiedClassName(String qualifiedClassName) {
-        this.qualifiedClassName = qualifiedClassName;
+        throw new IllegalStateException();
+    }
+
+    public TypeInfo getElementTypeInfo() {
+        return elementTypeInfo;
+    }
+
+    public void setElementTypeInfo(TypeInfo elementTypeInfo) {
+        this.elementTypeInfo = elementTypeInfo;
     }
 
     @Override
     public String getName() {
-        return this.qualifiedClassName;
+        return this.elementTypeInfo.getName();
     }
 
     @Override
     public String toString() {
         return "VarargTypeInfo{" +
-                "qualifiedClassName='" + qualifiedClassName + '\'' +
+                "elementTypeInfo=" + elementTypeInfo +
                 '}';
     }
+
 }
