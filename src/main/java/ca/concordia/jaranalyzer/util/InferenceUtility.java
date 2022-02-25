@@ -881,6 +881,14 @@ public class InferenceUtility {
 
             Map<String, TypeInfo> replacedTypeInfoMap = new HashMap<>();
 
+            /*
+             * Caller class may not be invoker sometimes. Any super class of caller class can be invoker. So added
+             * this class check before extracting formal type parameters of invoker type.
+             */
+            if (!invokerTypeInfo.getQualifiedClassName().equals(methodInfo.getQualifiedClassName())) {
+                invokerTypeInfo = methodInfo.getClassInfo().getTypeInfo();
+            }
+
             if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isParameterizedTypeInfo()) {
                 ParameterizedTypeInfo invokerParameterizedTypeInfo = (ParameterizedTypeInfo) invokerTypeInfo;
 
