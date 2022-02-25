@@ -31,6 +31,10 @@ public class ArrayTypeInfo extends TypeInfo {
         return elementTypeInfo;
     }
 
+    public void setElementTypeInfo(TypeInfo elementTypeInfo) {
+        this.elementTypeInfo = elementTypeInfo;
+    }
+
     public int getDimension() {
         return dimension;
     }

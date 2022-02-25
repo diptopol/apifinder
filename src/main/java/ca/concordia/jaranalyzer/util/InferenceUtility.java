@@ -997,6 +997,15 @@ public class InferenceUtility {
                     if (methodArgument.isFormalTypeParameterInfo() && Objects.nonNull(argument)) {
                         FormalTypeParameterInfo formalTypeParameterMethodArgInfo = (FormalTypeParameterInfo) methodArgument;
                         inferredFormalTypeParameterValueMap.put(formalTypeParameterMethodArgInfo.getTypeParameter(), argument);
+
+                    } else if (methodArgument.isArrayTypeInfo() && Objects.nonNull(argument) && argument.isArrayTypeInfo()) {
+                        ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
+                        ArrayTypeInfo argArray = (ArrayTypeInfo) argument;
+
+                        if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()) {
+                            FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
+                            inferredFormalTypeParameterValueMap.put(formalTypeParameterInfo.getTypeParameter(), argArray.getElementTypeInfo());
+                        }
                     }
                 }
 
@@ -1030,6 +1039,19 @@ public class InferenceUtility {
 
                                 replacedTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), baseTypeInfo);
                             }
+                        }
+                    } else if (methodArgument.isArrayTypeInfo()) {
+                        ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
+
+                        if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()) {
+                            FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
+
+                            if (inferredFormalTypeParameterValueMap.containsKey(formalTypeParameterInfo.getTypeParameter())) {
+                                methodArgArray.setElementTypeInfo(inferredFormalTypeParameterValueMap.get(formalTypeParameterInfo.getTypeParameter()));
+
+                                replacedTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), methodArgArray.getElementTypeInfo());
+                            }
+
                         }
                     }
                 }

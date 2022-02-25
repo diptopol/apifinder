@@ -623,4 +623,27 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testArgumentTypeInferenceForVarargs() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xy/DefaultWindDataset.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("Arrays.asList(seriesNames)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.util.Arrays::public static java.util.List asList(java.lang.String[])").equals(methodInfo.toString());
+
+                    assert ("[VarargTypeInfo{elementTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.String'}}]")
+                            .equals(methodInfo.getArgumentTypeInfoList().toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }
