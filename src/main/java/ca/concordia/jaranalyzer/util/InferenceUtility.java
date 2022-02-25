@@ -1452,39 +1452,42 @@ public class InferenceUtility {
             SignatureReader reader = new SignatureReader(fieldInfo.getSignature());
             reader.accept(formalTypeParameterExtractor);
 
-            Tuple3<String, String, List<TypeInfo>> fieldSignatureInfo = formalTypeParameterExtractor.getFieldSignatureInfo();
+            TypeInfo typeInfoExtractedFromFieldSignature = formalTypeParameterExtractor.getTypeInfo();
 
-            if (Objects.nonNull(fieldSignatureInfo._2())) {
-                TypeInfo fieldTypeInfo = fieldInfo.getClassInfo().getTypeInfo();
-                assert Objects.nonNull(fieldTypeInfo) && fieldTypeInfo.isParameterizedTypeInfo();
+            if (typeInfoExtractedFromFieldSignature.isFormalTypeParameterInfo()) {
+                String typeParameter = ((FormalTypeParameterInfo) typeInfoExtractedFromFieldSignature).getTypeParameter();
 
-                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) fieldTypeInfo;
+                TypeInfo fieldClassTypeInfo = fieldInfo.getClassInfo().getTypeInfo();
+                assert Objects.nonNull(fieldClassTypeInfo) && fieldClassTypeInfo.isParameterizedTypeInfo();
+
+                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) fieldClassTypeInfo;
 
                 return parameterizedTypeInfo.getTypeArgumentList().stream()
                         .filter(TypeInfo::isFormalTypeParameterInfo)
                         .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
-                        .filter(formalTypeParameterInfo -> formalTypeParameterInfo.getTypeParameter().equals(fieldSignatureInfo._2()))
+                        .filter(formalTypeParameterInfo -> formalTypeParameterInfo.getTypeParameter().equals(typeParameter))
                         .collect(Collectors.toList())
                         .get(0);
-            }
 
-            assert Objects.nonNull(fieldSignatureInfo._1());
+            } else {
+                String fieldTypeClassName = typeInfoExtractedFromFieldSignature.getQualifiedClassName();
 
-            String fieldTypeClassName = fieldSignatureInfo._1();
+                TypeInfo typeInfo = getTypeInfoFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
+                        fieldTypeClassName, owningClassQualifiedName);
 
-            TypeInfo typeInfo = getTypeInfoFromClassName(dependentJarInformationSet, javaVersion, importStatementList,
-                    fieldTypeClassName, owningClassQualifiedName);
+                if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
+                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
 
-            if (typeInfo.isParameterizedTypeInfo()) {
-                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
+                    if (typeInfoExtractedFromFieldSignature.isParameterizedTypeInfo()) {
+                        ParameterizedTypeInfo parameterizedTypeInfoExtractedFromSig = (ParameterizedTypeInfo) typeInfoExtractedFromFieldSignature;
 
-                if (!fieldSignatureInfo._3().isEmpty()) {
-                    parameterizedTypeInfo.setTypeArgumentList(fieldSignatureInfo._3());
-                    parameterizedTypeInfo.setParameterized(true);
+                        parameterizedTypeInfo.setTypeArgumentList(parameterizedTypeInfoExtractedFromSig.getTypeArgumentList());
+                        parameterizedTypeInfo.setParameterized(true);
+                    }
                 }
-            }
 
-            return typeInfo;
+                return typeInfo;
+            }
         } else {
             String fieldTypeClassName = fieldInfo.getTypeAsStr();
 

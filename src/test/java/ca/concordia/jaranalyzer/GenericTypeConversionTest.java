@@ -151,11 +151,28 @@ public class GenericTypeConversionTest {
 
         signatureReader.accept(fieldSignatureFormalTypeParameterExtractor);
 
+        assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Map', isParameterized=false," +
+                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.Integer'}," +
+                " QualifiedTypeInfo{qualifiedClassName='org.jfree.data.xy.XYDataset'}]}")
+                .equals(fieldSignatureFormalTypeParameterExtractor.getTypeInfo().toString());
 
-        assert "java.util.Map".equals(fieldSignatureFormalTypeParameterExtractor.getFieldSignatureInfo()._1())
-                && ("[QualifiedTypeInfo{qualifiedClassName='java.lang.Integer'}," +
-                " QualifiedTypeInfo{qualifiedClassName='org.jfree.data.xy.XYDataset'}]")
-                .equals(fieldSignatureFormalTypeParameterExtractor.getFieldSignatureInfo()._3().toString());
+    }
+
+    @Test
+    public void testNestedFormalTypeParameterExtractionFromFieldSignature() {
+        String signature = "Ljava/util/Map<Lorg/jfree/data/flow/FlowKey<TK;>;Ljava/lang/Number;>;";
+
+        SignatureReader signatureReader = new SignatureReader(signature);
+        FieldSignatureFormalTypeParameterExtractor fieldSignatureFormalTypeParameterExtractor = new FieldSignatureFormalTypeParameterExtractor();
+
+        signatureReader.accept(fieldSignatureFormalTypeParameterExtractor);
+
+        assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Map', isParameterized=false," +
+                " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='org.jfree.data.flow.FlowKey'," +
+                " isParameterized=false, typeArgumentList=[FormalTypeParameterInfo{typeParameter='K'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
+                " QualifiedTypeInfo{qualifiedClassName='java.lang.Number'}]}")
+                .equals(fieldSignatureFormalTypeParameterExtractor.getTypeInfo().toString());
     }
 
     @Test
@@ -254,14 +271,16 @@ public class GenericTypeConversionTest {
     }
 
     @Test
-    public void testTypeParameterAsTypeClass() {
+    public void testTypeParameterAsFieldType() {
         String signature = "TR;";
 
         SignatureReader signatureReader = new SignatureReader(signature);
         FieldSignatureFormalTypeParameterExtractor fieldSignatureFormalTypeParameterExtractor = new FieldSignatureFormalTypeParameterExtractor();
         signatureReader.accept(fieldSignatureFormalTypeParameterExtractor);
 
-        assert "R".equals(fieldSignatureFormalTypeParameterExtractor.getFieldSignatureInfo()._2());
+        assert ("FormalTypeParameterInfo{typeParameter='R'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}")
+                .equals(fieldSignatureFormalTypeParameterExtractor.getTypeInfo().toString());
     }
 
     @Test
