@@ -342,23 +342,6 @@ public class ClassInfo {
         return this.signature;
     }
 
-    public ParameterizedTypeInfo getParameterizedType() {
-        if (Objects.isNull(this.signature)) {
-            return null;
-        }
-
-        ClassSignatureFormalTypeParameterExtractor extractor = new ClassSignatureFormalTypeParameterExtractor();
-
-        SignatureReader signatureReader = new SignatureReader(this.getSignature());
-        signatureReader.accept(extractor);
-
-        String qualifiedClassName = this.qualifiedName;
-        ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedClassName);
-        parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
-
-        return parameterizedTypeInfo;
-    }
-
     private TypeInfo getClassTypeInfo(Type type, String qualifiedName, String signature) {
         if (Objects.isNull(signature)) {
             return getTypeInfo(type);
@@ -368,10 +351,15 @@ public class ClassInfo {
             SignatureReader signatureReader = new SignatureReader(signature);
             signatureReader.accept(extractor);
 
-            ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedName);
-            parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
+            if (extractor.getTypeArgumentList().isEmpty()) {
+                return new QualifiedTypeInfo(qualifiedName);
 
-            return parameterizedTypeInfo;
+            } else {
+                ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedName);
+                parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
+
+                return parameterizedTypeInfo;
+            }
         }
     }
 

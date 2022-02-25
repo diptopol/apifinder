@@ -1393,8 +1393,10 @@ public class InferenceUtility {
             Tuple3<String, String, List<TypeInfo>> fieldSignatureInfo = formalTypeParameterExtractor.getFieldSignatureInfo();
 
             if (Objects.nonNull(fieldSignatureInfo._2())) {
-                ParameterizedTypeInfo parameterizedTypeInfo = fieldInfo.getClassInfo().getParameterizedType();
-                assert Objects.nonNull(parameterizedTypeInfo);
+                TypeInfo fieldTypeInfo = fieldInfo.getClassInfo().getTypeInfo();
+                assert Objects.nonNull(fieldTypeInfo) && fieldTypeInfo.isParameterizedTypeInfo();
+
+                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) fieldTypeInfo;
 
                 return parameterizedTypeInfo.getTypeArgumentList().stream()
                         .filter(TypeInfo::isFormalTypeParameterInfo)
@@ -1469,18 +1471,31 @@ public class InferenceUtility {
             signatureReader.accept(extractor);
 
             String qualifiedClassName = classInfo.getQualifiedName();
-            ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedClassName);
-            parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
 
-            //if className is array populate array dimension
-            if (className.contains("[]")) {
-                int numberOfDimension = StringUtils.countMatches(className, "[]");
+            if (extractor.getTypeArgumentList().isEmpty()) {
+                QualifiedTypeInfo qualifiedTypeInfo = new QualifiedTypeInfo(qualifiedClassName);
 
-                return new ArrayTypeInfo(parameterizedTypeInfo, numberOfDimension);
+                //if className is array populate array dimension
+                if (className.contains("[]")) {
+                    int numberOfDimension = StringUtils.countMatches(className, "[]");
+
+                    return new ArrayTypeInfo(qualifiedTypeInfo, numberOfDimension);
+                }
+
+                return qualifiedTypeInfo;
+            } else {
+                ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedClassName);
+                parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
+
+                //if className is array populate array dimension
+                if (className.contains("[]")) {
+                    int numberOfDimension = StringUtils.countMatches(className, "[]");
+
+                    return new ArrayTypeInfo(parameterizedTypeInfo, numberOfDimension);
+                }
+
+                return parameterizedTypeInfo;
             }
-
-            return parameterizedTypeInfo;
-
         } else {
             String qualifiedClassName = classInfo.getQualifiedName();
 
