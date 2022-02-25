@@ -876,6 +876,9 @@ public class InferenceUtility {
                                                        TypeInfo invokerTypeInfo) {
 
         for (MethodInfo methodInfo : methodInfoList) {
+            convertParameterizedTypeIfRequired(dependentJarInformationSet, javaVersion, importStatementList,
+                    owningClassQualifiedName, methodInfo);
+
             Map<String, TypeInfo> replacedTypeInfoMap = new HashMap<>();
 
             if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isParameterizedTypeInfo()) {
@@ -1073,6 +1076,43 @@ public class InferenceUtility {
             }
 
             transformTypeRepresentation(methodInfo, replacedTypeInfoMap);
+        }
+    }
+
+    /*
+     * There are scenarios when parameterized type is called without type arguments in method signature.
+     * (e.g., public Stack getCurrentSeriesPoints() {})
+     */
+    private static void convertParameterizedTypeIfRequired(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                           String javaVersion,
+                                                           List<String> importStatementList,
+                                                           String owningClassQualifiedName,
+                                                           MethodInfo methodInfo) {
+
+        for (int i = 0; i < methodInfo.getArgumentTypeInfoList().size(); i++) {
+            TypeInfo argument = methodInfo.getArgumentTypeInfoList().get(i);
+
+            if (argument.isQualifiedTypeInfo()) {
+                QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) argument;
+
+                TypeInfo typeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
+                        importStatementList, qualifiedTypeInfo.getQualifiedClassName(), owningClassQualifiedName);
+
+                if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
+                    methodInfo.getArgumentTypeInfoList().set(i, typeInfo);
+                }
+            }
+        }
+
+        if (methodInfo.getReturnTypeInfo().isQualifiedTypeInfo()) {
+            QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) methodInfo.getReturnTypeInfo();
+
+            TypeInfo typeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
+                    importStatementList, qualifiedTypeInfo.getQualifiedClassName(), owningClassQualifiedName);
+
+            if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
+                methodInfo.setReturnTypeInfo(typeInfo);
+            }
         }
     }
 
