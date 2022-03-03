@@ -94,7 +94,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         if (callerClassName != null && StringUtils.countMatches(callerClassName, ".") >= 1) {
             List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousCallerClass, jarVertexIds,
-                    importedClassQNameSet, packageNameList, tinkerGraph);
+                    importedClassQNameSet, packageNameList, tinkerGraph, owningClassQualifiedName);
             Set<String> classQNameList = classInfoList.isEmpty()
                     ? Collections.singleton(callerClassName)
                     : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
@@ -239,12 +239,13 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         if (typeName.contains(".")) {
             if (StringUtils.countMatches(typeName, ".") > 1) {
-                importedClassQNameSet.add(typeName);
+                importedClassQNameSet.add(typeName.replaceAll("\\$", "."));
                 typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
             }
         }
 
-        List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeName, jarVertexIds, importedClassQNameSet, packageNameList, tinkerGraph);
+        List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeName, jarVertexIds, importedClassQNameSet,
+                packageNameList, tinkerGraph, owningClassQualifiedName);
         qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeName, owningClassQualifiedName,
                 importedClassQNameSet, qualifiedClassInfoList, tinkerGraph);
 

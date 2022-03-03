@@ -348,10 +348,15 @@ public abstract class TypeInferenceBase {
                                                      Object[] jarVertexIds,
                                                      Set<String> importedClassQNameList,
                                                      List<String> packageNameList,
-                                                     TinkerGraph tinkerGraph) {
+                                                     TinkerGraph tinkerGraph,
+                                                     String owningClassQualifiedName) {
 
         if (Objects.nonNull(typeClassName) && !InferenceUtility.isPrimitiveType(typeClassName)
                 && StringUtils.countMatches(typeClassName, ".") <= 1) {
+
+            String postProcessedOwningClassQualifiedName = Objects.nonNull(owningClassQualifiedName)
+                    ? owningClassQualifiedName.replace("$", ".")
+                    : null;
 
             String postProcessedTypeClassName = typeClassName.replace(".", "$")
                     .replaceAll("\\[]", "");
@@ -367,7 +372,10 @@ public abstract class TypeInferenceBase {
             qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(classInfo -> {
                 if (classInfo.isInnerClass()) {
                     if (classInfo.isPrivate()) {
-                        return false;
+                        if (Objects.isNull(postProcessedOwningClassQualifiedName)
+                                || !classInfo.getQualifiedName().startsWith(postProcessedOwningClassQualifiedName)) {
+                            return false;
+                        }
                     }
 
                     boolean classNameCheck;
@@ -415,7 +423,7 @@ public abstract class TypeInferenceBase {
         int numberOfArrayDimensions = StringUtils.countMatches(typeClassName, "[]");
 
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
-                importedClassQNameSet, packageNameList, tinkerGraph);
+                importedClassQNameSet, packageNameList, tinkerGraph, owningClassQualifiedName);
 
         qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeClassName, owningClassQualifiedName,
                 importedClassQNameSet, qualifiedClassInfoList, tinkerGraph);

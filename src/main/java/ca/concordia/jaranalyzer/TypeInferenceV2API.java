@@ -92,7 +92,7 @@ public class TypeInferenceV2API {
                 (MethodDeclaration) InferenceUtility.getClosestASTNode(constructorInvocation, MethodDeclaration.class);
 
         String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
-        String callerClassName = className.replace("%", "").replace("#", ".");
+        String callerClassName = className.replace("%", "").replace("$", ".");
 
         String methodName;
 
@@ -104,7 +104,7 @@ public class TypeInferenceV2API {
             methodName = className;
         }
 
-        methodName = methodName.replace("#", ".");
+        methodName = methodName.replace("$", ".");
 
         List<Expression> argumentList = constructorInvocation.arguments();
         int numberOfParameters = argumentList.size();

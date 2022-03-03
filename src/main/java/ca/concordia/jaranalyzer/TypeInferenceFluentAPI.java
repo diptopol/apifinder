@@ -90,7 +90,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         if (callerClassName != null && StringUtils.countMatches(callerClassName, ".") >= 1) {
             callerClassName = callerClassName.replace("$", ".");
             List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousCallerClass, jarVertexIds,
-                    importedClassQNameSet, packageNameList, tinkerGraph);
+                    importedClassQNameSet, packageNameList, tinkerGraph, criteria.getOwningClassQualifiedName());
             Set<String> classQNameList = classInfoList.isEmpty()
                     ? Collections.singleton(callerClassName)
                     : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
@@ -280,7 +280,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
                         List<ClassInfo> qualifiedClassInfoList =
                                 resolveQClassInfoForClass(argumentType, jarVertexIds, importedClassQNameList,
-                                        packageNameList, tinkerGraph);
+                                        packageNameList, tinkerGraph, criteria.getOwningClassQualifiedName());
 
                         qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, argumentType, criteria.getOwningClassQualifiedName(),
                                 importedClassQNameList, qualifiedClassInfoList, tinkerGraph);

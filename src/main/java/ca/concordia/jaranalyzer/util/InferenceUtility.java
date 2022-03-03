@@ -51,7 +51,7 @@ public class InferenceUtility {
 
             for (TypeDeclaration innerClassDeclaration : innerTypeDeclarationArray) {
                 importStatementList.add("import " +
-                        InferenceUtility.getDeclaringClassQualifiedName(innerClassDeclaration).replaceAll("#", "."));
+                        InferenceUtility.getDeclaringClassQualifiedName(innerClassDeclaration).replaceAll("\\$", "."));
             }
         }
     }
@@ -342,7 +342,7 @@ public class InferenceUtility {
                 if (declaringClassQualifiedName.equals("")) {
                     declaringClassQualifiedName = typeDeclarationName;
                 } else {
-                    declaringClassQualifiedName = typeDeclarationName + "#" + declaringClassQualifiedName;
+                    declaringClassQualifiedName = typeDeclarationName + "$" + declaringClassQualifiedName;
                 }
             } else if (node instanceof AnonymousClassDeclaration) {
                 AnonymousClassDeclaration anonymousClassDeclaration = (AnonymousClassDeclaration) node;
@@ -352,9 +352,10 @@ public class InferenceUtility {
                 if (declaringClassQualifiedName.equals("")) {
                     declaringClassQualifiedName = anonymousClassName;
                 } else {
-                    declaringClassQualifiedName = anonymousClassName + "#" + declaringClassQualifiedName;
+                    declaringClassQualifiedName = anonymousClassName + "$" + declaringClassQualifiedName;
                 }
             }
+
             node = node.getParent();
         }
 
