@@ -686,6 +686,12 @@ public class InferenceUtility {
                 return new NullTypeInfo();
             }
 
+        } else if (expression instanceof Assignment) {
+            Assignment assignment = (Assignment) expression;
+
+            return getTypeInfoFromExpression(dependentJarInformationSet, javaVersion, importStatementList,
+                    variableNameMap, assignment.getLeftHandSide(), owningClassQualifiedName);
+
         } else {
             return null;
         }
