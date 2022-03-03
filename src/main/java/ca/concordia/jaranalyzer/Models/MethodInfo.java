@@ -37,7 +37,7 @@ public class MethodInfo {
     private String signature;
 
     private int callerClassMatchingDistance;
-    private int argumentMatchingDistance;
+    private double argumentMatchingDistance;
 
     private List<TypeInfo> argumentTypeInfoList;
     private TypeInfo returnTypeInfo;
@@ -340,11 +340,11 @@ public class MethodInfo {
         this.callerClassMatchingDistance = callerClassMatchingDistance;
     }
 
-    public int getArgumentMatchingDistance() {
+    public double getArgumentMatchingDistance() {
         return argumentMatchingDistance;
     }
 
-    public void setArgumentMatchingDistance(int argumentMatchingDistance) {
+    public void setArgumentMatchingDistance(double argumentMatchingDistance) {
         this.argumentMatchingDistance = argumentMatchingDistance;
     }
 

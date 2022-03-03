@@ -378,7 +378,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             }).collect(Collectors.toList());
 
             if (methodInfoList.size() > 1 && !methodInfoList.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
-                int minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
+                double minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
 
                 return methodInfoList.stream()
                         .filter(m -> m.getArgumentMatchingDistance() >= minArgumentMatchingDistance)

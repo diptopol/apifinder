@@ -27,7 +27,7 @@ public abstract class TypeInferenceBase {
     private static final int PRIMITIVE_TYPE_COMPARABLE_DISTANCE = 1;
 
     /*Increased the distance of matching the wrapped objects to primitives*/
-    private static final int PRIMITIVE_TYPE_UNWRAPPING_DISTANCE = 2;
+    private static final double PRIMITIVE_TYPE_UNWRAPPING_DISTANCE = 1.5;
     private static final int PRIMITIVE_TYPE_NUMBER_DISTANCE = 1;
 
     private static Map<String, List<String>> PRIMITIVE_TYPE_WIDENING_MAP = new HashMap<>();
@@ -500,7 +500,7 @@ public abstract class TypeInferenceBase {
     }
 
     static Set<MethodInfo> prioritizeMethodInfoSet(Set<MethodInfo> methodInfoSet) {
-        int minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoSet);
+        double minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoSet);
         int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(methodInfoSet);
 
         if (methodInfoSet.size() > 1) {
@@ -731,12 +731,12 @@ public abstract class TypeInferenceBase {
                 .orElse(0);
     }
 
-    static int getMinimumArgumentMatchingDistance(Collection<MethodInfo> methodInfoCollection) {
+    static double getMinimumArgumentMatchingDistance(Collection<MethodInfo> methodInfoCollection) {
         return Optional.of(methodInfoCollection)
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(MethodInfo::getArgumentMatchingDistance)
-                .mapToInt(v -> v)
+                .mapToDouble(v -> v)
                 .min()
                 .orElse(0);
     }
