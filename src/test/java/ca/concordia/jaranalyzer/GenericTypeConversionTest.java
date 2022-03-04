@@ -6,7 +6,6 @@ import ca.concordia.jaranalyzer.util.*;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
-import org.objectweb.asm.signature.SignatureWriter;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -183,7 +182,7 @@ public class GenericTypeConversionTest {
         MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
         signatureReader.accept(methodArgumentExtractor);
 
-        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.lang.Class', isParameterized=false," +
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.lang.Class', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.util.EventListener'}}]}," +
                 " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.util.EventListener'}}]")
                 .equals(methodArgumentExtractor.getArgumentList().toString());
@@ -202,7 +201,7 @@ public class GenericTypeConversionTest {
         MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
         signatureReader.accept(methodArgumentExtractor);
 
-        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.Map', isParameterized=false," +
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.Map', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='P', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.String'}}," +
                 " FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
                 " FormalTypeParameterInfo{typeParameter='Q', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]")
@@ -291,7 +290,7 @@ public class GenericTypeConversionTest {
         MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
         signatureReader.accept(methodArgumentExtractor);
 
-        assert ("[ParameterizedTypeInfo{qualifiedClassName='org.jfree.data.flow.FlowDataset', isParameterized=false," +
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='org.jfree.data.flow.FlowDataset', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='K', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Comparable'}}]}," +
                 " FormalTypeParameterInfo{typeParameter='K', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Comparable'}}," +
                 " PrimitiveTypeInfo{qualifiedClassName='int'}]")
@@ -311,9 +310,9 @@ public class GenericTypeConversionTest {
         MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
         signatureReader.accept(methodArgumentExtractor);
 
-        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=false," +
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=true," +
                 " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable'," +
-                " isParameterized=false, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
                 " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}," +
                 " FormalTypeParameterInfo{typeParameter='T'," +
                 " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]")
@@ -336,7 +335,7 @@ public class GenericTypeConversionTest {
         assert ("[ArrayTypeInfo{elementTypeInfo=FormalTypeParameterInfo{typeParameter='T'," +
                 " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}, dimension=1}," +
                 " PrimitiveTypeInfo{qualifiedClassName='int'}, PrimitiveTypeInfo{qualifiedClassName='int'}," +
-                " ParameterizedTypeInfo{qualifiedClassName='java.util.Comparator', isParameterized=false," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.Comparator', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
                 " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
                 .equals(methodArgumentExtractor.getArgumentList().toString());
@@ -357,7 +356,7 @@ public class GenericTypeConversionTest {
 
         assert ("[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}," +
                 " ArrayTypeInfo{elementTypeInfo=ParameterizedTypeInfo{qualifiedClassName='java.lang.Class'," +
-                " isParameterized=false, typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}]}," +
+                " isParameterized=true, typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}]}," +
                 " dimension=1}]").equals(methodArgumentExtractor.getArgumentList().toString());
 
         MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
@@ -378,7 +377,7 @@ public class GenericTypeConversionTest {
         assert ("[PrimitiveTypeInfo{qualifiedClassName='int'}," +
                 " FormalTypeParameterInfo{typeParameter='K', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                 " FormalTypeParameterInfo{typeParameter='V', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
-                " ParameterizedTypeInfo{qualifiedClassName='com.sun.beans.util.Cache.CacheEntry', isParameterized=false," +
+                " ParameterizedTypeInfo{qualifiedClassName='com.sun.beans.util.Cache.CacheEntry', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='K', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                 " FormalTypeParameterInfo{typeParameter='V', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
                 .equals(methodArgumentExtractor.getArgumentList().toString());
@@ -417,14 +416,14 @@ public class GenericTypeConversionTest {
         MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
         signatureReader.accept(methodArgumentExtractor);
 
-        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture', isParameterized=false," +
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
-                " ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture', isParameterized=false," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
-                " ParameterizedTypeInfo{qualifiedClassName='java.util.function.Function', isParameterized=false," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.function.Function', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                 " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
-                " ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture$OrApply', isParameterized=false," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture$OrApply', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                 " FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                 " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
