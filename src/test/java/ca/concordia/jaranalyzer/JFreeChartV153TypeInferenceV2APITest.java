@@ -727,4 +727,24 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testParameterizedTypeCastExpressionAsArgument() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/flow/DefaultFlowDataset.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("clone.nodes.add((List<K>)CloneUtils.cloneList(list))")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.util.List::public abstract boolean add(java.util.List)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }

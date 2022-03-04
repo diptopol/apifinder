@@ -504,9 +504,9 @@ public class InferenceUtility {
 
             return !thenExpressionTypeInfo.isNullTypeInfo() ? thenExpressionTypeInfo : elseExpressionTypeInfo;
         } else if (expression instanceof CastExpression) {
-            String typeClassName = ((CastExpression) expression).getType().toString();
+            Type castedType = ((CastExpression) expression).getType();
 
-            return getTypeInfoFromClassName(dependentJarInformationSet, javaVersion, importStatementList, typeClassName,
+            return getTypeInfo(dependentJarInformationSet, javaVersion, importStatementList, castedType,
                     owningClassQualifiedName);
 
         } else if (expression instanceof NumberLiteral) {
