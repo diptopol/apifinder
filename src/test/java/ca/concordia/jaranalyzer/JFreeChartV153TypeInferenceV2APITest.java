@@ -706,4 +706,25 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+
+    @Test
+    public void testTypeArgumentResolutionFromAssignedVariableInClassInstanceCreation() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/flow/FlowDatasetUtils.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().contains("new NodeKey<>(stage")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert ("org.jfree.data.flow.NodeKey::public void NodeKey(int, K)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }

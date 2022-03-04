@@ -190,14 +190,37 @@ public class InferenceUtility {
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassQualifiedName);
 
         Type type = classInstanceCreation.getType();
-        String callerClassName = null;
+        TypeInfo callerClassTypeInfo = InferenceUtility.getTypeInfo(dependentJarInformationSet, javaVersion,
+                importStatementList, type, owningClassQualifiedName);
+        String callerClassName = Objects.nonNull(callerClassTypeInfo)
+                ? callerClassTypeInfo.getQualifiedClassName()
+                : null;
 
-        if (type.isSimpleType()) {
-            SimpleType simpleType = (SimpleType) type;
-            Expression simpleTypeExpression = simpleType.getName();
-            callerClassName = InferenceUtility.getTypeInfoFromExpression(dependentJarInformationSet, javaVersion,
-                    importStatementList, variableNameMap, simpleTypeExpression, owningClassQualifiedName).getQualifiedClassName();
-            callerClassName = (callerClassName == null || callerClassName.equals("null")) ? null : callerClassName;
+        if (type.isParameterizedType() && ((ParameterizedType) type).typeArguments().isEmpty()) {
+            VariableDeclarationStatement variableDeclarationStatement
+                    = (VariableDeclarationStatement) InferenceUtility.getClosestASTNode(classInstanceCreation, VariableDeclarationStatement.class);
+
+            if (Objects.nonNull(variableDeclarationStatement)) {
+                Type returnType = variableDeclarationStatement.getType();
+
+                if (returnType.isParameterizedType()) {
+                    ParameterizedType parameterizedReturnType = (ParameterizedType) returnType;
+
+                    if (!parameterizedReturnType.typeArguments().isEmpty()) {
+                        List<Type> returnTypeArgumentList = parameterizedReturnType.typeArguments();
+
+                        List<TypeInfo> returnTypeInfoArgumentList =
+                                getTypeInfoList(dependentJarInformationSet, javaVersion, importStatementList,
+                                        returnTypeArgumentList, owningClassQualifiedName);
+
+                        assert callerClassTypeInfo.isParameterizedTypeInfo();
+
+                        ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) callerClassTypeInfo;
+                        parameterizedTypeInfo.setParameterized(true);
+                        parameterizedTypeInfo.setTypeArgumentList(returnTypeInfoArgumentList);
+                    }
+                }
+            }
         }
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -210,7 +233,12 @@ public class InferenceUtility {
             searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
         }
 
-        return searchCriteria.getMethodList();
+        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+        InferenceUtility.transformTypeInfoRepresentation(dependentJarInformationSet, javaVersion, importStatementList,
+                owningClassQualifiedName, methodInfoList, argumentTypeInfoList, callerClassTypeInfo);
+
+        return methodInfoList;
     }
 
     public static Map<String, Set<VariableDeclarationDto>> getVariableNameMap(Set<Tuple3<String, String, String>> dependentJarInformationSet,
@@ -772,8 +800,11 @@ public class InferenceUtility {
                 assert typeInfo.isParameterizedTypeInfo();
 
                 ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
-                parameterizedTypeInfo.setParameterized(true);
-                parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+
+                if (!typeArgumentList.isEmpty()) {
+                    parameterizedTypeInfo.setParameterized(true);
+                    parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                }
 
                 return parameterizedTypeInfo;
 
