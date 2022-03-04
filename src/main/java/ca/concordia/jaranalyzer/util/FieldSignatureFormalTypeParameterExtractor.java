@@ -150,10 +150,12 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
             assert arrayTypeInfo.getElementTypeInfo().isParameterizedTypeInfo();
 
             ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) arrayTypeInfo.getElementTypeInfo();
+            parameterizedTypeInfo.setParameterized(true);
             parameterizedTypeInfo.setTypeArgumentList(argumentTypeList);
 
         } else if (typeInfo.isParameterizedTypeInfo()) {
             ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
+            parameterizedTypeInfo.setParameterized(true);
             parameterizedTypeInfo.setTypeArgumentList(argumentTypeList);
 
         } else {
