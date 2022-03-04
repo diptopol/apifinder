@@ -747,4 +747,24 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testAccessingVariableOfOuterMethodFromAnonymousInnerClassMethod() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/renderer/category/MinMaxCategoryRenderer.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("g2.setPaint(fillPaint)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.awt.Graphics2D::public abstract void setPaint(java.awt.Paint)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }

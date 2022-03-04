@@ -261,21 +261,8 @@ public class InferenceUtility {
 
         populateVariableNameMap(variableNameMap, fieldVariableDeclarationSet);
 
-        MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(methodExpression, MethodDeclaration.class);
-
-        if (methodDeclaration != null) {
-            Set<VariableDeclarationDto> methodParameterVariableDeclarationSet =
-                    getMethodParameterVariableDeclarationDtoList(dependentJarInformationSet, javaVersion,
-                            importStatementList, methodDeclaration, owningClassQualifiedName);
-
-            populateVariableNameMap(variableNameMap, methodParameterVariableDeclarationSet);
-
-            Set<VariableDeclarationDto> localVariableDeclarationList =
-                    getMethodLocalVariableDtoList(dependentJarInformationSet, javaVersion, importStatementList,
-                            methodDeclaration, owningClassQualifiedName);
-
-            populateVariableNameMap(variableNameMap, localVariableDeclarationList);
-        }
+        populateVariableNameMapForMethod(dependentJarInformationSet, javaVersion, importStatementList,
+                owningClassQualifiedName, methodExpression, variableNameMap);
 
         return variableNameMap;
     }
@@ -1122,6 +1109,38 @@ public class InferenceUtility {
             }
 
             transformTypeRepresentation(methodInfo, replacedTypeInfoMap);
+        }
+    }
+
+    private static void populateVariableNameMapForMethod(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                         String javaVersion,
+                                                         List<String> importStatementList,
+                                                         String owningClassQualifiedName,
+                                                         ASTNode node,
+                                                         Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+
+        MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(node, MethodDeclaration.class);
+
+        if (methodDeclaration != null) {
+            Set<VariableDeclarationDto> methodParameterVariableDeclarationSet =
+                    getMethodParameterVariableDeclarationDtoList(dependentJarInformationSet, javaVersion,
+                            importStatementList, methodDeclaration, owningClassQualifiedName);
+
+            populateVariableNameMap(variableNameMap, methodParameterVariableDeclarationSet);
+
+            Set<VariableDeclarationDto> localVariableDeclarationList =
+                    getMethodLocalVariableDtoList(dependentJarInformationSet, javaVersion, importStatementList,
+                            methodDeclaration, owningClassQualifiedName);
+
+            populateVariableNameMap(variableNameMap, localVariableDeclarationList);
+
+            AnonymousClassDeclaration anonymousClassDeclaration =
+                    (AnonymousClassDeclaration) getClosestASTNode(methodDeclaration, AnonymousClassDeclaration.class);
+
+            if (Objects.nonNull(anonymousClassDeclaration)) {
+                populateVariableNameMapForMethod(dependentJarInformationSet, javaVersion, importStatementList,
+                        owningClassQualifiedName, anonymousClassDeclaration, variableNameMap);
+            }
         }
     }
 
