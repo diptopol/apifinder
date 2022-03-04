@@ -264,7 +264,7 @@ public class GenericTypeConversionTest {
         MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
         signatureReader.accept(methodReturnTypeExtractor);
 
-        assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Iterator', isParameterized=false," +
+        assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Iterator', isParameterized=true," +
                 " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='javax.imageio.ImageWriter'}]}")
                 .equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
     }
