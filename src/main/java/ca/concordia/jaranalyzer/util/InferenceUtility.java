@@ -1078,7 +1078,9 @@ public class InferenceUtility {
 
                                 TypeInfo baseTypeInfo = inferredFormalTypeParameterValueMap.containsKey(formalTypeParameterInfo.getTypeParameter())
                                         ? inferredFormalTypeParameterValueMap.get(formalTypeParameterInfo.getTypeParameter())
-                                        : formalTypeParameterInfo.getBaseTypeInfo();
+                                        : (formalTypeParameterInfo.getBaseTypeInfo().isFormalTypeParameterInfo()
+                                        ? ((FormalTypeParameterInfo) formalTypeParameterInfo.getBaseTypeInfo()).getBaseTypeInfo()
+                                        : formalTypeParameterInfo.getBaseTypeInfo());
 
                                 typeArgumentList.set(j, baseTypeInfo);
 
