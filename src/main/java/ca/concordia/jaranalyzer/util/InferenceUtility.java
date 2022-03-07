@@ -414,16 +414,12 @@ public class InferenceUtility {
             TypeInfo argumentTypeInfo = getTypeInfo(dependentJarInformationSet, javaVersion, importStatementList,
                     argumentType, owningClassQualifiedName);
 
-            if (argumentTypeInfo.isParameterizedTypeInfo()) {
-                ParameterizedTypeInfo argumentParameterizedTypeInfo = (ParameterizedTypeInfo) argumentTypeInfo;
+            ParameterizedTypeInfo parameterizedClassTypeInfo = new ParameterizedTypeInfo("java.lang.Class");
+            parameterizedClassTypeInfo.setParameterized(true);
+            parameterizedClassTypeInfo.setTypeArgumentList(Collections.singletonList(
+                    new FormalTypeParameterInfo("T", argumentTypeInfo)));
 
-                ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo("java.lang.Class");
-                parameterizedTypeInfo.setTypeArgumentList(argumentParameterizedTypeInfo.getTypeArgumentList());
-
-                return parameterizedTypeInfo;
-            } else {
-                return new QualifiedTypeInfo("java.lang.Class");
-            }
+            return parameterizedClassTypeInfo;
         } else if (expression instanceof ParenthesizedExpression) {
             ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression) expression;
 
