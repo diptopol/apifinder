@@ -1272,7 +1272,7 @@ public class InferenceUtility {
     }
 
     private static void transformTypeRepresentation(MethodInfo methodInfo, Map<String, TypeInfo> formalTypeParameterMap) {
-        if (!formalTypeParameterMap.isEmpty()) {
+        if (!formalTypeParameterMap.isEmpty() && Objects.nonNull(methodInfo.getSignature())) {
             GenericTypeResolutionAdapter genericTypeResolutionAdapter =
                     new GenericTypeResolutionAdapter(formalTypeParameterMap);
             SignatureReader reader = new SignatureReader(methodInfo.getSignature());
