@@ -758,8 +758,11 @@ public class InferenceUtility {
                     assert typeInfo.isParameterizedTypeInfo();
 
                     ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
-                    parameterizedTypeInfo.setParameterized(true);
-                    parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+
+                    if (!typeArgumentList.isEmpty()) {
+                        parameterizedTypeInfo.setParameterized(true);
+                        parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                    }
 
                     return new ArrayTypeInfo(parameterizedTypeInfo, arrayType.getDimensions());
                 } else {
@@ -807,8 +810,11 @@ public class InferenceUtility {
                 assert typeInfo.isParameterizedTypeInfo();
 
                 ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
-                parameterizedTypeInfo.setParameterized(true);
-                parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+
+                if (!typeArgumentList.isEmpty()) {
+                    parameterizedTypeInfo.setParameterized(true);
+                    parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                }
 
                 return parameterizedTypeInfo;
 
