@@ -127,6 +127,15 @@ public class JFreeChartV1019TypeInferenceV2APITest {
         });
     }
 
+    /*
+     * The method signature is `<T:Ljava/lang/Object;>(Ljava/util/List<+Ljava/lang/Comparable<-TT;>;>;TT;)I`
+     * For parameterized argument types we are setting isParameterized = true. The reason is that in method signature
+     * (e.g., <-TT;>) the type argument is passed. But for formal type TT there is no type argument, hence
+     * isParameterized = false.
+     *
+     * But if formal type parameter is like <K::Ljava/lang/Comparable<TK;>;> we are only considering formal type parameter
+     * K with parameterized type Comparable with no type argument, hence isParameterized = false for simplicity.
+     */
     @Test
     public void testComplexGenericTypeMethodArguments() {
         String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/data/DefaultKeyedValues2D.java";
@@ -143,9 +152,9 @@ public class JFreeChartV1019TypeInferenceV2APITest {
                     assert "java.util.Collections::public static int binarySearch(java.util.List, java.lang.Comparable)"
                             .equals(methodInfo.toString());
 
-                    assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=false," +
+                    assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=true," +
                             " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable'," +
-                            " isParameterized=false, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                            " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
                             " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}," +
                             " ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable', isParameterized=false," +
                             " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +

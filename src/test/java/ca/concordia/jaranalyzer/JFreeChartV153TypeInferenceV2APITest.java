@@ -422,6 +422,10 @@ public class JFreeChartV153TypeInferenceV2APITest {
      * Parameterized typeInfo with type argument K where K would be 'java.lang.Object'. Since in the argument,
      * type argument for K is not provided, we cannot infer the type of K, hence it would be 'java.lang.Object'.
      *
+     * Also, for this method signature `<K::Ljava/lang/Comparable<TK;>;>(Lorg/jfree/data/flow/FlowDataset<TK;>;TK;I)D`
+     * we are only fetching k as parameterized type of java.lang.Comparable with isParameterized false. We are ignoring
+     * <TK;> in formal type parameter for now for simplicity.
+     *
      * TODO: need to check when type argument is provided whether we can resolve the type accordingly.
      */
     @Test
@@ -440,7 +444,7 @@ public class JFreeChartV153TypeInferenceV2APITest {
                             + " calculateInflow(org.jfree.data.flow.FlowDataset, java.lang.Comparable, int)")
                             .equals(methodInfo.toString());
 
-                    assert ("[ParameterizedTypeInfo{qualifiedClassName='org.jfree.data.flow.FlowDataset', isParameterized=false," +
+                    assert ("[ParameterizedTypeInfo{qualifiedClassName='org.jfree.data.flow.FlowDataset', isParameterized=true," +
                             " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable', isParameterized=false," +
                             " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
                             " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}," +
@@ -473,7 +477,7 @@ public class JFreeChartV153TypeInferenceV2APITest {
                     assert "[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}]".equals(methodInfo.getArgumentTypeInfoList().toString());
 
                     assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Iterator'," +
-                            " isParameterized=false," +
+                            " isParameterized=true," +
                             " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='javax.imageio.ImageWriter'}]}")
                             .equals(methodInfo.getReturnTypeInfo().toString());
                 }
