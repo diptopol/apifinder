@@ -94,9 +94,18 @@ public class InferenceUtility {
 
             callerClassName = callerClassTypeInfo.getQualifiedClassName();
         } else {
-            callerClassName = isStaticImport ? null : className.replace("%", "").replace("#", ".");
+            callerClassName = isStaticImport ? null : className.replace("%", "");
 
             if (Objects.nonNull(callerClassName)) {
+                /*
+                 * For anonymous inner class the class name can be `org.jfree.chart.ui.StrokeChooserPanel#0`. For
+                 * simplicity, we will not consider any type argument for inner class. We will take the parent class
+                 * as caller class.
+                 */
+                if (StringUtils.isNumeric(callerClassName.substring(callerClassName.indexOf("$") + 1))) {
+                    callerClassName = callerClassName.substring(0, callerClassName.indexOf("$"));
+                }
+
                 callerClassTypeInfo = getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
                         importStatementList, callerClassName, owningClassQualifiedName);
             }
@@ -146,7 +155,7 @@ public class InferenceUtility {
                 (BodyDeclaration) InferenceUtility.getClosestASTNode(superMethodInvocation, BodyDeclaration.class);
 
         String className = InferenceUtility.getDeclaringClassQualifiedName(bodyDeclaration);
-        String callerClassName = className.replace("%", "").replace("#", ".");
+        String callerClassName = className.replace("%", "").replace("$", ".");
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentJarInformationSet, javaVersion,
@@ -405,7 +414,7 @@ public class InferenceUtility {
             String className = thisExpression.getQualifier() != null ? thisExpression.getQualifier().getFullyQualifiedName()
                     : getDeclaringClassQualifiedName(typeDeclaration);
 
-            className = className.replace("%", "").replace("#", ".");
+            className = className.replace("%", "").replace("$", ".");
 
             return new QualifiedTypeInfo(className);
 
