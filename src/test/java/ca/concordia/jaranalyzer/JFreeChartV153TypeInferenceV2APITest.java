@@ -478,7 +478,8 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
                     assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Iterator'," +
                             " isParameterized=true," +
-                            " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='javax.imageio.ImageWriter'}]}")
+                            " typeArgumentList=[FormalTypeParameterInfo{typeParameter='E', " +
+                            "baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='javax.imageio.ImageWriter'}}]}")
                             .equals(methodInfo.getReturnTypeInfo().toString());
                 }
 
@@ -764,6 +765,86 @@ public class JFreeChartV153TypeInferenceV2APITest {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("java.awt.Graphics2D::public abstract void setPaint(java.awt.Paint)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testMethodInvocationForParameterizedClassType() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/ChartPanel.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("this.chartMouseListeners.getListeners(ChartMouseListener.class)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("javax.swing.event.EventListenerList::public org.jfree.chart.ChartMouseListener[]" +
+                            " getListeners(java.lang.Class)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testMethodInvocationFortFormalTypeParameterAsTypeArgumentInferredAsReturnType() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/plot/PiePlot.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("dataset.getKey(section)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    assert ("org.jfree.data.KeyedValues::public abstract K getKey(int)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testFormalTypeResolutionFromSuperClass() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/plot/PiePlot3D.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("getSectionKey(categoryIndex)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("org.jfree.chart.plot.PiePlot::protected java.lang.Comparable getSectionKey(int)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void tesMethodInvocationFortWildCardParameterizedCallerClass62() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/flow/DefaultFlowDataset.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("this.flows.put(new FlowKey<>(stage")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.util.Map::public abstract java.lang.Number put(org.jfree.data.flow.FlowKey, java.lang.Number)").equals(methodInfo.toString());
                 }
 
                 return true;
