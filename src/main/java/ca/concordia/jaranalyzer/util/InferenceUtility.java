@@ -453,7 +453,7 @@ public class InferenceUtility {
 
             String name = fieldAccess.getName().getFullyQualifiedName();
 
-            if (className != null && !className.equals("null")) {
+            if (Objects.nonNull(className)) {
                 name = className + "." + name;
             }
 
