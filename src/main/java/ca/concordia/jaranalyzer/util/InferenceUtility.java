@@ -1156,6 +1156,9 @@ public class InferenceUtility {
     /*
      * There are scenarios when parameterized type is called without type arguments in method signature.
      * (e.g., public Stack getCurrentSeriesPoints() {})
+     *
+     * Also, for parameterized type argument in method signature has only type arguments. They do not have formal type
+     * parameter. So fetched class in order to get formal type parameter and applied type argument against them.
      */
     private static void convertParameterizedTypeIfRequired(Set<Tuple3<String, String, String>> dependentJarInformationSet,
                                                            String javaVersion,
@@ -1175,6 +1178,21 @@ public class InferenceUtility {
                 if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
                     methodInfo.getArgumentTypeInfoList().set(i, typeInfo);
                 }
+            } else if (argument.isParameterizedTypeInfo()) {
+                ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) argument;
+
+                if (parameterizedArgTypeInfo.isParameterized()) {
+                    TypeInfo updatedArgTypeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
+                            importStatementList, parameterizedArgTypeInfo.getQualifiedClassName(), owningClassQualifiedName);
+
+                    if (Objects.nonNull(updatedArgTypeInfo) && updatedArgTypeInfo.isParameterizedTypeInfo()) {
+                        ParameterizedTypeInfo parameterizedUpdatedArgTypeInfo = (ParameterizedTypeInfo) updatedArgTypeInfo;
+                        parameterizedUpdatedArgTypeInfo.setParameterized(true);
+                        parameterizedUpdatedArgTypeInfo.setTypeArgumentList(parameterizedArgTypeInfo.getTypeArgumentList());
+
+                        methodInfo.getArgumentTypeInfoList().set(i, parameterizedUpdatedArgTypeInfo);
+                    }
+                }
             }
         }
 
@@ -1186,6 +1204,21 @@ public class InferenceUtility {
 
             if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
                 methodInfo.setReturnTypeInfo(typeInfo);
+            }
+        } else if (methodInfo.getReturnTypeInfo().isParameterizedTypeInfo()) {
+            ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) methodInfo.getReturnTypeInfo();
+
+            if (parameterizedArgTypeInfo.isParameterized()) {
+                TypeInfo updatedArgTypeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
+                        importStatementList, parameterizedArgTypeInfo.getQualifiedClassName(), owningClassQualifiedName);
+
+                if (Objects.nonNull(updatedArgTypeInfo) && updatedArgTypeInfo.isParameterizedTypeInfo()) {
+                    ParameterizedTypeInfo parameterizedUpdatedArgTypeInfo = (ParameterizedTypeInfo) updatedArgTypeInfo;
+                    parameterizedUpdatedArgTypeInfo.setParameterized(true);
+                    parameterizedUpdatedArgTypeInfo.setTypeArgumentList(parameterizedArgTypeInfo.getTypeArgumentList());
+
+                    methodInfo.setReturnTypeInfo(parameterizedUpdatedArgTypeInfo);
+                }
             }
         }
     }
