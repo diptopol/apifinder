@@ -627,7 +627,7 @@ public class JFreeChartTests {
                 .setArgumentType(1, "java.awt.Font")
                 .getMethodList();
 
-        assert "[java.text.AttributedString::public void addAttribute(java.text.AttributedCharacterIterator$Attribute, java.lang.Object)]".equals(matches.toString());
+        assert "[java.text.AttributedString::public void addAttribute(java.text.AttributedCharacterIterator.Attribute, java.lang.Object)]".equals(matches.toString());
     }
 
     @Test

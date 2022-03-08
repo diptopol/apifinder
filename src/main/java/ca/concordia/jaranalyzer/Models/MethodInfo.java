@@ -193,7 +193,7 @@ public class MethodInfo {
             methodDescription.append("final ");
         }
 
-        methodDescription.append(returnType.getClassName());
+        methodDescription.append(returnType.getClassName().replace("$", "."));
         methodDescription.append(" ");
 
         if (Objects.nonNull(internalClassConstructorPrefix)) {
@@ -208,7 +208,7 @@ public class MethodInfo {
             if (i > 0) {
                 methodDescription.append(", ");
             }
-            methodDescription.append(argumentType.getClassName());
+            methodDescription.append(argumentType.getClassName().replace("$", "."));
         }
         methodDescription.append(")");
 
