@@ -872,4 +872,25 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testQualifiedArrayArgumentTypeResolution() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/StandardChartTheme.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation methodInvocation) {
+                if (methodInvocation.toString().contains("new DefaultDrawingSupplier(new Paint")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("org.jfree.chart.plot.DefaultDrawingSupplier::public void DefaultDrawingSupplier(java.awt.Paint[]," +
+                            " java.awt.Paint[], java.awt.Stroke[], java.awt.Stroke[], java.awt.Shape[])").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
 }

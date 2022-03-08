@@ -239,7 +239,11 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         if (typeName.contains(".")) {
             if (StringUtils.countMatches(typeName, ".") > 1) {
-                importedClassQNameSet.add(typeName.replaceAll("\\$", "."));
+                /*
+                 * class name can be array (will end with []) or inner class (ends with $inner_class_name). We need to
+                 * resolve those before adding those to import class names.
+                 */
+                importedClassQNameSet.add(typeName.replaceAll("\\$", ".").replaceAll("\\[]", ""));
                 typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
             }
         }
