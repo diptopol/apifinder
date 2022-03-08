@@ -144,10 +144,10 @@ public class MethodArgumentExtractor extends SignatureVisitor {
             argumentStack |= 1;
 
             processForTypeArgumentVisit();
+        }
 
-            if (visitingMethodArguments) {
-                this.methodArgumentTypeInfoStack.push(new QualifiedTypeInfo("java.lang.Object"));
-            }
+        if (visitingMethodArguments) {
+            this.methodArgumentTypeInfoStack.push(new QualifiedTypeInfo("java.lang.Object"));
         }
     }
 

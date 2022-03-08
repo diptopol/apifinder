@@ -435,4 +435,22 @@ public class GenericTypeConversionTest {
         assert "PrimitiveTypeInfo{qualifiedClassName='boolean'}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
     }
 
+    @Test
+    public void testMultipleWildCardTypeArgument() {
+        String signature = "(Ljava/util/Map<**>;)V";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.Map', isParameterized=true," +
+                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}," +
+                " QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}]}]").equals(methodArgumentExtractor.getArgumentList().toString());
+
+        MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
+        signatureReader.accept(methodReturnTypeExtractor);
+
+        assert "VoidTypeInfo{}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
+    }
+
 }
