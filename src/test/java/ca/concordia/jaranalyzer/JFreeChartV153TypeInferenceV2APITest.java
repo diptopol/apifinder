@@ -833,7 +833,7 @@ public class JFreeChartV153TypeInferenceV2APITest {
     }
 
     @Test
-    public void tesMethodInvocationFortWildCardParameterizedCallerClass62() {
+    public void testResolutionOfParameterizedTypeWithFormalTypeAsTypeArgument() {
         String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/flow/DefaultFlowDataset.java";
 
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
