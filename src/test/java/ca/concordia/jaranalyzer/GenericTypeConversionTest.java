@@ -453,4 +453,19 @@ public class GenericTypeConversionTest {
         assert "VoidTypeInfo{}".equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
     }
 
+
+    @Test
+    public void testWildCardTypeAsReturn() {
+        String signature = "()Ljava/util/Map<Ljava/awt/font/TextAttribute;*>;";
+        SignatureReader signatureReader = new SignatureReader(signature);
+
+        MethodReturnTypeExtractor methodReturnTypeExtractor = new MethodReturnTypeExtractor();
+        signatureReader.accept(methodReturnTypeExtractor);
+
+        assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Map', isParameterized=true," +
+                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.awt.font.TextAttribute'}," +
+                " QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}]}")
+                .equals(methodReturnTypeExtractor.getReturnTypeInfo().toString());
+    }
+
 }

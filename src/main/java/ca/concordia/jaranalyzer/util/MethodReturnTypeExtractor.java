@@ -142,10 +142,10 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
             visitingTypeStack |= 1;
 
             processForTypeArgumentVisit();
+        }
 
-            if (visitingReturnType) {
-                this.methodReturnTypeInfoStack.push(new QualifiedTypeInfo("java.lang.Object"));
-            }
+        if (visitingReturnType) {
+            this.methodReturnTypeInfoStack.push(new QualifiedTypeInfo("java.lang.Object"));
         }
     }
 
