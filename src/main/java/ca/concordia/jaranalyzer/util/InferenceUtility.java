@@ -864,6 +864,16 @@ public class InferenceUtility {
         }
     }
 
+    private static TypeInfo replaceFormalTypeInfoUsingInvokerTypeParameterMap(TypeInfo typeInfo,
+                                                                          Map<String, FormalTypeParameterInfo> formalTypeParameterInfoMap,
+                                                                          Map<String, TypeInfo> replacedTypeInfoMap) {
+
+        List<TypeInfo> typeInfoList = new ArrayList<>(Collections.singleton(typeInfo));
+        replaceFormalTypeInfoUsingInvokerTypeParameterMap(typeInfoList, formalTypeParameterInfoMap, replacedTypeInfoMap);
+
+        return typeInfoList.get(0);
+    }
+
     private static void replaceFormalTypeInfoUsingInvokerTypeParameterMap(List<TypeInfo> typeInfoList,
                                                                           Map<String, FormalTypeParameterInfo> formalTypeParameterInfoMap,
                                                                           Map<String, TypeInfo> replacedTypeInfoMap) {
@@ -983,18 +993,8 @@ public class InferenceUtility {
                     /*
                      * Method return type:
                      */
-                    if (methodInfo.getReturnTypeInfo().isFormalTypeParameterInfo()) {
-                        FormalTypeParameterInfo formalTypeParameterMethodReturnTypeInfo = (FormalTypeParameterInfo) methodInfo.getReturnTypeInfo();
-
-                        if (invokerFormalTypeParameterMap.containsKey(formalTypeParameterMethodReturnTypeInfo.getTypeParameter())) {
-                            FormalTypeParameterInfo invokerFormalTypeParameterInfo =
-                                    invokerFormalTypeParameterMap.get(formalTypeParameterMethodReturnTypeInfo.getTypeParameter());
-
-                            methodInfo.setReturnTypeInfo(invokerFormalTypeParameterInfo.getBaseTypeInfo());
-
-                            replacedTypeInfoMap.put(invokerFormalTypeParameterInfo.getTypeParameter(), invokerFormalTypeParameterInfo.getBaseTypeInfo());
-                        }
-                    }
+                    methodInfo.setReturnTypeInfo(replaceFormalTypeInfoUsingInvokerTypeParameterMap(methodInfo.getReturnTypeInfo(),
+                            invokerFormalTypeParameterMap, replacedTypeInfoMap));
                 } else {
                     /*
                      * If callerClass is ParameterizedTypeInfo but parameterized=false, then there can be two scenarios.
@@ -1186,44 +1186,32 @@ public class InferenceUtility {
         for (int i = 0; i < methodInfo.getArgumentTypeInfoList().size(); i++) {
             TypeInfo argument = methodInfo.getArgumentTypeInfoList().get(i);
 
-            if (argument.isQualifiedTypeInfo()) {
-                QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) argument;
-
-                TypeInfo typeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
-                        importStatementList, qualifiedTypeInfo.getQualifiedClassName(), owningClassQualifiedName);
-
-                if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
-                    methodInfo.getArgumentTypeInfoList().set(i, typeInfo);
-                }
-            } else if (argument.isParameterizedTypeInfo()) {
-                ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) argument;
-
-                if (parameterizedArgTypeInfo.isParameterized()) {
-                    TypeInfo updatedArgTypeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
-                            importStatementList, parameterizedArgTypeInfo.getQualifiedClassName(), owningClassQualifiedName);
-
-                    if (Objects.nonNull(updatedArgTypeInfo) && updatedArgTypeInfo.isParameterizedTypeInfo()) {
-                        ParameterizedTypeInfo parameterizedUpdatedArgTypeInfo = (ParameterizedTypeInfo) updatedArgTypeInfo;
-                        parameterizedUpdatedArgTypeInfo.setParameterized(true);
-                        parameterizedUpdatedArgTypeInfo.setTypeArgumentList(parameterizedArgTypeInfo.getTypeArgumentList());
-
-                        methodInfo.getArgumentTypeInfoList().set(i, parameterizedUpdatedArgTypeInfo);
-                    }
-                }
-            }
+            methodInfo.getArgumentTypeInfoList().set(i, convertParameterizedTypeIfRequired(dependentJarInformationSet,
+                    javaVersion, importStatementList, owningClassQualifiedName, argument));
         }
 
-        if (methodInfo.getReturnTypeInfo().isQualifiedTypeInfo()) {
-            QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) methodInfo.getReturnTypeInfo();
+        methodInfo.setReturnTypeInfo(convertParameterizedTypeIfRequired(dependentJarInformationSet, javaVersion,
+                importStatementList, owningClassQualifiedName, methodInfo.getReturnTypeInfo()));
+    }
 
-            TypeInfo typeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
+    private static TypeInfo convertParameterizedTypeIfRequired(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+                                                               String javaVersion,
+                                                               List<String> importStatementList,
+                                                               String owningClassQualifiedName,
+                                                               TypeInfo typeInfo) {
+
+        if (typeInfo.isQualifiedTypeInfo()) {
+            QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) typeInfo;
+
+            TypeInfo fetchedTypeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
                     importStatementList, qualifiedTypeInfo.getQualifiedClassName(), owningClassQualifiedName);
 
-            if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
-                methodInfo.setReturnTypeInfo(typeInfo);
+            if (Objects.nonNull(fetchedTypeInfo) && fetchedTypeInfo.isParameterizedTypeInfo()) {
+                return fetchedTypeInfo;
             }
-        } else if (methodInfo.getReturnTypeInfo().isParameterizedTypeInfo()) {
-            ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) methodInfo.getReturnTypeInfo();
+
+        } else if (typeInfo.isParameterizedTypeInfo()) {
+            ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) typeInfo;
 
             if (parameterizedArgTypeInfo.isParameterized()) {
                 TypeInfo updatedArgTypeInfo = InferenceUtility.getTypeInfoFromClassName(dependentJarInformationSet, javaVersion,
@@ -1231,13 +1219,16 @@ public class InferenceUtility {
 
                 if (Objects.nonNull(updatedArgTypeInfo) && updatedArgTypeInfo.isParameterizedTypeInfo()) {
                     ParameterizedTypeInfo parameterizedUpdatedArgTypeInfo = (ParameterizedTypeInfo) updatedArgTypeInfo;
+
                     parameterizedUpdatedArgTypeInfo.setParameterized(true);
                     parameterizedUpdatedArgTypeInfo.setTypeArgumentList(parameterizedArgTypeInfo.getTypeArgumentList());
 
-                    methodInfo.setReturnTypeInfo(parameterizedUpdatedArgTypeInfo);
+                    return parameterizedUpdatedArgTypeInfo;
                 }
             }
         }
+
+        return typeInfo;
     }
 
     private static void processFormalTypeParameter(Set<Tuple3<String, String, String>> dependentJarInformationSet,
