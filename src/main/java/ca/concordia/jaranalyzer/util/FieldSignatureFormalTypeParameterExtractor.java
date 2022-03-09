@@ -75,9 +75,9 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
             argumentStack |= 1;
 
             processForTypeArgumentVisit();
-
-            this.typeArgumentStack.push(new QualifiedTypeInfo("java.lang.Object"));
         }
+
+        this.typeArgumentStack.push(new QualifiedTypeInfo("java.lang.Object"));
     }
 
     @Override
