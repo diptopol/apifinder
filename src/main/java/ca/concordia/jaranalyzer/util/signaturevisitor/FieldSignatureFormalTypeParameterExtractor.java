@@ -1,12 +1,10 @@
-package ca.concordia.jaranalyzer.util;
+package ca.concordia.jaranalyzer.util.signaturevisitor;
 
 import ca.concordia.jaranalyzer.Models.typeInfo.*;
-import io.vavr.Tuple3;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 

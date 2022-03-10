@@ -1,4 +1,4 @@
-package ca.concordia.jaranalyzer.util;
+package ca.concordia.jaranalyzer.util.signaturevisitor;
 
 import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
 import org.objectweb.asm.Opcodes;

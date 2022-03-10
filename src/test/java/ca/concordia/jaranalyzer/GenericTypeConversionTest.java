@@ -2,7 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.Models.typeInfo.QualifiedTypeInfo;
 import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
-import ca.concordia.jaranalyzer.util.*;
+import ca.concordia.jaranalyzer.util.signaturevisitor.*;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;

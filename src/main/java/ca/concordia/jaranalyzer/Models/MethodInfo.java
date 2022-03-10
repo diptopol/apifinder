@@ -2,8 +2,8 @@ package ca.concordia.jaranalyzer.Models;
 
 import ca.concordia.jaranalyzer.Models.typeInfo.*;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
-import ca.concordia.jaranalyzer.util.MethodArgumentExtractor;
-import ca.concordia.jaranalyzer.util.MethodReturnTypeExtractor;
+import ca.concordia.jaranalyzer.util.signaturevisitor.MethodArgumentExtractor;
+import ca.concordia.jaranalyzer.util.signaturevisitor.MethodReturnTypeExtractor;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.objectweb.asm.Opcodes;
