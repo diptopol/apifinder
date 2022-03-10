@@ -8,22 +8,6 @@
     <build>
         <plugins>
             <plugin>
-                <!-- Build an executable JAR -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>target/</classpathPrefix>
-                            <mainClass>ca.concordia.jaranalyzer.Runner</mainClass>
-                        </manifest>
-                        <!--<cleanupDaemonThreads>false</cleanupDaemonThreads>-->
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
@@ -57,6 +41,7 @@
             </plugin>
         </plugins>
     </build>
+
     <dependencies>
         <dependency>
             <groupId>io.vavr</groupId>
@@ -148,10 +133,5 @@
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>2.7</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>MigrationMiner</groupId>-->
-<!--            <artifactId>MigrationMiner</artifactId>-->
-<!--            <version>2.0.6</version>-->
-<!--        </dependency>-->
     </dependencies>
 </project>
