@@ -1,7 +1,5 @@
 package ca.concordia.jaranalyzer.Models.typeInfo;
 
-import ca.concordia.jaranalyzer.Models.NullTypeInfo;
-
 /**
  * @author Diptopol
  * @since 1/30/2022 3:39 PM
