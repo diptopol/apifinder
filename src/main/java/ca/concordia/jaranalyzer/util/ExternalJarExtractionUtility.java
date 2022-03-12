@@ -1,6 +1,6 @@
 package ca.concordia.jaranalyzer.util;
 
-import ca.concordia.jaranalyzer.Models.JarInformation;
+import ca.concordia.jaranalyzer.models.JarInformation;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.apache.maven.shared.invoker.*;

@@ -1,7 +1,7 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.Models.VariableDeclarationDto;
-import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
+import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import io.vavr.Tuple3;

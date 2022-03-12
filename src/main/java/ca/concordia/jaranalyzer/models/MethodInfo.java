@@ -1,6 +1,6 @@
-package ca.concordia.jaranalyzer.Models;
+package ca.concordia.jaranalyzer.models;
 
-import ca.concordia.jaranalyzer.Models.typeInfo.*;
+import ca.concordia.jaranalyzer.models.typeInfo.*;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.signaturevisitor.MethodArgumentExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.MethodReturnTypeExtractor;

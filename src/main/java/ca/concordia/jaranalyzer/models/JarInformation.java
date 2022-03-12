@@ -1,4 +1,4 @@
-package ca.concordia.jaranalyzer.Models;
+package ca.concordia.jaranalyzer.models;
 
 import ca.concordia.jaranalyzer.util.Utility;
 import org.objectweb.asm.ClassReader;

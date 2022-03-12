@@ -1,6 +1,6 @@
-package ca.concordia.jaranalyzer.Models;
+package ca.concordia.jaranalyzer.models;
 
-import ca.concordia.jaranalyzer.Models.typeInfo.*;
+import ca.concordia.jaranalyzer.models.typeInfo.*;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import org.apache.tinkerpop.gremlin.structure.Vertex;

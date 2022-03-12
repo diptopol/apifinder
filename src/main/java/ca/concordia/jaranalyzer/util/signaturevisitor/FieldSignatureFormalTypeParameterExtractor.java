@@ -1,6 +1,6 @@
 package ca.concordia.jaranalyzer.util.signaturevisitor;
 
-import ca.concordia.jaranalyzer.Models.typeInfo.*;
+import ca.concordia.jaranalyzer.models.typeInfo.*;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureVisitor;
 

@@ -1,7 +1,7 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.Models.ClassInfo;
-import ca.concordia.jaranalyzer.Models.MethodInfo;
+import ca.concordia.jaranalyzer.models.ClassInfo;
+import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;

@@ -1,6 +1,6 @@
-package ca.concordia.jaranalyzer.Models;
+package ca.concordia.jaranalyzer.models;
 
-import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import org.eclipse.jdt.core.dom.Type;
 
 /**

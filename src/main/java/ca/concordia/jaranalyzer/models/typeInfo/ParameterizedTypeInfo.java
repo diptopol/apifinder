@@ -1,4 +1,4 @@
-package ca.concordia.jaranalyzer.Models.typeInfo;
+package ca.concordia.jaranalyzer.models.typeInfo;
 
 import java.util.ArrayList;
 import java.util.List;

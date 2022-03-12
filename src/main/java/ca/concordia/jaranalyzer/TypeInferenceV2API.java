@@ -1,7 +1,7 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.Models.*;
-import ca.concordia.jaranalyzer.Models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.models.*;
+import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.*;

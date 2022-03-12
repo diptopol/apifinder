@@ -1,6 +1,6 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.Models.JarInformation;
+import ca.concordia.jaranalyzer.models.JarInformation;
 import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import io.vavr.Tuple3;

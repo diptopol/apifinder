@@ -1,4 +1,4 @@
-package ca.concordia.jaranalyzer.Models;
+package ca.concordia.jaranalyzer.models;
 
 /**
  * @author Diptopol

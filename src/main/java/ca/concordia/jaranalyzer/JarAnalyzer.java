@@ -1,9 +1,9 @@
 package ca.concordia.jaranalyzer;
 
 
-import ca.concordia.jaranalyzer.Models.ClassInfo;
-import ca.concordia.jaranalyzer.Models.JarInformation;
-import ca.concordia.jaranalyzer.Models.PackageInfo;
+import ca.concordia.jaranalyzer.models.ClassInfo;
+import ca.concordia.jaranalyzer.models.JarInformation;
+import ca.concordia.jaranalyzer.models.PackageInfo;
 import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple;

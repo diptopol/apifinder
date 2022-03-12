@@ -1,4 +1,4 @@
-package ca.concordia.jaranalyzer.Models;
+package ca.concordia.jaranalyzer.models;
 
 import java.util.ArrayList;
 

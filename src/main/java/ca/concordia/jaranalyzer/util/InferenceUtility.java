@@ -1,7 +1,7 @@
 package ca.concordia.jaranalyzer.util;
 
-import ca.concordia.jaranalyzer.Models.*;
-import ca.concordia.jaranalyzer.Models.typeInfo.*;
+import ca.concordia.jaranalyzer.models.*;
+import ca.concordia.jaranalyzer.models.typeInfo.*;
 import ca.concordia.jaranalyzer.TypeInferenceAPI;
 import ca.concordia.jaranalyzer.TypeInferenceFluentAPI;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;

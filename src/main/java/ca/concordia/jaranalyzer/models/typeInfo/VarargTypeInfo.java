@@ -1,25 +1,20 @@
-package ca.concordia.jaranalyzer.Models.typeInfo;
-
-import org.apache.commons.lang3.StringUtils;
+package ca.concordia.jaranalyzer.models.typeInfo;
 
 /**
  * @author Diptopol
- * @since 2/13/2022 2:30 AM
+ * @since 2/4/2022 4:12 PM
  */
-public class ArrayTypeInfo extends TypeInfo {
+public class VarargTypeInfo extends TypeInfo {
 
     private TypeInfo elementTypeInfo;
 
-    private int dimension;
-
-    public ArrayTypeInfo(TypeInfo elementTypeInfo, int dimension) {
+    public VarargTypeInfo(TypeInfo elementTypeInfo) {
         this.elementTypeInfo = elementTypeInfo;
-        this.dimension = dimension;
     }
 
     @Override
     public String getQualifiedClassName() {
-        return this.elementTypeInfo.getQualifiedClassName().concat(StringUtils.repeat("[]", this.dimension));
+        return this.elementTypeInfo.getQualifiedClassName();
     }
 
     @Override
@@ -35,20 +30,16 @@ public class ArrayTypeInfo extends TypeInfo {
         this.elementTypeInfo = elementTypeInfo;
     }
 
-    public int getDimension() {
-        return dimension;
-    }
-
     @Override
     public String getName() {
-        return this.elementTypeInfo.getName().concat(StringUtils.repeat("[]", this.dimension));
+        return this.elementTypeInfo.getName();
     }
 
     @Override
     public String toString() {
-        return "ArrayTypeInfo{" +
+        return "VarargTypeInfo{" +
                 "elementTypeInfo=" + elementTypeInfo +
-                ", dimension=" + dimension +
                 '}';
     }
+
 }
