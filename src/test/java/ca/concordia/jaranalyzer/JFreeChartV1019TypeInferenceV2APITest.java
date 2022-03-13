@@ -3,7 +3,7 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.PropertyReader;
-import io.vavr.Tuple3;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.BeforeClass;
@@ -21,7 +21,7 @@ import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
  */
 public class JFreeChartV1019TypeInferenceV2APITest {
 
-    private static Set<Tuple3<String, String, String>> jarInformationSet;
+    private static Set<Artifact> jarInformationSet;
     private static String javaVersion;
 
     @BeforeClass
@@ -40,8 +40,8 @@ public class JFreeChartV1019TypeInferenceV2APITest {
         String jFreeChartGroupId = "org.jfree";
         String jFreeChartArtifactId = "jfreechart";
         String jFreeChartVersion = "1.0.19";
-        TypeInferenceFluentAPI.getInstance().loadJar(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion);
-        jarInformationSet.add(new Tuple3<>(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
+        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
+        jarInformationSet.add(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
     }
 
     @Test

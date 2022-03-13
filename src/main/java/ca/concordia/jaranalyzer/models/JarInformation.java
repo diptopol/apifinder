@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.models;
 
 import ca.concordia.jaranalyzer.util.Utility;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
@@ -22,14 +23,13 @@ public class JarInformation {
 
 	private Map<String, PackageInfo> packages;
 
-	public JarInformation(JarFile jarFile, String groupId, String artifactId,
-						  String version) {
+	public JarInformation(JarFile jarFile, Artifact artifact) {
 
-		logger.info("Processing JarInformation of {}:{}:{}", groupId, artifactId, version);
+		logger.info("Processing JarInformation of {}:{}:{}", artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
 
-		this.artifactId = artifactId;
-		this.groupId = groupId;
-		this.version = version;
+		this.artifactId = artifact.getArtifactId();
+		this.groupId = artifact.getGroupId();
+		this.version = artifact.getVersion();
 		this.name = Utility.getJarName(jarFile.getName());
 		this.packages = new HashMap<>();
 

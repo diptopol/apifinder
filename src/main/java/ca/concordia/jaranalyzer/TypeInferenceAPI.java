@@ -4,7 +4,7 @@ import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.FieldInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
-import io.vavr.Tuple3;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
@@ -29,20 +29,24 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         jarAnalyzer = TinkerGraphStorageUtility.getJarAnalyzer();
     }
 
-    public static Set<Tuple3<String, String, String>> loadExternalJars(String commitId, String projectName, Repository repository) {
+    public static Set<Artifact> loadExternalJars(String commitId, String projectName, Repository repository) {
         return jarAnalyzer.loadExternalJars(commitId, projectName, repository);
     }
 
-    public static void loadJar(String groupId, String artifactId, String version) {
-        jarAnalyzer.loadJar(groupId, artifactId, version);
+    public static void loadJar(Artifact artifact) {
+        jarAnalyzer.loadJar(artifact);
     }
 
-    public static List<MethodInfo> getAllMethods(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+    public static void loadJar(String groupId, String artifactId, String version) {
+        jarAnalyzer.loadJar(new Artifact(groupId, artifactId, version));
+    }
+
+    public static List<MethodInfo> getAllMethods(Set<Artifact> dependentArtifactSet,
                                                  String javaVersion,
                                                  List<String> importList,
                                                  String methodName,
                                                  int numberOfParameters) {
-        return getAllMethods(dependentJarInformationSet, javaVersion, importList, methodName, numberOfParameters,
+        return getAllMethods(dependentArtifactSet, javaVersion, importList, methodName, numberOfParameters,
                 null, false, null);
     }
 
@@ -65,7 +69,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
      * if in any step method is found it will be returned, otherwise recursion will happen until java.lang.Object is
      * reached, then if no method is found an empty list will be returned.<br>
      */
-    public static List<MethodInfo> getAllMethods(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+    public static List<MethodInfo> getAllMethods(Set<Artifact> dependentArtifactSet,
                                                  String javaVersion,
                                                  List<String> importList,
                                                  String methodName,
@@ -75,7 +79,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                  String owningClassQualifiedName,
                                                  String... argumentTypes) {
 
-        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion, tinkerGraph);
+        Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
 
         Set<String> importedClassQNameSet = getImportedQNameList(importList);
         List<String> packageNameList = getPackageNameList(importList);
@@ -224,7 +228,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
     }
 
-    public static List<ClassInfo> getAllTypes(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+    public static List<ClassInfo> getAllTypes(Set<Artifact> dependentArtifactSet,
                                               String javaVersion,
                                               List<String> importList,
                                               String typeName,
@@ -233,7 +237,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             return Collections.emptyList();
         }
 
-        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion, tinkerGraph);
+        Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
         Set<String> importedClassQNameSet = getImportedQNameList(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
@@ -256,14 +260,14 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         return qualifiedClassInfoList;
     }
 
-    public static List<FieldInfo> getAllFieldTypes(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+    public static List<FieldInfo> getAllFieldTypes(Set<Artifact> dependentArtifactSet,
                                                    String javaVersion,
                                                    List<String> importList,
                                                    String fieldName,
                                                    String owningClassQualifiedName) {
 
 
-        Object[] jarVertexIds = getJarVertexIds(dependentJarInformationSet, javaVersion, tinkerGraph);
+        Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
 
         Set<String> importedClassQNameList = getImportedQNameList(importList);
         List<String> packageNameList = getPackageNameList(importList);

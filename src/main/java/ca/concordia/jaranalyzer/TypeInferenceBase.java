@@ -3,7 +3,7 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
-import io.vavr.Tuple3;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.structure.Element;
@@ -633,7 +633,7 @@ public abstract class TypeInferenceBase {
                 .toSet();
     }
 
-    static Object[] getJarVertexIds(Set<Tuple3<String, String, String>> jarInformationSet,
+    static Object[] getJarVertexIds(Set<Artifact> jarInformationSet,
                                     String javaVersion, TinkerGraph tinkerGraph) {
         Set<Object> jarVertexIdSet = new HashSet<>();
 
@@ -641,9 +641,9 @@ public abstract class TypeInferenceBase {
             jarVertexIdSet.addAll(
                     tinkerGraph.traversal().V()
                             .has("Kind", "Jar")
-                            .has("GroupId", j._1)
-                            .has("ArtifactId", j._2)
-                            .has("Version", j._3)
+                            .has("GroupId", j.getGroupId())
+                            .has("ArtifactId", j.getArtifactId())
+                            .has("Version", j.getVersion())
                             .toStream()
                             .map(Element::id)
                             .collect(Collectors.toSet())

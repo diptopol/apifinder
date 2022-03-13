@@ -3,8 +3,8 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import io.vavr.Tuple2;
-import io.vavr.Tuple3;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.lib.Repository;
@@ -37,12 +37,16 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         jarAnalyzer = TinkerGraphStorageUtility.getJarAnalyzer();
     }
 
-    public Set<Tuple3<String, String, String>> loadExternalJars(String commitId, String projectName, Repository repository) {
+    public Set<Artifact> loadExternalJars(String commitId, String projectName, Repository repository) {
         return jarAnalyzer.loadExternalJars(commitId, projectName, repository);
     }
 
+    public void loadJar(Artifact artifact) {
+        jarAnalyzer.loadJar(artifact);
+    }
+
     public void loadJar(String groupId, String artifactId, String version) {
-        jarAnalyzer.loadJar(groupId, artifactId, version);
+        jarAnalyzer.loadJar(new Artifact(groupId, artifactId, version));
     }
 
     /**
@@ -65,7 +69,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
      * reached, then if no method is found an empty list will be returned.<br>
      */
     private List<MethodInfo> getAllMethods(Criteria criteria) {
-        Object[] jarVertexIds = getJarVertexIds(criteria.getDependentJarInformationSet(), criteria.getJavaVersion(), tinkerGraph);
+        Object[] jarVertexIds = getJarVertexIds(criteria.getDependentArtifactSet(), criteria.getJavaVersion(), tinkerGraph);
         List<String> importList = criteria.getImportList();
         String methodName = criteria.getMethodName();
 
@@ -295,7 +299,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
     }
 
     public class Criteria {
-        private Set<Tuple3<String, String, String>> dependentJarInformationSet;
+        private Set<Artifact> dependentArtifactSet;
         private String javaVersion;
         private List<String> importList;
         private String methodName;
@@ -305,8 +309,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private boolean isSuperOfCallerClass;
         private Map<Integer, String> argumentTypeMap;
 
-        private Set<Tuple3<String, String, String>> getDependentJarInformationSet() {
-            return dependentJarInformationSet;
+        private Set<Artifact> getDependentArtifactSet() {
+            return dependentArtifactSet;
         }
 
         private String getJavaVersion() {
@@ -354,13 +358,13 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             }
         }
 
-        public Criteria(Set<Tuple3<String, String, String>> dependentJarInformationSet,
+        public Criteria(Set<Artifact> dependentArtifactSet,
                         String javaVersion,
                         List<String> importList,
                         String methodName,
                         int numberOfParameters) {
 
-            this.dependentJarInformationSet = dependentJarInformationSet;
+            this.dependentArtifactSet = dependentArtifactSet;
             this.javaVersion = javaVersion;
             this.importList = importList;
             this.methodName = methodName;

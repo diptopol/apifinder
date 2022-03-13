@@ -1,8 +1,7 @@
 package ca.concordia.jaranalyzer.util;
 
 import ca.concordia.jaranalyzer.models.JarInformation;
-import io.vavr.Tuple;
-import io.vavr.Tuple3;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.apache.maven.shared.invoker.*;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
@@ -25,11 +24,11 @@ import static java.util.stream.Collectors.toSet;
  */
 public class ExternalJarExtractionUtility {
 
-    private static Logger logger = LoggerFactory.getLogger(ExternalJarExtractionUtility.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExternalJarExtractionUtility.class);
 
-    public static Set<Tuple3<String, String, String>> getDependenciesFromEffectivePom(String commit,
-                                                                                      String projectName,
-                                                                                      String cloneLink) {
+    public static Set<Artifact> getDependenciesFromEffectivePom(String commit,
+                                                                String projectName,
+                                                                String cloneLink) {
 
         Set<String> deps = generateEffectivePom(commit, projectName, cloneLink)
                 .map(Utility::listOfJavaProjectLibraryFromEffectivePom)
@@ -37,20 +36,20 @@ public class ExternalJarExtractionUtility {
 
         return deps.stream().map(x -> x.split(":"))
                 .filter(x -> x.length == 3)
-                .map(dep -> Tuple.of(dep[0], dep[1], dep[2]))
+                .map(dep -> new Artifact(dep[0], dep[1], dep[2]))
                 .collect(toSet());
     }
 
-    public static Set<Tuple3<String, String, String>> getDependenciesFromEffectivePom(String commit,
-                                                                                      String projectName,
-                                                                                      Repository repository) {
+    public static Set<Artifact> getDependenciesFromEffectivePom(String commit,
+                                                                String projectName,
+                                                                Repository repository) {
         Set<String> deps = generateEffectivePOM(commit, projectName, repository)
                 .map(Utility::listOfJavaProjectLibraryFromEffectivePom)
                 .orElse(new HashSet<>());
 
         return deps.stream().map(x -> x.split(":"))
                 .filter(x -> x.length == 3)
-                .map(dep -> Tuple.of(dep[0], dep[1], dep[2]))
+                .map(dep -> new Artifact(dep[0], dep[1], dep[2]))
                 .collect(toSet());
     }
 
@@ -108,23 +107,24 @@ public class ExternalJarExtractionUtility {
         return Optional.of(effectivePomPathContent);
     }
 
-    public static JarInformation getJarInfo(String groupId, String artifactId, String version) {
-        String url = "https://repo1.maven.org/maven2/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version
-                + "/" + artifactId + "-" + version + ".jar";
+    public static JarInformation getJarInfo(Artifact artifact) {
+        String url = "https://repo1.maven.org/maven2/" + artifact.getGroupId().replace('.', '/') + "/"
+                + artifact.getArtifactId() + "/" + artifact.getVersion()
+                + "/" + artifact.getArtifactId() + "-" + artifact.getVersion() + ".jar";
 
-        return getAsJarInformation(url, groupId, artifactId, version);
+        return getAsJarInformation(url, artifact);
     }
 
-    private static JarInformation getAsJarInformation(JarFile jarFile, String groupId, String artifactId, String version) {
+    private static JarInformation getAsJarInformation(JarFile jarFile, Artifact artifact) {
         if (jarFile == null)
             return null;
 
-        return new JarInformation(jarFile, groupId, artifactId, version);
+        return new JarInformation(jarFile, artifact);
     }
 
-    private static JarInformation getAsJarInformation(String url, String groupId, String artifactId, String version) {
+    private static JarInformation getAsJarInformation(String url, Artifact artifact) {
         JarFile jarFile = DownloadJar(url);
-        return getAsJarInformation(jarFile, groupId, artifactId, version);
+        return getAsJarInformation(jarFile, artifact);
     }
 
     private static JarFile DownloadJar(String jarUrl) {
@@ -155,4 +155,5 @@ public class ExternalJarExtractionUtility {
 
         return jarFile;
     }
+
 }

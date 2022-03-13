@@ -2,7 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.PropertyReader;
-import io.vavr.Tuple3;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -33,9 +33,9 @@ public class TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Args.nullNotPermitted(listener,\"listener\")")) {
-                    Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-                    jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.5.1"));
-                    jarInformationSet1.add(new Tuple3<>("org.jfree", "org.jfree.chart.fx", "2.0"));
+                    Set<Artifact> jarInformationSet1 = new HashSet<>();
+                    jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.5.1"));
+                    jarInformationSet1.add(new Artifact("org.jfree", "org.jfree.chart.fx", "2.0"));
 
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet1, javaVersion, methodInvocation);
 
@@ -49,7 +49,7 @@ public class TypeInferenceV2APITest {
     }
 
     private static void loadPreviousJFreeChartJar() {
-        TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.5.1");
-        TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "org.jfree.chart.fx", "2.0");
+        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact("org.jfree", "jfreechart", "1.5.1"));
+        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact("org.jfree", "org.jfree.chart.fx", "2.0"));
     }
 }

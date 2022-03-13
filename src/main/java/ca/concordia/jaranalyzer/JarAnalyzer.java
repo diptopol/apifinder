@@ -6,6 +6,7 @@ import ca.concordia.jaranalyzer.models.JarInformation;
 import ca.concordia.jaranalyzer.models.PackageInfo;
 import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.Utility;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
@@ -205,18 +206,17 @@ public class JarAnalyzer {
                                 , x.isEnum())));
     }
 
-    public Set<Tuple3<String, String, String>> loadExternalJars(String commitId, String projectName,
-                                                                Repository repository) {
-        Set<Tuple3<String, String, String>> jarArtifactInfoSet =
+    public Set<Artifact> loadExternalJars(String commitId, String projectName, Repository repository) {
+        Set<Artifact> jarArtifactInfoSet =
                 ExternalJarExtractionUtility.getDependenciesFromEffectivePom(commitId, projectName, repository);
 
-        Set<Tuple3<String, String, String>> jarArtifactInfoSetForLoad = jarArtifactInfoSet.stream()
-                .filter(jarArtifactInfo -> !isJarExists(jarArtifactInfo._1, jarArtifactInfo._2, jarArtifactInfo._3))
+        Set<Artifact> jarArtifactInfoSetForLoad = jarArtifactInfoSet.stream()
+                .filter(jarArtifactInfo -> !isJarExists(jarArtifactInfo))
                 .collect(Collectors.toSet());
 
         jarArtifactInfoSetForLoad.forEach(jarArtifactInfo -> {
             JarInformation jarInformation =
-                    ExternalJarExtractionUtility.getJarInfo(jarArtifactInfo._1, jarArtifactInfo._2, jarArtifactInfo._3);
+                    ExternalJarExtractionUtility.getJarInfo(jarArtifactInfo);
 
             toGraph(jarInformation);
         });
@@ -228,10 +228,9 @@ public class JarAnalyzer {
         return jarArtifactInfoSet;
     }
 
-    public void loadJar(String groupId, String artifactId, String version) {
-        if (!isJarExists(groupId, artifactId, version)) {
-            JarInformation jarInformation =
-                    ExternalJarExtractionUtility.getJarInfo(groupId, artifactId, version);
+    public void loadJar(Artifact artifact) {
+        if (!isJarExists(artifact)) {
+            JarInformation jarInformation = ExternalJarExtractionUtility.getJarInfo(artifact);
 
             toGraph(jarInformation);
             storeClassStructureGraph();
@@ -268,7 +267,7 @@ public class JarAnalyzer {
                     Path path = Paths.get(jarLocation);
                     if (Files.exists(path)) {
                         JarFile jarFile = new JarFile(new File(jarLocation));
-                        jarToGraph(jarFile, path.getFileName().toString(), "Java", javaVersion);
+                        jarToGraph(jarFile, new Artifact(path.getFileName().toString(), "Java", javaVersion));
                     }
                 } catch (Exception e) {
                     logger.error("Could not open the JAR", e);
@@ -277,17 +276,17 @@ public class JarAnalyzer {
         }
     }
 
-    public void jarToGraph(JarFile jarFile, String groupId, String artifactId, String version) {
-        JarInformation ji = new JarInformation(jarFile, groupId, artifactId, version);
+    public void jarToGraph(JarFile jarFile, Artifact artifact) {
+        JarInformation ji = new JarInformation(jarFile, artifact);
         toGraph(ji);
     }
 
-    private boolean isJarExists(String groupId, String artifactId, String version) {
+    private boolean isJarExists(Artifact artifact) {
         return graph.traversal().V()
                 .has("Kind", "Jar")
-                .has("GroupId", groupId)
-                .has("ArtifactId", artifactId)
-                .has("Version", version)
+                .has("GroupId", artifact.getGroupId())
+                .has("ArtifactId", artifact.getArtifactId())
+                .has("Version", artifact.getVersion())
                 .toSet().size() > 0;
     }
 

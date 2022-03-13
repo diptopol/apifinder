@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.util.Utility;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
@@ -43,22 +44,17 @@ public class APIFinderImpl  {
 	}
 
 	public APIFinderImpl(JarAnalyzer analyzer, String javaHome, String javaVersion){
-		System.out.println(javaHome);
 			if (javaHome != null) {
 				List<String> jarFiles = Utility.getFiles(javaHome, "jar");
-				System.out.println(jarFiles.size());
 				for (String jarLocation : jarFiles) {
 					try {
 						Path path = Paths.get(jarLocation);
 						if(Files.exists(path)) {
 							JarFile jarFile = new JarFile(new File(jarLocation));
-							System.out.println(jarLocation);
-							analyzer.jarToGraph(jarFile, path.getFileName().toString(), "Java", javaVersion);
+							analyzer.jarToGraph(jarFile, new Artifact(path.getFileName().toString(), "Java", javaVersion));
 						}
 					} catch (Exception  e) {
 						e.printStackTrace();
-						System.out.println(e.toString());
-						System.out.println("Could not open the JAR");
 					}
 				}
 

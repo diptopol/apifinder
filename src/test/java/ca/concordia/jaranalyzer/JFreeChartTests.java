@@ -2,6 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import io.vavr.Tuple3;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.BeforeClass;
@@ -20,7 +21,7 @@ import java.util.*;
  */
 public class JFreeChartTests {
 
-    private static Set<Tuple3<String, String, String>> jarInformationSet;
+    private static Set<Artifact> jarInformationSet;
     private static String javaVersion;
 
     @BeforeClass
@@ -156,7 +157,7 @@ public class JFreeChartTests {
     @Test
     public void findInnerClassConstructorWithoutQualifiedName() {
         List<String> imports = Arrays.asList("java.lang.*", "org.jfree.chart.axis.*");
-        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
+        List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(singleton(new Artifact("org.jfree", "jfreechart", "1.0.19")),
                 javaVersion, imports, "BaseTimelineSegmentRange", 2).getMethodList();
 
         assertEquals("[org.jfree.chart.axis.SegmentedTimeline.BaseTimelineSegmentRange::" +
@@ -221,7 +222,7 @@ public class JFreeChartTests {
                 "java.util.SimpleTimeZone",
                 "java.util.TimeZone");
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
-                .new Criteria(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports,
+                .new Criteria(singleton(new Artifact("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports,
                 "Segment", 1)
                 .getMethodList();
 
@@ -250,7 +251,7 @@ public class JFreeChartTests {
                 "org.jfree.ui.ApplicationFrame",
                 "org.jfree.ui.RefineryUtilities");
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
-                .new Criteria(singleton(new Tuple3<>("org.jfree", "jfreechart", "1.0.19")),
+                .new Criteria(singleton(new Artifact("org.jfree", "jfreechart", "1.0.19")),
                 javaVersion, imports, "setPreferredSize", 1)
                 .getMethodList();
 
@@ -290,12 +291,12 @@ public class JFreeChartTests {
                 "import org.jfree.data.DefaultKeyedValues", "import org.jfree.data.KeyedValues", "import org.jfree.data.UnknownKeyException",
                 "import org.jfree.util.PublicCloneable", "import org.jfree.util.SortOrder");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
 
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
                 "clone", 0, "int[]", false, null);
@@ -455,11 +456,11 @@ public class JFreeChartTests {
                 "import java.awt.Graphics2D", "import java.awt.geom.Rectangle2D", "import java.io.Serializable",
                 "import org.jfree.ui.Size2D", "import org.jfree.util.PublicCloneable");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "setWidth", 1)
@@ -479,7 +480,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> methodInfoList = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(singleton(
-                new Tuple3<>("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "getZValueRange",
+                new Artifact("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "getZValueRange",
                 2).setInvokerType("DefaultContourDataset")
                 .setArgumentType(0, "Range")
                 .setArgumentType(1, "Range").getMethodList();
@@ -494,11 +495,11 @@ public class JFreeChartTests {
                 "import java.io.Serializable", "import org.jfree.data.DefaultKeyedValue",
                 "import org.jfree.data.KeyedValue", "import org.jfree.util.ObjectUtilities");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "getValue", 0)
@@ -515,11 +516,11 @@ public class JFreeChartTests {
                 "import static org.junit.Assert.assertTrue", "import java.awt.Color", "import java.awt.Font",
                 "import java.awt.GradientPaint", "import org.jfree.chart.TestUtilities", "import org.junit.Test");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "addSubLabel", 2)
@@ -542,11 +543,11 @@ public class JFreeChartTests {
                 "import org.jfree.chart.util.ParamChecks", "import org.jfree.io.SerialUtilities", "import org.jfree.util.PaintUtilities",
                 "import org.jfree.util.PublicCloneable");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports,
@@ -572,11 +573,11 @@ public class JFreeChartTests {
                 "import org.jfree.data.category.CategoryDataset", "import org.jfree.data.general.DatasetUtilities", "import org.jfree.ui.RectangleEdge",
                 "import org.jfree.ui.TextAnchor", "import org.jfree.util.PublicCloneable");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "setBasePositiveItemLabelPosition", 1)
@@ -591,11 +592,11 @@ public class JFreeChartTests {
     public void findMethodWhereMultipleClassExistsWithSameMethodSignatureInPackage() {
         List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.data.xy.*");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "equals", 1)
@@ -614,11 +615,11 @@ public class JFreeChartTests {
                 "import org.jfree.ui.StandardGradientPaintTransformer", "import org.junit.Test", "import static org.junit.Assert.assertEquals",
                 "import static org.junit.Assert.assertFalse", "import static org.junit.Assert.assertSame", "import static org.junit.Assert.assertNotSame");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "addAttribute", 2)
@@ -639,12 +640,12 @@ public class JFreeChartTests {
                 "import org.jfree.chart.plot.PlotOrientation", "import org.jfree.chart.plot.PlotRenderingInfo", "import org.jfree.chart.plot.XYPlot",
                 "import org.jfree.chart.urls.XYURLGenerator", "import org.jfree.data.xy.XYDataset", "import org.jfree.ui.RectangleEdge", "import org.jfree.util.PublicCloneable");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
 
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "setBaseToolTipGenerator", 1)
@@ -660,11 +661,11 @@ public class JFreeChartTests {
                 "import org.jfree.data.ComparableObjectItem", "import org.jfree.data.ComparableObjectSeries",
                 "import org.jfree.data.general.SeriesChangeEvent");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "add", 2)
@@ -684,11 +685,11 @@ public class JFreeChartTests {
                 "import java.util.ResourceBundle", "import org.jfree.chart.util.ParamChecks", "import org.jfree.chart.util.ResourceBundleWrapper",
                 "import org.jfree.data.DataUtilities", "import org.jfree.data.UnknownKeyException", "import org.jfree.data.general.AbstractSeriesDataset");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "DefaultIntervalCategoryDataset", 4)
@@ -709,11 +710,11 @@ public class JFreeChartTests {
         List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.util.*", "import java.awt.Color", "import java.awt.Graphics2D",
                 "import java.awt.image.BufferedImage", "import java.awt.image.DataBufferInt", "import java.io.Serializable", "import org.jfree.chart.HashUtilities");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "hashCode", 2)
@@ -732,12 +733,12 @@ public class JFreeChartTests {
                 "import org.jfree.data.DefaultKeyedValues", "import org.jfree.data.KeyedValues", "import org.jfree.data.UnknownKeyException",
                 "import org.jfree.util.PublicCloneable", "import org.jfree.util.SortOrder");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
 
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "addValue", 2)
@@ -757,11 +758,11 @@ public class JFreeChartTests {
                 "import java.lang.reflect.Method", "import javax.imageio.ImageIO", "import org.jfree.ui.Drawable",
                 "import org.jfree.chart.util.ExportUtils");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "getConstructor", 2)
@@ -784,11 +785,11 @@ public class JFreeChartTests {
                 "import java.lang.reflect.Method", "import javax.imageio.ImageIO", "import org.jfree.ui.Drawable",
                 "import org.jfree.chart.util.ExportUtils");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "newInstance", 2)
@@ -806,11 +807,11 @@ public class JFreeChartTests {
     public void finMethodsWithDeferredMatching() {
         List<String> imports = Arrays.asList("import java.lang.*", "import java.awt.geom.Arc2D");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "Double", 1)
@@ -833,11 +834,11 @@ public class JFreeChartTests {
                 "import org.jfree.data.general.DatasetUtilities", "import org.jfree.ui.RectangleEdge",
                 "import org.jfree.ui.TextAnchor", "import org.jfree.util.PublicCloneable");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "setBaseShape", 1)
@@ -863,11 +864,11 @@ public class JFreeChartTests {
                 "import org.jfree.util.PaintUtilities", "import org.jfree.util.PublicCloneable",
                 "import org.jfree.chart.annotations.XYPolygonAnnotation");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "moveTo", 2)
@@ -884,11 +885,11 @@ public class JFreeChartTests {
         List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.util.*",
                 "import java.awt.geom.Line2D", "import java.awt.geom.Rectangle2D", "import org.jfree.chart.util.LineUtilities");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "Line2D.Double", 4)
@@ -908,11 +909,11 @@ public class JFreeChartTests {
                 "import java.util.Collections", "import java.util.Date", "import java.util.List",
                 "import org.jfree.chart.util.ParamChecks", "import org.jfree.util.PublicCloneable");
 
-        Set<Tuple3<String, String, String>> jarInformationSet1 = new HashSet<>();
-        jarInformationSet1.add(new Tuple3<>("junit", "junit", "4.11"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jfreechart", "1.0.19"));
-        jarInformationSet1.add(new Tuple3<>("org.jfree", "jcommon", "1.0.23"));
-        jarInformationSet1.add(new Tuple3<>("javax.servlet", "servlet-api", "2.5"));
+        Set<Artifact> jarInformationSet1 = new HashSet<>();
+        jarInformationSet1.add(new Artifact("junit", "junit", "4.11"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        jarInformationSet1.add(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "seriesNameListFromDataArray", 1)
@@ -925,10 +926,10 @@ public class JFreeChartTests {
     }
 
     private static void loadPreviousJFreeChartJar() {
-        TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jfreechart", "1.0.19");
-        TypeInferenceFluentAPI.getInstance().loadJar("org.jfree", "jcommon", "1.0.23");
-        TypeInferenceFluentAPI.getInstance().loadJar("junit", "junit", "4.11");
-        TypeInferenceFluentAPI.getInstance().loadJar("javax.servlet", "servlet-api", "2.5");
+        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact("org.jfree", "jfreechart", "1.0.19"));
+        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact("org.jfree", "jcommon", "1.0.23"));
+        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact("junit", "junit", "4.11"));
+        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact("javax.servlet", "servlet-api", "2.5"));
     }
 
 }

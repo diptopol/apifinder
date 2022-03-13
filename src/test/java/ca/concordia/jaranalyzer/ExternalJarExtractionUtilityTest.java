@@ -3,7 +3,7 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.JarInformation;
 import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.GitUtil;
-import io.vavr.Tuple3;
+import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.Test;
 
@@ -18,34 +18,32 @@ public class ExternalJarExtractionUtilityTest {
 
     @Test
     public void testGetJarArtifactInfoFromEffectivePOM() {
-        Set<Tuple3<String, String, String>> jarArtifactInfoSet =
+        Set<Artifact> jarArtifactInfoSet =
                 ExternalJarExtractionUtility.getDependenciesFromEffectivePom("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
                         "RefactoringMinerIssueReproduction",
                         "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
 
         assert jarArtifactInfoSet.size() == 1;
 
-        Tuple3<String, String, String> jarArtifactInfo = jarArtifactInfoSet.iterator().next();
+        Artifact jarArtifactInfo = jarArtifactInfoSet.iterator().next();
 
-        assert "com.github.tsantalis".equals(jarArtifactInfo._1)
-                && "refactoring-miner".equals(jarArtifactInfo._2)
-                && "2.0.2".equals(jarArtifactInfo._3);
+        assert "com.github.tsantalis".equals(jarArtifactInfo.getGroupId())
+                && "refactoring-miner".equals(jarArtifactInfo.getArtifactId())
+                && "2.0.2".equals(jarArtifactInfo.getVersion());
     }
 
     @Test
     public void testGetJarInfo() {
-        Set<Tuple3<String, String, String>> jarArtifactInfoSet =
+        Set<Artifact> jarArtifactInfoSet =
                 ExternalJarExtractionUtility.getDependenciesFromEffectivePom("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
                         "RefactoringMinerIssueReproduction",
                         "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
 
         assert jarArtifactInfoSet.size() == 1;
 
-        Tuple3<String, String, String> jarArtifactInfo = jarArtifactInfoSet.iterator().next();
+        Artifact jarArtifactInfo = jarArtifactInfoSet.iterator().next();
 
-        JarInformation jarInformation = ExternalJarExtractionUtility.getJarInfo(jarArtifactInfo._1, jarArtifactInfo._2, jarArtifactInfo._3);
-
-        //System.out.println(jarInformation.getPackages().size());
+        JarInformation jarInformation = ExternalJarExtractionUtility.getJarInfo(jarArtifactInfo);
 
         assert "com.github.tsantalis".equals(jarInformation.getGroupId())
                 && "refactoring-miner".equals(jarInformation.getArtifactId())
@@ -60,13 +58,14 @@ public class ExternalJarExtractionUtilityTest {
         Repository repository = GitUtil.getRepository(projectName,
                 "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", projectDirectory);
 
-        Set<Tuple3<String, String, String>> jarArtifactInfoSet =
+        Set<Artifact> jarArtifactInfoSet =
                 ExternalJarExtractionUtility.getDependenciesFromEffectivePom("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c", projectName, repository);
 
-        Tuple3<String, String, String> jarArtifactInfo = jarArtifactInfoSet.iterator().next();
+        Artifact jarArtifactInfo = jarArtifactInfoSet.iterator().next();
 
-        assert "com.github.tsantalis".equals(jarArtifactInfo._1)
-                && "refactoring-miner".equals(jarArtifactInfo._2)
-                && "2.0.2".equals(jarArtifactInfo._3);
+        assert "com.github.tsantalis".equals(jarArtifactInfo.getGroupId())
+                && "refactoring-miner".equals(jarArtifactInfo.getArtifactId())
+                && "2.0.2".equals(jarArtifactInfo.getVersion());
     }
+
 }
