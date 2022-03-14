@@ -7,6 +7,7 @@ import ca.concordia.jaranalyzer.models.PackageInfo;
 import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.Utility;
 import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
+import ca.concordia.jaranalyzer.util.artifactextraction.MavenArtifactExtraction;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
@@ -208,7 +209,7 @@ public class JarAnalyzer {
 
     public Set<Artifact> loadExternalJars(String commitId, String projectName, Repository repository) {
         Set<Artifact> jarArtifactInfoSet =
-                ExternalJarExtractionUtility.getDependenciesFromEffectivePom(commitId, projectName, repository);
+                MavenArtifactExtraction.getDependentArtifactSet(commitId, projectName, repository);
 
         Set<Artifact> jarArtifactInfoSetForLoad = jarArtifactInfoSet.stream()
                 .filter(jarArtifactInfo -> !isJarExists(jarArtifactInfo))

@@ -4,6 +4,7 @@ import ca.concordia.jaranalyzer.models.JarInformation;
 import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
+import ca.concordia.jaranalyzer.util.artifactextraction.MavenArtifactExtraction;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.Test;
 
@@ -14,12 +15,12 @@ import java.util.Set;
  * @author Diptopol
  * @since 12/27/2020 5:55 PM
  */
-public class ExternalJarExtractionUtilityTest {
+public class MavenArtifactExtractionTest {
 
     @Test
-    public void testGetJarArtifactInfoFromEffectivePOM() {
+    public void testGetDependentArtifactSetFromEffectivePOM() {
         Set<Artifact> jarArtifactInfoSet =
-                ExternalJarExtractionUtility.getDependenciesFromEffectivePom("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
+                MavenArtifactExtraction.getDependentArtifactSet("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
                         "RefactoringMinerIssueReproduction",
                         "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
 
@@ -34,16 +35,16 @@ public class ExternalJarExtractionUtilityTest {
 
     @Test
     public void testGetJarInfo() {
-        Set<Artifact> jarArtifactInfoSet =
-                ExternalJarExtractionUtility.getDependenciesFromEffectivePom("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
+        Set<Artifact> dependentArtifactSet =
+                MavenArtifactExtraction.getDependentArtifactSet("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
                         "RefactoringMinerIssueReproduction",
                         "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
 
-        assert jarArtifactInfoSet.size() == 1;
+        assert dependentArtifactSet.size() == 1;
 
-        Artifact jarArtifactInfo = jarArtifactInfoSet.iterator().next();
+        Artifact artifact = dependentArtifactSet.iterator().next();
 
-        JarInformation jarInformation = ExternalJarExtractionUtility.getJarInfo(jarArtifactInfo);
+        JarInformation jarInformation = ExternalJarExtractionUtility.getJarInfo(artifact);
 
         assert "com.github.tsantalis".equals(jarInformation.getGroupId())
                 && "refactoring-miner".equals(jarInformation.getArtifactId())
@@ -58,14 +59,14 @@ public class ExternalJarExtractionUtilityTest {
         Repository repository = GitUtil.getRepository(projectName,
                 "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", projectDirectory);
 
-        Set<Artifact> jarArtifactInfoSet =
-                ExternalJarExtractionUtility.getDependenciesFromEffectivePom("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c", projectName, repository);
+        Set<Artifact> dependentArtifactSet =
+                MavenArtifactExtraction.getDependentArtifactSet("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c", projectName, repository);
 
-        Artifact jarArtifactInfo = jarArtifactInfoSet.iterator().next();
+        Artifact artifact = dependentArtifactSet.iterator().next();
 
-        assert "com.github.tsantalis".equals(jarArtifactInfo.getGroupId())
-                && "refactoring-miner".equals(jarArtifactInfo.getArtifactId())
-                && "2.0.2".equals(jarArtifactInfo.getVersion());
+        assert "com.github.tsantalis".equals(artifact.getGroupId())
+                && "refactoring-miner".equals(artifact.getArtifactId())
+                && "2.0.2".equals(artifact.getVersion());
     }
 
 }
