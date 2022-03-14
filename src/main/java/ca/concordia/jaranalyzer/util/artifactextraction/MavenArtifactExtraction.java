@@ -50,7 +50,7 @@ public class MavenArtifactExtraction {
     }
 
     public static String getEffectivePOMContent(String commitID, String projectName, Repository repository) {
-        String mavenHome = getProperty("mavenHome");
+        String mavenHome = getProperty("maven.home");
         Path projectPath = getProjectPath(projectName);
 
         if (!new File(mavenHome).exists()) {
@@ -98,7 +98,7 @@ public class MavenArtifactExtraction {
     }
 
     private static Path getProjectPath(String projectName) {
-        Path pathToCorpus = Path.of(getProperty("PathToCorpus"));
+        Path pathToCorpus = Path.of(getProperty("corpus.path"));
 
         return pathToCorpus.resolve("Project_" + projectName);
     }
