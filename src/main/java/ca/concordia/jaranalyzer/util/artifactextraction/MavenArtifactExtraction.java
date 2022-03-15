@@ -125,7 +125,16 @@ public class MavenArtifactExtraction {
                 String projectGroupId = getElementValue(getChildElement(project, "groupId"));
                 String projectArtifactId = getElementValue(getChildElement(project, "artifactId"));
                 String projectVersion = getElementValue(getChildElement(project, "version"));
+
+                if (Objects.nonNull(projectVersion) && propertyMap.containsKey(projectVersion)) {
+                    projectVersion = propertyMap.get(projectVersion);
+                }
+
                 String projectType = getElementValue(getChildElement(project, "type"));
+
+                if (Objects.isNull(projectType)) {
+                    projectType = "jar";
+                }
 
                 projectArtifactSet.add(new Artifact(projectGroupId, projectArtifactId, projectVersion, projectType));
 
@@ -144,6 +153,10 @@ public class MavenArtifactExtraction {
                         }
 
                         String dependentArtifactType = getElementValue(getChildElement(dependency, "type"));
+
+                        if (Objects.isNull(dependentArtifactType)) {
+                            dependentArtifactType = "jar";
+                        }
 
                         dependentArtifactSet.add(new Artifact(dependentArtifactGroupId, dependentArtifactArtifactId,
                                 dependentArtifactVersion, dependentArtifactType));

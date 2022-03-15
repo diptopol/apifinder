@@ -633,17 +633,17 @@ public abstract class TypeInferenceBase {
                 .toSet();
     }
 
-    static Object[] getJarVertexIds(Set<Artifact> jarInformationSet,
+    static Object[] getJarVertexIds(Set<Artifact> artifactSet,
                                     String javaVersion, TinkerGraph tinkerGraph) {
         Set<Object> jarVertexIdSet = new HashSet<>();
 
-        jarInformationSet.forEach(j -> {
+        artifactSet.forEach(artifact -> {
             jarVertexIdSet.addAll(
                     tinkerGraph.traversal().V()
                             .has("Kind", "Jar")
-                            .has("GroupId", j.getGroupId())
-                            .has("ArtifactId", j.getArtifactId())
-                            .has("Version", j.getVersion())
+                            .has("GroupId", artifact.getGroupId())
+                            .has("ArtifactId", artifact.getArtifactId())
+                            .has("Version", artifact.getVersion())
                             .toStream()
                             .map(Element::id)
                             .collect(Collectors.toSet())

@@ -1,35 +1,45 @@
 package ca.concordia.jaranalyzer.util;
 
 import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.input.SAXBuilder;
+import ca.concordia.jaranalyzer.util.artifactextraction.ArtifactResolver;
+import ca.concordia.jaranalyzer.util.artifactextraction.ArtifactResolverFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 public class Utility {
 
 	private static final Logger logger = LoggerFactory.getLogger(Utility.class);
 
-    public static void downloadUsingStream(String urlStr, String file) throws IOException {
-        URL url = new URL(urlStr);
-        BufferedInputStream bis = new BufferedInputStream(url.openStream());
-        FileOutputStream fis = new FileOutputStream(file);
-        byte[] buffer = new byte[1024];
-        int count = 0;
-        while ((count = bis.read(buffer, 0, 1024)) != -1) {
-            fis.write(buffer, 0, count);
+    public static Set<JarInfo> getJarInfoSet(Set<Artifact> artifactDtoSet) {
+        Set<JarInfo> jarInfoSet = new HashSet<>();
+
+        for (Artifact artifactDto: artifactDtoSet) {
+            jarInfoSet.addAll(getJarInfoSet(artifactDto));
         }
-        fis.close();
-        bis.close();
+
+        return jarInfoSet;
+    }
+
+    public static Set<JarInfo> getJarInfoSet(Artifact artifact) {
+        ArtifactResolver artifactResolver = ArtifactResolverFactory.getArtifactResolver();
+        Set<org.eclipse.aether.artifact.Artifact> artifactSet = artifactResolver.resolveArtifact(artifact);
+
+        /*
+         * Currently, we are only interested in the artifact (if the type is Jar), otherwise we should fetch all
+         * the dependent jars as well.
+         */
+        if (Artifact.JAR_TYPE.equals(artifact.getType())) {
+            artifactSet = filterOutDependencyArtifact(artifactSet, Collections.singleton(artifact));
+        }
+
+        return convertToJarInfoSet(artifactSet);
     }
 
     public static String getJarName(String url) {
@@ -56,100 +66,44 @@ public class Utility {
                 .resolve(PropertyReader.getProperty("jar.storage.filename"));
     }
 
-    public static Element getchild(Element classElement, String name) {
-        try {
-            List<Element> elementChildren = classElement.getChildren();
+    private static Set<org.eclipse.aether.artifact.Artifact> filterOutDependencyArtifact(Set<org.eclipse.aether.artifact.Artifact> artifactSet,
+                                                                                         Set<Artifact> artifactDtoSet) {
 
-            for (int temp = 0; temp < elementChildren.size(); ++temp) {
-                Element element = elementChildren.get(temp);
-                if (element.getName().equals(name)) {
-                    return element;
-                }
+        Set<String> artifactNameList = artifactDtoSet.stream()
+                .map(artifactDto -> String.join(":", artifactDto.getGroupId(), artifactDto.getArtifactId(),
+                        artifactDto.getVersion()))
+                .collect(Collectors.toSet());
+
+        return artifactSet.stream().filter(artifact -> artifactNameList.contains(String.join(":",
+                        artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion())))
+                .collect(Collectors.toSet());
+    }
+
+    private static Set<JarInfo> convertToJarInfoSet(Set<org.eclipse.aether.artifact.Artifact> artifactSet) {
+        Set<JarInfo> jarInfoSet = new HashSet<>();
+
+        for (org.eclipse.aether.artifact.Artifact artifact: artifactSet) {
+            JarFile jarFile = getJarFile(artifact.getFile());
+
+            if (Objects.nonNull(jarFile)) {
+                jarInfoSet.add(new JarInfo(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), jarFile));
             }
-        } catch (Exception ex) {
-            logger.error("No child found under:" + name, ex);
+        }
+
+        return jarInfoSet;
+    }
+
+    private static JarFile getJarFile(File file) {
+        if (file.getName().endsWith(".jar")) {
+            try {
+                return new JarFile(file);
+
+            } catch (IOException e) {
+                logger.error("Error", e);
+            }
         }
 
         return null;
-    }
-
-    public static Set<String> listOfJavaProjectLibraryFromEffectivePom(String pomContent) {
-        Set<String> versionLibraries = new HashSet<>();
-        Set<String> projectVersions = new HashSet<>();
-
-        try {
-            SAXBuilder saxBuilder = new SAXBuilder();
-            Document document = saxBuilder.build(new ByteArrayInputStream(pomContent.getBytes(StandardCharsets.UTF_8)));
-
-            Element root = document.getRootElement();
-
-            // get public properties for library version
-            HashMap<String, String> propertiesList = new HashMap<>();
-            try {
-                Element properties = getchild(root, "properties");
-                List<Element> propertiesListNode = properties.getChildren();
-
-                for (int temp = 0; temp < propertiesListNode.size(); temp++) {
-                    Element property = propertiesListNode.get(temp);
-                    propertiesList.put("${" + property.getName() + "}", property.getValue());
-                }
-            } catch (Exception ex) {
-				logger.error("No child found", ex);
-            }
-
-            List<Element> projectNodes = root.getChildren();
-
-            if (!projectNodes.stream().allMatch(e -> e.getName().equals("project"))) {
-                projectNodes = Arrays.asList(root);
-            }
-
-            for (Element project : projectNodes) {
-                String grId = getchild(project, "groupId").getValue();
-                String artID = getchild(project, "artifactId").getValue();
-                String vrsn = getchild(project, "version").getValue();
-                projectVersions.add(String.join(":", grId, artID, vrsn));
-
-
-                Element dependencyManagement = getchild(project, "dependencyManagement");
-                Element dependencies = null;
-                if (dependencyManagement != null) {
-                    dependencies = getchild(dependencyManagement, "dependencies");
-                } else {
-                    //dependencies may lives under root
-                    dependencies = getchild(project, "dependencies");
-                }
-
-                if (dependencies != null) {
-                    List<Element> dependencytList = dependencies.getChildren();
-                    for (int temp = 0; temp < dependencytList.size(); temp++) {
-                        Element dependency = dependencytList.get(temp);
-                        List<Element> librariesList = dependency.getChildren();
-                        String groupId = "";
-                        String artifactId = "";
-                        String version = "";
-                        for (int temp1 = 0; temp1 < librariesList.size(); temp1++) {
-                            Element libraryInfo = librariesList.get(temp1);
-                            if (libraryInfo.getName().equals("groupId"))
-                                groupId = libraryInfo.getValue();
-                            if (libraryInfo.getName().equals("artifactId"))
-                                artifactId = libraryInfo.getValue();
-                            if (libraryInfo.getName().equals("version")) {
-                                version = libraryInfo.getValue();
-                                if (version.startsWith("${")) {
-                                    version = propertiesList.get(version);
-                                }
-                            }
-                        }
-                        String libraryLink = groupId + ":" + artifactId + ":" + version;
-                        versionLibraries.add(libraryLink);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Error", e);
-        }
-
-        return versionLibraries.stream().filter(x -> !projectVersions.contains(x)).collect(Collectors.toSet());
     }
 
 }

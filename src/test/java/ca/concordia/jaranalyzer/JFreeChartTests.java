@@ -3,17 +3,16 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
-import io.vavr.Tuple3;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.nio.file.Path;
+import java.util.*;
+
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
-
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * @author Diptopol

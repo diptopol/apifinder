@@ -1,8 +1,8 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.models.JarInformation;
-import ca.concordia.jaranalyzer.util.ExternalJarExtractionUtility;
 import ca.concordia.jaranalyzer.util.GitUtil;
+import ca.concordia.jaranalyzer.util.JarInfo;
+import ca.concordia.jaranalyzer.util.Utility;
 import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import ca.concordia.jaranalyzer.util.artifactextraction.MavenArtifactExtraction;
 import org.eclipse.jgit.lib.Repository;
@@ -44,11 +44,15 @@ public class MavenArtifactExtractionTest {
 
         Artifact artifact = dependentArtifactSet.iterator().next();
 
-        JarInformation jarInformation = ExternalJarExtractionUtility.getJarInfo(artifact);
+        Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifact);
 
-        assert "com.github.tsantalis".equals(jarInformation.getGroupId())
-                && "refactoring-miner".equals(jarInformation.getArtifactId())
-                && "2.0.2".equals(jarInformation.getVersion());
+        assert jarInfoSet.size() == 1;
+
+        JarInfo jarInfo = jarInfoSet.iterator().next();
+
+        assert "com.github.tsantalis".equals(jarInfo.getArtifact().getGroupId())
+                && "refactoring-miner".equals(jarInfo.getArtifact().getArtifactId())
+                && "2.0.2".equals(jarInfo.getArtifact().getVersion());
     }
 
     @Test

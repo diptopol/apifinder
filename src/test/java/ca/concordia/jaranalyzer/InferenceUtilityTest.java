@@ -5,7 +5,6 @@ import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
-import io.vavr.Tuple3;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.BeforeClass;

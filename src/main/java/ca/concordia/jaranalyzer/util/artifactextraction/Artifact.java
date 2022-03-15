@@ -8,6 +8,8 @@ import java.util.Objects;
  */
 public class Artifact {
 
+    public static final String JAR_TYPE = "jar";
+
     private String groupId;
     private String artifactId;
     private String version;
@@ -21,9 +23,7 @@ public class Artifact {
     }
 
     public Artifact(String groupId, String artifactId, String version) {
-        this.groupId = groupId;
-        this.artifactId = artifactId;
-        this.version = version;
+        this(groupId, artifactId, version, JAR_TYPE);
     }
 
     public String getGroupId() {
