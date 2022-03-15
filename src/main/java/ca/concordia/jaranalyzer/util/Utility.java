@@ -48,16 +48,20 @@ public class Utility {
     }
 
     public static List<String> getFiles(String directory, String type) {
-        List<String> jarFiles = new ArrayList<String>();
+        List<String> jarFiles = new ArrayList<>();
         File dir = new File(directory);
-        if (dir.listFiles() != null)
-            for (File file : dir.listFiles()) {
+        File[] files = dir.listFiles();
+
+        if (Objects.nonNull(files)) {
+            for (File file : files) {
                 if (file.isDirectory()) {
                     jarFiles.addAll(getFiles(file.getAbsolutePath(), type));
                 } else if (file.getAbsolutePath().toLowerCase().endsWith((type.toLowerCase()))) {
                     jarFiles.add(file.getAbsolutePath());
                 }
             }
+        }
+
         return jarFiles;
     }
 
