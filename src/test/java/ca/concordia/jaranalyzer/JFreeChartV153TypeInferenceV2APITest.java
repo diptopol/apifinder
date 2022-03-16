@@ -34,7 +34,7 @@ public class JFreeChartV153TypeInferenceV2APITest {
         // Also need to manually check-out the project to this commit.
         String commitId = "09e374f617c3a5c2e68d260f17a03f1e3f584121";
 
-        Repository repository = GitUtil.getRepository(projectName, projectUrl, projectDirectory);
+        Repository repository = GitUtil.openRepository(projectName, projectUrl, projectDirectory).getRepository();
         jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, repository);
 
         String jFreeChartGroupId = "org.jfree";

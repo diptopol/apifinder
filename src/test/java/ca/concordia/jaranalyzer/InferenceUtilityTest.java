@@ -39,7 +39,7 @@ public class InferenceUtilityTest {
         // Also need to manually check-out the project to this commit.
         String commitId = "35d53459e854a2bb39d6f012ce9b78ec8ab7f0f9";
 
-        Repository repository = GitUtil.getRepository(projectName, projectUrl, projectDirectory);
+        Repository repository = GitUtil.openRepository(projectName, projectUrl, projectDirectory).getRepository();
         jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, repository);
 
         String jFreeChartGroupId = "org.jfree";

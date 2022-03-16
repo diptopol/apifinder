@@ -32,7 +32,7 @@ public class JFreeChartTests {
         String projectUrl = "https://github.com/jfree/jfreechart-fx.git";
         String commitId = "35d53459e854a2bb39d6f012ce9b78ec8ab7f0f9";
 
-        Repository repository = GitUtil.getRepository(projectName, projectUrl, projectDirectory);
+        Repository repository = GitUtil.openRepository(projectName, projectUrl, projectDirectory).getRepository();
         jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, repository);
         loadPreviousJFreeChartJar();
     }

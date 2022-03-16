@@ -60,8 +60,8 @@ public class MavenArtifactExtractionTest {
         String projectName = "RefactoringMinerIssueReproduction";
         Path projectDirectory = Path.of("testProjectDirectory").resolve(projectName);
 
-        Repository repository = GitUtil.getRepository(projectName,
-                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", projectDirectory);
+        Repository repository = GitUtil.openRepository(projectName,
+                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", projectDirectory).getRepository();
 
         Set<Artifact> dependentArtifactSet =
                 MavenArtifactExtraction.getDependentArtifactSet("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c", projectName, repository);

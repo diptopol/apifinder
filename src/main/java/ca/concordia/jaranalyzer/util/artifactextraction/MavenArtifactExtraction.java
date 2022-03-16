@@ -92,7 +92,7 @@ public class MavenArtifactExtraction {
 
     private static String getEffectivePOMContent(String commitID, final String projectName, String cloneLink) {
         Path pathToProject = getProjectPath(projectName);
-        Repository repository = GitUtil.getRepository(projectName, cloneLink, pathToProject);
+        Repository repository = GitUtil.openRepository(projectName, cloneLink, pathToProject).getRepository();
 
         return getEffectivePOMContent(commitID, projectName, repository);
     }

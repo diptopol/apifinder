@@ -33,8 +33,8 @@ public class TypeInferenceAPITest {
         String projectName = "RefactoringMinerIssueReproduction";
         Path projectDirectory = Path.of("testProjectDirectory").resolve(projectName);
 
-        Repository repository = GitUtil.getRepository(projectName,
-                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", projectDirectory);
+        Repository repository = GitUtil.openRepository(projectName,
+                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", projectDirectory).getRepository();
 
         TypeInferenceAPI.loadExternalJars(commitId, projectName, repository);
         TypeInferenceAPI.loadExternalJars(commitId, projectName, repository);

@@ -1,8 +1,8 @@
 package ca.concordia.jaranalyzer.util;
 
-import com.jasongoodwin.monads.Try;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
@@ -12,6 +12,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.treewalk.TreeWalk;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,18 +24,7 @@ import static ca.concordia.jaranalyzer.util.FileUtils.createFolderIfAbsent;
 
 public class GitUtil {
 
-    public static Try<Git> tryCloningRepo(String projectName, String cloneLink, Path pathToProject) {
-        createFolderIfAbsent(pathToProject);
-        return Try.ofFailable(() -> Git.open(pathToProject.resolve(projectName).toFile()))
-                .onFailure(e -> System.out.println("Did not find " + projectName + " at" + pathToProject.toString()))
-                .orElseTry(() ->
-                        Git.cloneRepository().setURI(cloneLink).setDirectory(pathToProject.resolve(projectName).toFile()).call())
-                .onFailure(e -> System.out.println("Could not clone " + projectName));
-
-    }
-
     public static Optional<RevCommit> findCommit(String SHAId, Repository repo) {
-
         List<RevCommit> mergeCommits = io.vavr.control.Try.of(() -> {
             RevWalk walk = new RevWalk(repo);
             walk.markStart(walk.parseCommit(repo.resolve("HEAD")));
@@ -102,14 +92,25 @@ public class GitUtil {
         return fileContents;
     }
 
-    public static Repository getRepository(String projectName, String cloneLink, Path pathToProject) {
-        Repository repo;
-        if (Files.exists(pathToProject))
-            repo = Try.ofFailable(() -> Git.open(pathToProject.resolve(projectName).toFile()))
-                    .orElseThrow(() -> new RuntimeException("Could not open " + projectName)).getRepository();
-        else repo = tryCloningRepo(projectName, cloneLink, pathToProject)
-                .orElseThrow(() -> new RuntimeException("Could not clone" + projectName)).getRepository();
-        return repo;
+    public static Git openRepository(String projectName, String cloneLink, Path pathToProject) {
+        if (Files.exists(pathToProject)) {
+            try (Git git = Git.open(pathToProject.resolve(projectName).toFile())) {
+                return git;
+            } catch (IOException e) {
+                throw new RuntimeException("Could not open " + projectName, e);
+            }
+
+        } else {
+            createFolderIfAbsent(pathToProject);
+            try {
+                return Git.cloneRepository()
+                        .setURI(cloneLink)
+                        .setDirectory(pathToProject.resolve(projectName).toFile())
+                        .call();
+            } catch (GitAPIException e) {
+                throw new RuntimeException("Could not clone" + projectName, e);
+            }
+        }
     }
 
 }
