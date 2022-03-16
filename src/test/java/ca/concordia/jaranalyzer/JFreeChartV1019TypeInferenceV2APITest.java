@@ -1,11 +1,13 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.PropertyReader;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
+import ca.concordia.jaranalyzer.util.Utility;
 import org.eclipse.jdt.core.dom.*;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.api.Git;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -24,24 +26,31 @@ public class JFreeChartV1019TypeInferenceV2APITest {
     private static Set<Artifact> jarInformationSet;
     private static String javaVersion;
 
+    /*
+     * For running the test we have to check out to a specific commit. So after completion of all test we intend to
+     * revert the change. So to do the revert we are storing the defaultBranchName here.
+     */
+    private static String defaultBranchName;
+
+    private static Git git;
+
     @BeforeClass
     public static void loadExternalLibrary() {
         javaVersion = getProperty("java.version");
 
         String projectName = "jfreechart-1.0.19";
-        Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
         String projectUrl = "https://github.com/jfree/jfreechart.git";
-        // Also need to manually check-out the project to this commit.
         String commitId = "b3f5f21ba0fe32a8f7eccb6760a79df30628be3e";
 
-        Repository repository = GitUtil.openRepository(projectName, projectUrl, projectDirectory).getRepository();
-        jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, repository);
+        loadTestProjectDirectory(projectName, projectUrl, commitId);
+        loadExternalJars(projectName, projectUrl, commitId);
+        loadJFreeChart();
+    }
 
-        String jFreeChartGroupId = "org.jfree";
-        String jFreeChartArtifactId = "jfreechart";
-        String jFreeChartVersion = "1.0.19";
-        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
-        jarInformationSet.add(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
+    @AfterClass
+    public static void revertGitChange() {
+        GitUtil.checkoutToCommit(git, defaultBranchName);
+        git.close();
     }
 
     @Test
@@ -211,6 +220,28 @@ public class JFreeChartV1019TypeInferenceV2APITest {
                 return false;
             }
         });
+    }
+
+    private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
+        Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
+
+        git = GitUtil.openRepository(projectName, projectUrl, projectDirectory);
+        defaultBranchName = GitUtil.checkoutToCommit(git, commitId);
+    }
+
+    private static void loadExternalJars(String projectName, String projectUrl, String commitId) {
+        Path pathToProject = Utility.getProjectPath(projectName);
+        Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
+
+        jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
+    }
+
+    private static void loadJFreeChart() {
+        String jFreeChartGroupId = "org.jfree";
+        String jFreeChartArtifactId = "jfreechart";
+        String jFreeChartVersion = "1.0.19";
+        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
+        jarInformationSet.add(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
     }
 
 }

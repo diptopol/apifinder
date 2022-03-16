@@ -1,8 +1,8 @@
 package ca.concordia.jaranalyzer.util;
 
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
-import ca.concordia.jaranalyzer.util.artifactextraction.ArtifactResolver;
-import ca.concordia.jaranalyzer.util.artifactextraction.ArtifactResolverFactory;
+import ca.concordia.jaranalyzer.models.Artifact;
+import ca.concordia.jaranalyzer.artifactresolver.ArtifactResolver;
+import ca.concordia.jaranalyzer.artifactresolver.ArtifactResolverFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+
+import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
 
 public class Utility {
 
@@ -68,6 +70,12 @@ public class Utility {
     public static Path getJarStoragePath() {
         return Path.of(PropertyReader.getProperty("jar.storage.directory"))
                 .resolve(PropertyReader.getProperty("jar.storage.filename"));
+    }
+
+    public static Path getProjectPath(String projectName) {
+        Path pathToCorpus = Path.of(getProperty("corpus.path"));
+
+        return pathToCorpus.resolve("Project_" + projectName);
     }
 
     private static Set<org.eclipse.aether.artifact.Artifact> filterOutDependencyArtifact(Set<org.eclipse.aether.artifact.Artifact> artifactSet,

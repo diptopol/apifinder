@@ -4,7 +4,7 @@ import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
+import ca.concordia.jaranalyzer.models.Artifact;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;

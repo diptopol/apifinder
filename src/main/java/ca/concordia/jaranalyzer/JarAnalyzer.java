@@ -1,17 +1,18 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractor;
+import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.PackageInfo;
 import ca.concordia.jaranalyzer.util.JarInfo;
 import ca.concordia.jaranalyzer.util.Utility;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
-import ca.concordia.jaranalyzer.util.artifactextraction.MavenArtifactExtraction;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.api.Git;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -195,9 +196,10 @@ public class JarAnalyzer {
         }
     }
 
-    public Set<Artifact> loadExternalJars(String commitId, String projectName, Repository repository) {
-        Set<Artifact> jarArtifactInfoSet =
-                MavenArtifactExtraction.getDependentArtifactSet(commitId, projectName, repository);
+    public Set<Artifact> loadExternalJars(String commitId, String projectName, Git git) {
+        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver(commitId, projectName, git);
+        ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
+        Set<Artifact> jarArtifactInfoSet = extractor.getDependentArtifactSet();
 
         Set<Artifact> jarArtifactInfoSetForLoad = jarArtifactInfoSet.stream()
                 .filter(jarArtifactInfo -> !isJarExists(jarArtifactInfo))

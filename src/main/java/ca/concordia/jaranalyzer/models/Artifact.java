@@ -1,4 +1,4 @@
-package ca.concordia.jaranalyzer.util.artifactextraction;
+package ca.concordia.jaranalyzer.models;
 
 import java.util.Objects;
 
@@ -9,6 +9,7 @@ import java.util.Objects;
 public class Artifact {
 
     public static final String JAR_TYPE = "jar";
+    public static final String POM_TYPE= "pom";
 
     private String groupId;
     private String artifactId;

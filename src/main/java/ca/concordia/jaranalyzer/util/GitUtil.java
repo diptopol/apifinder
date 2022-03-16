@@ -2,7 +2,7 @@ package ca.concordia.jaranalyzer.util;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
@@ -110,6 +110,19 @@ public class GitUtil {
             } catch (GitAPIException e) {
                 throw new RuntimeException("Could not clone" + projectName, e);
             }
+        }
+    }
+
+    public static String checkoutToCommit(Git git, String commitIdOrBranchName) {
+        try {
+            String previousBranchName = git.getRepository().getBranch();
+            git.checkout().setName(commitIdOrBranchName).call();
+
+            return previousBranchName;
+        } catch (IOException e) {
+            throw new RuntimeException("Could not get branch name", e);
+        } catch (GitAPIException e) {
+            throw new RuntimeException("Could not checkout to : " + commitIdOrBranchName, e);
         }
     }
 

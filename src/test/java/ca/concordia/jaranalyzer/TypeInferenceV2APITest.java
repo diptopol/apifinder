@@ -2,7 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.PropertyReader;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
+import ca.concordia.jaranalyzer.models.Artifact;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodInvocation;

@@ -3,7 +3,7 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
+import ca.concordia.jaranalyzer.models.Artifact;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.structure.Element;

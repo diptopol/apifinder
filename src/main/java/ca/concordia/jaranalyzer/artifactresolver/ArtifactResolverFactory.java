@@ -1,4 +1,4 @@
-package ca.concordia.jaranalyzer.util.artifactextraction;
+package ca.concordia.jaranalyzer.artifactresolver;
 
 import org.apache.maven.settings.building.SettingsBuildingException;
 

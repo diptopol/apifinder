@@ -1,13 +1,16 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
-import org.eclipse.jgit.lib.Repository;
+import ca.concordia.jaranalyzer.util.Utility;
+import org.eclipse.jgit.api.Git;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
@@ -28,12 +31,10 @@ public class JFreeChartTests {
         javaVersion = getProperty("java.version");
 
         String projectName = "jfreechart-fx";
-        Path projectDirectory = Path.of("testProjectDirectory").resolve(projectName);
         String projectUrl = "https://github.com/jfree/jfreechart-fx.git";
         String commitId = "35d53459e854a2bb39d6f012ce9b78ec8ab7f0f9";
 
-        Repository repository = GitUtil.openRepository(projectName, projectUrl, projectDirectory).getRepository();
-        jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, repository);
+        loadExternalJars(projectName, projectUrl, commitId);
         loadPreviousJFreeChartJar();
     }
 
@@ -922,6 +923,13 @@ public class JFreeChartTests {
 
         assert ("[org.jfree.data.xy.DefaultWindDataset::public static java.util.List" +
                 " seriesNameListFromDataArray(java.lang.Object[][])]").equals(matches.toString());
+    }
+
+    private static void loadExternalJars(String projectName, String projectUrl, String commitId) {
+        Path pathToProject = Utility.getProjectPath(projectName);
+        Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
+
+        jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
     }
 
     private static void loadPreviousJFreeChartJar() {

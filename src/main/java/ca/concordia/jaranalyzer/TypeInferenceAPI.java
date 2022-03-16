@@ -1,14 +1,14 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.FieldInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.api.Git;
 import org.objectweb.asm.Type;
 
 import java.util.*;
@@ -29,8 +29,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         jarAnalyzer = TinkerGraphStorageUtility.getJarAnalyzer();
     }
 
-    public static Set<Artifact> loadExternalJars(String commitId, String projectName, Repository repository) {
-        return jarAnalyzer.loadExternalJars(commitId, projectName, repository);
+    public static Set<Artifact> loadExternalJars(String commitId, String projectName, Git git) {
+        return jarAnalyzer.loadExternalJars(commitId, projectName, git);
     }
 
     public static void loadJar(Artifact artifact) {

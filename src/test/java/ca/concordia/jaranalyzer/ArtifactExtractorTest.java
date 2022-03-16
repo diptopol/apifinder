@@ -1,11 +1,12 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractor;
+import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.JarInfo;
 import ca.concordia.jaranalyzer.util.Utility;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
-import ca.concordia.jaranalyzer.util.artifactextraction.MavenArtifactExtraction;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.api.Git;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -15,14 +16,16 @@ import java.util.Set;
  * @author Diptopol
  * @since 12/27/2020 5:55 PM
  */
-public class MavenArtifactExtractionTest {
+public class ArtifactExtractorTest {
 
     @Test
     public void testGetDependentArtifactSetFromEffectivePOM() {
-        Set<Artifact> jarArtifactInfoSet =
-                MavenArtifactExtraction.getDependentArtifactSet("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
-                        "RefactoringMinerIssueReproduction",
-                        "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
+        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
+                "RefactoringMinerIssueReproduction",
+                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
+
+        ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
+        Set<Artifact> jarArtifactInfoSet = extractor.getDependentArtifactSet();
 
         assert jarArtifactInfoSet.size() == 1;
 
@@ -35,10 +38,12 @@ public class MavenArtifactExtractionTest {
 
     @Test
     public void testGetJarInfo() {
-        Set<Artifact> dependentArtifactSet =
-                MavenArtifactExtraction.getDependentArtifactSet("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
-                        "RefactoringMinerIssueReproduction",
-                        "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
+        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
+                "RefactoringMinerIssueReproduction",
+                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
+
+        ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
+        Set<Artifact> dependentArtifactSet = extractor.getDependentArtifactSet();
 
         assert dependentArtifactSet.size() == 1;
 
@@ -58,13 +63,16 @@ public class MavenArtifactExtractionTest {
     @Test
     public void testGenerateEffectivePOMFromRepository() {
         String projectName = "RefactoringMinerIssueReproduction";
-        Path projectDirectory = Path.of("testProjectDirectory").resolve(projectName);
+        Path pathToProject = Utility.getProjectPath(projectName);
 
-        Repository repository = GitUtil.openRepository(projectName,
-                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", projectDirectory).getRepository();
+        Git git = GitUtil.openRepository(projectName,
+                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", pathToProject);
 
-        Set<Artifact> dependentArtifactSet =
-                MavenArtifactExtraction.getDependentArtifactSet("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c", projectName, repository);
+        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
+                "RefactoringMinerIssueReproduction", git);
+
+        ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
+        Set<Artifact> dependentArtifactSet = extractor.getDependentArtifactSet();
 
         Artifact artifact = dependentArtifactSet.iterator().next();
 

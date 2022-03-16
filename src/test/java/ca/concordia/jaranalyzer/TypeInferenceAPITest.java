@@ -3,7 +3,8 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.FieldInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
-import org.eclipse.jgit.lib.Repository;
+import ca.concordia.jaranalyzer.util.Utility;
+import org.eclipse.jgit.api.Git;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -31,13 +32,13 @@ public class TypeInferenceAPITest {
     public void testLoadExternalJars() {
         String commitId = "b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c";
         String projectName = "RefactoringMinerIssueReproduction";
-        Path projectDirectory = Path.of("testProjectDirectory").resolve(projectName);
+        Path pathToProject = Utility.getProjectPath(projectName);
 
-        Repository repository = GitUtil.openRepository(projectName,
-                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", projectDirectory).getRepository();
+        Git git = GitUtil.openRepository(projectName,
+                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", pathToProject);
 
-        TypeInferenceAPI.loadExternalJars(commitId, projectName, repository);
-        TypeInferenceAPI.loadExternalJars(commitId, projectName, repository);
+        TypeInferenceAPI.loadExternalJars(commitId, projectName, git);
+        TypeInferenceAPI.loadExternalJars(commitId, projectName, git);
 
         List<String> qualifiedNameList = TypeInferenceAPI.getQualifiedClassName("Refactoring");
 

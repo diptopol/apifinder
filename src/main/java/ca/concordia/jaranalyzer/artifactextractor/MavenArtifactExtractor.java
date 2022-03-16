@@ -1,8 +1,11 @@
-package ca.concordia.jaranalyzer.util.artifactextraction;
+package ca.concordia.jaranalyzer.artifactextractor;
 
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.FileUtils;
 import ca.concordia.jaranalyzer.util.GitUtil;
+import ca.concordia.jaranalyzer.util.Utility;
 import org.apache.maven.shared.invoker.*;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -27,31 +30,30 @@ import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
  * @author Diptopol
  * @since 3/14/2022 11:35 AM
  */
-public class MavenArtifactExtraction {
+public class MavenArtifactExtractor extends ArtifactExtractor {
 
-    private static final Logger logger = LoggerFactory.getLogger(MavenArtifactExtraction.class);
+    private static final Logger logger = LoggerFactory.getLogger(MavenArtifactExtractor.class);
 
-    public static Set<Artifact> getDependentArtifactSet(String commitId,
-                                                        String projectName,
-                                                        String cloneLink) {
+    private String commitId;
+    private String projectName;
+    private Git git;
 
-        String effectivePOMContent = getEffectivePOMContent(commitId, projectName, cloneLink);
+    public MavenArtifactExtractor(String commitId, String projectName, Git git) {
+        this.commitId = commitId;
+        this.projectName = projectName;
+        this.git = git;
+    }
 
+    @Override
+    public Set<Artifact> getDependentArtifactSet() {
+        String effectivePOMContent = getEffectivePOMContent();
         return getDependentArtifactSet(effectivePOMContent);
     }
 
-    public static Set<Artifact> getDependentArtifactSet(String commitId,
-                                                        String projectName,
-                                                        Repository repository) {
-
-        String effectivePOMContent = getEffectivePOMContent(commitId, projectName, repository);
-
-        return getDependentArtifactSet(effectivePOMContent);
-    }
-
-    public static String getEffectivePOMContent(String commitID, String projectName, Repository repository) {
+    private String getEffectivePOMContent() {
         String mavenHome = getProperty("maven.home");
-        Path projectPath = getProjectPath(projectName);
+        Path projectPath = Utility.getProjectPath(this.projectName);
+        Repository repository = this.git.getRepository();
 
         if (!new File(mavenHome).exists()) {
             throw new RuntimeException("Maven Home is not configured properly");
@@ -59,8 +61,8 @@ public class MavenArtifactExtraction {
 
         FileUtils.createFolderIfAbsent(projectPath);
 
-        Map<Path, String> poms = GitUtil.populateFileContents(repository, commitID, x -> x.endsWith("pom.xml"));
-        Path p = projectPath.resolve("tmp").resolve(commitID);
+        Map<Path, String> poms = GitUtil.populateFileContents(repository, this.commitId, x -> x.endsWith("pom.xml"));
+        Path p = projectPath.resolve("tmp").resolve(this.commitId);
         FileUtils.materializeAtBase(p, poms);
         Path effectivePomPath = p.resolve("effectivePom.xml");
 
@@ -88,19 +90,6 @@ public class MavenArtifactExtraction {
         deleteDirectory(p);
 
         return effectivePomPathContent;
-    }
-
-    private static String getEffectivePOMContent(String commitID, final String projectName, String cloneLink) {
-        Path pathToProject = getProjectPath(projectName);
-        Repository repository = GitUtil.openRepository(projectName, cloneLink, pathToProject).getRepository();
-
-        return getEffectivePOMContent(commitID, projectName, repository);
-    }
-
-    private static Path getProjectPath(String projectName) {
-        Path pathToCorpus = Path.of(getProperty("corpus.path"));
-
-        return pathToCorpus.resolve("Project_" + projectName);
     }
 
     private static Set<Artifact> getDependentArtifactSet(String pomContent) {

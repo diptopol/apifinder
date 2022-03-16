@@ -1,4 +1,4 @@
-package ca.concordia.jaranalyzer.util.artifactextraction;
+package ca.concordia.jaranalyzer.artifactresolver;
 
 import ca.concordia.jaranalyzer.util.PropertyReader;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -70,7 +70,7 @@ public class ArtifactResolver {
      * ArtifactResolver fetch the artifact with all the dependencies. We can configure the scope of the dependencies.
      * Currently, the scope is RUNTIME. We can filter out later based on our needs.
      */
-    public Set<Artifact> resolveArtifact(ca.concordia.jaranalyzer.util.artifactextraction.Artifact artifactDto) {
+    public Set<Artifact> resolveArtifact(ca.concordia.jaranalyzer.models.Artifact artifactDto) {
         Artifact artifact = new DefaultArtifact(artifactDto.getGroupId(), artifactDto.getArtifactId(),
                 artifactDto.getType(), artifactDto.getVersion());
 

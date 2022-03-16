@@ -2,7 +2,7 @@ package ca.concordia.jaranalyzer.util;
 
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.PackageInfo;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
+import ca.concordia.jaranalyzer.models.Artifact;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;

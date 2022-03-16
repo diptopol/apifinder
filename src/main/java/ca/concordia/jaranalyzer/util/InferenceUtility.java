@@ -4,7 +4,7 @@ import ca.concordia.jaranalyzer.TypeInferenceAPI;
 import ca.concordia.jaranalyzer.TypeInferenceFluentAPI;
 import ca.concordia.jaranalyzer.models.*;
 import ca.concordia.jaranalyzer.models.typeInfo.*;
-import ca.concordia.jaranalyzer.util.artifactextraction.Artifact;
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.FieldSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.GenericTypeResolutionAdapter;
