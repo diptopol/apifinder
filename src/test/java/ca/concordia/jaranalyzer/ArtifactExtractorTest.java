@@ -4,7 +4,7 @@ import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractor;
 import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.GitUtil;
-import ca.concordia.jaranalyzer.util.JarInfo;
+import ca.concordia.jaranalyzer.models.JarInfo;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.eclipse.jgit.api.Git;
 import org.junit.Test;

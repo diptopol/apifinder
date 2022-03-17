@@ -5,7 +5,7 @@ import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.PackageInfo;
-import ca.concordia.jaranalyzer.util.JarInfo;
+import ca.concordia.jaranalyzer.models.JarInfo;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;

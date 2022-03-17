@@ -3,6 +3,7 @@ package ca.concordia.jaranalyzer.util;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.artifactresolver.ArtifactResolver;
 import ca.concordia.jaranalyzer.artifactresolver.ArtifactResolverFactory;
+import ca.concordia.jaranalyzer.models.JarInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
