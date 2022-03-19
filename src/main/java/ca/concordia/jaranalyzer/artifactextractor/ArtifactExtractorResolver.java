@@ -43,8 +43,12 @@ public class ArtifactExtractorResolver {
         this.git = GitUtil.openRepository(projectName, cloneLink, pathToProject);
     }
 
+    /*
+     * this.git.getRepository().getDirectory() will return the .git directory. So we are interested about the parent directory
+     * of .git directory.
+     */
     public ArtifactExtractor getArtifactExtractor() {
-        Path projectDirectory = Utility.getProjectPath(projectName).resolve(projectName);
+        Path projectDirectory = this.git.getRepository().getDirectory().getParentFile().toPath();
         BuildTool buildTool = getBuildTool(projectDirectory);
 
         ArtifactExtractor artifactExtractor;
@@ -56,7 +60,7 @@ public class ArtifactExtractorResolver {
             artifactExtractor = new GradleArtifactExtractor(commitId, projectName, git);
 
         } else {
-            logger.info("Build Tool not recognized for Project: {}", projectName);
+            logger.info("Build Tool not recognized for Project: {}, Path: {}", projectName, projectDirectory);
             throw new IllegalStateException();
         }
 
