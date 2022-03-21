@@ -222,6 +222,25 @@ public class JFreeChartV1019TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testMethodInvocationFromStaticBlock() {
+        String filePath = "testProjectDirectory/jfreechart-1.0.19/jfreechart-1.0.19/source/org/jfree/chart/axis/SegmentedTimeline.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation classInstanceCreation) {
+                if (classInstanceCreation.toString().equals("cal.getTime().getTime()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert ("java.util.Date::public long getTime()").equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 

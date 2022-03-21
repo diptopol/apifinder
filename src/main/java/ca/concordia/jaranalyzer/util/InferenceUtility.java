@@ -276,6 +276,9 @@ public class InferenceUtility {
         populateVariableNameMapForMethod(dependentArtifactSet, javaVersion, importStatementList,
                 owningClassQualifiedName, methodExpression, variableNameMap);
 
+        populateVariableNameMapForStaticBlock(dependentArtifactSet, javaVersion, importStatementList,
+                owningClassQualifiedName, methodExpression, variableNameMap);
+
         return variableNameMap;
     }
 
@@ -1158,8 +1161,8 @@ public class InferenceUtility {
             populateVariableNameMap(variableNameMap, methodParameterVariableDeclarationSet);
 
             Set<VariableDeclarationDto> localVariableDeclarationList =
-                    getMethodLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                            methodDeclaration, owningClassQualifiedName);
+                    getLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
+                            methodDeclaration.getBody(), owningClassQualifiedName);
 
             populateVariableNameMap(variableNameMap, localVariableDeclarationList);
 
@@ -1170,6 +1173,24 @@ public class InferenceUtility {
                 populateVariableNameMapForMethod(dependentArtifactSet, javaVersion, importStatementList,
                         owningClassQualifiedName, anonymousClassDeclaration, variableNameMap);
             }
+        }
+    }
+
+    private static void populateVariableNameMapForStaticBlock(Set<Artifact> dependentArtifactSet,
+                                                              String javaVersion,
+                                                              List<String> importStatementList,
+                                                              String owningClassQualifiedName,
+                                                              ASTNode node,
+                                                              Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+
+        Initializer initializer = (Initializer) getClosestASTNode(node, Initializer.class);
+
+        if (Objects.nonNull(initializer)) {
+            Set<VariableDeclarationDto> localVariableDeclarationList =
+                    getLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
+                            initializer.getBody(), owningClassQualifiedName);
+
+            populateVariableNameMap(variableNameMap, localVariableDeclarationList);
         }
     }
 
@@ -1312,14 +1333,21 @@ public class InferenceUtility {
         }
     }
 
-    private static Set<VariableDeclarationDto> getMethodLocalVariableDtoList(Set<Artifact> dependentArtifactSet,
-                                                                             String javaVersion,
-                                                                             List<String> importStatementList,
-                                                                             MethodDeclaration methodDeclaration,
-                                                                             String owningClassQualifiedName) {
+    /*
+     * this method is used to get local variables from a methodDeclaration (Method) or Initializer (static block).
+     */
+    private static Set<VariableDeclarationDto> getLocalVariableDtoList(Set<Artifact> dependentArtifactSet,
+                                                                       String javaVersion,
+                                                                       List<String> importStatementList,
+                                                                       Block bodyBlock,
+                                                                       String owningClassQualifiedName) {
+        if (Objects.isNull(bodyBlock)) {
+            return Collections.emptySet();
+        }
+
         Set<VariableDeclarationDto> localVariableDtoSet = new HashSet<>();
 
-        methodDeclaration.getBody().accept(new ASTVisitor() {
+        bodyBlock.accept(new ASTVisitor() {
             @Override
             public boolean visit(SingleVariableDeclaration singleVariableDeclaration) {
                 VariableDeclarationDto variableDeclarationDto =
