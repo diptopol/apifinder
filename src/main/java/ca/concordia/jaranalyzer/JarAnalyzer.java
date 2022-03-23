@@ -218,8 +218,14 @@ public class JarAnalyzer {
         if (!isJarExists(artifact)) {
             Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifact);
 
-            toGraph(jarInfoSet);
-            storeClassStructureGraph();
+            Set<JarInfo> jarInfoSetForLoad = jarInfoSet.stream()
+                    .filter(jarInfo -> !isJarExists(jarInfo.getArtifact()))
+                    .collect(Collectors.toSet());
+
+            if (!jarInfoSetForLoad.isEmpty()) {
+                toGraph(jarInfoSetForLoad);
+                storeClassStructureGraph();
+            }
         }
     }
 
