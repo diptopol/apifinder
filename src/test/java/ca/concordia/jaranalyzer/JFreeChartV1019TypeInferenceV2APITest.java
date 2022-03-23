@@ -50,7 +50,6 @@ public class JFreeChartV1019TypeInferenceV2APITest {
     @AfterClass
     public static void revertGitChange() {
         GitUtil.checkoutToCommit(git, defaultBranchName);
-        git.close();
     }
 
     @Test

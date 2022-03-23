@@ -55,7 +55,6 @@ public class InferenceUtilityTest {
     @AfterClass
     public static void revertGitChange() {
         GitUtil.checkoutToCommit(git, defaultBranchName);
-        git.close();
     }
 
     @Test
