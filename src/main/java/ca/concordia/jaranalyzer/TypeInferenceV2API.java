@@ -1,10 +1,11 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.MethodInfo;
+import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
-import ca.concordia.jaranalyzer.models.Artifact;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
@@ -22,17 +23,20 @@ public class TypeInferenceV2API {
                                            MethodInvocation methodInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(methodInvocation);
-        String owningClassQualifiedName = getOwingClassQualifiedName(methodInvocation);
+        String owningClassQualifiedName = getOwningClassQualifiedName(methodInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, methodInvocation);
 
+        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
+                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                        methodInvocation, owningClassQualifiedName);
+                        methodInvocation, owningClassInfo);
 
         List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                methodInvocation, importStatementList, variableNameMap, owningClassQualifiedName);
+                methodInvocation, importStatementList, variableNameMap, owningClassInfo);
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }
@@ -42,17 +46,20 @@ public class TypeInferenceV2API {
                                            SuperMethodInvocation superMethodInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superMethodInvocation);
-        String owningClassQualifiedName = getOwingClassQualifiedName(superMethodInvocation);
+        String owningClassQualifiedName = getOwningClassQualifiedName(superMethodInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, superMethodInvocation);
 
+        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
+                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                        superMethodInvocation, owningClassQualifiedName);
+                        superMethodInvocation, owningClassInfo);
 
         List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                superMethodInvocation, importStatementList, variableNameMap, owningClassQualifiedName);
+                superMethodInvocation, importStatementList, variableNameMap, owningClassInfo);
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }
@@ -62,17 +69,20 @@ public class TypeInferenceV2API {
                                            ClassInstanceCreation classInstanceCreation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(classInstanceCreation);
-        String owingClassQualifiedName = getOwingClassQualifiedName(classInstanceCreation);
+        String owningClassQualifiedName = getOwningClassQualifiedName(classInstanceCreation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, classInstanceCreation);
 
+        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
+                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                        classInstanceCreation, owingClassQualifiedName);
+                        classInstanceCreation, owningClassInfo);
 
         List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                classInstanceCreation, importStatementList, variableNameMap, owingClassQualifiedName);
+                classInstanceCreation, importStatementList, variableNameMap, owningClassInfo);
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }
@@ -82,14 +92,17 @@ public class TypeInferenceV2API {
                                     ConstructorInvocation constructorInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(constructorInvocation);
-        String owingClassQualifiedName = getOwingClassQualifiedName(constructorInvocation);
+        String owningClassQualifiedName = getOwningClassQualifiedName(constructorInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, constructorInvocation);
 
+        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
+                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                        constructorInvocation, owingClassQualifiedName);
+                        constructorInvocation, owningClassInfo);
 
         MethodDeclaration methodDeclaration =
                 (MethodDeclaration) InferenceUtility.getClosestASTNode(constructorInvocation, MethodDeclaration.class);
@@ -113,13 +126,13 @@ public class TypeInferenceV2API {
         int numberOfParameters = argumentList.size();
 
         List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
-                javaVersion, importStatementList, variableNameMap, argumentList, owingClassQualifiedName);
+                javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
                 .setInvokerType(callerClassName)
-                .setOwningClassQualifiedName(owingClassQualifiedName);
+                .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
             searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
@@ -135,14 +148,17 @@ public class TypeInferenceV2API {
                                     SuperConstructorInvocation superConstructorInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superConstructorInvocation);
-        String owingClassQualifiedName = getOwingClassQualifiedName(superConstructorInvocation);
+        String owningClassQualifiedName = getOwningClassQualifiedName(superConstructorInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, superConstructorInvocation);
 
+        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
+                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion,
-                        importStatementList, superConstructorInvocation, owingClassQualifiedName);
+                        importStatementList, superConstructorInvocation, owningClassInfo);
 
         TypeDeclaration typeDeclaration = (TypeDeclaration) InferenceUtility.getTypeDeclaration(superConstructorInvocation);
         Type superClassType = typeDeclaration.getSuperclassType();
@@ -152,7 +168,7 @@ public class TypeInferenceV2API {
             superClassName = "java.lang.Object";
         } else {
             superClassName = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
-                    importStatementList, superClassType, owingClassQualifiedName).getQualifiedClassName();
+                    importStatementList, superClassType, owningClassInfo).getQualifiedClassName();
         }
 
         MethodDeclaration methodDeclaration =
@@ -165,13 +181,13 @@ public class TypeInferenceV2API {
         int numberOfParameters = argumentList.size();
 
         List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
-                javaVersion, importStatementList, variableNameMap, argumentList, owingClassQualifiedName);
+                javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, superClassName, numberOfParameters)
                 .setInvokerType(callerClassName)
-                .setOwningClassQualifiedName(owingClassQualifiedName)
+                .setOwningClassInfo(owningClassInfo)
                 .setSuperInvoker(true);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
@@ -183,7 +199,7 @@ public class TypeInferenceV2API {
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }
 
-    private static  String getOwingClassQualifiedName(ASTNode methodNode) {
+    private static  String getOwningClassQualifiedName(ASTNode methodNode) {
         AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) InferenceUtility.getAbstractTypeDeclaration(methodNode);
 
         return InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration);

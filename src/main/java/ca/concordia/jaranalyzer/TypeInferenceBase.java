@@ -1,9 +1,10 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
+import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
-import ca.concordia.jaranalyzer.models.Artifact;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.structure.Element;
@@ -349,17 +350,22 @@ public abstract class TypeInferenceBase {
                                                      Set<String> importedClassQNameList,
                                                      List<String> packageNameList,
                                                      TinkerGraph tinkerGraph,
-                                                     String owningClassQualifiedName) {
+                                                     OwningClassInfo owningClassInfo) {
 
         if (Objects.nonNull(typeClassName) && !InferenceUtility.isPrimitiveType(typeClassName)
                 && StringUtils.countMatches(typeClassName, ".") <= 1) {
 
-            String postProcessedOwningClassQualifiedName = Objects.nonNull(owningClassQualifiedName)
-                    ? owningClassQualifiedName.replace("$", ".")
+            String postProcessedOwningClassQualifiedName = Objects.nonNull(owningClassInfo)
+                    && Objects.nonNull(owningClassInfo.getOwningQualifiedClassName())
+                    ? owningClassInfo.getOwningQualifiedClassName().replace("$", ".")
                     : null;
 
             String postProcessedTypeClassName = typeClassName.replace(".", "$")
                     .replaceAll("\\[]", "");
+
+            if (Objects.nonNull(owningClassInfo) && !owningClassInfo.getAvailableQualifiedClassNameSet().isEmpty()) {
+                importedClassQNameList.addAll(owningClassInfo.getAvailableQualifiedClassNameSet());
+            }
 
             List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
                     .out("ContainsPkg").out("Contains")
@@ -411,7 +417,7 @@ public abstract class TypeInferenceBase {
     }
 
     static String resolveQNameForClass(String typeClassName,
-                                       String owningClassQualifiedName,
+                                       OwningClassInfo owningClassInfo,
                                        Object[] jarVertexIds,
                                        Set<String> importedClassQNameSet,
                                        List<String> packageNameList,
@@ -423,9 +429,13 @@ public abstract class TypeInferenceBase {
         int numberOfArrayDimensions = StringUtils.countMatches(typeClassName, "[]");
 
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
-                importedClassQNameSet, packageNameList, tinkerGraph, owningClassQualifiedName);
+                importedClassQNameSet, packageNameList, tinkerGraph, owningClassInfo);
 
-        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeClassName, owningClassQualifiedName,
+        String owningQualifiedClassName = Objects.nonNull(owningClassInfo)
+                ? owningClassInfo.getOwningQualifiedClassName()
+                : null;
+
+        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeClassName, owningQualifiedClassName,
                 importedClassQNameSet, qualifiedClassInfoList, tinkerGraph);
 
         return qualifiedClassInfoList.isEmpty()
@@ -796,6 +806,33 @@ public abstract class TypeInferenceBase {
         } else {
             return methodInfoList;
         }
+    }
+
+    static Set<String> getAllQClassNameSetInHierarchy(Set<Artifact> dependentArtifactSet,
+                                                      String javaVersion,
+                                                      String className,
+                                                      TinkerGraph tinkerGraph) {
+        if (Objects.isNull(className) || StringUtils.countMatches(className, ".") <= 1) {
+            return Collections.emptySet();
+        }
+
+        Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
+
+        if (className.contains("$")) {
+            className = className.replace("$", ".");
+        }
+
+        Set<String> qClassNameSetInHierarchy = new HashSet<>();
+        Set<String> classNameSet = Collections.singleton(className);
+
+        while (!classNameSet.isEmpty()) {
+            classNameSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
+
+            qClassNameSetInHierarchy.addAll(classNameSet);
+            qClassNameSetInHierarchy.addAll(getInnerClassNameSet(jarVertexIds, classNameSet, tinkerGraph));
+        }
+
+        return qClassNameSetInHierarchy;
     }
 
     private static boolean filtrationBasedOnCriteria(int numberOfParameters, String outerClassPrefix, MethodInfo methodInfo) {

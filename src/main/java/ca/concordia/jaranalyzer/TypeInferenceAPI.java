@@ -1,9 +1,6 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.models.Artifact;
-import ca.concordia.jaranalyzer.models.ClassInfo;
-import ca.concordia.jaranalyzer.models.FieldInfo;
-import ca.concordia.jaranalyzer.models.MethodInfo;
+import ca.concordia.jaranalyzer.models.*;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
@@ -84,11 +81,16 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         Set<String> importedClassQNameSet = getImportedQNameList(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
+        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
+                getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName, tinkerGraph));
+
         List<MethodInfo> qualifiedMethodInfoList = new ArrayList<>();
 
         String previousCallerClass = callerClassName;
-        callerClassName = resolveQNameForClass(callerClassName, owningClassQualifiedName, jarVertexIds, importedClassQNameSet, packageNameList, tinkerGraph);
-        List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, owningClassQualifiedName, jarVertexIds, importedClassQNameSet, packageNameList);
+        callerClassName = resolveQNameForClass(callerClassName, owningClassInfo, jarVertexIds, importedClassQNameSet,
+                packageNameList, tinkerGraph);
+        List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, owningClassInfo, jarVertexIds,
+                importedClassQNameSet, packageNameList);
 
         methodName = processMethodName(methodName, importedClassQNameSet);
 
@@ -98,7 +100,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         if (callerClassName != null && StringUtils.countMatches(callerClassName, ".") >= 1) {
             List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousCallerClass, jarVertexIds,
-                    importedClassQNameSet, packageNameList, tinkerGraph, owningClassQualifiedName);
+                    importedClassQNameSet, packageNameList, tinkerGraph, owningClassInfo);
             Set<String> classQNameList = classInfoList.isEmpty()
                     ? Collections.singleton(callerClassName)
                     : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
@@ -228,11 +230,17 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
     }
 
+    public static Set<String> getAllQClassNameSetInHierarchy(Set<Artifact> dependentArtifactSet,
+                                                             String javaVersion,
+                                                             String className) {
+        return getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, className, tinkerGraph);
+    }
+
     public static List<ClassInfo> getAllTypes(Set<Artifact> dependentArtifactSet,
                                               String javaVersion,
                                               List<String> importList,
                                               String typeName,
-                                              String owningClassQualifiedName) {
+                                              OwningClassInfo owningClassInfo) {
         if (Objects.isNull(typeName)) {
             return Collections.emptyList();
         }
@@ -253,8 +261,13 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeName, jarVertexIds, importedClassQNameSet,
-                packageNameList, tinkerGraph, owningClassQualifiedName);
-        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeName, owningClassQualifiedName,
+                packageNameList, tinkerGraph, owningClassInfo);
+
+        String owningQualifiedClassName = Objects.nonNull(owningClassInfo)
+                ? owningClassInfo.getOwningQualifiedClassName()
+                : null;
+
+        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeName, owningQualifiedClassName,
                 importedClassQNameSet, qualifiedClassInfoList, tinkerGraph);
 
         return qualifiedClassInfoList;
@@ -264,7 +277,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                    String javaVersion,
                                                    List<String> importList,
                                                    String fieldName,
-                                                   String owningClassQualifiedName) {
+                                                   OwningClassInfo owningClassInfo) {
 
 
         Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
@@ -277,7 +290,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         if (fieldName.contains(".")) {
             if (StringUtils.countMatches(fieldName, ".") >= 1) {
                 String callerClassName = fieldName.substring(0, fieldName.lastIndexOf("."));
-                callerClassQName = resolveQNameForClass(callerClassName, owningClassQualifiedName, jarVertexIds,
+                callerClassQName = resolveQNameForClass(callerClassName, owningClassInfo, jarVertexIds,
                         importedClassQNameList, packageNameList, tinkerGraph);
 
                 importedClassQNameList.add(callerClassQName);
@@ -448,14 +461,14 @@ public class TypeInferenceAPI extends TypeInferenceBase {
     }
 
     private static List<String> resolveQNameForArgumentTypes(String[] argumentTypes,
-                                                             String owningPackageName,
+                                                             OwningClassInfo owningClassInfo,
                                                              Object[] jarVertexIds,
                                                              Set<String> importedClassQNameList,
                                                              List<String> packageNameList) {
         if (argumentTypes.length > 0) {
             return new ArrayList<>(Arrays.asList(argumentTypes)).stream()
                     .map(typeClassName ->
-                            resolveQNameForClass(typeClassName, owningPackageName, jarVertexIds, importedClassQNameList,
+                            resolveQNameForClass(typeClassName, owningClassInfo, jarVertexIds, importedClassQNameList,
                                     packageNameList, tinkerGraph))
                     .collect(Collectors.toList());
         } else {

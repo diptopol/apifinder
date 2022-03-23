@@ -3,6 +3,7 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
+import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
 import io.vavr.Tuple2;
 import org.apache.commons.lang3.StringUtils;
@@ -81,7 +82,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         String previousCallerClass = criteria.getCallerClassName();
 
         criteria.setInvokerType(
-                resolveQNameForClass(criteria.getCallerClassName(), criteria.getOwningClassQualifiedName(), jarVertexIds, importedClassQNameSet,
+                resolveQNameForClass(criteria.getCallerClassName(), criteria.getOwningClassInfo(), jarVertexIds, importedClassQNameSet,
                         packageNameList, tinkerGraph));
         resolveQNameForArgumentTypes(criteria, jarVertexIds, importedClassQNameSet, packageNameList);
 
@@ -94,7 +95,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         if (callerClassName != null && StringUtils.countMatches(callerClassName, ".") >= 1) {
             callerClassName = callerClassName.replace("$", ".");
             List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousCallerClass, jarVertexIds,
-                    importedClassQNameSet, packageNameList, tinkerGraph, criteria.getOwningClassQualifiedName());
+                    importedClassQNameSet, packageNameList, tinkerGraph, criteria.getOwningClassInfo());
             Set<String> classQNameList = classInfoList.isEmpty()
                     ? Collections.singleton(callerClassName)
                     : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
@@ -284,7 +285,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
                         List<ClassInfo> qualifiedClassInfoList =
                                 resolveQClassInfoForClass(argumentType, jarVertexIds, importedClassQNameList,
-                                        packageNameList, tinkerGraph, criteria.getOwningClassQualifiedName());
+                                        packageNameList, tinkerGraph, criteria.getOwningClassInfo());
 
                         qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, argumentType, criteria.getOwningClassQualifiedName(),
                                 importedClassQNameList, qualifiedClassInfoList, tinkerGraph);
@@ -305,7 +306,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private String methodName;
         private int numberOfParameters;
         private String callerClassName;
-        private String owningClassQualifiedName;
+        private OwningClassInfo owningClassInfo;
         private boolean isSuperOfCallerClass;
         private Map<Integer, String> argumentTypeMap;
 
@@ -333,8 +334,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return callerClassName;
         }
 
+        public OwningClassInfo getOwningClassInfo() {
+            return owningClassInfo;
+        }
+
         public String getOwningClassQualifiedName() {
-            return owningClassQualifiedName;
+            return Objects.nonNull(owningClassInfo) ? owningClassInfo.getOwningQualifiedClassName() : null;
         }
 
         private boolean isSuperOfCallerClass() {
@@ -386,7 +391,15 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         public Criteria setOwningClassQualifiedName(String owningClassQualifiedName) {
-            this.owningClassQualifiedName = owningClassQualifiedName;
+            this.owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
+                    getAllQClassNameSetInHierarchy(this.dependentArtifactSet, this.javaVersion,
+                            owningClassQualifiedName, tinkerGraph));
+
+            return this;
+        }
+
+        public Criteria setOwningClassInfo(OwningClassInfo owningClassInfo) {
+            this.owningClassInfo = owningClassInfo;
 
             return this;
         }
