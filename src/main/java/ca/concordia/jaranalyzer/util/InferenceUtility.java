@@ -1529,14 +1529,19 @@ public class InferenceUtility {
 
                 if (name.equals(typeParameterName)) {
                     List<Type> boundTypeList = typeParameter.typeBounds();
-                    Type boundType = boundTypeList.get(0) instanceof ParameterizedType
-                            ? ((ParameterizedType) boundTypeList.get(0)).getType()
-                            : (ParameterizedType) boundTypeList.get(0);
 
-                    TypeInfo boundTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
-                            boundType, owningClassQualifiedName);
+                    if (!boundTypeList.isEmpty()) {
+                        Type boundType = boundTypeList.get(0) instanceof ParameterizedType
+                                ? ((ParameterizedType) boundTypeList.get(0)).getType()
+                                : (ParameterizedType) boundTypeList.get(0);
 
-                    return new FormalTypeParameterInfo(name, new QualifiedTypeInfo(boundTypeInfo.getQualifiedClassName()));
+                        TypeInfo boundTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
+                                boundType, owningClassQualifiedName);
+
+                        return new FormalTypeParameterInfo(name, new QualifiedTypeInfo(boundTypeInfo.getQualifiedClassName()));
+                    } else {
+                        return new FormalTypeParameterInfo(name, new QualifiedTypeInfo("java.lang.Object"));
+                    }
                 }
             }
         }
