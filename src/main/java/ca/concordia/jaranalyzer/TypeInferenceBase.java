@@ -842,7 +842,9 @@ public abstract class TypeInferenceBase {
 
         return innerClassConstructorMatching
                 && !methodInfo.isBridgeMethod()
-                && (methodInfo.getArgumentTypes().length == numberOfParameters || methodInfo.isVarargs());
+                && ((methodInfo.isVarargs()
+                ? methodInfo.getArgumentTypes().length - 1 <= numberOfParameters
+                : methodInfo.getArgumentTypes().length == numberOfParameters));
     }
 
     private static String getQualifiedNameWithArrayDimension(String qualifiedClassName, int arrayDimension) {

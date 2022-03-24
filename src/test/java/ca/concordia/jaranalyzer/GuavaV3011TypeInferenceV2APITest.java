@@ -72,6 +72,26 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testVarargsMethodArgumentSizeCheck() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ForwardingListenableFuture.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("Preconditions.checkNotNull(delegate)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.base.Preconditions::public static com.google.common.util.concurrent.ListenableFuture" +
+                            " checkNotNull(com.google.common.util.concurrent.ListenableFuture)").equals(methodInfo.toString());
+                }
+
+                return false;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
