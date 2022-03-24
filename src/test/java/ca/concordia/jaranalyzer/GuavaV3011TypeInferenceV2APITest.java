@@ -5,6 +5,7 @@ import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jgit.api.Git;
@@ -88,6 +89,26 @@ public class GuavaV3011TypeInferenceV2APITest {
                 }
 
                 return false;
+            }
+        });
+    }
+
+    @Test
+    public void testOuterMostClassAsOwningClass() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().equals("new FailedService(service)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert ("com.google.common.util.concurrent.ServiceManager.FailedService" +
+                            "::void ServiceManager$FailedService(com.google.common.util.concurrent.Service)").equals(methodInfo.toString());
+                }
+
+                return true;
             }
         });
     }

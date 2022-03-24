@@ -10,6 +10,7 @@ import org.eclipse.jdt.core.dom.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -200,7 +201,16 @@ public class TypeInferenceV2API {
     }
 
     private static  String getOwningClassQualifiedName(ASTNode methodNode) {
-        AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) InferenceUtility.getAbstractTypeDeclaration(methodNode);
+        ASTNode node = methodNode;
+        AbstractTypeDeclaration abstractTypeDeclaration = null;
+
+        while (Objects.nonNull(node)) {
+            if (node instanceof AbstractTypeDeclaration) {
+                abstractTypeDeclaration = (AbstractTypeDeclaration) node;
+            }
+
+            node = node.getParent();
+        }
 
         return InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration);
     }

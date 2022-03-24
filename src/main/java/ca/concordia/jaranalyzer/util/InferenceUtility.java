@@ -42,20 +42,32 @@ public class InferenceUtility {
         PackageDeclaration packageDeclaration = compilationUnit.getPackage();
         importStatementList.add("import " + packageDeclaration.getName().getFullyQualifiedName() + ".*");
 
-        // added inner classes of the current file in the import statement
+        importStatementList.addAll(getAllClassImportStatements(methodNode));
+    }
+
+    private static Set<String> getAllClassImportStatements(ASTNode methodNode) {
+        Set<String> importStatementSet = new HashSet<>();
         AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) InferenceUtility.getAbstractTypeDeclaration(methodNode);
-        importStatementList.add("import " + InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration));
 
-        if (abstractTypeDeclaration instanceof TypeDeclaration) {
-            TypeDeclaration typeDeclaration = (TypeDeclaration) abstractTypeDeclaration;
+        while (Objects.nonNull(abstractTypeDeclaration)) {
+            importStatementSet.add("import " + InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration));
 
-            TypeDeclaration[] innerTypeDeclarationArray = typeDeclaration.getTypes();
+            if (abstractTypeDeclaration instanceof TypeDeclaration) {
+                TypeDeclaration typeDeclaration = (TypeDeclaration) abstractTypeDeclaration;
 
-            for (TypeDeclaration innerClassDeclaration : innerTypeDeclarationArray) {
-                importStatementList.add("import " +
-                        InferenceUtility.getDeclaringClassQualifiedName(innerClassDeclaration).replaceAll("\\$", "."));
+                TypeDeclaration[] innerTypeDeclarationArray = typeDeclaration.getTypes();
+
+                for (TypeDeclaration innerClassDeclaration : innerTypeDeclarationArray) {
+                    importStatementSet.add("import " +
+                            InferenceUtility.getDeclaringClassQualifiedName(innerClassDeclaration).replaceAll("\\$", "."));
+                }
             }
+
+            abstractTypeDeclaration = (AbstractTypeDeclaration)
+                    InferenceUtility.getAbstractTypeDeclaration(abstractTypeDeclaration.getParent());
         }
+
+        return importStatementSet;
     }
 
     /*
