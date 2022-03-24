@@ -1533,7 +1533,7 @@ public class InferenceUtility {
                     if (!boundTypeList.isEmpty()) {
                         Type boundType = boundTypeList.get(0) instanceof ParameterizedType
                                 ? ((ParameterizedType) boundTypeList.get(0)).getType()
-                                : (ParameterizedType) boundTypeList.get(0);
+                                : boundTypeList.get(0);
 
                         TypeInfo boundTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                                 boundType, owningClassInfo);
