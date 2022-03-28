@@ -1397,6 +1397,15 @@ public class InferenceUtility {
         return localVariableDtoSet;
     }
 
+    private static TypeInfo convertVarargsIfRequired(SingleVariableDeclaration singleVariableDeclaration,
+                                                     TypeInfo typeInfo) {
+        if (singleVariableDeclaration.isVarargs()) {
+            return new VarargTypeInfo(typeInfo);
+        } else {
+            return typeInfo;
+        }
+    }
+
     private static VariableDeclarationDto getVariableDeclarationDto(Set<Artifact> dependentArtifactSet,
                                                                     String javaVersion,
                                                                     List<String> importStatementList,
@@ -1404,8 +1413,8 @@ public class InferenceUtility {
                                                                     OwningClassInfo owningClassInfo) {
         String name = declaration.getName().getFullyQualifiedName();
         Type declarationType = declaration.getType();
-        TypeInfo declarationTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
-                declarationType, owningClassInfo);
+        TypeInfo declarationTypeInfo = convertVarargsIfRequired(declaration,
+                getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, declarationType, owningClassInfo));
 
         ASTNode scopedNode = getVariableDeclarationScopedNode(declaration);
 

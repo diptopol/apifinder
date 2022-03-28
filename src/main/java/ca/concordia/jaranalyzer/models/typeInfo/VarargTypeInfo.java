@@ -14,7 +14,7 @@ public class VarargTypeInfo extends TypeInfo {
 
     @Override
     public String getQualifiedClassName() {
-        return this.elementTypeInfo.getQualifiedClassName();
+        return this.elementTypeInfo.getQualifiedClassName().concat("[]");
     }
 
     @Override
