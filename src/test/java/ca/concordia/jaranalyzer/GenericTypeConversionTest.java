@@ -36,6 +36,20 @@ public class GenericTypeConversionTest {
     }
 
     @Test
+    public void testFormalTypeParameterExclusion() {
+        String methodSignature = "<S:TT;>()Lcom/google/common/collect/Ordering<TS;>;";
+        SignatureReader signatureReader = new SignatureReader(methodSignature);
+
+        Map<String, TypeInfo> map = new HashMap<>();
+        map.put("T", new QualifiedTypeInfo("java.lang.String"));
+
+        GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
+        signatureReader.accept(genericTypeResolutionAdapter);
+
+        assert "[]".equals(Arrays.asList(genericTypeResolutionAdapter.getMethodArgumentTypes()).toString());
+    }
+
+    @Test
     public void testSignatureForExtendedFormalTypeArgument() {
         String methodSignature = "(Ljava/util/Map<+TK;+TV;>;Z)V";
 

@@ -59,7 +59,7 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     @Override
     public void visitTypeVariable(final String name) {
-        if (argumentStack == 0) {
+        if (argumentStack == 0 && isFormalTypeParameterTraversalCompleted) {
             String className = formalParameterMap.get(name).getName().replaceAll("\\.", "/");
             signatureWriter.visitClassType(className);
             signatureWriter.visitEnd();
