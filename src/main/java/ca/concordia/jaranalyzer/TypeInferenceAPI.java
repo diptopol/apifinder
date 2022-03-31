@@ -314,13 +314,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, qCallerClassNameSet);
 
                 if (qualifiedFieldList.isEmpty()) {
-                    qCallerClassNameSet = tinkerGraph.traversal().V(jarVertexIds)
-                            .out("ContainsPkg").out("Contains")
-                            .has("Kind", "Class")
-                            .has("QName", TextP.within(qCallerClassNameSet))
-                            .out("extends", "implements")
-                            .<String>values("Name")
-                            .toSet();
+                    qCallerClassNameSet = getSuperClasses(qCallerClassNameSet, jarVertexIds, tinkerGraph);
                 }
             }
 
