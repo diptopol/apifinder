@@ -87,7 +87,7 @@ public class InferenceUtilityTest {
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Args.nullNotPermitted")) {
                     List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-                    InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, methodInvocation);
+                    InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
                     Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
                             = InferenceUtility.getFieldVariableDeclarationDtoList(jarInformationSet, javaVersion,
@@ -138,7 +138,7 @@ public class InferenceUtilityTest {
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Args.nullNotPermitted(listener,\"listener\")")) {
                     List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-                    InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit, methodInvocation);
+                    InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
                     Map<String, Set<VariableDeclarationDto>> variableNameMap =
                             InferenceUtility.getVariableNameMap(jarInformationSet, javaVersion,

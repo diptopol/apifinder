@@ -431,24 +431,18 @@ public abstract class TypeInferenceBase {
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeClassName, jarVertexIds,
                 importedClassQNameSet, packageNameList, tinkerGraph, owningClassInfo);
 
-        String owningQualifiedClassName = Objects.nonNull(owningClassInfo)
-                ? owningClassInfo.getOwningQualifiedClassName()
-                : null;
-
-        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeClassName, owningQualifiedClassName,
-                importedClassQNameSet, qualifiedClassInfoList, tinkerGraph);
+        qualifiedClassInfoList = filtrationBasedOnPrioritization(typeClassName, owningClassInfo,
+                importedClassQNameSet, qualifiedClassInfoList);
 
         return qualifiedClassInfoList.isEmpty()
                 ? typeClassName
                 : getQualifiedNameWithArrayDimension(qualifiedClassInfoList.get(0).getQualifiedName(), numberOfArrayDimensions);
     }
 
-    static List<ClassInfo> filtrationBasedOnPrioritization(Object[] jarVertexIds,
-                                                           String typeClassName,
-                                                           String owningClassQualifiedName,
+    static List<ClassInfo> filtrationBasedOnPrioritization(String typeClassName,
+                                                           OwningClassInfo owningClassInfo,
                                                            Set<String> importedClassQNameSet,
-                                                           List<ClassInfo> qualifiedClassInfoList,
-                                                           TinkerGraph tinkerGraph) {
+                                                           List<ClassInfo> qualifiedClassInfoList) {
         /*
          * If there are multiple result, we want to give priority for classes who are directly mentioned in import
          * statement or belongs to 'java.lang' package. Because * package import can have many classes which satisfies
@@ -469,25 +463,14 @@ public abstract class TypeInferenceBase {
                     .collect(Collectors.toList());
         }
 
-        if (StringUtils.isNotEmpty(owningClassQualifiedName) && qualifiedClassInfoList.size() > 1) {
-            Set<String> classNameSet = Collections.singleton(owningClassQualifiedName);
+        if (Objects.nonNull(owningClassInfo) && qualifiedClassInfoList.size() > 1) {
+            List<Set<String>> qClassNameSetInHierarchy = owningClassInfo.getQualifiedClassNameSetInHierarchy();
 
-            while (!classNameSet.isEmpty()) {
-                Set<String> superClassSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
-
-                if (qualifiedClassInfoList.stream().anyMatch(c -> superClassSet.contains(c.getQualifiedName()))) {
-                    return qualifiedClassInfoList.stream().filter(c -> superClassSet.contains(c.getQualifiedName()))
+            for (Set<String> qClassNameSet : qClassNameSetInHierarchy) {
+                if (qualifiedClassInfoList.stream().anyMatch(c -> qClassNameSet.contains(c.getQualifiedName()))) {
+                    return qualifiedClassInfoList.stream().filter(c -> qClassNameSet.contains(c.getQualifiedName()))
                             .collect(Collectors.toList());
                 }
-
-                Set<String> innerClassNameSet = getInnerClassNameSet(jarVertexIds, superClassSet, tinkerGraph);
-
-                if (qualifiedClassInfoList.stream().anyMatch(c -> innerClassNameSet.contains(c.getName()))) {
-                    return qualifiedClassInfoList.stream().filter(c -> innerClassNameSet.contains(c.getName()))
-                            .collect(Collectors.toList());
-                }
-
-                classNameSet = superClassSet;
             }
         }
 
@@ -626,7 +609,7 @@ public abstract class TypeInferenceBase {
                 .toSet();
     }
 
-    static Set<String> getInnerClassNameSet(Object[] jarVertexIds,
+    static Set<String> getInnerClassQualifiedNameSet(Object[] jarVertexIds,
                                             Set<String> classQNameList,
                                             TinkerGraph tinkerGraph) {
 
@@ -639,7 +622,7 @@ public abstract class TypeInferenceBase {
                 .has("Kind", "Class")
                 .has("QName", TextP.within(classQNameList))
                 .out("ContainsInnerClass")
-                .<String>values("Name")
+                .<String>values("QName")
                 .toSet();
     }
 
@@ -808,28 +791,27 @@ public abstract class TypeInferenceBase {
         }
     }
 
-    static Set<String> getAllQClassNameSetInHierarchy(Set<Artifact> dependentArtifactSet,
+    static List<Set<String>> getAllQClassNameSetInHierarchy(Set<Artifact> dependentArtifactSet,
                                                       String javaVersion,
-                                                      String className,
+                                                      String qualifiedClassName,
                                                       TinkerGraph tinkerGraph) {
-        if (Objects.isNull(className) || StringUtils.countMatches(className, ".") <= 1) {
-            return Collections.emptySet();
+        if (Objects.isNull(qualifiedClassName) || StringUtils.countMatches(qualifiedClassName, ".") <= 1) {
+            return Collections.emptyList();
         }
 
         Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
 
-        if (className.contains("$")) {
-            className = className.replace("$", ".");
-        }
-
-        Set<String> qClassNameSetInHierarchy = new HashSet<>();
-        Set<String> classNameSet = Collections.singleton(className);
+        List<Set<String>> qClassNameSetInHierarchy = new ArrayList<>();
+        Set<String> classNameSet = Collections.singleton(qualifiedClassName);
 
         while (!classNameSet.isEmpty()) {
-            classNameSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
+            Set<String> qClassNameSet = new HashSet<>();
+            qClassNameSet.addAll(classNameSet);
+            qClassNameSet.addAll(getInnerClassQualifiedNameSet(jarVertexIds, classNameSet, tinkerGraph));
 
-            qClassNameSetInHierarchy.addAll(classNameSet);
-            qClassNameSetInHierarchy.addAll(getInnerClassNameSet(jarVertexIds, classNameSet, tinkerGraph));
+            qClassNameSetInHierarchy.add(qClassNameSet);
+
+            classNameSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
         }
 
         return qClassNameSetInHierarchy;

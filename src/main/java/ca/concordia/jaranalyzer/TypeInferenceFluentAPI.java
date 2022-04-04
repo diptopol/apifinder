@@ -287,8 +287,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                                 resolveQClassInfoForClass(argumentType, jarVertexIds, importedClassQNameList,
                                         packageNameList, tinkerGraph, criteria.getOwningClassInfo());
 
-                        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, argumentType, criteria.getOwningClassQualifiedName(),
-                                importedClassQNameList, qualifiedClassInfoList, tinkerGraph);
+                        qualifiedClassInfoList = filtrationBasedOnPrioritization(argumentType, criteria.getOwningClassInfo(),
+                                importedClassQNameList, qualifiedClassInfoList);
 
                         return qualifiedClassInfoList.isEmpty()
                                 ? argumentTypeWithIndex

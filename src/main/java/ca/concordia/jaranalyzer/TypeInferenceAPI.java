@@ -230,7 +230,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
     }
 
-    public static Set<String> getAllQClassNameSetInHierarchy(Set<Artifact> dependentArtifactSet,
+    public static List<Set<String>> getAllQClassNameSetInHierarchy(Set<Artifact> dependentArtifactSet,
                                                              String javaVersion,
                                                              String className) {
         return getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, className, tinkerGraph);
@@ -263,12 +263,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         List<ClassInfo> qualifiedClassInfoList = resolveQClassInfoForClass(typeName, jarVertexIds, importedClassQNameSet,
                 packageNameList, tinkerGraph, owningClassInfo);
 
-        String owningQualifiedClassName = Objects.nonNull(owningClassInfo)
-                ? owningClassInfo.getOwningQualifiedClassName()
-                : null;
-
-        qualifiedClassInfoList = filtrationBasedOnPrioritization(jarVertexIds, typeName, owningQualifiedClassName,
-                importedClassQNameSet, qualifiedClassInfoList, tinkerGraph);
+        qualifiedClassInfoList = filtrationBasedOnPrioritization(typeName, owningClassInfo,
+                importedClassQNameSet, qualifiedClassInfoList);
 
         return qualifiedClassInfoList;
     }

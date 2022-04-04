@@ -1,7 +1,9 @@
 package ca.concordia.jaranalyzer.models;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Diptopol
@@ -9,24 +11,24 @@ import java.util.Set;
  */
 public class OwningClassInfo {
 
-    private String owningQualifiedClassName;
-    private Set<String> availableQualifiedClassNameSet;
+    private final String owningQualifiedClassName;
+    private final List<Set<String>> qualifiedClassNameSetInHierarchy;
 
-    public OwningClassInfo(String owningQualifiedClassName) {
-        this(owningQualifiedClassName, Collections.emptySet());
-    }
-
-    public OwningClassInfo(String owningQualifiedClassName, Set<String> availableQualifiedClassNameSet) {
+    public OwningClassInfo(String owningQualifiedClassName, List<Set<String>> qualifiedClassNameSetInHierarchy) {
         this.owningQualifiedClassName = owningQualifiedClassName;
-        this.availableQualifiedClassNameSet = availableQualifiedClassNameSet;
+        this.qualifiedClassNameSetInHierarchy = qualifiedClassNameSetInHierarchy;
     }
 
     public String getOwningQualifiedClassName() {
         return owningQualifiedClassName;
     }
 
+    public List<Set<String>> getQualifiedClassNameSetInHierarchy() {
+        return qualifiedClassNameSetInHierarchy;
+    }
+
     public Set<String> getAvailableQualifiedClassNameSet() {
-        return availableQualifiedClassNameSet;
+        return qualifiedClassNameSetInHierarchy.stream().flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
 }
