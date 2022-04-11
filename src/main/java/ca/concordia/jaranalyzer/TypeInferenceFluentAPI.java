@@ -92,8 +92,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
           STEP 0
          */
         String invokerClassName = criteria.getInvokerClassName();
-        if (invokerClassName != null && StringUtils.countMatches(invokerClassName, ".") >= 1) {
-            invokerClassName = invokerClassName.replace("$", ".");
+        if (invokerClassName != null && StringUtils.countMatches(invokerClassName, ".") > 1) {
             List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousInvokerClassName, jarVertexIds,
                     importedClassQNameSet, packageNameList, tinkerGraph, criteria.getOwningClassInfo());
             Set<String> classQNameList = classInfoList.isEmpty()

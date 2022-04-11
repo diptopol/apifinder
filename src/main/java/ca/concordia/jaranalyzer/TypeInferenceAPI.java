@@ -97,8 +97,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         /*
           STEP 0
          */
-
-        if (invokerClassName != null && StringUtils.countMatches(invokerClassName, ".") >= 1) {
+        if (invokerClassName != null && StringUtils.countMatches(invokerClassName, ".") > 1) {
             List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousInvokerClassName, jarVertexIds,
                     importedClassQNameSet, packageNameList, tinkerGraph, owningClassInfo);
             Set<String> classQNameList = classInfoList.isEmpty()
