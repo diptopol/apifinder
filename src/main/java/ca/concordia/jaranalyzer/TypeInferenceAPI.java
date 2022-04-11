@@ -321,6 +321,19 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         /*
           STEP 1
          */
+        if (Objects.nonNull(owningClassInfo)) {
+            for (Set<String> qClassNameSet: owningClassInfo.getQualifiedClassNameSetInHierarchy()) {
+                qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, qClassNameSet);
+
+                if (!qualifiedFieldList.isEmpty()) {
+                    return populateClassInfoForField(qualifiedFieldList);
+                }
+            }
+        }
+
+        /*
+          STEP 2
+         */
         qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, importedClassQNameList);
 
         if (!qualifiedFieldList.isEmpty()) {
@@ -328,7 +341,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 2
+          STEP 3
          */
         Set<String> classNameListForPackgage = tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg")
@@ -348,7 +361,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 3
+          STEP 4
          */
         Set<String> classQNameList = new HashSet<>(importedClassQNameList);
 

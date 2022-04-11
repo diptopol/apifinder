@@ -72,29 +72,13 @@ public class InferenceUtility {
         Expression expression = methodInvocation.getExpression();
 
         TypeInfo invokerClassTypeInfo = null;
-        String invokerClassName;
+        String invokerClassName = null;
 
         if (Objects.nonNull(expression)) {
             invokerClassTypeInfo = InferenceUtility.getTypeInfoFromExpression(dependentArtifactSet, javaVersion,
                     importStatementList, variableNameMap, expression, owningClassInfo);
 
             invokerClassName = invokerClassTypeInfo.getQualifiedClassName();
-        } else {
-            invokerClassName = isStaticImport ? null : className.replace("%", "");
-
-            if (Objects.nonNull(invokerClassName)) {
-                /*
-                 * For anonymous inner class the class name can be `org.jfree.chart.ui.StrokeChooserPanel#0`. For
-                 * simplicity, we will not consider any type argument for inner class. We will take the parent class
-                 * as invoker class.
-                 */
-                if (StringUtils.isNumeric(invokerClassName.substring(invokerClassName.indexOf("$") + 1))) {
-                    invokerClassName = invokerClassName.substring(0, invokerClassName.indexOf("$"));
-                }
-
-                invokerClassTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
-                        importStatementList, invokerClassName, owningClassInfo);
-            }
         }
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -912,6 +896,12 @@ public class InferenceUtility {
         for (MethodInfo methodInfo : methodInfoList) {
             convertParameterizedTypeIfRequired(dependentArtifactSet, javaVersion, importStatementList,
                     owningClassInfo, methodInfo);
+
+            if (Objects.isNull(invokerTypeInfo) && Objects.nonNull(owningClassInfo)
+                    && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(methodInfo.getQualifiedClassName())) {
+
+                invokerTypeInfo = methodInfo.getClassInfo().getTypeInfo();
+            }
 
             Map<String, TypeInfo> replacedTypeInfoMap = new HashMap<>();
 
