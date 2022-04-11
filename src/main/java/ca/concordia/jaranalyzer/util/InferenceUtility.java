@@ -71,36 +71,36 @@ public class InferenceUtility {
 
         Expression expression = methodInvocation.getExpression();
 
-        TypeInfo callerClassTypeInfo = null;
-        String callerClassName;
+        TypeInfo invokerClassTypeInfo = null;
+        String invokerClassName;
 
         if (Objects.nonNull(expression)) {
-            callerClassTypeInfo = InferenceUtility.getTypeInfoFromExpression(dependentArtifactSet, javaVersion,
+            invokerClassTypeInfo = InferenceUtility.getTypeInfoFromExpression(dependentArtifactSet, javaVersion,
                     importStatementList, variableNameMap, expression, owningClassInfo);
 
-            callerClassName = callerClassTypeInfo.getQualifiedClassName();
+            invokerClassName = invokerClassTypeInfo.getQualifiedClassName();
         } else {
-            callerClassName = isStaticImport ? null : className.replace("%", "");
+            invokerClassName = isStaticImport ? null : className.replace("%", "");
 
-            if (Objects.nonNull(callerClassName)) {
+            if (Objects.nonNull(invokerClassName)) {
                 /*
                  * For anonymous inner class the class name can be `org.jfree.chart.ui.StrokeChooserPanel#0`. For
                  * simplicity, we will not consider any type argument for inner class. We will take the parent class
-                 * as caller class.
+                 * as invoker class.
                  */
-                if (StringUtils.isNumeric(callerClassName.substring(callerClassName.indexOf("$") + 1))) {
-                    callerClassName = callerClassName.substring(0, callerClassName.indexOf("$"));
+                if (StringUtils.isNumeric(invokerClassName.substring(invokerClassName.indexOf("$") + 1))) {
+                    invokerClassName = invokerClassName.substring(0, invokerClassName.indexOf("$"));
                 }
 
-                callerClassTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
-                        importStatementList, callerClassName, owningClassInfo);
+                invokerClassTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
+                        importStatementList, invokerClassName, owningClassInfo);
             }
         }
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerType(callerClassName)
+                .setInvokerClassName(invokerClassName)
                 .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
@@ -117,7 +117,7 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfo, methodInfoList, argumentTypeInfoList, callerClassTypeInfo);
+                owningClassInfo, methodInfoList, argumentTypeInfoList, invokerClassTypeInfo);
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -141,12 +141,12 @@ public class InferenceUtility {
                 (BodyDeclaration) InferenceUtility.getClosestASTNode(superMethodInvocation, BodyDeclaration.class);
 
         String className = InferenceUtility.getDeclaringClassQualifiedName(bodyDeclaration);
-        String callerClassName = className.replace("%", "").replace("$", ".");
+        String invokerClassName = className.replace("%", "").replace("$", ".");
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerType(callerClassName)
+                .setInvokerClassName(invokerClassName)
                 .setOwningClassInfo(owningClassInfo)
                 .setSuperInvoker(true);
 
@@ -185,10 +185,10 @@ public class InferenceUtility {
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
 
         Type type = classInstanceCreation.getType();
-        TypeInfo callerClassTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
+        TypeInfo invokerClassTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
                 importStatementList, type, owningClassInfo);
-        String callerClassName = Objects.nonNull(callerClassTypeInfo)
-                ? callerClassTypeInfo.getQualifiedClassName()
+        String invokerClassName = Objects.nonNull(invokerClassTypeInfo)
+                ? invokerClassTypeInfo.getQualifiedClassName()
                 : null;
 
         if (type.isParameterizedType() && ((ParameterizedType) type).typeArguments().isEmpty()) {
@@ -208,9 +208,9 @@ public class InferenceUtility {
                                 getTypeInfoList(dependentArtifactSet, javaVersion, importStatementList,
                                         returnTypeArgumentList, owningClassInfo);
 
-                        assert callerClassTypeInfo.isParameterizedTypeInfo();
+                        assert invokerClassTypeInfo.isParameterizedTypeInfo();
 
-                        ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) callerClassTypeInfo;
+                        ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) invokerClassTypeInfo;
                         parameterizedTypeInfo.setParameterized(true);
                         parameterizedTypeInfo.setTypeArgumentList(returnTypeInfoArgumentList);
                     }
@@ -221,7 +221,7 @@ public class InferenceUtility {
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerType(callerClassName)
+                .setInvokerClassName(invokerClassName)
                 .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
@@ -231,7 +231,7 @@ public class InferenceUtility {
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
         InferenceUtility.transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfo, methodInfoList, argumentTypeInfoList, callerClassTypeInfo);
+                owningClassInfo, methodInfoList, argumentTypeInfoList, invokerClassTypeInfo);
 
         return methodInfoList;
     }
@@ -916,8 +916,8 @@ public class InferenceUtility {
             Map<String, TypeInfo> replacedTypeInfoMap = new HashMap<>();
 
             /*
-             * Caller class may not be invoker sometimes. Any super class of caller class can be invoker. So added
-             * this class check before extracting formal type parameters of invoker type.
+             * Invoker class may not be associated with method. Any super class of invoker class can be associated.
+             * So added this class check before extracting formal type parameters of invoker type.
              *
              * Also, moved the type arguments to the updated invoker type for formal type resolution.
              */
@@ -985,12 +985,12 @@ public class InferenceUtility {
                             invokerFormalTypeParameterMap, replacedTypeInfoMap));
                 } else {
                     /*
-                     * If callerClass is ParameterizedTypeInfo but parameterized=false, then there can be two scenarios.
+                     * If invokerClass is ParameterizedTypeInfo but parameterized=false, then there can be two scenarios.
                      *
-                     * Scenario 1. the callerClass can be owning class, then we should show the formalTypeParameterInfo
+                     * Scenario 1. the invokerClass can be owning class, then we should show the formalTypeParameterInfo
                      * as it is.
                      *
-                     * Scenario 2. the callerClass can be another class, then we have to show the base type of formalTypeParameterInfo
+                     * Scenario 2. the invokerClass can be another class, then we have to show the base type of formalTypeParameterInfo
                      */
                     if (methodInfo.getClassInfo().getTypeInfo().isParameterizedTypeInfo()) {
                         ParameterizedTypeInfo classParameterizedType = (ParameterizedTypeInfo) methodInfo.getClassInfo().getTypeInfo();

@@ -398,7 +398,7 @@ public class JFreeChartV153TypeInferenceV2APITest {
     }
 
     @Test
-    public void tesMethodInvocationFortWildCardParameterizedCallerClass() {
+    public void tesMethodInvocationFortWildCardParameterizedInvokerClass() {
         String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/util/ExportUtils.java";
 
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

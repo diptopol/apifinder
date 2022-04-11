@@ -83,11 +83,11 @@ public abstract class TypeInferenceBase {
     }
 
     static List<MethodInfo> filterByMethodInvoker(List<MethodInfo> methodInfoList,
-                                                  String callerClassName,
-                                                  boolean isSuperOfCallerClass,
+                                                  String invokerClassName,
+                                                  boolean isSuperInvoker,
                                                   Object[] jarVertexIds,
                                                   TinkerGraph tinkerGraph) {
-        if (!methodInfoList.isEmpty() && Objects.nonNull(callerClassName) && !callerClassName.equals("")) {
+        if (!methodInfoList.isEmpty() && Objects.nonNull(invokerClassName) && !invokerClassName.equals("")) {
             Map<String, List<MethodInfo>> methodInfoDeclaringClassNameMap = new HashMap<>();
 
             String methodInfoClassName;
@@ -103,22 +103,22 @@ public abstract class TypeInferenceBase {
 
             List<String> methodInfoClassNameList = new ArrayList<>(methodInfoDeclaringClassNameMap.keySet());
 
-            List<MethodInfo> filteredListByCallerClassName = new ArrayList<>();
+            List<MethodInfo> filteredListByInvokerClassName = new ArrayList<>();
 
-            if (methodInfoClassNameList.contains(callerClassName) && !isSuperOfCallerClass) {
-                filteredListByCallerClassName.addAll(methodInfoDeclaringClassNameMap.get(callerClassName));
+            if (methodInfoClassNameList.contains(invokerClassName) && !isSuperInvoker) {
+                filteredListByInvokerClassName.addAll(methodInfoDeclaringClassNameMap.get(invokerClassName));
 
-            } else if (callerClassName.contains("[]") && methodInfoClassNameList.contains("java.lang.Object")) {
+            } else if (invokerClassName.contains("[]") && methodInfoClassNameList.contains("java.lang.Object")) {
                 List<MethodInfo> qualifiedMethodInfoList = methodInfoDeclaringClassNameMap.get("java.lang.Object");
-                qualifiedMethodInfoList.forEach(m -> m.setCallerClassMatchingDistance(MAX_SUPER_CLASS_DISTANCE));
-                filteredListByCallerClassName.addAll(qualifiedMethodInfoList);
+                qualifiedMethodInfoList.forEach(m -> m.setInvokerClassMatchingDistance(MAX_SUPER_CLASS_DISTANCE));
+                filteredListByInvokerClassName.addAll(qualifiedMethodInfoList);
 
             } else {
                 Set<String> classNameSet = new HashSet<>();
-                classNameSet.add(callerClassName);
+                classNameSet.add(invokerClassName);
 
                 String[] allOutGoingEdges = new String[]{"extends", "implements"};
-                String[] superClassOutGoingEdgeLabels = isSuperOfCallerClass
+                String[] superClassOutGoingEdgeLabels = isSuperInvoker
                         ? new String[]{"extends"}
                         : allOutGoingEdges;
 
@@ -145,36 +145,36 @@ public abstract class TypeInferenceBase {
                         if (classNameSet.contains(className)) {
                             int finalDistance = className.equals("java.lang.Object") ? MAX_SUPER_CLASS_DISTANCE : distance;
 
-                            qualifiedMethodInfoList.forEach(m -> m.setCallerClassMatchingDistance(finalDistance));
-                            filteredListByCallerClassName.addAll(qualifiedMethodInfoList);
+                            qualifiedMethodInfoList.forEach(m -> m.setInvokerClassMatchingDistance(finalDistance));
+                            filteredListByInvokerClassName.addAll(qualifiedMethodInfoList);
                         }
                     }
 
-                    if (!filteredListByCallerClassName.isEmpty()
-                            && filteredListByCallerClassName.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
-                        deferredQualifiedMethodInfoSet.addAll(filteredListByCallerClassName);
-                        filteredListByCallerClassName.clear();
+                    if (!filteredListByInvokerClassName.isEmpty()
+                            && filteredListByInvokerClassName.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
+                        deferredQualifiedMethodInfoSet.addAll(filteredListByInvokerClassName);
+                        filteredListByInvokerClassName.clear();
                     }
 
-                    if (!filteredListByCallerClassName.isEmpty()) {
+                    if (!filteredListByInvokerClassName.isEmpty()) {
                         break;
                     }
                 }
 
-                if (filteredListByCallerClassName.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-                    filteredListByCallerClassName.addAll(deferredQualifiedMethodInfoSet);
+                if (filteredListByInvokerClassName.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
+                    filteredListByInvokerClassName.addAll(deferredQualifiedMethodInfoSet);
                 }
             }
 
-            if (filteredListByCallerClassName.size() > 1) {
-                int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(filteredListByCallerClassName);
+            if (filteredListByInvokerClassName.size() > 1) {
+                int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(filteredListByInvokerClassName);
 
-                filteredListByCallerClassName = filteredListByCallerClassName.stream()
-                        .filter(m -> m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                filteredListByInvokerClassName = filteredListByInvokerClassName.stream()
+                        .filter(m -> m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)
                         .collect(Collectors.toList());
             }
 
-            return filteredListByCallerClassName;
+            return filteredListByInvokerClassName;
         } else {
             return methodInfoList;
         }
@@ -494,7 +494,7 @@ public abstract class TypeInferenceBase {
 
     static Set<MethodInfo> prioritizeMethodInfoSet(Set<MethodInfo> methodInfoSet) {
         double minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoSet);
-        int minimumCallerClassMatchingDistance = getMinimumCallerClassMatchingDistance(methodInfoSet);
+        int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(methodInfoSet);
 
         if (methodInfoSet.size() > 1) {
             if (minimumArgumentMatchingDistance == 0
@@ -505,7 +505,7 @@ public abstract class TypeInferenceBase {
             } else {
                 methodInfoSet = methodInfoSet.stream()
                         .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
-                                && m.getCallerClassMatchingDistance() == minimumCallerClassMatchingDistance)
+                                && m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)
                         .collect(Collectors.toSet());
             }
 
@@ -714,11 +714,11 @@ public abstract class TypeInferenceBase {
         return methodName;
     }
 
-    static int getMinimumCallerClassMatchingDistance(Collection<MethodInfo> methodInfoCollection) {
+    static int getMinimumInvokerClassMatchingDistance(Collection<MethodInfo> methodInfoCollection) {
         return Optional.of(methodInfoCollection)
                 .orElse(Collections.emptyList())
                 .stream()
-                .map(MethodInfo::getCallerClassMatchingDistance)
+                .map(MethodInfo::getInvokerClassMatchingDistance)
                 .mapToInt(v -> v)
                 .min()
                 .orElse(0);
@@ -734,10 +734,10 @@ public abstract class TypeInferenceBase {
                 .orElse(0);
     }
 
-    static void modifyMethodInfoForArray(List<MethodInfo> methodInfoList, String callerClassName) {
-        if (callerClassName != null && callerClassName.endsWith("[]")) {
-            int dimension = StringUtils.countMatches(callerClassName, "[]");
-            String typeName = callerClassName.replaceAll("\\[]", "");
+    static void modifyMethodInfoForArray(List<MethodInfo> methodInfoList, String invokerClassName) {
+        if (invokerClassName != null && invokerClassName.endsWith("[]")) {
+            int dimension = StringUtils.countMatches(invokerClassName, "[]");
+            String typeName = invokerClassName.replaceAll("\\[]", "");
 
             typeName = InferenceUtility.isPrimitiveType(typeName)
                     ? getTypeDescriptorForPrimitive(typeName)

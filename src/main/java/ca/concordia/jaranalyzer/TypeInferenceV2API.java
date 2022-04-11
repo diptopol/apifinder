@@ -109,7 +109,7 @@ public class TypeInferenceV2API {
                 (MethodDeclaration) InferenceUtility.getClosestASTNode(constructorInvocation, MethodDeclaration.class);
 
         String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
-        String callerClassName = className.replace("%", "").replace("$", ".");
+        String invokerClassName = className.replace("%", "").replace("$", ".");
 
         String methodName;
 
@@ -132,7 +132,7 @@ public class TypeInferenceV2API {
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerType(callerClassName)
+                .setInvokerClassName(invokerClassName)
                 .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
@@ -176,7 +176,7 @@ public class TypeInferenceV2API {
                 (MethodDeclaration) InferenceUtility.getClosestASTNode(superConstructorInvocation, MethodDeclaration.class);
 
         String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
-        String callerClassName = className.replace("%", "").replace("#", ".");
+        String invokerClassName = className.replace("%", "").replace("#", ".");
 
         List<Expression> argumentList = superConstructorInvocation.arguments();
         int numberOfParameters = argumentList.size();
@@ -187,7 +187,7 @@ public class TypeInferenceV2API {
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, superClassName, numberOfParameters)
-                .setInvokerType(callerClassName)
+                .setInvokerClassName(invokerClassName)
                 .setOwningClassInfo(owningClassInfo)
                 .setSuperInvoker(true);
 

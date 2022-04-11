@@ -50,7 +50,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
     /**
      * The process of checking classes for specific method will happen in below steps.<br><br>
      *
-     * <strong>Step 0</strong>: If we can resolve qualified caller class name, we will use caller class to resolve method
+     * <strong>Step 0</strong>: If we can resolve qualified invoker class name, we will use caller class to resolve method
      * info.<br>
      *
      * <strong>Step 1</strong>: All the classes who are directly mentioned in the import statement will be checked,
@@ -71,8 +71,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                  List<String> importList,
                                                  String methodName,
                                                  int numberOfParameters,
-                                                 String callerClassName,
-                                                 boolean isSuperOfCallerClass,
+                                                 String invokerClassName,
+                                                 boolean isSuperInvoker,
                                                  String owningClassQualifiedName,
                                                  String... argumentTypes) {
 
@@ -86,8 +86,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         List<MethodInfo> qualifiedMethodInfoList = new ArrayList<>();
 
-        String previousCallerClass = callerClassName;
-        callerClassName = resolveQNameForClass(callerClassName, owningClassInfo, jarVertexIds, importedClassQNameSet,
+        String previousInvokerClassName = invokerClassName;
+        invokerClassName = resolveQNameForClass(invokerClassName, owningClassInfo, jarVertexIds, importedClassQNameSet,
                 packageNameList, tinkerGraph);
         List<String> argumentTypeList = resolveQNameForArgumentTypes(argumentTypes, owningClassInfo, jarVertexIds,
                 importedClassQNameSet, packageNameList);
@@ -98,11 +98,11 @@ public class TypeInferenceAPI extends TypeInferenceBase {
           STEP 0
          */
 
-        if (callerClassName != null && StringUtils.countMatches(callerClassName, ".") >= 1) {
-            List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousCallerClass, jarVertexIds,
+        if (invokerClassName != null && StringUtils.countMatches(invokerClassName, ".") >= 1) {
+            List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousInvokerClassName, jarVertexIds,
                     importedClassQNameSet, packageNameList, tinkerGraph, owningClassInfo);
             Set<String> classQNameList = classInfoList.isEmpty()
-                    ? Collections.singleton(callerClassName)
+                    ? Collections.singleton(invokerClassName)
                     : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
 
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
@@ -111,7 +111,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
                         jarVertexIds, classQNameList, tinkerGraph);
 
-                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
                         argumentTypeList, jarVertexIds);
 
                 if (!qualifiedMethodInfoList.isEmpty()
@@ -141,7 +141,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
                 argumentTypeList, jarVertexIds);
 
         Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
@@ -162,7 +162,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoListForInnerClass(methodName, numberOfParameters, jarVertexIds,
                 importedClassQNameSet, tinkerGraph);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
                 argumentTypeList, jarVertexIds);
 
         if (!qualifiedMethodInfoList.isEmpty()
@@ -181,7 +181,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoListForPackageImport(methodName, numberOfParameters,
                 packageNameList, importedClassQNameSet, jarVertexIds, tinkerGraph);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
                 argumentTypeList, jarVertexIds);
 
         if (!qualifiedMethodInfoList.isEmpty()
@@ -206,7 +206,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters, jarVertexIds,
                     classQNameList, tinkerGraph);
 
-            qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, callerClassName, isSuperOfCallerClass,
+            qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
                     argumentTypeList, jarVertexIds);
 
             if (!qualifiedMethodInfoList.isEmpty()
@@ -281,15 +281,15 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         Set<String> importedClassQNameList = getImportedQNameList(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
-        String callerClassQName = null;
+        String invokerClassQName = null;
 
         if (fieldName.contains(".")) {
             if (StringUtils.countMatches(fieldName, ".") >= 1) {
-                String callerClassName = fieldName.substring(0, fieldName.lastIndexOf("."));
-                callerClassQName = resolveQNameForClass(callerClassName, owningClassInfo, jarVertexIds,
+                String invokerClassName = fieldName.substring(0, fieldName.lastIndexOf("."));
+                invokerClassQName = resolveQNameForClass(invokerClassName, owningClassInfo, jarVertexIds,
                         importedClassQNameList, packageNameList, tinkerGraph);
 
-                importedClassQNameList.add(callerClassQName);
+                importedClassQNameList.add(invokerClassQName);
             }
 
             if (fieldName.contains("[]") && fieldName.endsWith(".length")) {
@@ -303,14 +303,14 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         /*
           STEP 0
          */
-        if (callerClassQName != null) {
-            Set<String> qCallerClassNameSet = new HashSet<>(Collections.singletonList(callerClassQName));
+        if (invokerClassQName != null) {
+            Set<String> invokerQualifiedClassNameSet = new HashSet<>(Collections.singletonList(invokerClassQName));
 
-            while (!qCallerClassNameSet.isEmpty() && qualifiedFieldList.isEmpty()) {
-                qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, qCallerClassNameSet);
+            while (!invokerQualifiedClassNameSet.isEmpty() && qualifiedFieldList.isEmpty()) {
+                qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, invokerQualifiedClassNameSet);
 
                 if (qualifiedFieldList.isEmpty()) {
-                    qCallerClassNameSet = getSuperClasses(qCallerClassNameSet, jarVertexIds, tinkerGraph);
+                    invokerQualifiedClassNameSet = getSuperClasses(invokerQualifiedClassNameSet, jarVertexIds, tinkerGraph);
                 }
             }
 
@@ -402,16 +402,16 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
     }
 
-    private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList, String callerClassName,
-                                                  boolean isSuperOfCallerClass, List<String> argumentTypeList,
+    private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList, String invokerClassName,
+                                                  boolean isSuperInvoker, List<String> argumentTypeList,
                                                   Object[] jarVertexIds) {
         if (methodInfoList.isEmpty()) {
             return methodInfoList;
         }
 
         populateClassInfo(methodInfoList, tinkerGraph);
-        modifyMethodInfoForArray(methodInfoList, callerClassName);
-        methodInfoList = filterByMethodInvoker(methodInfoList, callerClassName, isSuperOfCallerClass, jarVertexIds, tinkerGraph);
+        modifyMethodInfoForArray(methodInfoList, invokerClassName);
+        methodInfoList = filterByMethodInvoker(methodInfoList, invokerClassName, isSuperInvoker, jarVertexIds, tinkerGraph);
 
         methodInfoList = filterByMethodArgumentTypes(methodInfoList, argumentTypeList, jarVertexIds);
 

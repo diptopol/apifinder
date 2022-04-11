@@ -5,12 +5,10 @@ import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.eclipse.jgit.api.Git;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
@@ -285,7 +283,7 @@ public class JFreeChartTests {
     }
 
     @Test
-    public void findMethodWhereCallerClassArray() {
+    public void findMethodWhereInvokerClassArray() {
         List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.data.general.*", "import java.io.Serializable",
                 "import java.util.Collections", "import java.util.List", "import org.jfree.chart.util.ParamChecks",
                 "import org.jfree.data.DefaultKeyedValues", "import org.jfree.data.KeyedValues", "import org.jfree.data.UnknownKeyException",
@@ -309,7 +307,7 @@ public class JFreeChartTests {
         List<String> imports = Arrays.asList("java.lang.*", "java.util.*");
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet, javaVersion, imports,
                 "ArrayList", 1)
-                .setInvokerType("ArrayList")
+                .setInvokerClassName("ArrayList")
                 .setArgumentType(0, "ArrayList")
                 .getMethodList();
 
@@ -349,7 +347,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "assertTrue", 2)
-                .setInvokerType("org.junit.jupiter.api.Assertions")
+                .setInvokerClassName("org.junit.jupiter.api.Assertions")
                 .setArgumentType(1, "java.util.function.Supplier")
                 .getMethodList();
 
@@ -386,13 +384,13 @@ public class JFreeChartTests {
     }
 
     @Test
-    public void findMethodWithChildCallerClass() {
+    public void findMethodWithChildInvokerClass() {
         List<String> imports = Arrays.asList("import java.lang.*",
                 "import org.jfree.data.xy.*");
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "getStartX", 2)
-                .setInvokerType("org.jfree.data.xy.AbstractIntervalXYDataset")
+                .setInvokerClassName("org.jfree.data.xy.AbstractIntervalXYDataset")
                 .setArgumentType(0, "int")
                 .setArgumentType(1, "int")
                 .getMethodList();
@@ -401,12 +399,12 @@ public class JFreeChartTests {
     }
 
     @Test
-    public void findMethodForSuperOfCallerClass() {
+    public void findMethodForSuperInvokerClass() {
         List<String> imports = Arrays.asList("import java.lang.*", "import org.jfree.chart.urls.*", "import org.jfree.data.xy.XYZDataset");
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet, javaVersion, imports, "generateURL", 3)
-                .setInvokerType("org.jfree.chart.urls.StandardXYZURLGenerator")
+                .setInvokerClassName("org.jfree.chart.urls.StandardXYZURLGenerator")
                 .setSuperInvoker(true)
                 .setArgumentType(0, "XYZDataset")
                 .setArgumentType(1, "int")
@@ -464,7 +462,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "setWidth", 1)
-                .setInvokerType("org.jfree.chart.block.EmptyBlock")
+                .setInvokerClassName("org.jfree.chart.block.EmptyBlock")
                 .setArgumentType(0, "double")
                 .setSuperInvoker(true)
                 .getMethodList();
@@ -481,7 +479,7 @@ public class JFreeChartTests {
         List<MethodInfo> methodInfoList = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(singleton(
                 new Artifact("org.jfree", "jfreechart", "1.0.19")), javaVersion, imports, "getZValueRange",
-                2).setInvokerType("DefaultContourDataset")
+                2).setInvokerClassName("DefaultContourDataset")
                 .setArgumentType(0, "Range")
                 .setArgumentType(1, "Range").getMethodList();
 
@@ -503,7 +501,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "getValue", 0)
-                .setInvokerType("KeyedValue")
+                .setInvokerClassName("KeyedValue")
                 .getMethodList();
 
         assert "[org.jfree.data.Value::public abstract java.lang.Number getValue()]".equals(matches.toString());
@@ -524,7 +522,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "addSubLabel", 2)
-                .setInvokerType("org.jfree.chart.axis.ExtendedCategoryAxis")
+                .setInvokerClassName("org.jfree.chart.axis.ExtendedCategoryAxis")
                 .setArgumentType(0, "java.lang.String")
                 .setArgumentType(1, "java.lang.String")
                 .getMethodList();
@@ -552,7 +550,7 @@ public class JFreeChartTests {
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports,
                 "Color", 3)
-                .setInvokerType("Color")
+                .setInvokerClassName("Color")
                 .setArgumentType(0, "int")
                 .setArgumentType(1, "int")
                 .setArgumentType(2, "int")
@@ -581,7 +579,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "setBasePositiveItemLabelPosition", 1)
-                .setInvokerType("org.jfree.chart.renderer.category.StackedBarRenderer")
+                .setInvokerClassName("org.jfree.chart.renderer.category.StackedBarRenderer")
                 .setArgumentType(0, "org.jfree.chart.labels.ItemLabelPosition")
                 .getMethodList();
 
@@ -600,7 +598,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "equals", 1)
-                .setInvokerType("org.jfree.data.xy.YIntervalSeries")
+                .setInvokerClassName("org.jfree.data.xy.YIntervalSeries")
                 .setArgumentType(0, "org.jfree.data.xy.YIntervalSeries")
                 .getMethodList();
 
@@ -623,7 +621,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "addAttribute", 2)
-                .setInvokerType("java.text.AttributedString")
+                .setInvokerClassName("java.text.AttributedString")
                 .setArgumentType(0,"java.awt.font.TextAttribute")
                 .setArgumentType(1, "java.awt.Font")
                 .getMethodList();
@@ -669,7 +667,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "add", 2)
-                .setInvokerType("org.jfree.data.xy.YIntervalSeries")
+                .setInvokerClassName("org.jfree.data.xy.YIntervalSeries")
                 .setSuperInvoker(true)
                 .setArgumentType(0, "org.jfree.data.xy.YIntervalDataItem")
                 .setArgumentType(1, "boolean")
@@ -693,7 +691,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "DefaultIntervalCategoryDataset", 4)
-                .setInvokerType("org.jfree.data.category.DefaultIntervalCategoryDataset")
+                .setInvokerClassName("org.jfree.data.category.DefaultIntervalCategoryDataset")
                 .setArgumentType(0, "null")
                 .setArgumentType(1, "null")
                 .setArgumentType(2, "java.lang.Number[][]")
@@ -718,7 +716,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "hashCode", 2)
-                .setInvokerType("org.jfree.chart.HashUtilities")
+                .setInvokerClassName("org.jfree.chart.HashUtilities")
                 .setArgumentType(0, "int")
                 .setArgumentType(1, "java.awt.Color")
                 .getMethodList();
@@ -766,7 +764,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "getConstructor", 2)
-                .setInvokerType("java.lang.Class")
+                .setInvokerClassName("java.lang.Class")
                 .setArgumentType(0, "java.lang.Class")
                 .setArgumentType(1, "java.lang.Class")
                 .getMethodList();
@@ -793,7 +791,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance().new Criteria(jarInformationSet1, javaVersion, imports,
                 "newInstance", 2)
-                .setInvokerType("java.lang.reflect.Constructor")
+                .setInvokerClassName("java.lang.reflect.Constructor")
                 .setArgumentType(0, "int")
                 .setArgumentType(1, "int")
                 .getMethodList();
@@ -842,7 +840,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "setBaseShape", 1)
-                .setInvokerType("org.jfree.chart.renderer.xy.XYShapeRenderer")
+                .setInvokerClassName("org.jfree.chart.renderer.xy.XYShapeRenderer")
                 .setArgumentType(0, "java.awt.geom.Ellipse2D.Double")
                 .getMethodList();
 
@@ -872,7 +870,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "moveTo", 2)
-                .setInvokerType("java.awt.geom.GeneralPath")
+                .setInvokerClassName("java.awt.geom.GeneralPath")
                 .setArgumentType(0, "float")
                 .setArgumentType(1, "float")
                 .getMethodList();
@@ -917,7 +915,7 @@ public class JFreeChartTests {
 
         List<MethodInfo> matches = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(jarInformationSet1, javaVersion, imports, "seriesNameListFromDataArray", 1)
-                .setInvokerType("org.jfree.data.xy.DefaultWindDataset")
+                .setInvokerClassName("org.jfree.data.xy.DefaultWindDataset")
                 .setArgumentType(0, "java.lang.Object[][][]")
                 .getMethodList();
 

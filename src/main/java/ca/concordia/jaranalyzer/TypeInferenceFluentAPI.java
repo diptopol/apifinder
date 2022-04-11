@@ -53,7 +53,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
     /**
      * The process of checking classes for specific method will happen in below steps.<br><br>
      *
-     * <strong>Step 0</strong>: If we can resolve qualified caller class name, we will use caller class to resolve method
+     * <strong>Step 0</strong>: If we can resolve qualified invoker class name, we will use caller class to resolve method
      * info.<br>
      *
      * <strong>Step 1</strong>: All the classes who are directly mentioned in the import statement will be checked,
@@ -79,10 +79,10 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         Set<String> importedClassQNameSet = getImportedQNameList(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
-        String previousCallerClass = criteria.getCallerClassName();
+        String previousInvokerClassName = criteria.getInvokerClassName();
 
-        criteria.setInvokerType(
-                resolveQNameForClass(criteria.getCallerClassName(), criteria.getOwningClassInfo(), jarVertexIds, importedClassQNameSet,
+        criteria.setInvokerClassName(
+                resolveQNameForClass(criteria.getInvokerClassName(), criteria.getOwningClassInfo(), jarVertexIds, importedClassQNameSet,
                         packageNameList, tinkerGraph));
         resolveQNameForArgumentTypes(criteria, jarVertexIds, importedClassQNameSet, packageNameList);
 
@@ -91,13 +91,13 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         /*
           STEP 0
          */
-        String callerClassName = criteria.getCallerClassName();
-        if (callerClassName != null && StringUtils.countMatches(callerClassName, ".") >= 1) {
-            callerClassName = callerClassName.replace("$", ".");
-            List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousCallerClass, jarVertexIds,
+        String invokerClassName = criteria.getInvokerClassName();
+        if (invokerClassName != null && StringUtils.countMatches(invokerClassName, ".") >= 1) {
+            invokerClassName = invokerClassName.replace("$", ".");
+            List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousInvokerClassName, jarVertexIds,
                     importedClassQNameSet, packageNameList, tinkerGraph, criteria.getOwningClassInfo());
             Set<String> classQNameList = classInfoList.isEmpty()
-                    ? Collections.singleton(callerClassName)
+                    ? Collections.singleton(invokerClassName)
                     : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
 
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
@@ -224,9 +224,9 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         populateClassInfo(methodInfoList, tinkerGraph);
-        modifyMethodInfoForArray(methodInfoList, criteria.getCallerClassName());
-        methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getCallerClassName(),
-                criteria.isSuperOfCallerClass, jarVertexIds, tinkerGraph);
+        modifyMethodInfoForArray(methodInfoList, criteria.getInvokerClassName());
+        methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getInvokerClassName(),
+                criteria.isSuperInvoker, jarVertexIds, tinkerGraph);
 
         methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
 
@@ -305,9 +305,9 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private List<String> importList;
         private String methodName;
         private int numberOfParameters;
-        private String callerClassName;
+        private String invokerClassName;
         private OwningClassInfo owningClassInfo;
-        private boolean isSuperOfCallerClass;
+        private boolean isSuperInvoker;
         private Map<Integer, String> argumentTypeMap;
 
         private Set<Artifact> getDependentArtifactSet() {
@@ -330,8 +330,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return numberOfParameters;
         }
 
-        private String getCallerClassName() {
-            return callerClassName;
+        private String getInvokerClassName() {
+            return invokerClassName;
         }
 
         public OwningClassInfo getOwningClassInfo() {
@@ -342,8 +342,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return Objects.nonNull(owningClassInfo) ? owningClassInfo.getOwningQualifiedClassName() : null;
         }
 
-        private boolean isSuperOfCallerClass() {
-            return isSuperOfCallerClass;
+        private boolean isSuperInvoker() {
+            return isSuperInvoker;
         }
 
         private List<Tuple2<Integer, String>> getArgumentTypeWithIndexList() {
@@ -378,14 +378,14 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             this.argumentTypeMap = new HashMap<>();
         }
 
-        public Criteria setInvokerType(String callerClassName) {
-            this.callerClassName = callerClassName;
+        public Criteria setInvokerClassName(String invokerClassName) {
+            this.invokerClassName = invokerClassName;
 
             return this;
         }
 
-        public Criteria setSuperInvoker(boolean isSuperOfCallerClass) {
-            this.isSuperOfCallerClass = isSuperOfCallerClass;
+        public Criteria setSuperInvoker(boolean isSuperInvoker) {
+            this.isSuperInvoker = isSuperInvoker;
 
             return this;
         }
