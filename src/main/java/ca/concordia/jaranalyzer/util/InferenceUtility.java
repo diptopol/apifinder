@@ -59,16 +59,6 @@ public class InferenceUtility {
         List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
 
-        BodyDeclaration bodyDeclaration =
-                (BodyDeclaration) InferenceUtility.getClosestASTNode(methodInvocation,
-                        BodyDeclaration.class);
-
-        String className = InferenceUtility.getDeclaringClassQualifiedName(bodyDeclaration);
-
-        boolean isStaticImport = importStatementList.stream()
-                .anyMatch(importStatement -> importStatement.startsWith("import static")
-                        && importStatement.endsWith(methodName));
-
         Expression expression = methodInvocation.getExpression();
 
         TypeInfo invokerClassTypeInfo = null;

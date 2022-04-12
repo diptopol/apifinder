@@ -24,7 +24,7 @@ public class ImportObject {
         stringBuilder.append("import ");
 
         if (isStatic) {
-            stringBuilder.append(" static ");
+            stringBuilder.append("static ");
         }
 
         stringBuilder.append(this.importName);
