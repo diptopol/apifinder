@@ -56,16 +56,19 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
      * <strong>Step 0</strong>: If we can resolve qualified invoker class name, we will use caller class to resolve method
      * info.<br>
      *
-     * <strong>Step 1</strong>: All the classes who are directly mentioned in the import statement will be checked,
+     * <strong>Step 1</strong>: If invokerClass is null, and we have owningClassInfo, then we can check the owning class
+     * hierarchy to resolve the method info.<br>
+     *
+     * <strong>Step 2</strong>: All the classes who are directly mentioned in the import statement will be checked,
      * if method found it will be returned.<br>
      *
-     * <strong>Step 2</strong>: All the inner classes of classes who are directly mentioned in the import statement will
+     * <strong>Step 3</strong>: All the inner classes of classes who are directly mentioned in the import statement will
      * be checked, if method found it will be returned.<br>
      *
-     * <strong>Step 3</strong>: All the classes under on-demand package import will be searched, if method found
+     * <strong>Step 4</strong>: All the classes under on-demand package import will be searched, if method found
      * it will be returned.<br>
      *
-     * <strong>Step 4</strong>: Recursively look for super classes and interfaces from all the import classes (on demand and normal)
+     * <strong>Step 5</strong>: Recursively look for super classes and interfaces from all the import classes (on demand and normal)
      * if in any step method is found it will be returned, otherwise recursion will happen until java.lang.Object is
      * reached, then if no method is found an empty list will be returned.<br>
      */
@@ -131,6 +134,39 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         /*
           STEP 1
          */
+        if (Objects.isNull(criteria.getInvokerClassName()) && Objects.nonNull(criteria.getOwningClassInfo())) {
+            Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+
+            for (Set<String> classQNameSet : criteria.getOwningClassInfo().getQualifiedClassNameSetInHierarchy()) {
+                qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
+                        jarVertexIds, classQNameSet, tinkerGraph);
+
+                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+
+                if (!qualifiedMethodInfoList.isEmpty()
+                        && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
+                    deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
+                    qualifiedMethodInfoList.clear();
+                }
+
+                if (!qualifiedMethodInfoList.isEmpty()) {
+                    return qualifiedMethodInfoList;
+                }
+            }
+
+            if (!deferredQualifiedMethodInfoSet.isEmpty()) {
+                deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
+                qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
+            }
+
+            if (!qualifiedMethodInfoList.isEmpty()) {
+                return qualifiedMethodInfoList;
+            }
+        }
+
+        /*
+          STEP 2
+         */
         qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
 
@@ -149,7 +185,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 2
+          STEP 3
          */
         qualifiedMethodInfoList = getQualifiedMethodInfoListForInnerClass(methodName, criteria.getNumberOfParameters(),
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
@@ -167,7 +203,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 3
+          STEP 4
          */
         qualifiedMethodInfoList = getQualifiedMethodInfoListForPackageImport(methodName, criteria.getNumberOfParameters(),
                 packageNameList, importedClassQNameSet, jarVertexIds, tinkerGraph);
@@ -185,7 +221,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 4
+          STEP 5
          */
         Set<String> classQNameList = new HashSet<>(importedClassQNameSet);
 
