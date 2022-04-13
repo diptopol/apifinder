@@ -166,14 +166,6 @@ public abstract class TypeInferenceBase {
                 }
             }
 
-            if (filteredListByInvokerClassName.size() > 1) {
-                int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(filteredListByInvokerClassName);
-
-                filteredListByInvokerClassName = filteredListByInvokerClassName.stream()
-                        .filter(m -> m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)
-                        .collect(Collectors.toList());
-            }
-
             return filteredListByInvokerClassName;
         } else {
             return methodInfoList;
