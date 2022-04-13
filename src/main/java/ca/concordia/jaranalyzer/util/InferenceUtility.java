@@ -1029,12 +1029,12 @@ public class InferenceUtility {
                     }
                 }
                 /*
-                 * When invoker is Qualified type but method has formal type parameter.
+                 * When invoker is Qualified type or null (e.g., superMethodInvocation) but method has formal type parameter.
                  *
                  * We can infer from argument type or use base type
                  *
                  */
-            } else if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isQualifiedTypeInfo()) {
+            } else if ((Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isQualifiedTypeInfo()) || Objects.isNull(invokerTypeInfo)) {
                 List<TypeInfo> methodArgumentTypeInfoList = methodInfo.getArgumentTypeInfoList();
 
                 Map<String, TypeInfo> inferredFormalTypeParameterValueMap = getInferredFormalTypeParameterMap(methodInfo, argumentTypeInfoList);

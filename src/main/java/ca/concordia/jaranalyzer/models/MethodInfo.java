@@ -12,6 +12,7 @@ import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MethodInfo {
 
@@ -242,6 +243,7 @@ public class MethodInfo {
 
     public void setClassInfo(ClassInfo classInfo) {
         this.classInfo = classInfo;
+        updateFormalTypeParameterBaseType();
     }
 
     public String getQualifiedClassName() {
@@ -468,6 +470,39 @@ public class MethodInfo {
                 return new PrimitiveTypeInfo(type.getClassName());
             } else {
                 return new QualifiedTypeInfo(type.getClassName());
+            }
+        }
+    }
+
+    private void updateFormalTypeParameterBaseType() {
+        if (Objects.nonNull(this.classInfo)) {
+            TypeInfo classTypeInfo = this.classInfo.getTypeInfo();
+
+            if (classTypeInfo.isParameterizedTypeInfo()) {
+                ParameterizedTypeInfo parameterizedClassTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
+                List<TypeInfo> typeArgumentList = parameterizedClassTypeInfo.getTypeArgumentList();
+
+                Map<String, TypeInfo> formalTypeParameterMap = typeArgumentList.stream()
+                        .filter(TypeInfo::isFormalTypeParameterInfo)
+                        .map(t -> (FormalTypeParameterInfo) t)
+                        .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
+                                FormalTypeParameterInfo::getBaseTypeInfo));
+
+                for (TypeInfo argument: this.argumentTypeInfoList) {
+                    if (argument.isFormalTypeParameterInfo()
+                            && formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) argument).getTypeParameter())) {
+
+                        FormalTypeParameterInfo argumentFormalTypeParameterInfo = (FormalTypeParameterInfo) argument;
+                        argumentFormalTypeParameterInfo.setBaseTypeInfo(formalTypeParameterMap.get(argumentFormalTypeParameterInfo.getTypeParameter()));
+                    }
+                }
+
+                if (this.returnTypeInfo.isFormalTypeParameterInfo()
+                        && formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) this.returnTypeInfo).getTypeParameter())) {
+
+                    FormalTypeParameterInfo formalReturnTypeParameterInfo = (FormalTypeParameterInfo) this.returnTypeInfo;
+                    formalReturnTypeParameterInfo.setBaseTypeInfo(formalTypeParameterMap.get(formalReturnTypeParameterInfo.getTypeParameter()));
+                }
             }
         }
     }

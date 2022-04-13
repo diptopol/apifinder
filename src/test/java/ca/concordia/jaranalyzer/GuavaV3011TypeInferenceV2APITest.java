@@ -4,10 +4,7 @@ import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jgit.api.Git;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -167,6 +164,26 @@ public class GuavaV3011TypeInferenceV2APITest {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("java.lang.Object::public boolean equals(java.lang.Object)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testSuperMethodInvocationWithFormalTypeMethodArguments() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ImmutableSortedMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(SuperMethodInvocation superMethodInvocation) {
+                if (superMethodInvocation.toString().startsWith("super.put(key,value)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superMethodInvocation);
+
+                    assert ("com.google.common.collect.ImmutableMap.Builder" +
+                            "::public com.google.common.collect.ImmutableMap.Builder put(K, V)").equals(methodInfo.toString());
                 }
 
                 return true;
