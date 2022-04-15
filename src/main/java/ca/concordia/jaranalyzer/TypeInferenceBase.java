@@ -485,10 +485,12 @@ public abstract class TypeInferenceBase {
     }
 
     static Set<MethodInfo> prioritizeMethodInfoSet(Set<MethodInfo> methodInfoSet) {
-        double minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoSet);
-        int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(methodInfoSet);
+        methodInfoSet = filteredNonAbstractMethod(methodInfoSet);
 
         if (methodInfoSet.size() > 1) {
+            double minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoSet);
+            int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(methodInfoSet);
+
             if (minimumArgumentMatchingDistance == 0
                     && !methodInfoSet.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
                 methodInfoSet = methodInfoSet.stream()
@@ -500,8 +502,6 @@ public abstract class TypeInferenceBase {
                                 && m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)
                         .collect(Collectors.toSet());
             }
-
-            methodInfoSet = filteredNonAbstractMethod(methodInfoSet);
         }
 
         return methodInfoSet;
