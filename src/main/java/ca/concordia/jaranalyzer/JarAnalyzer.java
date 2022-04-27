@@ -200,33 +200,13 @@ public class JarAnalyzer {
         ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver(commitId, projectName, git);
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         Set<Artifact> jarArtifactInfoSet = extractor.getDependentArtifactSet();
-
-        Set<Artifact> jarArtifactInfoSetForLoad = jarArtifactInfoSet.stream()
-                .filter(jarArtifactInfo -> !isJarExists(jarArtifactInfo))
-                .collect(Collectors.toSet());
-
-        if (!jarArtifactInfoSetForLoad.isEmpty()) {
-            Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(jarArtifactInfoSet);
-            toGraph(jarInfoSet);
-            storeClassStructureGraph();
-        }
+        storeArtifactSet(jarArtifactInfoSet);
 
         return jarArtifactInfoSet;
     }
 
     public void loadJar(Artifact artifact) {
-        if (!isJarExists(artifact)) {
-            Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifact);
-
-            Set<JarInfo> jarInfoSetForLoad = jarInfoSet.stream()
-                    .filter(jarInfo -> !isJarExists(jarInfo.getArtifact()))
-                    .collect(Collectors.toSet());
-
-            if (!jarInfoSetForLoad.isEmpty()) {
-                toGraph(jarInfoSetForLoad);
-                storeClassStructureGraph();
-            }
-        }
+        storeArtifactSet(Collections.singleton(artifact));
     }
 
     public void storeClassStructureGraph() {
@@ -259,7 +239,7 @@ public class JarAnalyzer {
                     Path path = Paths.get(jarLocation);
                     if (Files.exists(path)) {
                         JarFile jarFile = new JarFile(new File(jarLocation));
-                        JarInfo jarInfo = new JarInfo(path.getFileName().toString(),"Java", javaVersion, jarFile);
+                        JarInfo jarInfo = new JarInfo(path.getFileName().toString(), "Java", javaVersion, jarFile);
 
                         toGraph(jarInfo);
                     }
@@ -267,6 +247,22 @@ public class JarAnalyzer {
                     logger.error("Could not open the JAR", e);
                 }
             }
+        }
+    }
+
+    private void storeArtifactSet(Set<Artifact> artifactSet) {
+        artifactSet = artifactSet.stream()
+                .filter(artifact -> !isJarExists(artifact))
+                .collect(Collectors.toSet());
+
+        Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifactSet);
+        jarInfoSet = jarInfoSet.stream()
+                .filter(jarInfo -> !isJarExists(jarInfo.getArtifact()))
+                .collect(Collectors.toSet());
+
+        if (!jarInfoSet.isEmpty()) {
+            toGraph(jarInfoSet);
+            storeClassStructureGraph();
         }
     }
 
