@@ -79,7 +79,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         List<MethodInfo> qualifiedMethodInfoList = new ArrayList<>();
 
-        Set<String> importedClassQNameSet = getImportedQNameList(importList);
+        Set<String> importedClassQNameSet = getImportedQNameSet(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
         String previousInvokerClassName = criteria.getInvokerClassName();
@@ -98,15 +98,15 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         if (invokerClassName != null && StringUtils.countMatches(invokerClassName, ".") > 1) {
             List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousInvokerClassName, jarVertexIds,
                     importedClassQNameSet, packageNameList, tinkerGraph, criteria.getOwningClassInfo());
-            Set<String> classQNameList = classInfoList.isEmpty()
+            Set<String> classQNameSet = classInfoList.isEmpty()
                     ? Collections.singleton(invokerClassName)
                     : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
 
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
-            while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
+            while (!classQNameSet.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
-                        jarVertexIds, classQNameList, tinkerGraph);
+                        jarVertexIds, classQNameSet, tinkerGraph);
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
 
@@ -117,7 +117,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 }
 
                 if (qualifiedMethodInfoList.isEmpty()) {
-                    classQNameList = getSuperClasses(classQNameList, jarVertexIds, tinkerGraph);
+                    classQNameSet = getSuperClasses(classQNameSet, jarVertexIds, tinkerGraph);
                 }
             }
 
@@ -223,13 +223,13 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         /*
           STEP 5
          */
-        Set<String> classQNameList = new HashSet<>(importedClassQNameSet);
+        Set<String> classQNameSet = new HashSet<>(importedClassQNameSet);
 
-        while (!classQNameList.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
-            classQNameList = getSuperClasses(classQNameList, jarVertexIds, tinkerGraph);
+        while (!classQNameSet.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
+            classQNameSet = getSuperClasses(classQNameSet, jarVertexIds, tinkerGraph);
 
             qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(), jarVertexIds,
-                    classQNameList, tinkerGraph);
+                    classQNameSet, tinkerGraph);
 
             qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
 
@@ -310,7 +310,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
     private void resolveQNameForArgumentTypes(Criteria criteria,
                                               Object[] jarVertexIds,
-                                              Set<String> importedClassQNameList,
+                                              Set<String> importedClassQNameSet,
                                               List<String> packageNameList) {
         if (!criteria.getArgumentTypeWithIndexList().isEmpty()) {
             List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList().stream()
@@ -319,11 +319,11 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                         String argumentType = argumentTypeWithIndex._2();
 
                         List<ClassInfo> qualifiedClassInfoList =
-                                resolveQClassInfoForClass(argumentType, jarVertexIds, importedClassQNameList,
+                                resolveQClassInfoForClass(argumentType, jarVertexIds, importedClassQNameSet,
                                         packageNameList, tinkerGraph, criteria.getOwningClassInfo());
 
                         qualifiedClassInfoList = filtrationBasedOnPrioritization(argumentType, criteria.getOwningClassInfo(),
-                                importedClassQNameList, qualifiedClassInfoList);
+                                importedClassQNameSet, qualifiedClassInfoList);
 
                         return qualifiedClassInfoList.isEmpty()
                                 ? argumentTypeWithIndex
