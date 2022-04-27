@@ -484,7 +484,7 @@ public abstract class TypeInferenceBase {
         return qualifiedClassInfoList;
     }
 
-    static Set<MethodInfo> prioritizeMethodInfoSet(Set<MethodInfo> methodInfoSet) {
+    static Set<MethodInfo> prioritizeDeferredMethodInfoSet(Set<MethodInfo> methodInfoSet) {
         methodInfoSet = filteredNonAbstractMethod(methodInfoSet);
 
         if (methodInfoSet.size() > 1) {
@@ -510,7 +510,7 @@ public abstract class TypeInferenceBase {
     static List<MethodInfo> getQualifiedMethodInfoList(String methodName,
                                                        int numberOfParameters,
                                                        Object[] jarVertexIds,
-                                                       Set<String> classQNameList,
+                                                       Set<String> classQNameSet,
                                                        TinkerGraph tinkerGraph) {
 
         String outerClassPrefix = StringUtils.countMatches(methodName, ".") == 1
@@ -524,7 +524,7 @@ public abstract class TypeInferenceBase {
         return tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
-                .has("QName", TextP.within(classQNameList))
+                .has("QName", TextP.within(classQNameSet))
                 .out("Declares")
                 .has("Kind", "Method")
                 .has("Name", methodName)
@@ -584,42 +584,43 @@ public abstract class TypeInferenceBase {
     }
 
 
-    static Set<String> getSuperClasses(Set<String> classQNameList,
+    static Set<String> getSuperClasses(Set<String> classQNameSet,
                                        Object[] jarVertexIds,
                                        TinkerGraph tinkerGraph) {
 
-        if (classQNameList.isEmpty()) {
+        if (classQNameSet.isEmpty()) {
             return Collections.emptySet();
         }
 
         return tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
-                .has("QName", TextP.within(classQNameList))
+                .has("QName", TextP.within(classQNameSet))
                 .out("extends", "implements")
                 .<String>values("Name")
                 .toSet();
     }
 
     static Set<String> getInnerClassQualifiedNameSet(Object[] jarVertexIds,
-                                            Set<String> classQNameList,
+                                            Set<String> classQNameSet,
                                             TinkerGraph tinkerGraph) {
 
-        if (classQNameList.isEmpty()) {
+        if (classQNameSet.isEmpty()) {
             return Collections.emptySet();
         }
 
         return tinkerGraph.traversal().V(jarVertexIds)
                 .out("ContainsPkg").out("Contains")
                 .has("Kind", "Class")
-                .has("QName", TextP.within(classQNameList))
+                .has("QName", TextP.within(classQNameSet))
                 .out("ContainsInnerClass")
                 .<String>values("QName")
                 .toSet();
     }
 
     static Object[] getJarVertexIds(Set<Artifact> artifactSet,
-                                    String javaVersion, TinkerGraph tinkerGraph) {
+                                    String javaVersion,
+                                    TinkerGraph tinkerGraph) {
         Set<Object> jarVertexIdSet = new HashSet<>();
 
         artifactSet.forEach(artifact -> {
@@ -650,7 +651,9 @@ public abstract class TypeInferenceBase {
 
 
     static List<String> getPackageNameList(List<String> importList) {
-        List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
+        List<String> nonImportStaticList = importList.stream()
+                .filter(im -> !im.startsWith("import static"))
+                .collect(Collectors.toList());
 
         return nonImportStaticList.stream()
                 .filter(im -> im.endsWith(".*"))
@@ -660,8 +663,13 @@ public abstract class TypeInferenceBase {
 
     static Set<String> getImportedQNameList(List<String> importList) {
         Set<String> importedClassQNameList = new HashSet<>();
-        List<String> importStaticList = importList.stream().filter(im -> im.startsWith("import static")).collect(Collectors.toList());
-        List<String> nonImportStaticList = importList.stream().filter(im -> !im.startsWith("import static")).collect(Collectors.toList());
+        List<String> importStaticList = importList.stream()
+                .filter(im -> im.startsWith("import static"))
+                .collect(Collectors.toList());
+
+        List<String> nonImportStaticList = importList.stream()
+                .filter(im -> !im.startsWith("import static"))
+                .collect(Collectors.toList());
 
         importedClassQNameList.addAll(
                 nonImportStaticList.stream()

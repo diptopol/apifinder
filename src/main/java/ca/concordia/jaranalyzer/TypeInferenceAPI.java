@@ -128,7 +128,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             }
 
             if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-                deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
+                deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 
@@ -162,7 +162,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             }
 
             if (!deferredQualifiedMethodInfoSet.isEmpty()) {
-                deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
+                deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 
@@ -172,7 +172,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 1
+          STEP 2
          */
         qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters,
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
@@ -193,7 +193,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 2
+          STEP 3
          */
         qualifiedMethodInfoList = getQualifiedMethodInfoListForInnerClass(methodName, numberOfParameters, jarVertexIds,
                 importedClassQNameSet, tinkerGraph);
@@ -212,7 +212,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 3
+          STEP 4
          */
         qualifiedMethodInfoList = getQualifiedMethodInfoListForPackageImport(methodName, numberOfParameters,
                 packageNameList, importedClassQNameSet, jarVertexIds, tinkerGraph);
@@ -232,7 +232,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         /*
-          STEP 4
+          STEP 5
          */
         Set<String> classQNameList = new HashSet<>(importedClassQNameSet);
 
@@ -253,7 +253,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-            deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
+            deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
 
             qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
         }

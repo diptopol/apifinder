@@ -122,7 +122,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             }
 
             if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-                deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
+                deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 
@@ -155,7 +155,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             }
 
             if (!deferredQualifiedMethodInfoSet.isEmpty()) {
-                deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
+                deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 
@@ -241,7 +241,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-            deferredQualifiedMethodInfoSet = prioritizeMethodInfoSet(deferredQualifiedMethodInfoSet);
+            deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
             qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
         }
 
