@@ -5,8 +5,10 @@ import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
+import io.vavr.Tuple2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
+import org.apache.tinkerpop.gremlin.process.traversal.step.util.WithOptions;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.objectweb.asm.Type;
@@ -521,10 +523,13 @@ public abstract class TypeInferenceBase {
                 ? methodName.substring(methodName.indexOf(".") + 1)
                 : methodName;
 
-        return tinkerGraph.traversal().V(jarVertexIds)
-                .out("ContainsPkg").out("Contains")
-                .has("Kind", "Class")
-                .has("QName", TextP.within(classQNameSet))
+        List<Long> classVertexIdList = getQualifiedClassVertexIdList(classQNameSet, jarVertexIds, tinkerGraph);
+
+        if (classVertexIdList.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return tinkerGraph.traversal().V(classVertexIdList.toArray(new Long[0]))
                 .out("Declares")
                 .has("Kind", "Method")
                 .has("Name", methodName)
@@ -815,6 +820,28 @@ public abstract class TypeInferenceBase {
         }
 
         return new OwningClassInfo(qualifiedClassName, qClassNameSetInHierarchy);
+    }
+
+    private static List<Long> getQualifiedClassVertexIdList(Set<String> classQNameSet, Object[] jarVertexIds, TinkerGraph tinkerGraph) {
+        Map<String, Long> classVertexIdMap = tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
+                .has("Kind", "Class")
+                .has("QName", TextP.within(classQNameSet))
+                .valueMap("QName").with(WithOptions.tokens)
+                .toStream()
+                .map(m -> new ArrayList(m.values()))
+                .map(a -> new Tuple2<>((Long) a.get(0), (String) ((ArrayList) a.get(2)).get(0)))
+                .collect(Collectors.toMap(Tuple2::_2, Tuple2::_1));
+
+        List<Long> classVertexIdList = new ArrayList<>();
+
+        for (String classQName: classQNameSet) {
+            if (Objects.nonNull(classVertexIdMap.get(classQName))) {
+                classVertexIdList.add(classVertexIdMap.get(classQName));
+            }
+        }
+
+        return classVertexIdList;
     }
 
     private static boolean filtrationBasedOnCriteria(int numberOfParameters, String outerClassPrefix, MethodInfo methodInfo) {
