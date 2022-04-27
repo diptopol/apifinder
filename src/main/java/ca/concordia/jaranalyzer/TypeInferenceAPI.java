@@ -123,7 +123,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 }
 
                 if (qualifiedMethodInfoList.isEmpty()) {
-                    classQNameSet = getSuperClasses(classQNameSet, jarVertexIds, tinkerGraph);
+                    classQNameSet = getSuperClassQNameSet(classQNameSet, jarVertexIds, tinkerGraph);
                 }
             }
 
@@ -237,7 +237,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         Set<String> classQNameSet = new HashSet<>(importedClassQNameSet);
 
         while (!classQNameSet.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
-            classQNameSet = getSuperClasses(classQNameSet, jarVertexIds, tinkerGraph);
+            classQNameSet = getSuperClassQNameSet(classQNameSet, jarVertexIds, tinkerGraph);
 
             qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, numberOfParameters, jarVertexIds,
                     classQNameSet, tinkerGraph);
@@ -346,7 +346,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarVertexIds, invokerQualifiedClassNameSet);
 
                 if (qualifiedFieldList.isEmpty()) {
-                    invokerQualifiedClassNameSet = getSuperClasses(invokerQualifiedClassNameSet, jarVertexIds, tinkerGraph);
+                    invokerQualifiedClassNameSet = getSuperClassQNameSet(invokerQualifiedClassNameSet, jarVertexIds, tinkerGraph);
                 }
             }
 

@@ -299,7 +299,7 @@ public abstract class TypeInferenceBase {
             int distance = 0;
 
             while (!classNameList.isEmpty()) {
-                classNameList = getSuperClasses(classNameList, jarVertexIds, tinkerGraph);
+                classNameList = getSuperClassQNameSet(classNameList, jarVertexIds, tinkerGraph);
 
                 distance++;
 
@@ -588,22 +588,50 @@ public abstract class TypeInferenceBase {
         return getQualifiedMethodInfoList(methodName, numberOfParameters, jarVertexIds, classNameListForPackgage, tinkerGraph);
     }
 
+    static Map<String, List<String>> getSuperClassQNameMapPerClass(Set<String> classQNameSet,
+                                                                   Object[] jarVertexIds,
+                                                                   TinkerGraph tinkerGraph) {
 
-    static Set<String> getSuperClasses(Set<String> classQNameSet,
-                                       Object[] jarVertexIds,
-                                       TinkerGraph tinkerGraph) {
+        Map<String, List<String>> superClassNameMap = new HashMap<>();
+
+        Map<String, Long> classVertexIdMap = getClassVertexIdMap(classQNameSet, jarVertexIds, tinkerGraph);
+
+        for (String classQName : classQNameSet) {
+            if (classVertexIdMap.containsKey(classQName) && Objects.nonNull(classVertexIdMap.get(classQName))) {
+                Long classVertexId = classVertexIdMap.get(classQName);
+
+                List<String> superClassNameList = tinkerGraph.traversal().V(classVertexId)
+                        .out("extends", "implements")
+                        .order().by("Order")
+                        .<String>values("Name")
+                        .toList();
+
+                superClassNameMap.put(classQName, superClassNameList);
+            }
+        }
+
+        return superClassNameMap;
+    }
+
+    static Set<String> getSuperClassQNameSet(Set<String> classQNameSet,
+                                             Object[] jarVertexIds,
+                                             TinkerGraph tinkerGraph) {
 
         if (classQNameSet.isEmpty()) {
             return Collections.emptySet();
         }
 
-        return tinkerGraph.traversal().V(jarVertexIds)
-                .out("ContainsPkg").out("Contains")
-                .has("Kind", "Class")
-                .has("QName", TextP.within(classQNameSet))
-                .out("extends", "implements")
-                .<String>values("Name")
-                .toSet();
+        Set<String> superClassSet = new LinkedHashSet<>();
+        Map<String, List<String>> superClassQNameMap = getSuperClassQNameMapPerClass(classQNameSet, jarVertexIds,
+                tinkerGraph);
+
+        for (String classQName : classQNameSet) {
+            if (superClassQNameMap.containsKey(classQName)) {
+                superClassSet.addAll(superClassQNameMap.get(classQName));
+            }
+        }
+
+        return superClassSet;
     }
 
     static Set<String> getInnerClassQualifiedNameSet(Object[] jarVertexIds,
@@ -813,7 +841,7 @@ public abstract class TypeInferenceBase {
 
                 qClassNameSetInHierarchy.add(qClassNameSet);
 
-                classNameSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
+                classNameSet = getSuperClassQNameSet(classNameSet, jarVertexIds, tinkerGraph);
             }
         }
 
@@ -821,15 +849,7 @@ public abstract class TypeInferenceBase {
     }
 
     private static List<Long> getQualifiedClassVertexIdList(Set<String> classQNameSet, Object[] jarVertexIds, TinkerGraph tinkerGraph) {
-        Map<String, Long> classVertexIdMap = tinkerGraph.traversal().V(jarVertexIds)
-                .out("ContainsPkg").out("Contains")
-                .has("Kind", "Class")
-                .has("QName", TextP.within(classQNameSet))
-                .valueMap("QName").with(WithOptions.tokens)
-                .toStream()
-                .map(m -> new ArrayList(m.values()))
-                .map(a -> new Tuple2<>((Long) a.get(0), (String) ((ArrayList) a.get(2)).get(0)))
-                .collect(Collectors.toMap(Tuple2::_2, Tuple2::_1));
+        Map<String, Long> classVertexIdMap = getClassVertexIdMap(classQNameSet, jarVertexIds, tinkerGraph);
 
         List<Long> classVertexIdList = new ArrayList<>();
 
@@ -840,6 +860,18 @@ public abstract class TypeInferenceBase {
         }
 
         return classVertexIdList;
+    }
+
+    private static Map<String, Long> getClassVertexIdMap(Set<String> classQNameSet, Object[] jarVertexIds, TinkerGraph tinkerGraph) {
+        return tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
+                .has("Kind", "Class")
+                .has("QName", TextP.within(classQNameSet))
+                .valueMap("QName").with(WithOptions.tokens)
+                .toStream()
+                .map(m -> new ArrayList(m.values()))
+                .map(a -> new Tuple2<>((Long) a.get(0), (String) ((ArrayList) a.get(2)).get(0)))
+                .collect(Collectors.toMap(Tuple2::_2, Tuple2::_1));
     }
 
     private static boolean filtrationBasedOnCriteria(int numberOfParameters, String outerClassPrefix, MethodInfo methodInfo) {
@@ -946,7 +978,7 @@ public abstract class TypeInferenceBase {
             boolean matched = false;
 
             while (!classNameSet.isEmpty()) {
-                classNameSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
+                classNameSet = getSuperClassQNameSet(classNameSet, jarVertexIds, tinkerGraph);
 
                 if (classNameSet.contains(methodArgumentTypeName)) {
                     matched = true;

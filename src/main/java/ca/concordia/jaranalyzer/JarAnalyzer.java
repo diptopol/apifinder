@@ -98,10 +98,12 @@ public class JarAnalyzer {
 
                 graphTraversalSource.addE("Contains").from(pkg).to(cls).iterate();
 
+                int superClassOrder = 0;
                 if (!c.getSuperClassName().isEmpty()) {
                     Vertex superClass = graphTraversalSource.addV()
                             .property("Kind", "SuperClass")
                             .property("Name", c.getSuperClassName())
+                            .property("Order", superClassOrder++)
                             .next();
 
                     graphTraversalSource.addE("extends").from(cls).to(superClass).iterate();
@@ -109,14 +111,15 @@ public class JarAnalyzer {
 
                 innerClassQNameMap.put(cls.id(), c.getInnerClassNameList());
 
-                c.getSuperInterfaceNames()
-                        .forEach(e -> {
-                            Vertex superInterface = graphTraversalSource.addV()
-                                    .property("Kind", "SuperInterface")
-                                    .property("Name", e).next();
+                for (String superInterfaceName: c.getSuperInterfaceNames()) {
+                    Vertex superInterface = graphTraversalSource.addV()
+                            .property("Kind", "SuperInterface")
+                            .property("Name", superInterfaceName)
+                            .property("Order", superClassOrder++)
+                            .next();
 
-                            graphTraversalSource.addE("implements").from(cls).to(superInterface).iterate();
-                        });
+                    graphTraversalSource.addE("implements").from(cls).to(superInterface).iterate();
+                }
 
                 c.getMethods()
                         .forEach(m -> {
