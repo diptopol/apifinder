@@ -706,14 +706,12 @@ public abstract class TypeInferenceBase {
         }
 
         /*
-          For fully qualified method expression, We are extracting fully qualified class name as import and method name
+          For fully qualified method expression (method name should have dot more than 1), We are extracting fully
+          qualified class name as import and method name
          */
-        if (methodName.contains(".")) {
+        if (StringUtils.countMatches(methodName, ".") > 1) {
             importedClassQNameSet.add(methodName);
-
-            if (StringUtils.countMatches(methodName, ".") > 1) {
-                methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
-            }
+            methodName = methodName.substring(methodName.lastIndexOf(".") + 1);
         }
 
         return methodName;
