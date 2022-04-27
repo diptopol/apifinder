@@ -84,8 +84,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         Set<String> importedClassQNameSet = getImportedQNameList(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
-        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
-                getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName, tinkerGraph));
+        OwningClassInfo owningClassInfo = getOwningClassInfo(dependentArtifactSet, javaVersion,
+                owningClassQualifiedName, tinkerGraph);
 
         List<MethodInfo> qualifiedMethodInfoList = new ArrayList<>();
 
@@ -266,10 +266,10 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
     }
 
-    public static List<Set<String>> getAllQClassNameSetInHierarchy(Set<Artifact> dependentArtifactSet,
-                                                             String javaVersion,
-                                                             String className) {
-        return getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, className, tinkerGraph);
+    public static OwningClassInfo getOwningClassInfo(Set<Artifact> dependentArtifactSet,
+                                                     String javaVersion,
+                                                     String className) {
+        return getOwningClassInfo(dependentArtifactSet, javaVersion, className, tinkerGraph);
     }
 
     public static List<ClassInfo> getAllTypes(Set<Artifact> dependentArtifactSet,

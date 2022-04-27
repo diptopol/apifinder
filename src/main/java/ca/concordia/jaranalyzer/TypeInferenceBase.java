@@ -783,30 +783,30 @@ public abstract class TypeInferenceBase {
         }
     }
 
-    static List<Set<String>> getAllQClassNameSetInHierarchy(Set<Artifact> dependentArtifactSet,
-                                                      String javaVersion,
-                                                      String qualifiedClassName,
-                                                      TinkerGraph tinkerGraph) {
-        if (Objects.isNull(qualifiedClassName) || StringUtils.countMatches(qualifiedClassName, ".") <= 1) {
-            return Collections.emptyList();
-        }
-
-        Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
+    static OwningClassInfo getOwningClassInfo(Set<Artifact> dependentArtifactSet,
+                                              String javaVersion,
+                                              String qualifiedClassName,
+                                              TinkerGraph tinkerGraph) {
 
         List<Set<String>> qClassNameSetInHierarchy = new ArrayList<>();
-        Set<String> classNameSet = Collections.singleton(qualifiedClassName);
 
-        while (!classNameSet.isEmpty()) {
-            Set<String> qClassNameSet = new HashSet<>();
-            qClassNameSet.addAll(classNameSet);
-            qClassNameSet.addAll(getInnerClassQualifiedNameSet(jarVertexIds, classNameSet, tinkerGraph));
+        if (Objects.nonNull(qualifiedClassName) && StringUtils.countMatches(qualifiedClassName, ".") > 1) {
+            Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
 
-            qClassNameSetInHierarchy.add(qClassNameSet);
+            Set<String> classNameSet = Collections.singleton(qualifiedClassName);
 
-            classNameSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
+            while (!classNameSet.isEmpty()) {
+                Set<String> qClassNameSet = new HashSet<>();
+                qClassNameSet.addAll(classNameSet);
+                qClassNameSet.addAll(getInnerClassQualifiedNameSet(jarVertexIds, classNameSet, tinkerGraph));
+
+                qClassNameSetInHierarchy.add(qClassNameSet);
+
+                classNameSet = getSuperClasses(classNameSet, jarVertexIds, tinkerGraph);
+            }
         }
 
-        return qClassNameSetInHierarchy;
+        return new OwningClassInfo(qualifiedClassName, qClassNameSetInHierarchy);
     }
 
     private static boolean filtrationBasedOnCriteria(int numberOfParameters, String outerClassPrefix, MethodInfo methodInfo) {

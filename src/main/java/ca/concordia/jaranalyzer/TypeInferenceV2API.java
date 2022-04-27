@@ -29,8 +29,8 @@ public class TypeInferenceV2API {
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
-                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                owningClassQualifiedName);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -52,8 +52,8 @@ public class TypeInferenceV2API {
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
-                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                owningClassQualifiedName);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -75,8 +75,8 @@ public class TypeInferenceV2API {
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
-                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                owningClassQualifiedName);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -98,8 +98,8 @@ public class TypeInferenceV2API {
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
-                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                owningClassQualifiedName);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -154,8 +154,8 @@ public class TypeInferenceV2API {
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
-                TypeInferenceAPI.getAllQClassNameSetInHierarchy(dependentArtifactSet, javaVersion, owningClassQualifiedName));
+        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                owningClassQualifiedName);
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion,

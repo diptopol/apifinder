@@ -426,9 +426,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         public Criteria setOwningClassQualifiedName(String owningClassQualifiedName) {
-            this.owningClassInfo = new OwningClassInfo(owningClassQualifiedName,
-                    getAllQClassNameSetInHierarchy(this.dependentArtifactSet, this.javaVersion,
-                            owningClassQualifiedName, tinkerGraph));
+            this.owningClassInfo = TypeInferenceFluentAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                    owningClassQualifiedName, tinkerGraph);
 
             return this;
         }
