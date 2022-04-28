@@ -13,10 +13,15 @@ public class OwningClassInfo {
 
     private final String owningQualifiedClassName;
     private final List<Set<String>> qualifiedClassNameSetInHierarchy;
+    private List<String> classQNameDeclarationOrderList;
 
-    public OwningClassInfo(String owningQualifiedClassName, List<Set<String>> qualifiedClassNameSetInHierarchy) {
+    public OwningClassInfo(String owningQualifiedClassName,
+                           List<Set<String>> qualifiedClassNameSetInHierarchy,
+                           List<String> qualifiedClassQNameDeclarationList) {
+
         this.owningQualifiedClassName = owningQualifiedClassName;
         this.qualifiedClassNameSetInHierarchy = qualifiedClassNameSetInHierarchy;
+        this.classQNameDeclarationOrderList = qualifiedClassQNameDeclarationList;
     }
 
     public String getOwningQualifiedClassName() {
@@ -25,6 +30,10 @@ public class OwningClassInfo {
 
     public List<Set<String>> getQualifiedClassNameSetInHierarchy() {
         return qualifiedClassNameSetInHierarchy;
+    }
+
+    public List<String> getClassQNameDeclarationOrderList() {
+        return classQNameDeclarationOrderList;
     }
 
     public Set<String> getAvailableQualifiedClassNameSet() {

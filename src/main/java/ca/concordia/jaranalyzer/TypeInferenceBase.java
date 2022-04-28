@@ -487,23 +487,42 @@ public abstract class TypeInferenceBase {
     }
 
     static Set<MethodInfo> prioritizeDeferredMethodInfoSet(Set<MethodInfo> methodInfoSet) {
-        methodInfoSet = filteredNonAbstractMethod(methodInfoSet);
+        double minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoSet);
 
-        if (methodInfoSet.size() > 1) {
-            double minimumArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoSet);
-            int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(methodInfoSet);
+        if (methodInfoSet.size() > 1
+                && minimumArgumentMatchingDistance == 0
+                && !methodInfoSet.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
 
-            if (minimumArgumentMatchingDistance == 0
-                    && !methodInfoSet.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
-                methodInfoSet = methodInfoSet.stream()
-                        .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance)
-                        .collect(Collectors.toSet());
-            } else {
-                methodInfoSet = methodInfoSet.stream()
-                        .filter(m -> m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance
-                                && m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)
-                        .collect(Collectors.toSet());
+            Set<MethodInfo> filteredMethodInfoSet = new LinkedHashSet<>();
+
+            for (MethodInfo methodInfo: methodInfoSet) {
+                if (methodInfo.getArgumentMatchingDistance() == minimumArgumentMatchingDistance) {
+                    filteredMethodInfoSet.add(methodInfo);
+                }
             }
+
+            methodInfoSet = filteredMethodInfoSet;
+        }
+
+        int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(methodInfoSet);
+
+        if (methodInfoSet.size() > 1
+                && !methodInfoSet.stream().allMatch(m -> m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)) {
+            Set<MethodInfo> filteredMethodInfoSet = new LinkedHashSet<>();
+
+            for (MethodInfo methodInfo: methodInfoSet) {
+                if (methodInfo.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance) {
+                    filteredMethodInfoSet.add(methodInfo);
+                }
+            }
+
+            methodInfoSet = filteredMethodInfoSet;
+        }
+
+        if (methodInfoSet.size() > 1 && methodInfoSet.stream()
+                .allMatch(m -> m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance
+                        && m.getArgumentMatchingDistance() == minimumArgumentMatchingDistance)) {
+            methodInfoSet = Collections.singleton(methodInfoSet.iterator().next());
         }
 
         return methodInfoSet;
@@ -828,24 +847,84 @@ public abstract class TypeInferenceBase {
                                               TinkerGraph tinkerGraph) {
 
         List<Set<String>> qClassNameSetInHierarchy = new ArrayList<>();
+        List<String> classQNameDeclarationOrderList = new ArrayList<>();
 
         if (Objects.nonNull(qualifiedClassName) && StringUtils.countMatches(qualifiedClassName, ".") > 1) {
             Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
 
-            Set<String> classNameSet = Collections.singleton(qualifiedClassName);
+            Set<String> classQNameSet = new LinkedHashSet<>(List.of(qualifiedClassName));
 
-            while (!classNameSet.isEmpty()) {
+            classQNameDeclarationOrderList.addAll(classQNameSet);
+
+            while (!classQNameSet.isEmpty()) {
                 Set<String> qClassNameSet = new HashSet<>();
-                qClassNameSet.addAll(classNameSet);
-                qClassNameSet.addAll(getInnerClassQualifiedNameSet(jarVertexIds, classNameSet, tinkerGraph));
+                qClassNameSet.addAll(classQNameSet);
+                qClassNameSet.addAll(getInnerClassQualifiedNameSet(jarVertexIds, classQNameSet, tinkerGraph));
 
                 qClassNameSetInHierarchy.add(qClassNameSet);
 
-                classNameSet = getSuperClassQNameSet(classNameSet, jarVertexIds, tinkerGraph);
+                Map<String, List<String>> superClassQNameMap =
+                        getSuperClassQNameMapPerClass(classQNameSet, jarVertexIds, tinkerGraph);
+                insertSuperClassQNamePreservingDeclarationOrder(superClassQNameMap, classQNameSet,
+                        classQNameDeclarationOrderList);
+
+                classQNameSet = getOrderedSuperClassQNameSet(superClassQNameMap, classQNameSet);
             }
         }
 
-        return new OwningClassInfo(qualifiedClassName, qClassNameSetInHierarchy);
+        return new OwningClassInfo(qualifiedClassName, qClassNameSetInHierarchy,
+                getUniqueClassQNameList(classQNameDeclarationOrderList));
+    }
+
+    static List<String> getUniqueClassQNameList(List<String> classQNameList) {
+        return new ArrayList<>(new LinkedHashSet<>(classQNameList));
+    }
+
+    static void insertSuperClassQNamePreservingDeclarationOrder(Map<String, List<String>> superClassQNameMap,
+                                                                Set<String> classQNameSet,
+                                                                List<String> classQNameDeclarationOrderList) {
+
+        assert classQNameSet instanceof LinkedHashSet;
+
+        for (String classQName: classQNameSet) {
+            if (superClassQNameMap.containsKey(classQName)
+                    && classQNameDeclarationOrderList.contains(classQName)) {
+
+                List<String> superClassQNameList = superClassQNameMap.get(classQName);
+                int insertionIndex = classQNameDeclarationOrderList.indexOf(classQName) + 1;
+
+                if (insertionIndex < classQNameDeclarationOrderList.size()) {
+                    for (String superClassQName: superClassQNameList) {
+                        classQNameDeclarationOrderList.add(insertionIndex, superClassQName);
+                        insertionIndex++;
+                    }
+
+                } else {
+                    classQNameDeclarationOrderList.addAll(superClassQNameList);
+                }
+            }
+        }
+    }
+
+    static Set<MethodInfo> getOrderedDeferredMethodInfoSetBasedOnDeclarationOrder(Set<MethodInfo> deferredQualifiedMethodInfoSet,
+                                                                                  List<String> classQNameDeclarationOrderList) {
+        List<MethodInfo> orderedDeferredMethodInfoList = new ArrayList<>(deferredQualifiedMethodInfoSet);
+        orderedDeferredMethodInfoList.sort(Comparator.comparingInt(m ->
+                classQNameDeclarationOrderList.indexOf(m.getQualifiedClassName())));
+
+        return new LinkedHashSet<>(orderedDeferredMethodInfoList);
+    }
+
+    private static Set<String> getOrderedSuperClassQNameSet(Map<String, List<String>> superClassQNameMap, Set<String> classQNameSet) {
+        Set<String> superClassQNameSet = new LinkedHashSet<>();
+
+        for (String classQName: classQNameSet) {
+            if (superClassQNameMap.containsKey(classQName)) {
+                superClassQNameSet.addAll(superClassQNameMap.get(classQName));
+            }
+        }
+
+        return superClassQNameSet;
     }
 
     private static List<Long> getQualifiedClassVertexIdList(Set<String> classQNameSet, Object[] jarVertexIds, TinkerGraph tinkerGraph) {

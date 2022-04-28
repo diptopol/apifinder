@@ -99,10 +99,11 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousInvokerClassName, jarVertexIds,
                     importedClassQNameSet, packageNameList, tinkerGraph, criteria.getOwningClassInfo());
             Set<String> classQNameSet = classInfoList.isEmpty()
-                    ? Collections.singleton(invokerClassName)
-                    : classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toSet());
+                    ? new LinkedHashSet<>(List.of(invokerClassName))
+                    : new LinkedHashSet<>(classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toList()));
 
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+            List<String> classQNameDeclarationOrderList = new ArrayList<>(classQNameSet);
 
             while (!classQNameSet.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
@@ -117,12 +118,22 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 }
 
                 if (qualifiedMethodInfoList.isEmpty()) {
+                    Map<String, List<String>> superClassQNameMap =
+                            getSuperClassQNameMapPerClass(classQNameSet, jarVertexIds, tinkerGraph);
+
+                    insertSuperClassQNamePreservingDeclarationOrder(superClassQNameMap, classQNameSet,
+                            classQNameDeclarationOrderList);
+
                     classQNameSet = getSuperClassQNameSet(classQNameSet, jarVertexIds, tinkerGraph);
                 }
             }
 
             if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
-                deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
+                classQNameDeclarationOrderList = getUniqueClassQNameList(classQNameDeclarationOrderList);
+                deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(
+                        getOrderedDeferredMethodInfoSetBasedOnDeclarationOrder(deferredQualifiedMethodInfoSet,
+                                classQNameDeclarationOrderList));
+
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 
@@ -155,7 +166,9 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             }
 
             if (!deferredQualifiedMethodInfoSet.isEmpty()) {
-                deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
+                deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(
+                        getOrderedDeferredMethodInfoSetBasedOnDeclarationOrder(deferredQualifiedMethodInfoSet,
+                                criteria.getOwningClassInfo().getClassQNameDeclarationOrderList()));
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 
