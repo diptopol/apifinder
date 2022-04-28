@@ -1111,56 +1111,6 @@ public class InferenceUtility {
         }
     }
 
-    private static void populateVariableNameMapForMethod(Set<Artifact> dependentArtifactSet,
-                                                         String javaVersion,
-                                                         List<String> importStatementList,
-                                                         OwningClassInfo owningClassInfo,
-                                                         ASTNode node,
-                                                         Map<String, Set<VariableDeclarationDto>> variableNameMap) {
-
-        MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(node, MethodDeclaration.class);
-
-        if (methodDeclaration != null) {
-            Set<VariableDeclarationDto> methodParameterVariableDeclarationSet =
-                    getMethodParameterVariableDeclarationDtoList(dependentArtifactSet, javaVersion,
-                            importStatementList, methodDeclaration, owningClassInfo);
-
-            populateVariableNameMap(variableNameMap, methodParameterVariableDeclarationSet);
-
-            Set<VariableDeclarationDto> localVariableDeclarationList =
-                    getLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                            methodDeclaration.getBody(), owningClassInfo);
-
-            populateVariableNameMap(variableNameMap, localVariableDeclarationList);
-
-            AnonymousClassDeclaration anonymousClassDeclaration =
-                    (AnonymousClassDeclaration) getClosestASTNode(methodDeclaration, AnonymousClassDeclaration.class);
-
-            if (Objects.nonNull(anonymousClassDeclaration)) {
-                populateVariableNameMapForMethod(dependentArtifactSet, javaVersion, importStatementList,
-                        owningClassInfo, anonymousClassDeclaration, variableNameMap);
-            }
-        }
-    }
-
-    private static void populateVariableNameMapForStaticBlock(Set<Artifact> dependentArtifactSet,
-                                                              String javaVersion,
-                                                              List<String> importStatementList,
-                                                              OwningClassInfo owningClassInfo,
-                                                              ASTNode node,
-                                                              Map<String, Set<VariableDeclarationDto>> variableNameMap) {
-
-        Initializer initializer = (Initializer) getClosestASTNode(node, Initializer.class);
-
-        if (Objects.nonNull(initializer)) {
-            Set<VariableDeclarationDto> localVariableDeclarationList =
-                    getLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                            initializer.getBody(), owningClassInfo);
-
-            populateVariableNameMap(variableNameMap, localVariableDeclarationList);
-        }
-    }
-
     /*
      * There are scenarios when parameterized type is called without type arguments in method signature.
      * (e.g., public Stack getCurrentSeriesPoints() {})
@@ -1220,6 +1170,56 @@ public class InferenceUtility {
         }
 
         return typeInfo;
+    }
+
+    private static void populateVariableNameMapForMethod(Set<Artifact> dependentArtifactSet,
+                                                         String javaVersion,
+                                                         List<String> importStatementList,
+                                                         OwningClassInfo owningClassInfo,
+                                                         ASTNode node,
+                                                         Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+
+        MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(node, MethodDeclaration.class);
+
+        if (methodDeclaration != null) {
+            Set<VariableDeclarationDto> methodParameterVariableDeclarationSet =
+                    getMethodParameterVariableDeclarationDtoList(dependentArtifactSet, javaVersion,
+                            importStatementList, methodDeclaration, owningClassInfo);
+
+            populateVariableNameMap(variableNameMap, methodParameterVariableDeclarationSet);
+
+            Set<VariableDeclarationDto> localVariableDeclarationList =
+                    getLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
+                            methodDeclaration.getBody(), owningClassInfo);
+
+            populateVariableNameMap(variableNameMap, localVariableDeclarationList);
+
+            AnonymousClassDeclaration anonymousClassDeclaration =
+                    (AnonymousClassDeclaration) getClosestASTNode(methodDeclaration, AnonymousClassDeclaration.class);
+
+            if (Objects.nonNull(anonymousClassDeclaration)) {
+                populateVariableNameMapForMethod(dependentArtifactSet, javaVersion, importStatementList,
+                        owningClassInfo, anonymousClassDeclaration, variableNameMap);
+            }
+        }
+    }
+
+    private static void populateVariableNameMapForStaticBlock(Set<Artifact> dependentArtifactSet,
+                                                              String javaVersion,
+                                                              List<String> importStatementList,
+                                                              OwningClassInfo owningClassInfo,
+                                                              ASTNode node,
+                                                              Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+
+        Initializer initializer = (Initializer) getClosestASTNode(node, Initializer.class);
+
+        if (Objects.nonNull(initializer)) {
+            Set<VariableDeclarationDto> localVariableDeclarationList =
+                    getLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
+                            initializer.getBody(), owningClassInfo);
+
+            populateVariableNameMap(variableNameMap, localVariableDeclarationList);
+        }
     }
 
     private static void processFormalTypeParameter(Set<Artifact> dependentArtifactSet,
