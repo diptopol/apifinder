@@ -857,7 +857,7 @@ public abstract class TypeInferenceBase {
             classQNameDeclarationOrderList.addAll(classQNameSet);
 
             while (!classQNameSet.isEmpty()) {
-                Set<String> qClassNameSet = new HashSet<>();
+                Set<String> qClassNameSet = new LinkedHashSet<>();
                 qClassNameSet.addAll(classQNameSet);
                 qClassNameSet.addAll(getInnerClassQualifiedNameSet(jarVertexIds, classQNameSet, tinkerGraph));
 
