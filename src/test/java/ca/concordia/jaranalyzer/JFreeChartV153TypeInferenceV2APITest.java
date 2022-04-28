@@ -922,7 +922,7 @@ public class JFreeChartV153TypeInferenceV2APITest {
     }
 
     @Test
-    public void tesMethodInvocationOfOwningClass() {
+    public void testMethodInvocationOfOwningClass() {
         String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/plot/PiePlot.java";
 
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
@@ -934,6 +934,88 @@ public class JFreeChartV153TypeInferenceV2APITest {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("org.jfree.data.KeyedValues::public abstract java.lang.Number getValue(K)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testPrioritizingCloneOfOwnClassThanJavaLangObject() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/labels/MultipleXYSeriesLabelGenerator.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("pc.clone()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("org.jfree.chart.util.PublicCloneable" +
+                            "::public abstract java.lang.Object clone() throws java.lang.CloneNotSupportedException")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testPrioritizingArgumentMatchingAmongMultipleAbstractMethods() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/DataUtils.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("data.getValue(i)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("org.jfree.data.Values::public abstract java.lang.Number getValue(int)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testPrioritizingOwningClassMethod() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/axis/DateAxis.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("setRange(DEFAULT_DATE_RANGE,false,false)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("org.jfree.chart.axis.DateAxis" +
+                            "::public void setRange(org.jfree.data.Range, boolean, boolean)")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testPrioritizingClassDeclarationOrder() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/data/xy/CategoryTableXYDataset.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("addChangeListener(this.intervalDelegate)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("org.jfree.data.general.AbstractDataset" +
+                            "::public void addChangeListener(org.jfree.data.general.DatasetChangeListener)").equals(methodInfo.toString());
                 }
 
                 return true;
