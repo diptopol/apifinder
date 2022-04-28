@@ -923,55 +923,8 @@ public class InferenceUtility {
             convertParameterizedTypeIfRequired(dependentArtifactSet, javaVersion, importStatementList,
                     owningClassInfo, methodInfo);
 
-            if (Objects.isNull(invokerTypeInfo) && Objects.nonNull(owningClassInfo)
-                    && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(methodInfo.getQualifiedClassName())) {
-
-                invokerTypeInfo = methodInfo.getClassInfo().getTypeInfo();
-            }
-
             Map<String, TypeInfo> replacedTypeInfoMap = new HashMap<>();
-
-            /*
-             * Invoker class may not be associated with method. Any super class of invoker class can be associated.
-             * So added this class check before extracting formal type parameters of invoker type.
-             *
-             * Also, moved the type arguments to the updated invoker type for formal type resolution.
-             */
-            if (Objects.nonNull(invokerTypeInfo)
-                    && !invokerTypeInfo.getQualifiedClassName().equals(methodInfo.getQualifiedClassName())) {
-
-                TypeInfo updatedInvokerTypeInfo = methodInfo.getClassInfo().getTypeInfo();
-
-                if (invokerTypeInfo.isParameterizedTypeInfo()
-                        && updatedInvokerTypeInfo.isParameterizedTypeInfo()
-                        && ((ParameterizedTypeInfo) invokerTypeInfo).isParameterized()) {
-
-                    ParameterizedTypeInfo parameterizedInvokerTypeInfo = (ParameterizedTypeInfo) invokerTypeInfo;
-
-                    ParameterizedTypeInfo parameterizedUpdatedInvokerTypeInfo = (ParameterizedTypeInfo) updatedInvokerTypeInfo;
-                    parameterizedUpdatedInvokerTypeInfo.setParameterized(parameterizedInvokerTypeInfo.isParameterized());
-
-                    Map<String, FormalTypeParameterInfo> invokerFormalTypeParameterMap =
-                            parameterizedInvokerTypeInfo.getTypeArgumentList()
-                                    .stream()
-                                    .filter(TypeInfo::isFormalTypeParameterInfo)
-                                    .map(t -> (FormalTypeParameterInfo) t)
-                                    .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter, f -> f));
-
-                    for (TypeInfo typeInfo : parameterizedUpdatedInvokerTypeInfo.getTypeArgumentList()) {
-                        if (typeInfo.isFormalTypeParameterInfo()
-                                && invokerFormalTypeParameterMap.containsKey(((FormalTypeParameterInfo) typeInfo).getTypeParameter())) {
-
-                            FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeInfo;
-                            formalTypeParameterInfo.setBaseTypeInfo(invokerFormalTypeParameterMap.get(
-                                            formalTypeParameterInfo.getTypeParameter())
-                                    .getBaseTypeInfo());
-                        }
-                    }
-                }
-
-                invokerTypeInfo = updatedInvokerTypeInfo;
-            }
+            invokerTypeInfo = getOriginalInvoker(invokerTypeInfo, methodInfo, owningClassInfo);
 
             if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isParameterizedTypeInfo()) {
                 ParameterizedTypeInfo invokerParameterizedTypeInfo = (ParameterizedTypeInfo) invokerTypeInfo;
@@ -1170,6 +1123,61 @@ public class InferenceUtility {
         }
 
         return typeInfo;
+    }
+
+    private static TypeInfo getOriginalInvoker(TypeInfo invokerTypeInfo,
+                                               MethodInfo methodInfo,
+                                               OwningClassInfo owningClassInfo) {
+
+        if (Objects.isNull(invokerTypeInfo) && Objects.nonNull(owningClassInfo)
+                && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(methodInfo.getQualifiedClassName())) {
+
+            invokerTypeInfo = methodInfo.getClassInfo().getTypeInfo();
+        }
+
+        /*
+         * Invoker class may not be associated with method. Any super class of invoker class can be associated.
+         * So added this class check before extracting formal type parameters of invoker type.
+         *
+         * Also, moved the type arguments to the updated invoker type for formal type resolution.
+         */
+        if (Objects.nonNull(invokerTypeInfo)
+                && !invokerTypeInfo.getQualifiedClassName().equals(methodInfo.getQualifiedClassName())) {
+
+            TypeInfo updatedInvokerTypeInfo = methodInfo.getClassInfo().getTypeInfo();
+
+            if (invokerTypeInfo.isParameterizedTypeInfo()
+                    && updatedInvokerTypeInfo.isParameterizedTypeInfo()
+                    && ((ParameterizedTypeInfo) invokerTypeInfo).isParameterized()) {
+
+                ParameterizedTypeInfo parameterizedInvokerTypeInfo = (ParameterizedTypeInfo) invokerTypeInfo;
+
+                ParameterizedTypeInfo parameterizedUpdatedInvokerTypeInfo = (ParameterizedTypeInfo) updatedInvokerTypeInfo;
+                parameterizedUpdatedInvokerTypeInfo.setParameterized(parameterizedInvokerTypeInfo.isParameterized());
+
+                Map<String, FormalTypeParameterInfo> invokerFormalTypeParameterMap =
+                        parameterizedInvokerTypeInfo.getTypeArgumentList()
+                                .stream()
+                                .filter(TypeInfo::isFormalTypeParameterInfo)
+                                .map(t -> (FormalTypeParameterInfo) t)
+                                .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter, f -> f));
+
+                for (TypeInfo typeInfo : parameterizedUpdatedInvokerTypeInfo.getTypeArgumentList()) {
+                    if (typeInfo.isFormalTypeParameterInfo()
+                            && invokerFormalTypeParameterMap.containsKey(((FormalTypeParameterInfo) typeInfo).getTypeParameter())) {
+
+                        FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeInfo;
+                        formalTypeParameterInfo.setBaseTypeInfo(invokerFormalTypeParameterMap.get(
+                                        formalTypeParameterInfo.getTypeParameter())
+                                .getBaseTypeInfo());
+                    }
+                }
+            }
+
+            invokerTypeInfo = updatedInvokerTypeInfo;
+        }
+
+        return invokerTypeInfo;
     }
 
     private static void populateVariableNameMapForMethod(Set<Artifact> dependentArtifactSet,
