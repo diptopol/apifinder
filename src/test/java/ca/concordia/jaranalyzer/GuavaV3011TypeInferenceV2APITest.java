@@ -191,6 +191,26 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testFindingFormalTypeParameterFromNearestMethodArguments() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ImmutableSortedMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation superMethodInvocation) {
+                if (superMethodInvocation.toString().equals("ImmutableList.of(k1)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superMethodInvocation);
+
+                    assert ("com.google.common.collect.ImmutableList" +
+                            "::public static com.google.common.collect.ImmutableList of(K)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 

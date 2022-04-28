@@ -162,8 +162,10 @@ public class JFreeChartV1019TypeInferenceV2APITest {
 
                     assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=true," +
                             " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable'," +
-                            " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
-                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}," +
+                            " isParameterized=true," +
+                            " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable'," +
+                            " isParameterized=false, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}]}," +
                             " ParameterizedTypeInfo{qualifiedClassName='java.lang.Comparable', isParameterized=false," +
                             " typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
                             " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")

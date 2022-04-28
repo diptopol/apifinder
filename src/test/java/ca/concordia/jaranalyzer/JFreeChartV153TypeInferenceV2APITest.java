@@ -486,8 +486,7 @@ public class JFreeChartV153TypeInferenceV2APITest {
 
                     assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.Iterator'," +
                             " isParameterized=true," +
-                            " typeArgumentList=[FormalTypeParameterInfo{typeParameter='E', " +
-                            "baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='javax.imageio.ImageWriter'}}]}")
+                            " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='javax.imageio.ImageWriter'}]}")
                             .equals(methodInfo.getReturnTypeInfo().toString());
                 }
 
