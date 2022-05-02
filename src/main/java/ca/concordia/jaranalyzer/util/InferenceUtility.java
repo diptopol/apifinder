@@ -1476,7 +1476,7 @@ public class InferenceUtility {
          * Checking formal type parameter of thw owning class
          */
         String owningQualifiedClassName = Objects.nonNull(owningClassInfo)
-                ? owningClassInfo.getOwningQualifiedClassName()
+                ? owningClassInfo.getOuterMostClassName()
                 : null;
         TypeInfo owningClassTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
                 importStatementList, owningQualifiedClassName, owningClassInfo);

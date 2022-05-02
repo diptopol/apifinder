@@ -350,8 +350,8 @@ public abstract class TypeInferenceBase {
                 && StringUtils.countMatches(typeClassName, ".") <= 1) {
 
             String postProcessedOwningClassQualifiedName = Objects.nonNull(owningClassInfo)
-                    && Objects.nonNull(owningClassInfo.getOwningQualifiedClassName())
-                    ? owningClassInfo.getOwningQualifiedClassName().replace("$", ".")
+                    && Objects.nonNull(owningClassInfo.getOuterMostClassName())
+                    ? owningClassInfo.getOuterMostClassName().replace("$", ".")
                     : null;
 
             String postProcessedTypeClassName = typeClassName.replace(".", "$")
@@ -846,37 +846,59 @@ public abstract class TypeInferenceBase {
 
     static OwningClassInfo getOwningClassInfo(Set<Artifact> dependentArtifactSet,
                                               String javaVersion,
-                                              String qualifiedClassName,
+                                              List<String> enclosingQualifiedClassNameList,
                                               TinkerGraph tinkerGraph) {
 
+        if (Objects.isNull(enclosingQualifiedClassNameList) || enclosingQualifiedClassNameList.size() == 0) {
+            return null;
+        }
+
+        Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
         List<Set<String>> qClassNameSetInHierarchy = new ArrayList<>();
-        List<String> classQNameDeclarationOrderList = new ArrayList<>();
 
-        if (Objects.nonNull(qualifiedClassName) && StringUtils.countMatches(qualifiedClassName, ".") > 1) {
-            Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
+        String outerMostClassName = enclosingQualifiedClassNameList.get(enclosingQualifiedClassNameList.size() - 1);
+        Set<String> innerClassQualifiedNameSet =
+                getInnerClassQualifiedNameSet(jarVertexIds, Collections.singleton(outerMostClassName), tinkerGraph);
 
-            Set<String> classQNameSet = new LinkedHashSet<>(List.of(qualifiedClassName));
+        /*
+         * Here conversion is needed. Because inner class inside method can have position
+         * number ahead of class name. But enclosingQualifiedClassNameList can not provide such information.
+         * So we are fetching inner classes using outer-most class and then replacing with appropriate name
+         * of inner class.
+         */
+        convertEnclosingClassNameList(enclosingQualifiedClassNameList, innerClassQualifiedNameSet);
+        List<String> classQNameDeclarationOrderList = new ArrayList<>(enclosingQualifiedClassNameList);
 
-            classQNameDeclarationOrderList.addAll(classQNameSet);
+        /*
+         * Adding inner class that is outside enclosing class name list because method can be a class construction
+         * of that inner class.
+         */
+        qClassNameSetInHierarchy.add(
+                getCombinedClassAndInnerClassQualifiedNameSet(new LinkedHashSet<>(enclosingQualifiedClassNameList),
+                        innerClassQualifiedNameSet));
 
-            while (!classQNameSet.isEmpty()) {
-                Set<String> qClassNameSet = new LinkedHashSet<>();
-                qClassNameSet.addAll(classQNameSet);
-                qClassNameSet.addAll(getInnerClassQualifiedNameSet(jarVertexIds, classQNameSet, tinkerGraph));
+        Set<String> classQNameSet = new LinkedHashSet<>(enclosingQualifiedClassNameList);
 
-                qClassNameSetInHierarchy.add(qClassNameSet);
+        while (!classQNameSet.isEmpty()) {
+            Map<String, List<String>> superClassQNameMap =
+                    getSuperClassQNameMapPerClass(classQNameSet, jarVertexIds, tinkerGraph);
 
-                Map<String, List<String>> superClassQNameMap =
-                        getSuperClassQNameMapPerClass(classQNameSet, jarVertexIds, tinkerGraph);
-                insertSuperClassQNamePreservingDeclarationOrder(superClassQNameMap, classQNameSet,
-                        classQNameDeclarationOrderList);
+            insertSuperClassQNamePreservingDeclarationOrder(superClassQNameMap, classQNameSet,
+                    classQNameDeclarationOrderList);
 
-                classQNameSet = getOrderedSuperClassQNameSet(superClassQNameMap, classQNameSet);
+            classQNameSet = getOrderedSuperClassQNameSet(superClassQNameMap, classQNameSet);
+
+            if (!classQNameSet.isEmpty()) {
+                /*
+                 * Class can be used without import if inner class of super classes. In order to find those classes
+                 * we need to add these inner class in hierarchy.
+                 */
+                qClassNameSetInHierarchy.add(getCombinedClassAndInnerClassQualifiedNameSet(classQNameSet,
+                        getInnerClassQualifiedNameSet(jarVertexIds, classQNameSet, tinkerGraph)));
             }
         }
 
-        return new OwningClassInfo(qualifiedClassName, qClassNameSetInHierarchy,
-                getUniqueClassQNameList(classQNameDeclarationOrderList));
+        return new OwningClassInfo(enclosingQualifiedClassNameList, qClassNameSetInHierarchy, classQNameDeclarationOrderList);
     }
 
     static List<String> getUniqueClassQNameList(List<String> classQNameList) {
@@ -918,6 +940,17 @@ public abstract class TypeInferenceBase {
         return new LinkedHashSet<>(orderedDeferredMethodInfoList);
     }
 
+    private static Set<String> getCombinedClassAndInnerClassQualifiedNameSet(Set<String> classQualifiedNameSet,
+                                                                  Set<String> innerClassQualifiedNameSet) {
+
+        Set<String> combinedQualifiedClassNameSet = new LinkedHashSet<>();
+
+        combinedQualifiedClassNameSet.addAll(classQualifiedNameSet);
+        combinedQualifiedClassNameSet.addAll(innerClassQualifiedNameSet);
+
+        return combinedQualifiedClassNameSet;
+    }
+
     private static Set<String> getOrderedSuperClassQNameSet(Map<String, List<String>> superClassQNameMap, Set<String> classQNameSet) {
         Set<String> superClassQNameSet = new LinkedHashSet<>();
 
@@ -928,6 +961,24 @@ public abstract class TypeInferenceBase {
         }
 
         return superClassQNameSet;
+    }
+
+    private static void convertEnclosingClassNameList(List<String> enclosingClassNameList,
+                                                      Set<String> innerClassQualifiedNameSet) {
+
+        assert enclosingClassNameList.size() > 0;
+
+        for (String innerClassQualifiedName : innerClassQualifiedNameSet) {
+            if (innerClassQualifiedName.matches(".*\\.[0-9]+.*")) {
+                String innerClassQualifiedNameWithoutPosition = innerClassQualifiedName.replaceAll("\\.[0-9]+", "\\.");
+
+                if (enclosingClassNameList.contains(innerClassQualifiedNameWithoutPosition)) {
+                    int index = enclosingClassNameList.indexOf(innerClassQualifiedNameWithoutPosition);
+                    enclosingClassNameList.set(index, innerClassQualifiedName);
+                }
+            }
+        }
+
     }
 
     private static List<Long> getQualifiedClassVertexIdList(Set<String> classQNameSet, Object[] jarVertexIds, TinkerGraph tinkerGraph) {

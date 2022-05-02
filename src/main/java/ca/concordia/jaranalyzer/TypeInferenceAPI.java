@@ -76,7 +76,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                  int numberOfParameters,
                                                  String invokerClassName,
                                                  boolean isSuperInvoker,
-                                                 String owningClassQualifiedName,
+                                                 List<String> enclosingQualifiedClassNameList,
                                                  String... argumentTypes) {
 
         Object[] jarVertexIds = getJarVertexIds(dependentArtifactSet, javaVersion, tinkerGraph);
@@ -85,7 +85,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         List<String> packageNameList = getPackageNameList(importList);
 
         OwningClassInfo owningClassInfo = getOwningClassInfo(dependentArtifactSet, javaVersion,
-                owningClassQualifiedName, tinkerGraph);
+                enclosingQualifiedClassNameList, tinkerGraph);
 
         List<MethodInfo> qualifiedMethodInfoList = new ArrayList<>();
 
@@ -140,7 +140,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         /*
           STEP 1
          */
-        if (Objects.isNull(invokerClassName) && Objects.nonNull(owningClassQualifiedName)) {
+        if (Objects.isNull(invokerClassName) && Objects.nonNull(owningClassInfo)) {
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
             for (Set<String> classQNameSet : owningClassInfo.getQualifiedClassNameSetInHierarchy()) {
@@ -268,8 +268,9 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
     public static OwningClassInfo getOwningClassInfo(Set<Artifact> dependentArtifactSet,
                                                      String javaVersion,
-                                                     String className) {
-        return getOwningClassInfo(dependentArtifactSet, javaVersion, className, tinkerGraph);
+                                                     List<String> enclosingQualifiedClassNameList) {
+
+        return getOwningClassInfo(dependentArtifactSet, javaVersion, enclosingQualifiedClassNameList, tinkerGraph);
     }
 
     public static List<ClassInfo> getAllTypes(Set<Artifact> dependentArtifactSet,

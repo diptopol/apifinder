@@ -11,21 +11,23 @@ import java.util.stream.Collectors;
  */
 public class OwningClassInfo {
 
-    private final String owningQualifiedClassName;
+    private final List<String> enclosingClassNameList;
     private final List<Set<String>> qualifiedClassNameSetInHierarchy;
     private List<String> classQNameDeclarationOrderList;
 
-    public OwningClassInfo(String owningQualifiedClassName,
+    public OwningClassInfo(List<String> enclosingClassNameList,
                            List<Set<String>> qualifiedClassNameSetInHierarchy,
-                           List<String> qualifiedClassQNameDeclarationList) {
+                           List<String> classQNameDeclarationOrderList) {
 
-        this.owningQualifiedClassName = owningQualifiedClassName;
+        assert enclosingClassNameList.size() > 0;
+
+        this.enclosingClassNameList = enclosingClassNameList;
         this.qualifiedClassNameSetInHierarchy = qualifiedClassNameSetInHierarchy;
-        this.classQNameDeclarationOrderList = qualifiedClassQNameDeclarationList;
+        this.classQNameDeclarationOrderList = classQNameDeclarationOrderList;
     }
 
-    public String getOwningQualifiedClassName() {
-        return owningQualifiedClassName;
+    public String getOuterMostClassName() {
+        return this.enclosingClassNameList.get(this.enclosingClassNameList.size() - 1);
     }
 
     public List<Set<String>> getQualifiedClassNameSetInHierarchy() {

@@ -198,12 +198,32 @@ public class GuavaV3011TypeInferenceV2APITest {
 
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation superMethodInvocation) {
-                if (superMethodInvocation.toString().equals("ImmutableList.of(k1)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superMethodInvocation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("ImmutableList.of(k1)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableList" +
                             "::public static com.google.common.collect.ImmutableList of(K)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testMethodOfSuperClassOfInnerClass() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ImmutableSortedMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("asList().iterator()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.ImmutableList" +
+                            "::public com.google.common.collect.UnmodifiableIterator iterator()").equals(methodInfo.toString());
                 }
 
                 return true;

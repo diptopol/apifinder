@@ -8,10 +8,7 @@ import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import org.eclipse.jdt.core.dom.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Diptopol
@@ -24,13 +21,12 @@ public class TypeInferenceV2API {
                                            MethodInvocation methodInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(methodInvocation);
-        String owningClassQualifiedName = getOwningClassQualifiedName(methodInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                owningClassQualifiedName);
+                getEnclosingClassList(methodInvocation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -47,13 +43,12 @@ public class TypeInferenceV2API {
                                            SuperMethodInvocation superMethodInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superMethodInvocation);
-        String owningClassQualifiedName = getOwningClassQualifiedName(superMethodInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                owningClassQualifiedName);
+                getEnclosingClassList(superMethodInvocation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -70,13 +65,12 @@ public class TypeInferenceV2API {
                                            ClassInstanceCreation classInstanceCreation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(classInstanceCreation);
-        String owningClassQualifiedName = getOwningClassQualifiedName(classInstanceCreation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                owningClassQualifiedName);
+                getEnclosingClassList(classInstanceCreation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -93,13 +87,12 @@ public class TypeInferenceV2API {
                                     ConstructorInvocation constructorInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(constructorInvocation);
-        String owningClassQualifiedName = getOwningClassQualifiedName(constructorInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                owningClassQualifiedName);
+                getEnclosingClassList(constructorInvocation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -149,13 +142,12 @@ public class TypeInferenceV2API {
                                     SuperConstructorInvocation superConstructorInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superConstructorInvocation);
-        String owningClassQualifiedName = getOwningClassQualifiedName(superConstructorInvocation);
 
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                owningClassQualifiedName);
+                getEnclosingClassList(superConstructorInvocation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion,
@@ -200,7 +192,27 @@ public class TypeInferenceV2API {
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
     }
 
-    private static  String getOwningClassQualifiedName(ASTNode methodNode) {
+    private static List<String> getEnclosingClassList(ASTNode methodNode) {
+        ASTNode node = methodNode;
+        AbstractTypeDeclaration abstractTypeDeclaration = null;
+
+        List<String> enclosingClassNameList = new ArrayList<>();
+
+        while (Objects.nonNull(node)) {
+            if (node instanceof AbstractTypeDeclaration) {
+                abstractTypeDeclaration = (AbstractTypeDeclaration) node;
+
+                String className = InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration);
+                enclosingClassNameList.add(className.replaceAll("\\$", "."));
+            }
+
+            node = node.getParent();
+        }
+
+        return enclosingClassNameList;
+    }
+
+    private static String getOwningClassQualifiedName(ASTNode methodNode) {
         ASTNode node = methodNode;
         AbstractTypeDeclaration abstractTypeDeclaration = null;
 
