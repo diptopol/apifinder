@@ -394,6 +394,10 @@ public class MethodInfo {
         return isAbstract || classInfo.getQualifiedName().equals("java.lang.Object") || argumentMatchingDistance > 0;
     }
 
+    public boolean isInnerClassConstructor() {
+        return isConstructor && Objects.nonNull(internalClassConstructorPrefix);
+    }
+
     private TypeInfo getMethodReturnType(Type returnType, String signature) {
         if (Objects.nonNull(signature)) {
             MethodReturnTypeExtractor extractor = new MethodReturnTypeExtractor();

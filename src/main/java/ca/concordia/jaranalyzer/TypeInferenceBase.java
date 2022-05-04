@@ -1007,16 +1007,27 @@ public abstract class TypeInferenceBase {
                 .collect(Collectors.toMap(Tuple2::_2, Tuple2::_1));
     }
 
-    private static boolean filtrationBasedOnCriteria(int numberOfParameters, String outerClassPrefix, MethodInfo methodInfo) {
-        boolean innerClassConstructorMatching = outerClassPrefix == null
-                || (methodInfo.getInternalClassConstructorPrefix() != null
-                && methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$"));
+    private static boolean filtrationBasedOnCriteria(int numberOfParameters,
+                                                     String outerClassPrefix,
+                                                     MethodInfo methodInfo) {
+        boolean outerClassPrefixMatchingForInnerClassConstructor = true;
 
-        return innerClassConstructorMatching
+        if (Objects.nonNull(outerClassPrefix) && methodInfo.isInnerClassConstructor()) {
+            outerClassPrefixMatchingForInnerClassConstructor =
+                    methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$");
+        }
+
+        return outerClassPrefixMatchingForInnerClassConstructor
                 && !methodInfo.isBridgeMethod()
-                && ((methodInfo.isVarargs()
-                ? methodInfo.getArgumentTypes().length - 1 <= numberOfParameters
-                : methodInfo.getArgumentTypes().length == numberOfParameters));
+                && checkMethodArgumentLength(numberOfParameters, methodInfo);
+    }
+
+    private static boolean checkMethodArgumentLength(int numberOfParameters, MethodInfo methodInfo) {
+        if (methodInfo.isVarargs()) {
+            return methodInfo.getArgumentTypes().length - 1 <= numberOfParameters;
+        } else {
+            return methodInfo.getArgumentTypes().length == numberOfParameters;
+        }
     }
 
     private static String getQualifiedNameWithArrayDimension(String qualifiedClassName, int arrayDimension) {
