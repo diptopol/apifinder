@@ -136,10 +136,9 @@ public class MethodInfo {
         } else if ((methodNode.access & Opcodes.ACC_PRIVATE) != 0) {
             isPrivate = true;
         }
-        String qualifiedName = classInfo.getQualifiedName();
+
         if ((methodNode.access & Opcodes.ACC_STATIC) != 0) {
             isStatic = true;
-            qualifiedName = qualifiedName + name;
         }
 
         if ((methodNode.access & Opcodes.ACC_ABSTRACT) != 0) {
