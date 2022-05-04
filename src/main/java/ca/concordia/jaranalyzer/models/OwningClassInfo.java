@@ -13,7 +13,7 @@ public class OwningClassInfo {
 
     private final List<String> enclosingClassNameList;
     private final List<Set<String>> qualifiedClassNameSetInHierarchy;
-    private List<String> classQNameDeclarationOrderList;
+    private final List<String> classQNameDeclarationOrderList;
 
     public OwningClassInfo(List<String> enclosingClassNameList,
                            List<Set<String>> qualifiedClassNameSetInHierarchy,

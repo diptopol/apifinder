@@ -34,9 +34,9 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
 
     private static final Logger logger = LoggerFactory.getLogger(MavenArtifactExtractor.class);
 
-    private String commitId;
-    private String projectName;
-    private Git git;
+    private final String commitId;
+    private final String projectName;
+    private final Git git;
 
     public MavenArtifactExtractor(String commitId, String projectName, Git git) {
         this.commitId = commitId;

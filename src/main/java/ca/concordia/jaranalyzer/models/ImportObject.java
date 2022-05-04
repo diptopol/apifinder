@@ -8,9 +8,9 @@ import org.eclipse.jdt.core.dom.ImportDeclaration;
  */
 public class ImportObject {
 
-    private String importName;
-    private boolean onDemand;
-    private boolean isStatic;
+    private final String importName;
+    private final boolean onDemand;
+    private final boolean isStatic;
 
     public ImportObject(ImportDeclaration importDeclaration) {
         this.importName = importDeclaration.getName().getFullyQualifiedName();

@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -13,9 +12,9 @@ import java.util.Properties;
  */
 public class PropertyReader {
 
-    private static Logger logger = LoggerFactory.getLogger(PropertyReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(PropertyReader.class);
 
-    private static Properties properties;
+    private static final Properties properties;
 
     static {
         logger.info("Load Config properties");

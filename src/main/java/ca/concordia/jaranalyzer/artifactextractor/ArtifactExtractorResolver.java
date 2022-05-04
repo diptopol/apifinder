@@ -21,9 +21,9 @@ public class ArtifactExtractorResolver {
         GRADLE
     }
 
-    private String commitId;
-    private String projectName;
-    private Git git;
+    private final String commitId;
+    private final String projectName;
+    private final Git git;
 
     public ArtifactExtractorResolver(String commitId,
                                      String projectName,

@@ -1,71 +1,38 @@
 package ca.concordia.jaranalyzer.models;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class PackageInfo {
-	private int id;
-	private String name;
-	private int jarId;
-	private ArrayList<ClassInfo> classes;
 
-	public PackageInfo(String packageName) {
-		this.classes = new ArrayList<>();
-		this.name = packageName;
-	}
+    private final String name;
+    private final List<ClassInfo> classList;
 
-	public int getId() {
-		return id;
-	}
+    public PackageInfo(String packageName) {
+        this.classList = new ArrayList<>();
+        this.name = packageName;
+    }
 
+    public String getName() {
+        return name;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public List<ClassInfo> getClassList() {
+        return classList;
+    }
 
+    public void addClass(ClassInfo classInfo) {
+        classList.add(classInfo);
+    }
 
+    public String toString() {
+        String packageString = "PACKAGE: " + name;
 
-	public int getJarId() {
-		return jarId;
-	}
+        for (ClassInfo classInfo : classList) {
+            packageString += "\n" + classInfo.toString();
+        }
 
-	public ArrayList<ClassInfo> getClasses() {
-		return classes;
-	}
-	
-	public boolean addClass(ClassInfo classInfo){
-		classes.add(classInfo);
-		return true;
-	}
+        return packageString;
+    }
 
-	public boolean matchesImportStatement(String importedPackage) {
-		return importedPackage.startsWith(name);
-	}
-
-	public String toString() {
-		String packageString = "PACKAGE: " + name;
-		for (ClassInfo classFile : classes) {
-			packageString += "\n" + classFile.toString();
-		}
-		return packageString;
-	}
-
-//	public Identification getID(){
-//		return Identification.newBuilder()
-//				.setName(getName())
-//				.setType(TypeSignatureOuterClass.TypeSignature.newBuilder().setNoType(true).build())
-//				.setKind("PACKAGE").build();
-//	}
-//
-//
-//	public TypeFactGraph<Identification> getTFG(Identification owner) {
-//
-//		Identification pkgId = getID();
-//		TypeFactGraph<Identification> tfg = TypeFactGraph.<Identification>emptyTFG()
-//				.mergeMap(classes.parallelStream()
-//						.map(c -> u_v(pkgId, c.getID(pkgId), "DECLARES"))
-//						.collect(toList()));
-//		return mergeGraphs(tfg, classes.stream()
-//				.map(c -> c.getTFG(pkgId))
-//				.reduce(TypeFactGraph.emptyTFG(), TypeFactGraph::mergeGraphs));
-//	}
 }

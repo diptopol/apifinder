@@ -74,7 +74,7 @@ public class JarAnalyzer {
 
             Map<Object, List<String>> innerClassQNameMap = new HashMap<>();
 
-            for (ClassInfo c : p.getClasses()) {
+            for (ClassInfo c : p.getClassList()) {
                 if (c.isAnonymousInnerClass()) {
                     continue;
                 }

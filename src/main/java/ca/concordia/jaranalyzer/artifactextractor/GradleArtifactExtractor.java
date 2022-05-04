@@ -29,9 +29,9 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
 
     private static final String GRADLE_HOME_PATH = PropertyReader.getProperty("gradle.home");
 
-    private String commitId;
-    private String projectName;
-    private Git git;
+    private final String commitId;
+    private final String projectName;
+    private final Git git;
 
     public GradleArtifactExtractor(String commitId, String projectName, Git git) {
         this.commitId = commitId;

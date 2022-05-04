@@ -6,8 +6,8 @@ package ca.concordia.jaranalyzer.models;
  */
 public class VariableScope {
 
-    private int startOffset;
-    private int endOffset;
+    private final int startOffset;
+    private final int endOffset;
 
     public VariableScope(int startOffset, int endOffset) {
         this.startOffset = startOffset;

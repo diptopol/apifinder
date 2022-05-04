@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class MethodInfo {
 
     private Object id;
+
     private String name;
     private ClassInfo classInfo;
     private Type[] argumentTypes;
@@ -32,7 +33,6 @@ public class MethodInfo {
     private boolean isVarargs;
     private boolean isFinal;
     private boolean isBridgeMethod;
-    private String qualifiedName;
     private String internalClassConstructorPrefix;
 
     private String signature;
@@ -136,10 +136,10 @@ public class MethodInfo {
         } else if ((methodNode.access & Opcodes.ACC_PRIVATE) != 0) {
             isPrivate = true;
         }
-        this.qualifiedName = classInfo.getQualifiedName();
+        String qualifiedName = classInfo.getQualifiedName();
         if ((methodNode.access & Opcodes.ACC_STATIC) != 0) {
             isStatic = true;
-            this.qualifiedName = qualifiedName + name;
+            qualifiedName = qualifiedName + name;
         }
 
         if ((methodNode.access & Opcodes.ACC_ABSTRACT) != 0) {
@@ -364,29 +364,6 @@ public class MethodInfo {
 
     public void setReturnTypeInfo(TypeInfo returnTypeInfo) {
         this.returnTypeInfo = returnTypeInfo;
-    }
-
-    public boolean matches(String methodName, int numberOfParameters) {
-        if (argumentTypes.length != numberOfParameters)
-            return false;
-
-        if (name.replace('$', '.').equals(methodName)) {
-            return true;
-        } else if ((getClassName() + "." + name).replace('$', '.').equals(methodName)) {
-            return true;
-        } else if ((getQualifiedClassName() + "." + name).replace('$', '.').equals(
-                methodName)) {
-            return true;
-        } else if (isConstructor) {
-            if (getQualifiedClassName().replace('$', '.').equals(methodName)) {
-                return true;
-            }
-
-            if (name.contains("$") && name.endsWith("$" + methodName)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override

@@ -1,7 +1,6 @@
 package ca.concordia.jaranalyzer.artifactextractor;
 
 import ca.concordia.jaranalyzer.models.Artifact;
-import org.eclipse.jgit.lib.Repository;
 
 import java.util.Set;
 

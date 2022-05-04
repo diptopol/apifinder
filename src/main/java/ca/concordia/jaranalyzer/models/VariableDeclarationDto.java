@@ -9,13 +9,13 @@ import org.eclipse.jdt.core.dom.Type;
  */
 public class VariableDeclarationDto {
 
-    private String name;
+    private final String name;
 
-    private Type type;
+    private final Type type;
 
-    private TypeInfo typeInfo;
+    private final TypeInfo typeInfo;
 
-    private VariableScope scope;
+    private final VariableScope scope;
 
     public VariableDeclarationDto(String name, TypeInfo typeInfo, VariableScope scope, Type type) {
         this.name = name;

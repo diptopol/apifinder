@@ -11,10 +11,10 @@ public class Artifact {
     public static final String JAR_TYPE = "jar";
     public static final String POM_TYPE= "pom";
 
-    private String groupId;
-    private String artifactId;
-    private String version;
-    private String type;
+    private final String groupId;
+    private final String artifactId;
+    private final String version;
+    private final String type;
 
     public Artifact(String groupId, String artifactId, String version, String type) {
         this.groupId = groupId;

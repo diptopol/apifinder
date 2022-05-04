@@ -18,13 +18,13 @@ import java.util.jar.JarFile;
  */
 public class JarInfo {
 
-    private static Logger logger = LoggerFactory.getLogger(JarInfo.class);
+    private static final Logger logger = LoggerFactory.getLogger(JarInfo.class);
 
-    private String name;
+    private final String name;
 
-    private Artifact artifact;
+    private final Artifact artifact;
 
-    private Map<String, PackageInfo> packageInfoMap;
+    private final Map<String, PackageInfo> packageInfoMap;
 
     public JarInfo(String groupId, String artifactId, String version, JarFile jarFile) {
         logger.info("Processing JarInfo of {}:{}:{}", groupId, artifactId, version);
@@ -138,7 +138,7 @@ public class JarInfo {
         List<ClassInfo> classInfoList = new ArrayList<>();
 
         for (PackageInfo packageInfo: packageInfoCollection) {
-            classInfoList.addAll(packageInfo.getClasses());
+            classInfoList.addAll(packageInfo.getClassList());
         }
 
         return classInfoList;
