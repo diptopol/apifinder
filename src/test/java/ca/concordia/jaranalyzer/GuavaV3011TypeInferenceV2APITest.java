@@ -252,6 +252,27 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testInnerClassSuperInstanceCreationWithOuterClassAsArgument() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ImmutableSortedMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(SuperConstructorInvocation superConstructorInvocation) {
+                if (superConstructorInvocation.toString().startsWith("super(sortedMap)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superConstructorInvocation);
+
+                    assert ("com.google.common.collect.ImmutableSortedMap.SerializedForm" +
+                            "::void ImmutableSortedMap$SerializedForm(com.google.common.collect.ImmutableSortedMap)")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 

@@ -276,7 +276,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         reduceArgumentForInnerClassConstructorIfRequired(methodInfoList, criteria);
 
         methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getInvokerClassName(),
-                criteria.isSuperInvoker, jarVertexIds, tinkerGraph);
+                criteria.isSuperInvoker(), jarVertexIds, tinkerGraph);
 
         methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
 

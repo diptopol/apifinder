@@ -180,8 +180,7 @@ public class TypeInferenceV2API {
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, superClassName, numberOfParameters)
                 .setInvokerClassName(invokerClassName)
-                .setOwningClassInfo(owningClassInfo)
-                .setSuperInvoker(true);
+                .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
             searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
