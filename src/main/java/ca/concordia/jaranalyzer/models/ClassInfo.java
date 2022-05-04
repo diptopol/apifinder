@@ -270,6 +270,14 @@ public class ClassInfo {
         return this.signature;
     }
 
+    public String getOuterClassQualifiedName() {
+        if (!this.isInnerClass) {
+            return null;
+        }
+
+        return this.qualifiedName.substring(0, this.qualifiedName.lastIndexOf("."));
+    }
+
     private String getQualifiedClassName(String className) {
         String qualifiedClassName = className.replace('/', '.');
 

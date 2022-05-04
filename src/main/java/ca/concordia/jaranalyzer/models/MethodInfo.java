@@ -113,18 +113,7 @@ public class MethodInfo {
         this.classInfo = classInfo;
         this.returnType = Type.getReturnType(methodNode.desc);
 
-        if (isConstructor && Objects.nonNull(internalClassConstructorPrefix)) {
-            List<Type> types = new ArrayList<Type>();
-            for (Type type : Type.getArgumentTypes(methodNode.desc)) {
-                if (!classInfo.getQualifiedName().startsWith(type.getClassName() + ".")) {
-                    types.add(type);
-                }
-            }
-            this.argumentTypes = new Type[types.size()];
-            this.argumentTypes = types.toArray(this.argumentTypes);
-        } else {
-            this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
-        }
+        this.argumentTypes = Type.getArgumentTypes(methodNode.desc);
 
         this.thrownInternalClassNames = methodNode.exceptions;
         this.signature = methodNode.signature;

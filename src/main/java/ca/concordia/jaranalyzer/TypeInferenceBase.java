@@ -1025,6 +1025,10 @@ public abstract class TypeInferenceBase {
     private static boolean checkMethodArgumentLength(int numberOfParameters, MethodInfo methodInfo) {
         if (methodInfo.isVarargs()) {
             return methodInfo.getArgumentTypes().length - 1 <= numberOfParameters;
+        } else if (methodInfo.isInnerClassConstructor()) {
+            return methodInfo.getArgumentTypes().length == numberOfParameters
+                    || methodInfo.getArgumentTypes().length - 1 == numberOfParameters;
+
         } else {
             return methodInfo.getArgumentTypes().length == numberOfParameters;
         }
