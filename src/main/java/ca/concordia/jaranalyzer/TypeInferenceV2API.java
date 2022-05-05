@@ -26,7 +26,7 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getEnclosingClassList(methodInvocation));
+                getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion, importStatementList));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -48,7 +48,7 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getEnclosingClassList(superMethodInvocation));
+                getAllEnclosingClassList(superMethodInvocation, dependentArtifactSet, javaVersion, importStatementList));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -70,7 +70,7 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getEnclosingClassList(classInstanceCreation));
+                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -83,8 +83,8 @@ public class TypeInferenceV2API {
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
-                                    String javaVersion,
-                                    ConstructorInvocation constructorInvocation) {
+                                           String javaVersion,
+                                           ConstructorInvocation constructorInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(constructorInvocation);
 
@@ -92,7 +92,7 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getEnclosingClassList(constructorInvocation));
+                getAllEnclosingClassList(constructorInvocation, dependentArtifactSet, javaVersion, importStatementList));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
@@ -138,8 +138,8 @@ public class TypeInferenceV2API {
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
-                                    String javaVersion,
-                                    SuperConstructorInvocation superConstructorInvocation) {
+                                           String javaVersion,
+                                           SuperConstructorInvocation superConstructorInvocation) {
 
         CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superConstructorInvocation);
 
@@ -147,7 +147,7 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getEnclosingClassList(superConstructorInvocation));
+                getAllEnclosingClassList(superConstructorInvocation, dependentArtifactSet, javaVersion, importStatementList));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
                 InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion,
@@ -187,7 +187,7 @@ public class TypeInferenceV2API {
 
     private static List<String> getEnclosingClassList(ASTNode methodNode) {
         ASTNode node = methodNode;
-        AbstractTypeDeclaration abstractTypeDeclaration = null;
+        AbstractTypeDeclaration abstractTypeDeclaration;
 
         List<String> enclosingClassNameList = new ArrayList<>();
 
@@ -205,19 +205,50 @@ public class TypeInferenceV2API {
         return enclosingClassNameList;
     }
 
-    private static String getOwningClassQualifiedName(ASTNode methodNode) {
-        ASTNode node = methodNode;
-        AbstractTypeDeclaration abstractTypeDeclaration = null;
+    private static String getClassInstanceCreationQualifiedName(ASTNode node,
+                                                                Set<Artifact> dependentArtifactSet,
+                                                                String javaVersion,
+                                                                List<String> importStatementList) {
 
-        while (Objects.nonNull(node)) {
-            if (node instanceof AbstractTypeDeclaration) {
-                abstractTypeDeclaration = (AbstractTypeDeclaration) node;
-            }
+        ClassInstanceCreation classInstanceCreation =
+                (ClassInstanceCreation) InferenceUtility.getClosestASTNode(node.getParent(), ClassInstanceCreation.class);
 
-            node = node.getParent();
+        if (Objects.isNull(classInstanceCreation)) {
+            return null;
         }
 
-        return InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration);
+        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList));
+
+        Type type = classInstanceCreation.getType();
+        TypeInfo classTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
+                importStatementList, type, owningClassInfo);
+
+        assert Objects.nonNull(classTypeInfo);
+
+        return classTypeInfo.getQualifiedClassName();
+    }
+
+    /*
+     * Enclosing class list will consist of anonymous inner class and enclosing class declarations.
+     */
+    private static List<String> getAllEnclosingClassList(ASTNode node,
+                                                         Set<Artifact> dependentArtifactSet,
+                                                         String javaVersion,
+                                                         List<String> importStatementList) {
+
+        List<String> enclosingClassList = new ArrayList<>();
+
+        String qualifiedClassName =
+                getClassInstanceCreationQualifiedName(node, dependentArtifactSet, javaVersion, importStatementList);
+
+        if (Objects.nonNull(qualifiedClassName)) {
+            enclosingClassList.add(qualifiedClassName);
+        }
+
+        enclosingClassList.addAll(getEnclosingClassList(node));
+
+        return enclosingClassList;
     }
 
 }
