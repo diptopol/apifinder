@@ -164,12 +164,6 @@ public class TypeInferenceV2API {
                     importStatementList, superClassType, owningClassInfo).getQualifiedClassName();
         }
 
-        MethodDeclaration methodDeclaration =
-                (MethodDeclaration) InferenceUtility.getClosestASTNode(superConstructorInvocation, MethodDeclaration.class);
-
-        String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
-        String invokerClassName = className.replace("%", "").replace("#", ".");
-
         List<Expression> argumentList = superConstructorInvocation.arguments();
         int numberOfParameters = argumentList.size();
 
@@ -179,8 +173,8 @@ public class TypeInferenceV2API {
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, superClassName, numberOfParameters)
-                .setInvokerClassName(invokerClassName)
-                .setOwningClassInfo(owningClassInfo);
+                .setOwningClassInfo(owningClassInfo)
+                .setSuperInvoker(true);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
             searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());

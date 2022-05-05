@@ -148,7 +148,13 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         if (Objects.isNull(criteria.getInvokerClassName()) && Objects.nonNull(criteria.getOwningClassInfo())) {
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
-            for (Set<String> classQNameSet : criteria.getOwningClassInfo().getQualifiedClassNameSetInHierarchy()) {
+            for (int i = 0; i < criteria.getOwningClassInfo().getQualifiedClassNameSetInHierarchy().size(); i++) {
+                if (i == 0 && criteria.isSuperInvoker()) {
+                    continue;
+                }
+
+                Set<String> classQNameSet = criteria.getOwningClassInfo().getQualifiedClassNameSetInHierarchy().get(i);
+
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                         jarVertexIds, classQNameSet, tinkerGraph);
 
@@ -273,7 +279,13 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         populateClassInfo(methodInfoList, tinkerGraph);
         modifyMethodInfoForArray(methodInfoList, criteria.getInvokerClassName());
-        reduceArgumentForInnerClassConstructorIfRequired(methodInfoList, criteria);
+
+        String firstArgumentQualifiedClassName = criteria.getArgumentTypeWithIndexList().stream()
+                .filter(a -> a._1() == 0).map(Tuple2::_2)
+                .findFirst()
+                .orElse(null);
+        reduceArgumentForInnerClassConstructorIfRequired(methodInfoList, firstArgumentQualifiedClassName,
+                criteria.getNumberOfParameters(), jarVertexIds, tinkerGraph);
 
         methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getInvokerClassName(),
                 criteria.isSuperInvoker(), jarVertexIds, tinkerGraph);
@@ -283,34 +295,6 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         methodInfoList = filteredNonAbstractMethod(methodInfoList);
 
         return methodInfoList;
-    }
-
-    /*
-     * Java Compiler can add outer class as first argument to the inner class constructors if not present. We will
-     * always try to remove first argument for inner class constructor unless sent argument name is outer class name.
-     */
-    private void reduceArgumentForInnerClassConstructorIfRequired(List<MethodInfo> methodInfoList, Criteria criteria) {
-        for (MethodInfo methodInfo: methodInfoList) {
-            if (methodInfo.isInnerClassConstructor()) {
-                if (criteria.getArgumentTypeWithIndexList().isEmpty()
-                        || criteria.getArgumentTypeWithIndexList().stream()
-                        .filter(a -> a._1() == 0).map(Tuple2::_2)
-                        .noneMatch(qName -> qName.equals(methodInfo.getClassInfo().getOuterClassQualifiedName()))) {
-
-                    if (methodInfo.getArgumentTypeInfoList().get(0).getQualifiedClassName()
-                            .equals(methodInfo.getClassInfo().getOuterClassQualifiedName())) {
-
-                        List<Type> methodArgumentList = new ArrayList<>(Arrays.asList(methodInfo.getArgumentTypes()));
-                        methodArgumentList.remove(0);
-
-                        methodInfo.setArgumentTypes(methodArgumentList.toArray(new Type[0]));
-                        methodInfo.getArgumentTypeInfoList().remove(0);
-                    }
-                }
-            }
-        }
-
-        methodInfoList.removeIf(m -> m.isInnerClassConstructor() && m.getArgumentTypes().length != criteria.getNumberOfParameters());
     }
 
     private List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {
@@ -385,6 +369,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private int numberOfParameters;
         private String invokerClassName;
         private OwningClassInfo owningClassInfo;
+
+        /*
+         * superInvoker will be used to determine appropriate method from invoker type as well as from owning class.
+         * In both cases, we will skip the lower order classes assuming that methods will come from any of the super
+         * classes.
+         */
         private boolean isSuperInvoker;
         private Map<Integer, String> argumentTypeMap;
 

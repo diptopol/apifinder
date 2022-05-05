@@ -263,8 +263,8 @@ public class GuavaV3011TypeInferenceV2APITest {
                 if (superConstructorInvocation.toString().startsWith("super(sortedMap)")) {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superConstructorInvocation);
 
-                    assert ("com.google.common.collect.ImmutableSortedMap.SerializedForm" +
-                            "::void ImmutableSortedMap$SerializedForm(com.google.common.collect.ImmutableSortedMap)")
+                    assert ("com.google.common.collect.ImmutableMap.SerializedForm" +
+                            "::void ImmutableMap$SerializedForm(com.google.common.collect.ImmutableMap)")
                             .equals(methodInfo.toString());
                 }
 

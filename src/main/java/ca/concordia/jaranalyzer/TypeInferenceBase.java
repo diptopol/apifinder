@@ -805,6 +805,49 @@ public abstract class TypeInferenceBase {
         }
     }
 
+
+    /*
+     * Java Compiler can add outer class as first argument to the inner class constructors if not present. We will
+     * always try to remove first argument for inner class constructor unless sent argument name is outer class name.
+     *
+     * Limitation: For now, it's not possible to determine from only number of parameters only whether to remove
+     * the first argument (assuming that was added by compiler). We also need to know the class name of first argument
+     * in order to recognize that.
+     */
+    static void reduceArgumentForInnerClassConstructorIfRequired(List<MethodInfo> methodInfoList,
+                                                                 String firstArgumentQualifiedClassName,
+                                                                 int numberOfParameters,
+                                                                 Object[] jarVertexIds,
+                                                                 TinkerGraph tinkerGraph) {
+
+        Set<String> eligibleFirstArgumentClassNameSet = new LinkedHashSet<>();
+
+        eligibleFirstArgumentClassNameSet.add(firstArgumentQualifiedClassName);
+        eligibleFirstArgumentClassNameSet.addAll(
+                getAllSuperClassSet(Collections.singleton(firstArgumentQualifiedClassName), jarVertexIds, tinkerGraph));
+        eligibleFirstArgumentClassNameSet.remove("java.lang.Object");
+
+        for (MethodInfo methodInfo: methodInfoList) {
+            if (methodInfo.isInnerClassConstructor()) {
+                if (Objects.isNull(firstArgumentQualifiedClassName)
+                        || !eligibleFirstArgumentClassNameSet.contains(methodInfo.getClassInfo().getOuterClassQualifiedName())) {
+
+                    if (methodInfo.getArgumentTypeInfoList().get(0).getQualifiedClassName()
+                            .equals(methodInfo.getClassInfo().getOuterClassQualifiedName())) {
+
+                        List<Type> methodArgumentList = new ArrayList<>(Arrays.asList(methodInfo.getArgumentTypes()));
+                        methodArgumentList.remove(0);
+
+                        methodInfo.setArgumentTypes(methodArgumentList.toArray(new Type[0]));
+                        methodInfo.getArgumentTypeInfoList().remove(0);
+                    }
+                }
+            }
+        }
+
+        methodInfoList.removeIf(m -> m.isInnerClassConstructor() && m.getArgumentTypes().length != numberOfParameters);
+    }
+
     static String getTypeDescriptorForPrimitive(String type) {
         if (!InferenceUtility.isPrimitiveType(type)) {
             return null;
@@ -938,6 +981,19 @@ public abstract class TypeInferenceBase {
                 classQNameDeclarationOrderList.indexOf(m.getQualifiedClassName())));
 
         return new LinkedHashSet<>(orderedDeferredMethodInfoList);
+    }
+
+    private static Set<String> getAllSuperClassSet(Set<String> classSet, Object[] jarVertexIds, TinkerGraph tinkerGraph) {
+        Set<String> allSuperClassQualifiedNameSet = new LinkedHashSet<>();
+
+        while (!classSet.isEmpty()) {
+            Set<String> superClassQualifiedNameSet = getSuperClassQNameSet(classSet, jarVertexIds, tinkerGraph);
+            allSuperClassQualifiedNameSet.addAll(superClassQualifiedNameSet);
+
+            classSet = new LinkedHashSet<>(superClassQualifiedNameSet);
+        }
+
+        return allSuperClassQualifiedNameSet;
     }
 
     private static Set<String> getCombinedClassAndInnerClassQualifiedNameSet(Set<String> classQualifiedNameSet,
