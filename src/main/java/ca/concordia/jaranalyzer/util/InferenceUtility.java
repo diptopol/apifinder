@@ -159,8 +159,7 @@ public class InferenceUtility {
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
 
         Type type = classInstanceCreation.getType();
-        TypeInfo invokerClassTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
-                importStatementList, type, owningClassInfo);
+        TypeInfo invokerClassTypeInfo = null;
 
         if (type.isParameterizedType() && ((ParameterizedType) type).typeArguments().isEmpty()) {
             VariableDeclarationStatement variableDeclarationStatement
@@ -178,6 +177,9 @@ public class InferenceUtility {
                         List<TypeInfo> returnTypeInfoArgumentList =
                                 getTypeInfoList(dependentArtifactSet, javaVersion, importStatementList,
                                         returnTypeArgumentList, owningClassInfo);
+
+                        invokerClassTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
+                                importStatementList, type, owningClassInfo);
 
                         assert invokerClassTypeInfo.isParameterizedTypeInfo();
 
