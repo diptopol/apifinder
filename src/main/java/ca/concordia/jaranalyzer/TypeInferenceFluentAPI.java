@@ -109,7 +109,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                         jarVertexIds, classQNameSet, tinkerGraph);
 
-                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds, false);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -158,7 +158,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                         jarVertexIds, classQNameSet, tinkerGraph);
 
-                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds, i == 0);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -189,7 +189,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds, false);
 
         Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
@@ -209,7 +209,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoListForInnerClass(methodName, criteria.getNumberOfParameters(),
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds, false);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -227,7 +227,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoListForPackageImport(methodName, criteria.getNumberOfParameters(),
                 packageNameList, importedClassQNameSet, jarVertexIds, tinkerGraph);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds, false);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -250,7 +250,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(), jarVertexIds,
                     classQNameSet, tinkerGraph);
 
-            qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds);
+            qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds, false);
 
             if (!qualifiedMethodInfoList.isEmpty()
                     && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -272,7 +272,10 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
     }
 
-    private List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {
+    private List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList,
+                                           Criteria criteria,
+                                           Object[] jarVertexIds,
+                                           boolean isOwningClass) {
         if (methodInfoList.isEmpty()) {
             return methodInfoList;
         }
@@ -291,6 +294,20 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 criteria.isSuperInvoker(), jarVertexIds, tinkerGraph);
 
         methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
+
+        if (methodInfoList.size() > 1 && !isOwningClass) {
+            methodInfoList = methodInfoList.stream()
+                    .filter(m -> !m.isPrivate())
+                    .collect(Collectors.toList());
+        }
+
+        if (methodInfoList.size() > 1 && !methodInfoList.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
+            double minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
+
+            methodInfoList = methodInfoList.stream()
+                    .filter(m -> m.getArgumentMatchingDistance() == minArgumentMatchingDistance)
+                    .collect(Collectors.toList());
+        }
 
         methodInfoList = filteredNonAbstractMethod(methodInfoList);
 
@@ -320,14 +337,6 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds,
                         tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
-
-            if (methodInfoList.size() > 1 && !methodInfoList.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
-                double minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
-
-                return methodInfoList.stream()
-                        .filter(m -> m.getArgumentMatchingDistance() == minArgumentMatchingDistance)
-                        .collect(Collectors.toList());
-            }
 
             return methodInfoList;
         } else {

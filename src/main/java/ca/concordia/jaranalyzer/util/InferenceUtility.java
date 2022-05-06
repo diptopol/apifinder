@@ -161,9 +161,6 @@ public class InferenceUtility {
         Type type = classInstanceCreation.getType();
         TypeInfo invokerClassTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
                 importStatementList, type, owningClassInfo);
-        String invokerClassName = Objects.nonNull(invokerClassTypeInfo)
-                ? invokerClassTypeInfo.getQualifiedClassName()
-                : null;
 
         if (type.isParameterizedType() && ((ParameterizedType) type).typeArguments().isEmpty()) {
             VariableDeclarationStatement variableDeclarationStatement
@@ -195,7 +192,6 @@ public class InferenceUtility {
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerClassName(invokerClassName)
                 .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {

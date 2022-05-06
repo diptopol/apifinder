@@ -114,7 +114,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                         jarVertexIds, classQNameSet, tinkerGraph);
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
-                        argumentTypeList, numberOfParameters, jarVertexIds);
+                        argumentTypeList, numberOfParameters, jarVertexIds, false);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -154,7 +154,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                         jarVertexIds, classQNameSet, tinkerGraph);
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
-                        argumentTypeList, numberOfParameters, jarVertexIds);
+                        argumentTypeList, numberOfParameters, jarVertexIds, i == 0);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -184,7 +184,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 jarVertexIds, importedClassQNameSet, tinkerGraph);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
-                argumentTypeList, numberOfParameters, jarVertexIds);
+                argumentTypeList, numberOfParameters, jarVertexIds, false);
 
         Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
@@ -205,7 +205,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 importedClassQNameSet, tinkerGraph);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
-                argumentTypeList, numberOfParameters, jarVertexIds);
+                argumentTypeList, numberOfParameters, jarVertexIds, false);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -224,7 +224,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 packageNameList, importedClassQNameSet, jarVertexIds, tinkerGraph);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
-                argumentTypeList, numberOfParameters, jarVertexIds);
+                argumentTypeList, numberOfParameters, jarVertexIds, false);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -249,7 +249,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                     classQNameSet, tinkerGraph);
 
             qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerClassName, isSuperInvoker,
-                    argumentTypeList, numberOfParameters, jarVertexIds);
+                    argumentTypeList, numberOfParameters, jarVertexIds, false);
 
             if (!qualifiedMethodInfoList.isEmpty()
                     && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -444,14 +444,6 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds, tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
 
-            if (methodInfoList.size() > 1 && !methodInfoList.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
-                double minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
-
-                return methodInfoList.stream()
-                        .filter(m -> m.getArgumentMatchingDistance() >= minArgumentMatchingDistance)
-                        .collect(Collectors.toList());
-            }
-
             return methodInfoList;
         } else {
             return methodInfoList;
@@ -463,7 +455,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                   boolean isSuperInvoker,
                                                   List<String> argumentTypeList,
                                                   int numberOfParameters,
-                                                  Object[] jarVertexIds) {
+                                                  Object[] jarVertexIds,
+                                                  boolean isOwningClass) {
         if (methodInfoList.isEmpty()) {
             return methodInfoList;
         }
@@ -478,6 +471,20 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         methodInfoList = filterByMethodInvoker(methodInfoList, invokerClassName, isSuperInvoker, jarVertexIds, tinkerGraph);
 
         methodInfoList = filterByMethodArgumentTypes(methodInfoList, argumentTypeList, jarVertexIds);
+
+        if (methodInfoList.size() > 1 && !isOwningClass) {
+            methodInfoList = methodInfoList.stream()
+                    .filter(m -> !m.isPrivate())
+                    .collect(Collectors.toList());
+        }
+
+        if (methodInfoList.size() > 1 && !methodInfoList.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
+            double minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
+
+            methodInfoList = methodInfoList.stream()
+                    .filter(m -> m.getArgumentMatchingDistance() >= minArgumentMatchingDistance)
+                    .collect(Collectors.toList());
+        }
 
         methodInfoList = filteredNonAbstractMethod(methodInfoList);
 
