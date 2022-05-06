@@ -6,6 +6,7 @@ import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import io.vavr.Tuple2;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.WithOptions;
@@ -832,7 +833,8 @@ public abstract class TypeInferenceBase {
                 if (Objects.isNull(firstArgumentQualifiedClassName)
                         || !eligibleFirstArgumentClassNameSet.contains(methodInfo.getClassInfo().getOuterClassQualifiedName())) {
 
-                    if (methodInfo.getArgumentTypeInfoList().get(0).getQualifiedClassName()
+                    if (CollectionUtils.isNotEmpty(methodInfo.getArgumentTypeInfoList())
+                            && methodInfo.getArgumentTypeInfoList().get(0).getQualifiedClassName()
                             .equals(methodInfo.getClassInfo().getOuterClassQualifiedName())) {
 
                         List<Type> methodArgumentList = new ArrayList<>(Arrays.asList(methodInfo.getArgumentTypes()));
