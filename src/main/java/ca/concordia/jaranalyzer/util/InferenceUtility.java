@@ -816,7 +816,10 @@ public class InferenceUtility {
             Type boundType = wildCardType.getBound();
 
             if (Objects.nonNull(boundType)) {
-                return getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, boundType, owningClassInfo);
+                TypeInfo boundTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
+                        boundType, owningClassInfo);
+
+                return new QualifiedTypeInfo(boundTypeInfo.getQualifiedClassName());
             } else {
                 return new QualifiedTypeInfo("java.lang.Object");
             }
