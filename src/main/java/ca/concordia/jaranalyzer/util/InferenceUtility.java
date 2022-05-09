@@ -948,6 +948,7 @@ public class InferenceUtility {
          * Also, moved the type arguments to the updated invoker type for formal type resolution.
          */
         if (Objects.nonNull(invokerTypeInfo)
+                && invokerTypeInfo.isParameterizedTypeInfo()
                 && !invokerTypeInfo.getQualifiedClassName().equals(methodInfo.getQualifiedClassName())) {
 
             TypeInfo updatedInvokerTypeInfo = methodInfo.getClassInfo().getTypeInfo();

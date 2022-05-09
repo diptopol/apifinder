@@ -164,7 +164,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
 
                 formalTypeParameterMap.put(typeParameter, typeInfo);
             } else {
-                TypeInfo typeInfo = new FormalTypeParameterInfo(typeParameter,
+                TypeInfo typeInfo = new FormalTypeParameterInfo(name,
                         new QualifiedTypeInfo("java.lang.Object"));
 
                 formalTypeParameterMap.put(typeParameter, typeInfo);

@@ -49,6 +49,26 @@ public class GenericTypeConversionTest {
         assert "[]".equals(Arrays.asList(genericTypeResolutionAdapter.getMethodArgumentTypes()).toString());
     }
 
+    /*
+     * If a formal type parameter extends or super of another formal type parameter, we will convert to that dependent
+     * formal type parameter in order to simplify the relation.
+     */
+    @Test
+    public void testFormalTypeConversion() {
+        String methodSignature = "<E:TT;>(TE;TE;TE;[TE;)TE;";
+        SignatureReader signatureReader = new SignatureReader(methodSignature);
+
+        MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
+        signatureReader.accept(methodArgumentExtractor);
+
+        assert ("[FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " ArrayTypeInfo{elementTypeInfo=FormalTypeParameterInfo{typeParameter='T'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}, dimension=1}]")
+                .equals(methodArgumentExtractor.getArgumentList().toString());
+    }
+
     @Test
     public void testSignatureForExtendedFormalTypeArgument() {
         String methodSignature = "(Ljava/util/Map<+TK;+TV;>;Z)V";

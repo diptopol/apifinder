@@ -6,7 +6,9 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 /**
  * @author Diptopol
@@ -20,15 +22,36 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     private int argumentStack;
 
+    private boolean classBoundVisit;
+    private boolean visitingFormalTypeParameter;
+
+    private Stack<String> formalTypeParameterNameStack;
+
+    private Map<String, String> formalTypeParameterConversionMap;
+
     private boolean isFormalTypeParameterTraversalCompleted;
 
     /**
-     * @param formalTypeParameterMap : This map will be used to resolve formal types
+     * @param formalTypeParameterConversionMap : This map will be used to resolve formal types
      */
-    public GenericTypeResolutionAdapter(Map<String, TypeInfo> formalTypeParameterMap) {
+    public GenericTypeResolutionAdapter(Map<String, TypeInfo> formalTypeParameterConversionMap) {
         super(Opcodes.ASM9);
+        this.formalTypeParameterNameStack = new Stack<>();
+        this.formalTypeParameterConversionMap = new HashMap<>();
         this.signatureWriter = new SignatureWriter();
-        this.formalParameterMap = formalTypeParameterMap;
+        this.formalParameterMap = formalTypeParameterConversionMap;
+    }
+
+    @Override
+    public void visitFormalTypeParameter(final String name) {
+        formalTypeParameterNameStack.push(name);
+        visitingFormalTypeParameter = true;
+    }
+
+    @Override
+    public SignatureVisitor visitClassBound() {
+        classBoundVisit = true;
+        return this;
     }
 
     @Override
@@ -59,8 +82,20 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     @Override
     public void visitTypeVariable(final String name) {
+        if (visitingFormalTypeParameter && classBoundVisit) {
+            String typeParameter = formalTypeParameterNameStack.pop();
+
+            formalTypeParameterConversionMap.put(typeParameter, name);
+            classBoundVisit = false;
+        }
+
         if (argumentStack == 0 && isFormalTypeParameterTraversalCompleted) {
-            String className = formalParameterMap.get(name).getName().replaceAll("\\.", "/");
+            String typeParameterName = name;
+            if (formalTypeParameterConversionMap.containsKey(name)) {
+                typeParameterName = formalTypeParameterConversionMap.get(typeParameterName);
+            }
+
+            String className = formalParameterMap.get(typeParameterName).getName().replaceAll("\\.", "/");
             signatureWriter.visitClassType(className);
             signatureWriter.visitEnd();
         }

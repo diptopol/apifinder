@@ -354,6 +354,25 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testTypeInferenceWithSubClassNonParameterizedAndParentParameterizedType() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ReverseNaturalOrdering.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("NaturalOrdering.INSTANCE.max(a,b,c,rest")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.Ordering::public E max(E, E, E, E[])").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
