@@ -43,6 +43,18 @@ public class ClassSignatureFormalTypeParameterExtractor extends SignatureVisitor
             classBoundVisit = false;
 
         } else if (interfaceBoundVisit) {
+            /*
+             * Formal type parameter can consist of single class and multiple interfaces. Here we are ignoring the other
+             * interfaces for simplicity's sake. If we face any issue with this approach, we will facilitate the storing
+             * process of all the classes and interfaces.
+             *
+             * TODO: facilitate the storing process of all the classes and interfaces of formal type parameter
+             */
+            if (formalTypeParameterNameStack.isEmpty()) {
+                interfaceBoundVisit = false;
+                return;
+            }
+
             String typeParameter = formalTypeParameterNameStack.pop();
             updateByBoundClassOrInterface(typeParameter, name);
             interfaceBoundVisit = false;
@@ -59,10 +71,6 @@ public class ClassSignatureFormalTypeParameterExtractor extends SignatureVisitor
     public SignatureVisitor visitInterfaceBound() {
         interfaceBoundVisit = true;
         return super.visitInterfaceBound();
-    }
-
-    public LinkedHashMap<String, TypeInfo> getFormalTypeParameterMap() {
-        return formalTypeParameterMap;
     }
 
     public List<TypeInfo> getTypeArgumentList() {

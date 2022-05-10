@@ -161,6 +161,21 @@ public class GenericTypeConversionTest {
     }
 
     @Test
+    public void testFormalTypParameterExtractionFromClassSignatureWithInterfaceWithoutFormalTypeArgument() {
+        String classSignature = "<X:Ljava/lang/Number;:Ljava/lang/Comparable<TX;>;>Ljava/lang/Object;";
+        SignatureReader signatureReader = new SignatureReader(classSignature);
+
+        ClassSignatureFormalTypeParameterExtractor classSignatureFormalTypeParameterExtractor =
+                new ClassSignatureFormalTypeParameterExtractor();
+
+        signatureReader.accept(classSignatureFormalTypeParameterExtractor);
+
+        assert ("[FormalTypeParameterInfo{typeParameter='X'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Number'}}]")
+                .equals(classSignatureFormalTypeParameterExtractor.getTypeArgumentList().toString());
+    }
+
+    @Test
     public void testFormalTypParameterExtractionFromClassSignatureWithInterfaceBound() {
         String classSignature = "<K::Ljava/lang/Comparable<TK;>;>Ljava/lang/Object;Lorg/jfree/data/KeyedValues<TK;>;Ljava/lang/Cloneable;Lorg/jfree/chart/util/PublicCloneable;Ljava/io/Serializable;";
 
