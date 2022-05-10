@@ -1,5 +1,6 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.models.typeInfo.FormalTypeParameterInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.QualifiedTypeInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.signaturevisitor.*;
@@ -33,6 +34,21 @@ public class GenericTypeConversionTest {
 
         assert "[]".equals(Arrays.asList(genericTypeResolutionAdapter.getMethodArgumentTypes()).toString())
                 && "java.util.Set".equals(genericTypeResolutionAdapter.getMethodReturnType().getClassName());
+    }
+
+    @Test
+    public void testMissingValueOfFormalTypeParameterForMethodSignature() {
+        String methodSignature = "(TE;)TT;";
+        SignatureReader signatureReader = new SignatureReader(methodSignature);
+
+        Map<String, TypeInfo> map = new HashMap<>();
+        map.put("E", new FormalTypeParameterInfo("F", new QualifiedTypeInfo("java.lang.Object")));
+
+        GenericTypeResolutionAdapter genericTypeResolutionAdapter = new GenericTypeResolutionAdapter(map);
+        signatureReader.accept(genericTypeResolutionAdapter);
+
+        assert "[LF;]".equals(Arrays.asList(genericTypeResolutionAdapter.getMethodArgumentTypes()).toString())
+                && "LT;".equals(genericTypeResolutionAdapter.getMethodReturnType().toString());
     }
 
     @Test
