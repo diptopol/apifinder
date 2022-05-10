@@ -320,19 +320,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
             methodInfoList = methodInfoList.stream().filter(methodInfo -> {
                 argumentTypeWithIndexList.sort(Comparator.comparingInt(Tuple2::_1));
-                List<Type> methodArgumentTypeList = new ArrayList<>(Arrays.asList(methodInfo.getArgumentTypes()));
-                List<String> argumentTypeClassNameList = new ArrayList<>();
-                List<String> methodArgumentClassNameList = new ArrayList<>();
-
-                for (Tuple2<Integer, String> argumentIndexTuple : argumentTypeWithIndexList) {
-                    int index = argumentIndexTuple._1();
-
-                    argumentTypeClassNameList.add(argumentIndexTuple._2());
-
-                    if (index < methodArgumentTypeList.size()) {
-                        methodArgumentClassNameList.add(methodArgumentTypeList.get(index).getClassName());
-                    }
-                }
+                List<String> argumentTypeClassNameList = getOrderedArgumentClassQualifiedNameList(argumentTypeWithIndexList);
+                List<String> methodArgumentClassNameList = getOrderedMethodArgumentClassQualifiedNameList(argumentTypeWithIndexList, methodInfo);
 
                 return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds,
                         tinkerGraph, methodInfo);
@@ -342,6 +331,37 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         } else {
             return methodInfoList;
         }
+    }
+
+    private List<String> getOrderedArgumentClassQualifiedNameList(List<Tuple2<Integer, String>> argumentTypeWithIndexListOrderedByIndex) {
+        List<String> argumentTypeClassNameList = new ArrayList<>();
+
+        for (Tuple2<Integer, String> argumentIndexTuple : argumentTypeWithIndexListOrderedByIndex) {
+            argumentTypeClassNameList.add(argumentIndexTuple._2());
+        }
+
+        return argumentTypeClassNameList;
+    }
+
+    private List<String> getOrderedMethodArgumentClassQualifiedNameList(List<Tuple2<Integer, String>> argumentTypeWithIndexListOrderedByIndex,
+                                                                        MethodInfo methodInfo) {
+        List<String> methodArgumentClassNameList = new ArrayList<>();
+        List<Type> methodArgumentTypeList = new ArrayList<>(Arrays.asList(methodInfo.getArgumentTypes()));
+
+        List<Integer> argumentIndexList = argumentTypeWithIndexListOrderedByIndex
+                .stream()
+                .map(Tuple2::_1)
+                .collect(Collectors.toList());
+
+        int lastIndex = methodArgumentTypeList.size() > 0 ? methodArgumentTypeList.size() - 1 : 0;
+
+        for (int i = 0; i < methodArgumentTypeList.size(); i++) {
+            if (argumentIndexList.contains(i) || (methodInfo.isVarargs() && i == lastIndex)) {
+                methodArgumentClassNameList.add(methodArgumentTypeList.get(i).getClassName());
+            }
+        }
+
+        return methodArgumentClassNameList;
     }
 
     private void resolveQNameForArgumentTypes(Criteria criteria,
