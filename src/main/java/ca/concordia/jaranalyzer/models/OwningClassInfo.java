@@ -1,5 +1,7 @@
 package ca.concordia.jaranalyzer.models;
 
+import ca.concordia.jaranalyzer.models.typeInfo.FormalTypeParameterInfo;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +17,8 @@ public class OwningClassInfo {
     private final List<Set<String>> qualifiedClassNameSetInHierarchy;
     private final List<String> classQNameDeclarationOrderList;
 
+    private List<FormalTypeParameterInfo> accessibleFormalTypeParameterList;
+
     public OwningClassInfo(List<String> enclosingClassNameList,
                            List<Set<String>> qualifiedClassNameSetInHierarchy,
                            List<String> classQNameDeclarationOrderList) {
@@ -24,6 +28,19 @@ public class OwningClassInfo {
         this.enclosingClassNameList = enclosingClassNameList;
         this.qualifiedClassNameSetInHierarchy = qualifiedClassNameSetInHierarchy;
         this.classQNameDeclarationOrderList = classQNameDeclarationOrderList;
+    }
+
+    public OwningClassInfo(List<String> enclosingClassNameList,
+                           List<Set<String>> qualifiedClassNameSetInHierarchy,
+                           List<String> classQNameDeclarationOrderList,
+                           List<FormalTypeParameterInfo> accessibleFormalTypeParameterList) {
+
+        assert enclosingClassNameList.size() > 0;
+
+        this.enclosingClassNameList = enclosingClassNameList;
+        this.qualifiedClassNameSetInHierarchy = qualifiedClassNameSetInHierarchy;
+        this.classQNameDeclarationOrderList = classQNameDeclarationOrderList;
+        this.accessibleFormalTypeParameterList = accessibleFormalTypeParameterList;
     }
 
     public String getOuterMostClassName() {
@@ -36,6 +53,14 @@ public class OwningClassInfo {
 
     public List<String> getClassQNameDeclarationOrderList() {
         return classQNameDeclarationOrderList;
+    }
+
+    public List<FormalTypeParameterInfo> getAccessibleFormalTypeParameterList() {
+        return accessibleFormalTypeParameterList;
+    }
+
+    public void setAccessibleFormalTypeParameterList(List<FormalTypeParameterInfo> accessibleFormalTypeParameterList) {
+        this.accessibleFormalTypeParameterList = accessibleFormalTypeParameterList;
     }
 
     public Set<String> getAvailableQualifiedClassNameSet() {

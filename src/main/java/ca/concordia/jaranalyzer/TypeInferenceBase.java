@@ -943,7 +943,8 @@ public abstract class TypeInferenceBase {
             }
         }
 
-        return new OwningClassInfo(enclosingQualifiedClassNameList, qClassNameSetInHierarchy, classQNameDeclarationOrderList);
+        return new OwningClassInfo(enclosingQualifiedClassNameList, qClassNameSetInHierarchy,
+                classQNameDeclarationOrderList);
     }
 
     static List<String> getUniqueClassQNameList(List<String> classQNameList) {

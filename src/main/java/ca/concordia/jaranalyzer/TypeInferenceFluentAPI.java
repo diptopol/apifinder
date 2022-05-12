@@ -435,10 +435,6 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return owningClassInfo;
         }
 
-        public String getOwningClassQualifiedName() {
-            return Objects.nonNull(owningClassInfo) ? owningClassInfo.getOuterMostClassName() : null;
-        }
-
         private boolean isSuperInvoker() {
             return isSuperInvoker;
         }
@@ -483,13 +479,6 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         public Criteria setSuperInvoker(boolean isSuperInvoker) {
             this.isSuperInvoker = isSuperInvoker;
-
-            return this;
-        }
-
-        public Criteria setEnclosingQualifiedClassNameList(List<String> enclosingQualifiedClassNameList) {
-            this.owningClassInfo = TypeInferenceFluentAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                    enclosingQualifiedClassNameList, tinkerGraph);
 
             return this;
         }

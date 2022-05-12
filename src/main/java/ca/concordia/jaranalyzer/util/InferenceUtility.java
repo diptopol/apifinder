@@ -7,6 +7,7 @@ import ca.concordia.jaranalyzer.models.typeInfo.*;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.FieldSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.GenericTypeResolutionAdapter;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jdt.core.dom.*;
 import org.objectweb.asm.signature.SignatureReader;
@@ -887,6 +888,33 @@ public class InferenceUtility {
         }
     }
 
+    public static TypeInfo getTypeInfoFromClassName(Set<Artifact> dependentArtifactSet,
+                                                    String javaVersion,
+                                                    List<String> importStatementList,
+                                                    String className,
+                                                    OwningClassInfo owningClassInfo) {
+        if (Objects.isNull(className)) {
+            return null;
+        }
+
+        if (PRIMITIVE_TYPE_LIST.contains(className.replaceAll("\\[]", ""))) {
+            int dimension = StringUtils.countMatches(className, "[]");
+
+            if (dimension > 0) {
+                return new ArrayTypeInfo(new PrimitiveTypeInfo(className.replaceAll("\\[]", "")), dimension);
+            } else {
+                return new PrimitiveTypeInfo(className);
+            }
+        }
+
+        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentArtifactSet, javaVersion, importStatementList,
+                className, owningClassInfo);
+
+        assert !classInfoList.isEmpty();
+
+        return getTypeInfoFromClassInfo(className, classInfoList.get(0));
+    }
+
     /*
      * There are scenarios when parameterized type is called without type arguments in method signature.
      * (e.g., public Stack getCurrentSeriesPoints() {})
@@ -1477,26 +1505,16 @@ public class InferenceUtility {
         /*
          * Checking formal type parameter of thw owning class
          */
-        String owningQualifiedClassName = Objects.nonNull(owningClassInfo)
-                ? owningClassInfo.getOuterMostClassName()
-                : null;
-        TypeInfo owningClassTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
-                importStatementList, owningQualifiedClassName, owningClassInfo);
+        if (Objects.nonNull(owningClassInfo)
+                && CollectionUtils.isNotEmpty(owningClassInfo.getAccessibleFormalTypeParameterList())
+                && owningClassInfo.getAccessibleFormalTypeParameterList().stream()
+                .anyMatch(ft -> ft.getTypeParameter().equals(name))) {
 
-        if (Objects.nonNull(owningClassTypeInfo) && owningClassTypeInfo.isParameterizedTypeInfo()) {
-            ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) owningClassTypeInfo;
-
-            List<FormalTypeParameterInfo> formalTypeArgumentList = parameterizedTypeInfo.getTypeArgumentList().stream()
-                    .filter(TypeInfo::isFormalTypeParameterInfo)
-                    .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
-                    .collect(Collectors.toList());
-
-            if (formalTypeArgumentList.stream().anyMatch(ft -> ft.getTypeParameter().equals(name))) {
-                return formalTypeArgumentList.stream()
-                        .filter(ft -> ft.getTypeParameter().equals(name))
-                        .collect(Collectors.toList())
-                        .get(0);
-            }
+            return owningClassInfo.getAccessibleFormalTypeParameterList()
+                    .stream()
+                    .filter(ft -> ft.getTypeParameter().equals(name))
+                    .collect(Collectors.toList())
+                    .get(0);
         }
 
         return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, name, owningClassInfo);
@@ -1576,33 +1594,6 @@ public class InferenceUtility {
             return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
                     fieldTypeClassName, owningClassInfo);
         }
-    }
-
-    private static TypeInfo getTypeInfoFromClassName(Set<Artifact> dependentArtifactSet,
-                                                      String javaVersion,
-                                                      List<String> importStatementList,
-                                                      String className,
-                                                      OwningClassInfo owningClassInfo) {
-        if (Objects.isNull(className)) {
-            return null;
-        }
-
-        if (PRIMITIVE_TYPE_LIST.contains(className.replaceAll("\\[]", ""))) {
-            int dimension = StringUtils.countMatches(className, "[]");
-
-            if (dimension > 0) {
-                return new ArrayTypeInfo(new PrimitiveTypeInfo(className.replaceAll("\\[]", "")), dimension);
-            } else {
-                return new PrimitiveTypeInfo(className);
-            }
-        }
-
-        List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentArtifactSet, javaVersion, importStatementList,
-                className, owningClassInfo);
-
-        assert !classInfoList.isEmpty();
-
-        return getTypeInfoFromClassInfo(className, classInfoList.get(0));
     }
 
     private static TypeInfo getTypeInfoFromClassInfo(String className, ClassInfo classInfo) {
