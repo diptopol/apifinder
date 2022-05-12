@@ -317,6 +317,14 @@ public abstract class TypeInferenceBase {
             }
         }
 
+        /*
+         * For varargs method number of arguments can be one less. So considered that as matching.
+         */
+        if (methodInfo.isVarargs()
+                && argumentTypeClassNameList.size() == methodArgumentClassNameList.size() - 1) {
+            matchedMethodArgumentTypeList.add(methodArgumentClassNameList.get(methodArgumentClassNameList.size() - 1));
+        }
+
         methodArgumentClassNameList.removeAll(matchedMethodArgumentTypeList);
 
         return methodArgumentClassNameList.isEmpty();

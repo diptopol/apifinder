@@ -1041,6 +1041,32 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testForReducedNumberOfArgumentsForVarargsMethod() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/util/ExportUtils.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().contains("m2.invoke(page)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.lang.reflect.Method::public java.lang.Object invoke(java.lang.Object, java.lang.Object[])" +
+                            " throws java.lang.IllegalAccessException, java.lang.IllegalArgumentException," +
+                            " java.lang.reflect.InvocationTargetException").equals(methodInfo.toString());
+
+                    assert ("[QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}," +
+                            " VarargTypeInfo{elementTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]")
+                            .equals(methodInfo.getArgumentTypeInfoList().toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
