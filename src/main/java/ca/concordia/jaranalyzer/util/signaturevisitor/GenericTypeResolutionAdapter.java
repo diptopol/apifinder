@@ -32,14 +32,14 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
     private boolean isFormalTypeParameterTraversalCompleted;
 
     /**
-     * @param formalTypeParameterConversionMap : This map will be used to resolve formal types
+     * @param formalTypeParameterMap : This map will be used to resolve formal types
      */
-    public GenericTypeResolutionAdapter(Map<String, TypeInfo> formalTypeParameterConversionMap) {
+    public GenericTypeResolutionAdapter(Map<String, TypeInfo> formalTypeParameterMap) {
         super(Opcodes.ASM9);
         this.formalTypeParameterNameStack = new Stack<>();
         this.formalTypeParameterConversionMap = new HashMap<>();
         this.signatureWriter = new SignatureWriter();
-        this.formalParameterMap = formalTypeParameterConversionMap;
+        this.formalParameterMap = formalTypeParameterMap;
     }
 
     @Override
