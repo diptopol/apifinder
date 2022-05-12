@@ -485,13 +485,21 @@ public class InferenceUtility {
             TypeInfo typeInfo = getTypeInfoFromExpression(dependentArtifactSet, javaVersion, importStatementList,
                     variableNameMap, array, owningClassInfo);
 
-            assert typeInfo.isArrayTypeInfo();
+            if (typeInfo.isArrayTypeInfo()) {
+                ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
 
-            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) typeInfo;
+                return arrayTypeInfo.getDimension() > 1
+                        ? new ArrayTypeInfo(arrayTypeInfo.getElementTypeInfo(), arrayTypeInfo.getDimension() - 1)
+                        : arrayTypeInfo.getElementTypeInfo();
 
-            return arrayTypeInfo.getDimension() > 1
-                    ? new ArrayTypeInfo(arrayTypeInfo.getElementTypeInfo(), arrayTypeInfo.getDimension() - 1)
-                    : arrayTypeInfo.getElementTypeInfo();
+            } else if (typeInfo.isVarargTypeInfo()) {
+                VarargTypeInfo varargTypeInfo = (VarargTypeInfo) typeInfo;
+
+                return varargTypeInfo.getElementTypeInfo();
+
+            } else {
+                throw new IllegalStateException();
+            }
 
         } else if (expression instanceof InfixExpression) {
             InfixExpression infixExpression = (InfixExpression) expression;
