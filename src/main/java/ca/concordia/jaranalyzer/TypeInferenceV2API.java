@@ -248,6 +248,11 @@ public class TypeInferenceV2API {
                         TypeInfo baseType = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                                 typeList.get(0), owningClassInfo);
 
+                        if (Objects.isNull(baseType) && typeList.get(0).isSimpleType()) {
+                            String typeName = ((SimpleType) typeList.get(0)).getName().getFullyQualifiedName();
+                            baseType = new FormalTypeParameterInfo(typeName, new QualifiedTypeInfo("java.lang.Object"));
+                        }
+
                         accessibleFormalTypeParameterList.add(
                                 new FormalTypeParameterInfo(typeParameter.getName().getFullyQualifiedName(), baseType));
                     }

@@ -910,7 +910,12 @@ public class InferenceUtility {
         List<ClassInfo> classInfoList = TypeInferenceAPI.getAllTypes(dependentArtifactSet, javaVersion, importStatementList,
                 className, owningClassInfo);
 
-        assert !classInfoList.isEmpty();
+        /*
+         * Only for formal type parameter in the class, classInfoList can be empty.
+         */
+        if (classInfoList.isEmpty()) {
+            return null;
+        }
 
         return getTypeInfoFromClassInfo(className, classInfoList.get(0));
     }
