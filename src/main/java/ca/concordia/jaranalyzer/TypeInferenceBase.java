@@ -225,6 +225,7 @@ public abstract class TypeInferenceBase {
                     && isVarArgsMatch(methodArgumentTypeClassName,
                     argumentTypeClassNameList.subList(index, argumentTypeClassNameList.size()), jarVertexIds, tinkerGraph)) {
 
+                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + VARARGS_DISTANCE);
                 matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                 break;
             }
