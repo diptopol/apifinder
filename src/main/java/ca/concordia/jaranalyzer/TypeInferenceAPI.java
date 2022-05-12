@@ -450,6 +450,10 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
     }
 
+    public static String getPrimitiveWrapperClassName(String primitiveClassName) {
+        return PRIMITIVE_WRAPPER_CLASS_MAP.get(primitiveClassName);
+    }
+
     private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList,
                                                   String invokerClassName,
                                                   boolean isSuperInvoker,

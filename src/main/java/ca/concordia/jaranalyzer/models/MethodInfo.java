@@ -400,7 +400,7 @@ public class MethodInfo {
                 return new VoidTypeInfo();
             }
 
-            return new QualifiedTypeInfo(returnType.getClassName());
+            return getTypeInfo(returnType);
         }
     }
 

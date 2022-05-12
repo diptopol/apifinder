@@ -119,6 +119,14 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
 
     @Override
     public void visitClassType(final String name) {
+        if (visitingFormalTypeParameter && classBoundVisit) {
+            if (!formalTypeParameterNameStack.isEmpty()) {
+                formalTypeParameterNameStack.pop();
+            }
+
+            classBoundVisit = false;
+        }
+
         if (argumentStack == 0 && isFormalTypeParameterTraversalCompleted) {
             signatureWriter.visitClassType(name);
         }

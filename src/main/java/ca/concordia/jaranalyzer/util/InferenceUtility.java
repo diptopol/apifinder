@@ -1085,6 +1085,13 @@ public class InferenceUtility {
                     ? null
                     : argumentTypeInfoList.get(i);
 
+            /*
+             * Primitive type cannot be replaced as placeholder of formal type parameter. Replaced with wrapper object.
+             */
+            if (Objects.nonNull(argument) && argument.isPrimitiveTypeInfo()) {
+                argument = new QualifiedTypeInfo(TypeInferenceAPI.getPrimitiveWrapperClassName(argument.getQualifiedClassName()));
+            }
+
             if (methodArgument.isFormalTypeParameterInfo()
                     && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgument).getTypeParameter())
                     && Objects.nonNull(argument) && !argument.isNullTypeInfo()) {

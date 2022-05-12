@@ -434,6 +434,26 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testPrimitiveTypeWrapperConversionDuringFormalTypeParameterResolution() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("Maps.immutableEntry(service")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.Maps" +
+                            "::public static java.util.Map.Entry immutableEntry(com.google.common.util.concurrent.Service, java.lang.Long)")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
