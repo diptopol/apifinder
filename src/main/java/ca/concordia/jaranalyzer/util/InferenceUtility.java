@@ -828,6 +828,12 @@ public class InferenceUtility {
                 TypeInfo boundTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                         boundType, owningClassInfo);
 
+                //assuming that if boundTypeInfo null, means its a formal type parameter
+                if (Objects.isNull(boundTypeInfo) && boundType.isSimpleType()) {
+                    String typeName = ((SimpleType) boundType).getName().getFullyQualifiedName();
+                    boundTypeInfo = new FormalTypeParameterInfo(typeName, new QualifiedTypeInfo("java.lang.Object"));
+                }
+
                 return new QualifiedTypeInfo(boundTypeInfo.getQualifiedClassName());
             } else {
                 return new QualifiedTypeInfo("java.lang.Object");
