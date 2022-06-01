@@ -32,7 +32,7 @@ public class VarargTypeInfo extends TypeInfo {
 
     @Override
     public String getName() {
-        return this.elementTypeInfo.getName();
+        return this.elementTypeInfo.getName().concat("...");
     }
 
     @Override
