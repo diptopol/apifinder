@@ -1,12 +1,15 @@
 package ca.concordia.jaranalyzer.models;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * @author Diptopol
  * @since 3/12/2022 4:36 PM
  */
-public class Artifact {
+public class Artifact implements Serializable {
+
+    private static final long serialVersionUID = 42L;
 
     public static final String JAR_TYPE = "jar";
     public static final String POM_TYPE= "pom";
