@@ -425,9 +425,12 @@ public class MethodInfo {
     }
 
     private TypeInfo getTypeInfo(Type type) {
-        if (type.getClassName().endsWith("[]")) {
+        String typeClassName = type.getClassName()
+                .replaceAll("\\$", ".");
+
+        if (typeClassName.endsWith("[]")) {
             int dimension = type.getDimensions();
-            String className = type.getClassName().replaceAll("\\[]", "");
+            String className = typeClassName.replaceAll("\\[]", "");
 
             if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(className)) {
                 return new ArrayTypeInfo(new PrimitiveTypeInfo(className), dimension);
@@ -435,10 +438,10 @@ public class MethodInfo {
                 return new ArrayTypeInfo(new QualifiedTypeInfo(className), dimension);
             }
         } else {
-            if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(type.getClassName())) {
-                return new PrimitiveTypeInfo(type.getClassName());
+            if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(typeClassName)) {
+                return new PrimitiveTypeInfo(typeClassName);
             } else {
-                return new QualifiedTypeInfo(type.getClassName());
+                return new QualifiedTypeInfo(typeClassName);
             }
         }
     }
