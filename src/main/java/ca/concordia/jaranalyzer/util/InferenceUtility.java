@@ -934,6 +934,28 @@ public class InferenceUtility {
         return getTypeInfoFromClassInfo(className, classInfoList.get(0));
     }
 
+    public static List<String> getInnerClassQNameList(AbstractTypeDeclaration abstractTypeDeclaration) {
+        if (Objects.isNull(abstractTypeDeclaration)) {
+            return Collections.emptyList();
+        }
+
+        AbstractTypeDeclarationVisitor abstractTypeDeclarationVisitor = new AbstractTypeDeclarationVisitor();
+        abstractTypeDeclaration.accept(abstractTypeDeclarationVisitor);
+
+        List<AbstractTypeDeclaration> abstractTypeDeclarationList =
+                abstractTypeDeclarationVisitor.getAbstractTypeDeclarationList();
+
+        List<String> innerClassQNameList = new ArrayList<>();
+
+        for (AbstractTypeDeclaration innerAbstractTypeDeclaration: abstractTypeDeclarationList) {
+            innerClassQNameList.add(getDeclaringClassQualifiedName(innerAbstractTypeDeclaration)
+                    .replaceAll("\\$", "."));
+        }
+
+        return innerClassQNameList;
+    }
+
+
     /*
      * There are scenarios when parameterized type is called without type arguments in method signature.
      * (e.g., public Stack getCurrentSeriesPoints() {})

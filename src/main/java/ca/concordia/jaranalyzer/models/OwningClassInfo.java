@@ -2,9 +2,7 @@ package ca.concordia.jaranalyzer.models;
 
 import ca.concordia.jaranalyzer.models.typeInfo.FormalTypeParameterInfo;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,19 +26,6 @@ public class OwningClassInfo {
         this.enclosingClassNameList = enclosingClassNameList;
         this.qualifiedClassNameSetInHierarchy = qualifiedClassNameSetInHierarchy;
         this.classQNameDeclarationOrderList = classQNameDeclarationOrderList;
-    }
-
-    public OwningClassInfo(List<String> enclosingClassNameList,
-                           List<Set<String>> qualifiedClassNameSetInHierarchy,
-                           List<String> classQNameDeclarationOrderList,
-                           List<FormalTypeParameterInfo> accessibleFormalTypeParameterList) {
-
-        assert enclosingClassNameList.size() > 0;
-
-        this.enclosingClassNameList = enclosingClassNameList;
-        this.qualifiedClassNameSetInHierarchy = qualifiedClassNameSetInHierarchy;
-        this.classQNameDeclarationOrderList = classQNameDeclarationOrderList;
-        this.accessibleFormalTypeParameterList = accessibleFormalTypeParameterList;
     }
 
     public String getOuterMostClassName() {

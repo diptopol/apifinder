@@ -297,7 +297,7 @@ public class JFreeChartTests {
         jarInformationSet1.add(new Artifact("javax.servlet", "servlet-api", "2.5"));
 
         List<MethodInfo> matches = TypeInferenceAPI.getAllMethods(jarInformationSet1, javaVersion, imports,
-                "clone", 0, "int[]", false, null);
+                "clone", 0, "int[]", false, null, null);
 
         assert "[java.lang.Object::protected int[] clone()]".equals(matches.toString());
     }

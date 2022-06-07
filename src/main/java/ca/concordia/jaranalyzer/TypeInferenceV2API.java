@@ -30,7 +30,8 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion, importStatementList));
+                getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                Collections.emptyList());
 
         owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, methodInvocation));
@@ -55,7 +56,8 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(superMethodInvocation, dependentArtifactSet, javaVersion, importStatementList));
+                getAllEnclosingClassList(superMethodInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                Collections.emptyList());
 
         owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, superMethodInvocation));
@@ -79,8 +81,14 @@ public class TypeInferenceV2API {
         List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
+        List<String> enclosingClassQNameList =
+                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
+
+        List<String> nonEnclosingAccessibleClassQNameList =
+                getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
+
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList));
+                enclosingClassQNameList, nonEnclosingAccessibleClassQNameList);
 
         owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, classInstanceCreation));
@@ -105,7 +113,8 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(constructorInvocation, dependentArtifactSet, javaVersion, importStatementList));
+                getAllEnclosingClassList(constructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                Collections.emptyList());
 
         owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, constructorInvocation));
@@ -163,7 +172,8 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(superConstructorInvocation, dependentArtifactSet, javaVersion, importStatementList));
+                getAllEnclosingClassList(superConstructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                Collections.emptyList());
 
         owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, superConstructorInvocation));
@@ -297,7 +307,8 @@ public class TypeInferenceV2API {
         }
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList));
+                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList),
+                Collections.emptyList());
 
         owningClassInfo.setAccessibleFormalTypeParameterList(
                 getAccessibleFormalTypeParameterList(dependentArtifactSet, javaVersion, importStatementList,
@@ -332,6 +343,27 @@ public class TypeInferenceV2API {
         enclosingClassList.addAll(getEnclosingClassList(node));
 
         return enclosingClassList;
+    }
+
+    private static List<String> getNonEnclosingAccessibleClassListForInstantiation(ASTNode methodNode,
+                                                                                   List<String> enclosingQClassNameList) {
+
+        AbstractTypeDeclaration topMostAbstractTypeDeclaration = null;
+        ASTNode node = methodNode;
+
+        while (Objects.nonNull(node)) {
+            if (node instanceof AbstractTypeDeclaration) {
+                topMostAbstractTypeDeclaration = (AbstractTypeDeclaration) node;
+            }
+
+            node = node.getParent();
+        }
+
+        List<String> innerQNameList = InferenceUtility.getInnerClassQNameList(topMostAbstractTypeDeclaration);
+
+        innerQNameList.removeIf(enclosingQClassNameList::contains);
+
+        return innerQNameList;
     }
 
 }

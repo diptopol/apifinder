@@ -677,7 +677,8 @@ public abstract class TypeInferenceBase {
         }
 
         return tinkerGraph.traversal().V(jarVertexIds)
-                .out("ContainsPkg").out("Contains")
+                .out("ContainsPkg")
+                .out("Contains")
                 .has("Kind", "Class")
                 .has("QName", TextP.within(classQNameSet))
                 .out("ContainsInnerClass")
@@ -903,6 +904,7 @@ public abstract class TypeInferenceBase {
     static OwningClassInfo getOwningClassInfo(Set<Artifact> dependentArtifactSet,
                                               String javaVersion,
                                               List<String> enclosingQualifiedClassNameList,
+                                              List<String> nonEnclosingQualifiedClassNameList,
                                               TinkerGraph tinkerGraph) {
 
         if (Objects.isNull(enclosingQualifiedClassNameList) || enclosingQualifiedClassNameList.size() == 0) {
@@ -922,16 +924,19 @@ public abstract class TypeInferenceBase {
          * So we are fetching inner classes using outer-most class and then replacing with appropriate name
          * of inner class.
          */
-        convertEnclosingClassNameList(enclosingQualifiedClassNameList, innerClassQualifiedNameSet);
+        convertAccessibleClassNameList(enclosingQualifiedClassNameList, innerClassQualifiedNameSet);
+        convertAccessibleClassNameList(nonEnclosingQualifiedClassNameList, innerClassQualifiedNameSet);
+
+
+        List<String> accessibleQClassNameList = new ArrayList<>(enclosingQualifiedClassNameList);
+
+        if (Objects.nonNull(nonEnclosingQualifiedClassNameList)) {
+            accessibleQClassNameList.addAll(nonEnclosingQualifiedClassNameList);
+        }
+
         List<String> classQNameDeclarationOrderList = new ArrayList<>(enclosingQualifiedClassNameList);
 
-        /*
-         * Adding inner class that is outside enclosing class name list because method can be a class construction
-         * of that inner class.
-         */
-        qClassNameSetInHierarchy.add(
-                getCombinedClassAndInnerClassQualifiedNameSet(new LinkedHashSet<>(enclosingQualifiedClassNameList),
-                        innerClassQualifiedNameSet));
+        qClassNameSetInHierarchy.add(new LinkedHashSet<>(accessibleQClassNameList));
 
         Set<String> classQNameSet = new LinkedHashSet<>(enclosingQualifiedClassNameList);
 
@@ -1033,18 +1038,20 @@ public abstract class TypeInferenceBase {
         return superClassQNameSet;
     }
 
-    private static void convertEnclosingClassNameList(List<String> enclosingClassNameList,
-                                                      Set<String> innerClassQualifiedNameSet) {
+    private static void convertAccessibleClassNameList(List<String> accessibleClassNameList,
+                                                       Set<String> innerClassQualifiedNameSet) {
 
-        assert enclosingClassNameList.size() > 0;
+        if (Objects.isNull(accessibleClassNameList) || accessibleClassNameList.isEmpty()) {
+            return;
+        }
 
         for (String innerClassQualifiedName : innerClassQualifiedNameSet) {
             if (innerClassQualifiedName.matches(".*\\.[0-9]+.*")) {
                 String innerClassQualifiedNameWithoutPosition = innerClassQualifiedName.replaceAll("\\.[0-9]+", "\\.");
 
-                if (enclosingClassNameList.contains(innerClassQualifiedNameWithoutPosition)) {
-                    int index = enclosingClassNameList.indexOf(innerClassQualifiedNameWithoutPosition);
-                    enclosingClassNameList.set(index, innerClassQualifiedName);
+                if (accessibleClassNameList.contains(innerClassQualifiedNameWithoutPosition)) {
+                    int index = accessibleClassNameList.indexOf(innerClassQualifiedNameWithoutPosition);
+                    accessibleClassNameList.set(index, innerClassQualifiedName);
                 }
             }
         }

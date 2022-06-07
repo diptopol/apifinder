@@ -52,6 +52,24 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testNestedInnerClassInstantiationFromInsideSiblingInnerClass() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation methodInvocation) {
+                if (methodInvocation.toString().startsWith("new AwaitHealthGuard()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.util.concurrent.ServiceManager.ServiceManagerState.AwaitHealthGuard::void ServiceManager$ServiceManagerState$AwaitHealthGuard()").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testUseOfClassFromSuperClassWithoutImport() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/RegularImmutableMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
