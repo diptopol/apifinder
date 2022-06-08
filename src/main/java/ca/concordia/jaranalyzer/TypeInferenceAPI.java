@@ -437,7 +437,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
     private static List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, List<String> argumentTypeList,
                                                                 Object[] jarVertexIds) {
-        if (!methodInfoList.isEmpty() && !argumentTypeList.isEmpty()) {
+        if (!methodInfoList.isEmpty()) {
             methodInfoList = methodInfoList.stream().filter(methodInfo -> {
                 List<String> argumentTypeClassNameList = new ArrayList<>(argumentTypeList);
                 List<String> methodArgumentClassNameList = Stream.of(methodInfo.getArgumentTypes())
@@ -477,7 +477,9 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         methodInfoList = filterByMethodInvoker(methodInfoList, invokerClassName, isSuperInvoker, jarVertexIds, tinkerGraph);
 
-        methodInfoList = filterByMethodArgumentTypes(methodInfoList, argumentTypeList, jarVertexIds);
+        if (!(numberOfParameters > 0 && argumentTypeList.isEmpty())) {
+            methodInfoList = filterByMethodArgumentTypes(methodInfoList, argumentTypeList, jarVertexIds);
+        }
 
         if (methodInfoList.size() > 1 && !isOwningClass) {
             methodInfoList = methodInfoList.stream()

@@ -70,6 +70,25 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testMethodInfoPrioritizationIfNoMethodArguments() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("Lists.newArrayList()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.Lists" +
+                            "::public static java.util.ArrayList newArrayList()").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testDistanceBetweenObjectArrayAndObjectMethodArg() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

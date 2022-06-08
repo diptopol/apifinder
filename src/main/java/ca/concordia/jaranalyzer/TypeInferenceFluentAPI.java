@@ -293,7 +293,9 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getInvokerClassName(),
                 criteria.isSuperInvoker(), jarVertexIds, tinkerGraph);
 
-        methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
+        if (!(criteria.getNumberOfParameters() > 0 && criteria.getArgumentTypeWithIndexList().isEmpty())) {
+            methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
+        }
 
         if (methodInfoList.size() > 1 && !isOwningClass) {
             methodInfoList = methodInfoList.stream()
@@ -315,7 +317,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
     }
 
     private List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {
-        if (!methodInfoList.isEmpty() && !criteria.getArgumentTypeWithIndexList().isEmpty()) {
+        if (!methodInfoList.isEmpty()) {
             List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList();
 
             methodInfoList = methodInfoList.stream().filter(methodInfo -> {
