@@ -57,11 +57,31 @@ public class GuavaV3011TypeInferenceV2APITest {
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(ClassInstanceCreation methodInvocation) {
-                if (methodInvocation.toString().startsWith("new AwaitHealthGuard()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new AwaitHealthGuard()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
 
                     assert ("com.google.common.util.concurrent.ServiceManager.ServiceManagerState.AwaitHealthGuard::void ServiceManager$ServiceManagerState$AwaitHealthGuard()").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testDistanceBetweenObjectArrayAndObjectMethodArg() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("logger.log(Level.FINE,\"Service {0} has terminated. Previous state was: {1}\"")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.util.logging.Logger::" +
+                            "public void log(java.util.logging.Level, java.lang.String, java.lang.Object[])")
+                            .equals(methodInfo.toString());
                 }
 
                 return true;

@@ -30,6 +30,7 @@ public abstract class TypeInferenceBase {
     private static final int PRIMITIVE_TYPE_NARROWING_DISTANCE = 2;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;
     private static final int PRIMITIVE_TYPE_COMPARABLE_DISTANCE = 1;
+    private static final int OBJECT_ARRAY_TO_OBJECT_DISTANCE = 1;
 
     /*Increased the distance of matching the wrapped objects to primitives*/
     private static final double PRIMITIVE_TYPE_UNWRAPPING_DISTANCE = 1.5;
@@ -264,6 +265,7 @@ public abstract class TypeInferenceBase {
             /*
              * Trimmed down array dimension before searching for super classes.
              */
+            boolean isArgumentArray = argumentTypeClassName.contains("[]");
             argumentTypeClassName = argumentTypeClassName.replaceAll("\\[]", "");
             methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("\\[]", "");
             methodArgumentClassNameList.set(index, methodArgumentTypeClassName);
@@ -284,6 +286,10 @@ public abstract class TypeInferenceBase {
                     matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                     continue;
                 } else if (argumentTypeClassName.equals("java.lang.Object")) {
+                    if (isArgumentArray) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + OBJECT_ARRAY_TO_OBJECT_DISTANCE);
+                    }
+
                     matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
                     continue;
                 }
