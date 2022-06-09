@@ -109,6 +109,26 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testTypeArgumentPassingDuringMethodInvocation() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("ImmutableList.<Service>of(new NoOpService())")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.ImmutableList" +
+                            "::public static com.google.common.collect.ImmutableList of(com.google.common.util.concurrent.Service)")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testUseOfClassFromSuperClassWithoutImport() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/RegularImmutableMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

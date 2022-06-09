@@ -60,6 +60,11 @@ public class InferenceUtility {
         List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
 
+        List<Type> typeArgumentList = methodInvocation.typeArguments();
+
+        List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
+                importStatementList, typeArgumentList, owningClassInfo);
+
         Expression expression = methodInvocation.getExpression();
 
         TypeInfo invokerClassTypeInfo = null;
@@ -92,7 +97,7 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfo, methodInfoList, argumentTypeInfoList, invokerClassTypeInfo);
+                owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, invokerClassTypeInfo);
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -111,6 +116,11 @@ public class InferenceUtility {
 
         List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
+
+        List<Type> typeArgumentList = superMethodInvocation.typeArguments();
+        List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
+                importStatementList, typeArgumentList, owningClassInfo);
+
 
         BodyDeclaration bodyDeclaration =
                 (BodyDeclaration) InferenceUtility.getClosestASTNode(superMethodInvocation, BodyDeclaration.class);
@@ -139,7 +149,7 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfo, methodInfoList, argumentTypeInfoList, null);
+                owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, null);
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -158,6 +168,10 @@ public class InferenceUtility {
 
         List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
                 javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
+
+        List<Type> typeArgumentList = classInstanceCreation.typeArguments();
+        List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
+                importStatementList, typeArgumentList, owningClassInfo);
 
         Type type = classInstanceCreation.getType();
         TypeInfo invokerClassTypeInfo = null;
@@ -204,7 +218,7 @@ public class InferenceUtility {
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
         InferenceUtility.transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfo, methodInfoList, argumentTypeInfoList, invokerClassTypeInfo);
+                owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, invokerClassTypeInfo);
 
         return methodInfoList;
     }
@@ -882,6 +896,7 @@ public class InferenceUtility {
                                                        OwningClassInfo owningClassInfo,
                                                        List<MethodInfo> methodInfoList,
                                                        List<TypeInfo> argumentTypeInfoList,
+                                                       List<TypeInfo> typeArgumentTypeInfoList,
                                                        TypeInfo invokerTypeInfo) {
 
         for (MethodInfo methodInfo : methodInfoList) {
@@ -890,7 +905,7 @@ public class InferenceUtility {
 
             Map<String, TypeInfo> replacedTypeInfoMap = new HashMap<>();
             invokerTypeInfo = getOriginalInvoker(invokerTypeInfo, methodInfo, owningClassInfo);
-            Map<String, TypeInfo> formalTypeParameterMap = getInferredFormalTypeParameterMap(invokerTypeInfo, methodInfo, argumentTypeInfoList);
+            Map<String, TypeInfo> formalTypeParameterMap = getInferredFormalTypeParameterMap(invokerTypeInfo, methodInfo, argumentTypeInfoList, typeArgumentTypeInfoList);
 
             if (Objects.nonNull(owningClassInfo) && Objects.nonNull(invokerTypeInfo)
                     && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(invokerTypeInfo.getQualifiedClassName())) {
@@ -1058,7 +1073,8 @@ public class InferenceUtility {
 
     private static Map<String, TypeInfo> getInferredFormalTypeParameterMap(TypeInfo invokerTypeInfo,
                                                                            MethodInfo methodInfo,
-                                                                           List<TypeInfo> argumentTypeInfoList) {
+                                                                           List<TypeInfo> argumentTypeInfoList,
+                                                                           List<TypeInfo> typeArgumentTypeInfoList) {
         Map<String, TypeInfo> inferredTypeInfoMap = new HashMap<>();
 
         if (Objects.nonNull(invokerTypeInfo)
@@ -1076,7 +1092,29 @@ public class InferenceUtility {
             );
         }
 
-        if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo)) {
+        if (!typeArgumentTypeInfoList.isEmpty()) {
+            List<TypeInfo> formalTypeParameterList = methodInfo.getFormalTypeParameterList();
+
+            assert formalTypeParameterList.size() == typeArgumentTypeInfoList.size();
+
+            for (int i = 0; i < typeArgumentTypeInfoList.size(); i++) {
+                TypeInfo typeArgumentInfo = typeArgumentTypeInfoList.get(i);
+                TypeInfo methodTypeArgumentInfo = formalTypeParameterList.get(i);
+
+                if (methodTypeArgumentInfo.isFormalTypeParameterInfo()) {
+                    FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodTypeArgumentInfo;
+                    formalTypeParameterInfo.setBaseTypeInfo(typeArgumentInfo);
+                }
+            }
+
+            inferredTypeInfoMap.putAll(
+                    formalTypeParameterList.stream()
+                            .filter(TypeInfo::isFormalTypeParameterInfo)
+                            .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
+                            .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
+                                    FormalTypeParameterInfo::getBaseTypeInfo))
+            );
+        }else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo)) {
             inferredTypeInfoMap.putAll(getInferredFormalTypeParameterMapUsingMethodArguments(methodInfo,
                     argumentTypeInfoList, inferredTypeInfoMap));
         }

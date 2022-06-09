@@ -43,6 +43,8 @@ public class MethodInfo {
     private List<TypeInfo> argumentTypeInfoList;
     private TypeInfo returnTypeInfo;
 
+    private List<TypeInfo> formalTypeParameterList;
+
     public MethodInfo(Vertex vertex) {
         this.id = vertex.id();
         this.name = vertex.<String>property("Name").value();
@@ -354,6 +356,10 @@ public class MethodInfo {
         this.returnTypeInfo = returnTypeInfo;
     }
 
+    public List<TypeInfo> getFormalTypeParameterList() {
+        return formalTypeParameterList;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -406,12 +412,15 @@ public class MethodInfo {
 
     private List<TypeInfo> getMethodArgumentTypeInfoList(Type[] argumentTypes, String signature) {
         List<TypeInfo> argumentTypeInfoList = new ArrayList<>();
+        this.formalTypeParameterList = new ArrayList<>();
 
         if (Objects.nonNull(signature)) {
             MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
             SignatureReader signatureReader = new SignatureReader(signature);
 
             signatureReader.accept(methodArgumentExtractor);
+            this.formalTypeParameterList = methodArgumentExtractor.getFormalTypeParameterList();
+
 
             return methodArgumentExtractor.getArgumentList();
         }

@@ -204,6 +204,10 @@ public class MethodArgumentExtractor extends SignatureVisitor {
         return new ArrayList<>(this.methodArgumentTypeInfoStack);
     }
 
+    public List<TypeInfo> getFormalTypeParameterList() {
+        return new ArrayList<>(this.formalTypeParameterMap.values());
+    }
+
     /*
      * For inner class (Lcom/sun/beans/util/Cache<TK;TV;>.CacheEntry<TK;TV;>) we are currently replacing parent class
      * with inner class with full name including child class name. We are also removing type arguments of parent class
