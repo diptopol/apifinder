@@ -70,6 +70,26 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testFieldVariableDeclarationBelowMethodInvocation() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/base/Throwables.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("invokeAccessibleNonThrowingMethod(getStackTraceElementMethod,jla,t,n)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert ("com.google.common.base.Throwables" +
+                            "::private static java.lang.Object invokeAccessibleNonThrowingMethod(java.lang.reflect.Method," +
+                            " java.lang.Object, java.lang.Object[])").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testMethodInfoPrioritizationIfNoMethodArguments() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

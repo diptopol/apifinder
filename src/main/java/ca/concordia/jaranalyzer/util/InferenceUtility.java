@@ -289,7 +289,7 @@ public class InferenceUtility {
                 List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
 
                 return getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                        fieldDeclaration.getType(), fragmentList, owningClassInfo);
+                        fieldDeclaration.getType(), typeDeclaration.getStartPosition(), fragmentList, owningClassInfo);
             }).flatMap(Collection::stream).collect(Collectors.toSet());
 
         } else {
@@ -1398,7 +1398,7 @@ public class InferenceUtility {
 
                 List<VariableDeclarationDto> variableDeclarationDtoList =
                         getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                                variableDeclarationExpression.getType(), fragmentList, owningClassInfo);
+                                variableDeclarationExpression.getType(), null, fragmentList, owningClassInfo);
 
                 localVariableDtoSet.addAll(variableDeclarationDtoList);
             }
@@ -1409,7 +1409,7 @@ public class InferenceUtility {
 
                 List<VariableDeclarationDto> variableDeclarationDtoList =
                         getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                                variableDeclarationStatement.getType(), fragmentList, owningClassInfo);
+                                variableDeclarationStatement.getType(), null, fragmentList, owningClassInfo);
 
                 localVariableDtoSet.addAll(variableDeclarationDtoList);
             }
@@ -1523,6 +1523,7 @@ public class InferenceUtility {
                                                                               String javaVersion,
                                                                               List<String> importStatementList,
                                                                               Type declarationType,
+                                                                              Integer fieldVariableStartOffset,
                                                                               List<VariableDeclarationFragment> fragmentList,
                                                                               OwningClassInfo owningClassInfo) {
 
@@ -1533,7 +1534,10 @@ public class InferenceUtility {
             ASTNode scopedNode = getVariableDeclarationScopedNode(fragment);
             String name = fragment.getName().getFullyQualifiedName();
 
-            int startOffset = fragment.getStartPosition();
+            int startOffset = Objects.nonNull(fieldVariableStartOffset)
+                    ? fieldVariableStartOffset
+                    : fragment.getStartPosition();
+
             int endOffSet = startOffset + (scopedNode != null ? scopedNode.getLength() : 0);
 
             return new VariableDeclarationDto(name, declarationTypeInfo, new VariableScope(startOffset, endOffSet), declarationType);
