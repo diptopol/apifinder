@@ -442,7 +442,7 @@ public class GuavaV3011TypeInferenceV2APITest {
                 if (methodInvocation.toString().startsWith("comparator.compare(e1.getKey()")) {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
-                    assert ("java.util.Comparator::public abstract int compare(java.lang.Object, java.lang.Object)")
+                    assert ("java.util.Comparator::public abstract int compare(K, K)")
                             .equals(methodInfo.toString());
                 }
 

@@ -848,7 +848,7 @@ public class InferenceUtility {
                     boundTypeInfo = new FormalTypeParameterInfo(typeName, new QualifiedTypeInfo("java.lang.Object"));
                 }
 
-                return new QualifiedTypeInfo(boundTypeInfo.getQualifiedClassName());
+                return boundTypeInfo;
             } else {
                 return new QualifiedTypeInfo("java.lang.Object");
             }
@@ -1114,7 +1114,7 @@ public class InferenceUtility {
                             .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
                                     FormalTypeParameterInfo::getBaseTypeInfo))
             );
-        }else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo)) {
+        } else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo)) {
             inferredTypeInfoMap.putAll(getInferredFormalTypeParameterMapUsingMethodArguments(methodInfo,
                     argumentTypeInfoList, inferredTypeInfoMap));
         }
