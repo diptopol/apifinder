@@ -936,7 +936,7 @@ public abstract class TypeInferenceBase {
 
         List<String> accessibleQClassNameList = new ArrayList<>(enclosingQualifiedClassNameList);
 
-        if (Objects.nonNull(nonEnclosingQualifiedClassNameList)) {
+        if (CollectionUtils.isNotEmpty(nonEnclosingQualifiedClassNameList)) {
             accessibleQClassNameList.addAll(nonEnclosingQualifiedClassNameList);
         }
 

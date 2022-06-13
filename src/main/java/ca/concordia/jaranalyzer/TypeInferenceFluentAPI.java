@@ -160,7 +160,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarVertexIds, i == 0);
 
-                if (!qualifiedMethodInfoList.isEmpty()
+                if (i != 0
+                        && !qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
                     deferredQualifiedMethodInfoSet.addAll(qualifiedMethodInfoList);
                     qualifiedMethodInfoList.clear();

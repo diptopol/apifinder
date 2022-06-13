@@ -452,6 +452,27 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testNonDeferringAbstractMethodOfOwningClass() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ForwardingListenableFuture.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("delegate()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.util.concurrent.ForwardingListenableFuture" +
+                            "::protected abstract com.google.common.util.concurrent.ListenableFuture delegate()")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testTypeInferenceWithSubClassNonParameterizedAndParentParameterizedType() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ReverseNaturalOrdering.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
