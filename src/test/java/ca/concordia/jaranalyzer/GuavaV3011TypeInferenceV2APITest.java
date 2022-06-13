@@ -532,6 +532,25 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testFetchingFieldInstanceInsideAnonymousInnerClass() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/base/Optional.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("iterator.hasNext()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.util.Iterator::public abstract boolean hasNext()").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testResolvingFormalTypeOutsideMethodDeclaration() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/cache/RemovalListeners.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

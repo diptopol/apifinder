@@ -279,23 +279,24 @@ public class InferenceUtility {
                                                                                  OwningClassInfo owningClassInfo) {
 
         AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(node);
+        List<FieldDeclaration> fieldDeclarationList = new ArrayList<>();
 
-        if (abstractTypeDeclaration instanceof TypeDeclaration) {
-            TypeDeclaration typeDeclaration = (TypeDeclaration) abstractTypeDeclaration;
+        abstractTypeDeclaration.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(FieldDeclaration node) {
+                fieldDeclarationList.add(node);
 
-            FieldDeclaration[] fieldDeclarations = typeDeclaration.getFields();
+                return true;
+            }
+        });
 
-            return Arrays.stream(fieldDeclarations).map(fieldDeclaration -> {
-                List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
+        return fieldDeclarationList.stream().map(fieldDeclaration -> {
+                    List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
 
-                return getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                        fieldDeclaration.getType(), typeDeclaration.getStartPosition(), fragmentList, owningClassInfo);
-            }).flatMap(Collection::stream).collect(Collectors.toSet());
-
-        } else {
-            return Collections.emptySet();
-        }
-
+                    return getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
+                            fieldDeclaration.getType(), fieldDeclaration.getParent().getStartPosition(), fragmentList, owningClassInfo);
+                }).flatMap(Collection::stream)
+                .collect(Collectors.toSet());
     }
 
     public static ASTNode getTypeDeclaration(ASTNode node) {
