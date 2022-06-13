@@ -783,6 +783,9 @@ public class InferenceUtility {
             return getTypeInfoFromQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
                     (QualifiedType) type, owningClassInfo);
 
+        } else if (type instanceof NameQualifiedType) {
+            return getTypeInfoFromNameQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
+                    (NameQualifiedType) type, owningClassInfo);
 
         } else if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
@@ -809,6 +812,21 @@ public class InferenceUtility {
             } else if (internalType instanceof QualifiedType) {
                 TypeInfo typeInfo = getTypeInfoFromQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
                         (QualifiedType) internalType, owningClassInfo);
+
+                assert typeInfo.isParameterizedTypeInfo();
+
+                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
+
+                if (!typeArgumentList.isEmpty()) {
+                    parameterizedTypeInfo.setParameterized(true);
+                    parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                }
+
+                return parameterizedTypeInfo;
+
+            } else if (internalType instanceof NameQualifiedType) {
+                TypeInfo typeInfo = getTypeInfoFromNameQualifiedType(dependentArtifactSet, javaVersion,
+                        importStatementList, (NameQualifiedType) internalType, owningClassInfo);
 
                 assert typeInfo.isParameterizedTypeInfo();
 
@@ -1610,21 +1628,34 @@ public class InferenceUtility {
         return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, name, owningClassInfo);
     }
 
+    private static TypeInfo getTypeInfoFromNameQualifiedType(Set<Artifact> dependentArtifactSet,
+                                                             String javaVersion,
+                                                             List<String> importStatementList,
+                                                             NameQualifiedType nameQualifiedType,
+                                                             OwningClassInfo owningClassInfo) {
+
+        String qualifierName = nameQualifiedType.getQualifier().getFullyQualifiedName();
+        String simpleName = nameQualifiedType.getName().getFullyQualifiedName();
+        String name = qualifierName.concat(".").concat(simpleName);
+
+        return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, name, owningClassInfo);
+    }
+
     private static TypeInfo getTypeInfoFromQualifiedType(Set<Artifact> dependentArtifactSet,
-                                                          String javaVersion,
-                                                          List<String> importStatementList,
-                                                          QualifiedType qualifiedType,
-                                                          OwningClassInfo owningClassInfo) {
+                                                         String javaVersion,
+                                                         List<String> importStatementList,
+                                                         QualifiedType qualifiedType,
+                                                         OwningClassInfo owningClassInfo) {
 
         String name = qualifiedType.getName().getFullyQualifiedName();
         return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, name, owningClassInfo);
     }
 
     private static TypeInfo getTypeInfoFromFieldName(Set<Artifact> dependentArtifactSet,
-                                                      String javaVersion,
-                                                      List<String> importStatementList,
-                                                      String fieldName,
-                                                      OwningClassInfo owningClassInfo) {
+                                                     String javaVersion,
+                                                     List<String> importStatementList,
+                                                     String fieldName,
+                                                     OwningClassInfo owningClassInfo) {
 
         List<FieldInfo> fieldInfoList = TypeInferenceAPI.getAllFieldTypes(dependentArtifactSet,
                 javaVersion, importStatementList, fieldName, owningClassInfo);

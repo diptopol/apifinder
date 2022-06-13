@@ -512,6 +512,26 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testNameQualifiedNameResolution() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/base/Optional.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("fromNullable(javaUtilOptional.orElse(null))")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.base.Optional" +
+                            "::public static com.google.common.base.Optional fromNullable(T)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testResolvingFormalTypeOutsideMethodDeclaration() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/cache/RemovalListeners.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
