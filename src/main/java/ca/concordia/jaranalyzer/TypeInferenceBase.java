@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public abstract class TypeInferenceBase {
 
     private static final int MAX_SUPER_CLASS_DISTANCE = 1000;
-    private static final int VARARGS_DISTANCE = 1001;
+    private static final int VARARGS_DISTANCE = 10001;
     private static final int PRIMITIVE_TYPE_WIDENING_DISTANCE = 1;
     private static final int PRIMITIVE_TYPE_NARROWING_DISTANCE = 2;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;
