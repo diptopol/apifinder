@@ -193,6 +193,11 @@ public abstract class TypeInferenceBase {
             return true;
         }
 
+        //varargs can be matched with first arguments.
+        if (methodArgumentClassNameList.isEmpty()) {
+            return false;
+        }
+
         List<String> matchedMethodArgumentTypeList = new ArrayList<>();
 
         for (int index = 0; index < argumentTypeClassNameList.size(); index++) {
