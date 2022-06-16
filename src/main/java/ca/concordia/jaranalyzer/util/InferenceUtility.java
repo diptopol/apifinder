@@ -1779,6 +1779,27 @@ public class InferenceUtility {
         }
     }
 
+    public static List<String> getNonEnclosingAccessibleClassListForInstantiation(ASTNode methodNode,
+                                                                                  List<String> enclosingQClassNameList) {
+
+        AbstractTypeDeclaration topMostAbstractTypeDeclaration = null;
+        ASTNode node = methodNode;
+
+        while (Objects.nonNull(node)) {
+            if (node instanceof AbstractTypeDeclaration) {
+                topMostAbstractTypeDeclaration = (AbstractTypeDeclaration) node;
+            }
+
+            node = node.getParent();
+        }
+
+        List<String> innerQNameList = getInnerClassQNameList(topMostAbstractTypeDeclaration);
+
+        innerQNameList.removeIf(enclosingQClassNameList::contains);
+
+        return innerQNameList;
+    }
+
     /*
      * Enclosing class list will consist of anonymous inner class and enclosing class declarations.
      */
@@ -1900,9 +1921,14 @@ public class InferenceUtility {
             return null;
         }
 
+        List<String> enclosingClassQNameList =
+                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
+
+        List<String> nonEnclosingAccessibleClassQNameList =
+                getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
+
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList),
-                Collections.emptyList());
+                enclosingClassQNameList, nonEnclosingAccessibleClassQNameList);
 
         owningClassInfo.setAccessibleFormalTypeParameterList(
                 getAccessibleFormalTypeParameterList(dependentArtifactSet, javaVersion, importStatementList,

@@ -81,7 +81,7 @@ public class TypeInferenceV2API {
                 InferenceUtility.getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
 
         List<String> nonEnclosingAccessibleClassQNameList =
-                getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
+                InferenceUtility.getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
                 enclosingClassQNameList, nonEnclosingAccessibleClassQNameList);
@@ -208,27 +208,6 @@ public class TypeInferenceV2API {
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
-    }
-
-    private static List<String> getNonEnclosingAccessibleClassListForInstantiation(ASTNode methodNode,
-                                                                                   List<String> enclosingQClassNameList) {
-
-        AbstractTypeDeclaration topMostAbstractTypeDeclaration = null;
-        ASTNode node = methodNode;
-
-        while (Objects.nonNull(node)) {
-            if (node instanceof AbstractTypeDeclaration) {
-                topMostAbstractTypeDeclaration = (AbstractTypeDeclaration) node;
-            }
-
-            node = node.getParent();
-        }
-
-        List<String> innerQNameList = InferenceUtility.getInnerClassQNameList(topMostAbstractTypeDeclaration);
-
-        innerQNameList.removeIf(enclosingQClassNameList::contains);
-
-        return innerQNameList;
     }
 
 }
