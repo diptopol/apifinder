@@ -90,6 +90,24 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testOwningClassInfoRelativeToPositionOfFieldDeclaration() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/MapMakerInternalMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("Math.min(builder.getConcurrencyLevel(),MAX_SEGMENTS)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+
+                    assert ("java.lang.Math::public static int min(int, int)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testMethodInfoPrioritizationIfNoMethodArguments() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/ServiceManager.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

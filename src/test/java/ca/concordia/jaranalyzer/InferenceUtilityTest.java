@@ -91,7 +91,7 @@ public class InferenceUtilityTest {
 
                     Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
                             = InferenceUtility.getFieldVariableDeclarationDtoList(jarInformationSet, javaVersion,
-                            importStatementList, methodInvocation, null);
+                            importStatementList, methodInvocation);
 
                     assert "[altKey, ctrlKey, enabled, id, metaKey, shiftKey]"
                             .equals(fieldVariableDeclarationDtoList.stream()

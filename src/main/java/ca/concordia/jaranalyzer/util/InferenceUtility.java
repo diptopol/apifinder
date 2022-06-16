@@ -239,7 +239,7 @@ public class InferenceUtility {
 
         Set<VariableDeclarationDto> fieldVariableDeclarationSet =
                 getFieldVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                        methodExpression, owningClassInfo);
+                        methodExpression);
 
         populateVariableNameMap(variableNameMap, fieldVariableDeclarationSet);
 
@@ -275,8 +275,7 @@ public class InferenceUtility {
     public static Set<VariableDeclarationDto> getFieldVariableDeclarationDtoList(Set<Artifact> dependentArtifactSet,
                                                                                  String javaVersion,
                                                                                  List<String> importStatementList,
-                                                                                 ASTNode node,
-                                                                                 OwningClassInfo owningClassInfo) {
+                                                                                 ASTNode node) {
 
         AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(node);
         List<FieldDeclaration> fieldDeclarationList = new ArrayList<>();
@@ -292,6 +291,14 @@ public class InferenceUtility {
 
         return fieldDeclarationList.stream().map(fieldDeclaration -> {
                     List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
+
+                    OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                            getAllEnclosingClassList(fieldDeclaration, dependentArtifactSet, javaVersion, importStatementList),
+                            Collections.emptyList());
+
+                    owningClassInfo.setAccessibleFormalTypeParameterList(
+                            getAccessibleFormalTypeParameterList(dependentArtifactSet, javaVersion, importStatementList,
+                                    owningClassInfo, fieldDeclaration));
 
                     return getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
                             fieldDeclaration.getType(), fieldDeclaration.getParent().getStartPosition(), fragmentList, owningClassInfo);
@@ -1770,6 +1777,144 @@ public class InferenceUtility {
                 return new QualifiedTypeInfo(qualifiedClassName);
             }
         }
+    }
+
+    /*
+     * Enclosing class list will consist of anonymous inner class and enclosing class declarations.
+     */
+    public static List<String> getAllEnclosingClassList(ASTNode node,
+                                                        Set<Artifact> dependentArtifactSet,
+                                                        String javaVersion,
+                                                        List<String> importStatementList) {
+
+        List<String> enclosingClassList = new ArrayList<>();
+
+        String qualifiedClassName =
+                getClassInstanceCreationQualifiedName(node, dependentArtifactSet, javaVersion, importStatementList);
+
+        if (Objects.nonNull(qualifiedClassName)) {
+            enclosingClassList.add(qualifiedClassName);
+        }
+
+        enclosingClassList.addAll(getEnclosingClassList(node));
+
+        return enclosingClassList;
+    }
+
+    public static List<FormalTypeParameterInfo> getAccessibleFormalTypeParameterList(Set<Artifact> dependentArtifactSet,
+                                                                                     String javaVersion,
+                                                                                     List<String> importStatementList,
+                                                                                     OwningClassInfo owningClassInfo,
+                                                                                     ASTNode methodOrFieldNode) {
+        ASTNode node = methodOrFieldNode;
+        List<FormalTypeParameterInfo> accessibleFormalTypeParameterList = new ArrayList<>();
+
+        while (Objects.nonNull(node)) {
+            if (node instanceof TypeDeclaration) {
+                TypeDeclaration typeDeclaration = (TypeDeclaration) node;
+                String qualifiedClassName =
+                        getDeclaringClassQualifiedName(typeDeclaration).replaceAll("\\$", ".");
+
+                TypeInfo classTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
+                        importStatementList, qualifiedClassName, owningClassInfo);
+
+                if (Objects.nonNull(classTypeInfo) && classTypeInfo.isParameterizedTypeInfo()) {
+                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
+
+                    List<FormalTypeParameterInfo> formalTypeArgumentList = parameterizedTypeInfo.getTypeArgumentList().stream()
+                            .filter(TypeInfo::isFormalTypeParameterInfo)
+                            .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
+                            .collect(Collectors.toList());
+
+                    accessibleFormalTypeParameterList.addAll(formalTypeArgumentList);
+                }
+
+            } else if (node instanceof MethodDeclaration) {
+                MethodDeclaration methodDeclaration = (MethodDeclaration) node;
+                List<TypeParameter> typeParameterList = methodDeclaration.typeParameters();
+
+                for (TypeParameter typeParameter: typeParameterList) {
+                    List<Type> typeList = typeParameter.typeBounds();
+
+                    if (typeList.isEmpty()) {
+                        accessibleFormalTypeParameterList.add(
+                                new FormalTypeParameterInfo(typeParameter.getName().getFullyQualifiedName(),
+                                        new QualifiedTypeInfo("java.lang.Object")));
+
+                    } else {
+                        TypeInfo baseType = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
+                                typeList.get(0), owningClassInfo);
+
+                        if (Objects.isNull(baseType) && typeList.get(0).isSimpleType()) {
+                            String typeName = ((SimpleType) typeList.get(0)).getName().getFullyQualifiedName();
+                            baseType = new FormalTypeParameterInfo(typeName, new QualifiedTypeInfo("java.lang.Object"));
+                        }
+
+                        accessibleFormalTypeParameterList.add(
+                                new FormalTypeParameterInfo(typeParameter.getName().getFullyQualifiedName(), baseType));
+                    }
+                }
+            }
+
+            node = node.getParent();
+        }
+
+        return accessibleFormalTypeParameterList;
+    }
+
+    private static List<String> getEnclosingClassList(ASTNode methodNode) {
+        ASTNode node = methodNode;
+
+        List<String> enclosingClassNameList = new ArrayList<>();
+
+        while (Objects.nonNull(node)) {
+            if (node instanceof AbstractTypeDeclaration) {
+                AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) node;
+
+                String className = getDeclaringClassQualifiedName(abstractTypeDeclaration);
+                enclosingClassNameList.add(className.replaceAll("\\$", "."));
+            }
+
+            node = node.getParent();
+        }
+
+        return enclosingClassNameList;
+    }
+
+    private static String getClassInstanceCreationQualifiedName(ASTNode node,
+                                                                Set<Artifact> dependentArtifactSet,
+                                                                String javaVersion,
+                                                                List<String> importStatementList) {
+
+         AnonymousClassDeclaration anonymousClassDeclaration =
+                (AnonymousClassDeclaration) getClosestASTNode(node.getParent(), AnonymousClassDeclaration.class);
+
+        if (Objects.isNull(anonymousClassDeclaration)) {
+            return null;
+        }
+
+        ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation)
+                getClosestASTNode(anonymousClassDeclaration, ClassInstanceCreation.class);
+
+        if (Objects.isNull(classInstanceCreation)) {
+            return null;
+        }
+
+        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList),
+                Collections.emptyList());
+
+        owningClassInfo.setAccessibleFormalTypeParameterList(
+                getAccessibleFormalTypeParameterList(dependentArtifactSet, javaVersion, importStatementList,
+                        owningClassInfo, classInstanceCreation));
+
+        Type type = classInstanceCreation.getType();
+        TypeInfo classTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion,
+                importStatementList, type, owningClassInfo);
+
+        assert Objects.nonNull(classTypeInfo);
+
+        return classTypeInfo.getQualifiedClassName();
     }
 
 }

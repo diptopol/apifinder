@@ -4,15 +4,11 @@ import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
-import ca.concordia.jaranalyzer.models.typeInfo.FormalTypeParameterInfo;
-import ca.concordia.jaranalyzer.models.typeInfo.ParameterizedTypeInfo;
-import ca.concordia.jaranalyzer.models.typeInfo.QualifiedTypeInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Diptopol
@@ -30,10 +26,10 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                InferenceUtility.getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion, importStatementList),
                 Collections.emptyList());
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
+        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, methodInvocation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
@@ -56,10 +52,10 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(superMethodInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                InferenceUtility.getAllEnclosingClassList(superMethodInvocation, dependentArtifactSet, javaVersion, importStatementList),
                 Collections.emptyList());
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
+        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, superMethodInvocation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
@@ -82,7 +78,7 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         List<String> enclosingClassQNameList =
-                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
+                InferenceUtility.getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
 
         List<String> nonEnclosingAccessibleClassQNameList =
                 getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
@@ -90,7 +86,7 @@ public class TypeInferenceV2API {
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
                 enclosingClassQNameList, nonEnclosingAccessibleClassQNameList);
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
+        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, classInstanceCreation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
@@ -113,10 +109,10 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(constructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                InferenceUtility.getAllEnclosingClassList(constructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
                 Collections.emptyList());
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
+        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, constructorInvocation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
@@ -172,10 +168,10 @@ public class TypeInferenceV2API {
         InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(superConstructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                InferenceUtility.getAllEnclosingClassList(superConstructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
                 Collections.emptyList());
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(getAccessibleFormalTypeParameterList(dependentArtifactSet,
+        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                 javaVersion, importStatementList, owningClassInfo, superConstructorInvocation));
 
         Map<String, Set<VariableDeclarationDto>> variableNameMap =
@@ -212,144 +208,6 @@ public class TypeInferenceV2API {
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
         return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
-    }
-
-    private static List<FormalTypeParameterInfo> getAccessibleFormalTypeParameterList(Set<Artifact> dependentArtifactSet,
-                                                                                      String javaVersion,
-                                                                                      List<String> importStatementList,
-                                                                                      OwningClassInfo owningClassInfo,
-                                                                                      ASTNode methodNode) {
-        ASTNode node = methodNode;
-        List<FormalTypeParameterInfo> accessibleFormalTypeParameterList = new ArrayList<>();
-
-        while (Objects.nonNull(node)) {
-            if (node instanceof TypeDeclaration) {
-                TypeDeclaration typeDeclaration = (TypeDeclaration) node;
-                String qualifiedClassName =
-                        InferenceUtility.getDeclaringClassQualifiedName(typeDeclaration).replaceAll("\\$", ".");
-
-                TypeInfo classTypeInfo = InferenceUtility.getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
-                        importStatementList, qualifiedClassName, owningClassInfo);
-
-                if (Objects.nonNull(classTypeInfo) && classTypeInfo.isParameterizedTypeInfo()) {
-                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
-
-                    List<FormalTypeParameterInfo> formalTypeArgumentList = parameterizedTypeInfo.getTypeArgumentList().stream()
-                            .filter(TypeInfo::isFormalTypeParameterInfo)
-                            .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
-                            .collect(Collectors.toList());
-
-                    accessibleFormalTypeParameterList.addAll(formalTypeArgumentList);
-                }
-
-            } else if (node instanceof MethodDeclaration) {
-                MethodDeclaration methodDeclaration = (MethodDeclaration) node;
-                List<TypeParameter> typeParameterList = methodDeclaration.typeParameters();
-
-                for (TypeParameter typeParameter: typeParameterList) {
-                    List<Type> typeList = typeParameter.typeBounds();
-
-                    if (typeList.isEmpty()) {
-                        accessibleFormalTypeParameterList.add(
-                                new FormalTypeParameterInfo(typeParameter.getName().getFullyQualifiedName(),
-                                        new QualifiedTypeInfo("java.lang.Object")));
-
-                    } else {
-                        TypeInfo baseType = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
-                                typeList.get(0), owningClassInfo);
-
-                        if (Objects.isNull(baseType) && typeList.get(0).isSimpleType()) {
-                            String typeName = ((SimpleType) typeList.get(0)).getName().getFullyQualifiedName();
-                            baseType = new FormalTypeParameterInfo(typeName, new QualifiedTypeInfo("java.lang.Object"));
-                        }
-
-                        accessibleFormalTypeParameterList.add(
-                                new FormalTypeParameterInfo(typeParameter.getName().getFullyQualifiedName(), baseType));
-                    }
-                }
-            }
-
-            node = node.getParent();
-        }
-
-        return accessibleFormalTypeParameterList;
-    }
-
-    private static List<String> getEnclosingClassList(ASTNode methodNode) {
-        ASTNode node = methodNode;
-
-        List<String> enclosingClassNameList = new ArrayList<>();
-
-        while (Objects.nonNull(node)) {
-            if (node instanceof AbstractTypeDeclaration) {
-                AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) node;
-
-                String className = InferenceUtility.getDeclaringClassQualifiedName(abstractTypeDeclaration);
-                enclosingClassNameList.add(className.replaceAll("\\$", "."));
-            }
-
-            node = node.getParent();
-        }
-
-        return enclosingClassNameList;
-    }
-
-    private static String getClassInstanceCreationQualifiedName(ASTNode node,
-                                                                Set<Artifact> dependentArtifactSet,
-                                                                String javaVersion,
-                                                                List<String> importStatementList) {
-
-         AnonymousClassDeclaration anonymousClassDeclaration =
-                (AnonymousClassDeclaration) InferenceUtility.getClosestASTNode(node.getParent(), AnonymousClassDeclaration.class);
-
-        if (Objects.isNull(anonymousClassDeclaration)) {
-            return null;
-        }
-
-        ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation)
-                InferenceUtility.getClosestASTNode(anonymousClassDeclaration, ClassInstanceCreation.class);
-
-        if (Objects.isNull(classInstanceCreation)) {
-            return null;
-        }
-
-        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList),
-                Collections.emptyList());
-
-        owningClassInfo.setAccessibleFormalTypeParameterList(
-                getAccessibleFormalTypeParameterList(dependentArtifactSet, javaVersion, importStatementList,
-                        owningClassInfo, classInstanceCreation));
-
-        Type type = classInstanceCreation.getType();
-        TypeInfo classTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
-                importStatementList, type, owningClassInfo);
-
-        assert Objects.nonNull(classTypeInfo);
-
-        return classTypeInfo.getQualifiedClassName();
-    }
-
-    /*
-     * Enclosing class list will consist of anonymous inner class and enclosing class declarations.
-     */
-    private static List<String> getAllEnclosingClassList(ASTNode node,
-                                                         Set<Artifact> dependentArtifactSet,
-                                                         String javaVersion,
-                                                         List<String> importStatementList) {
-
-        List<String> enclosingClassList = new ArrayList<>();
-
-        String qualifiedClassName =
-                getClassInstanceCreationQualifiedName(node, dependentArtifactSet, javaVersion, importStatementList);
-
-        if (Objects.nonNull(qualifiedClassName)) {
-            enclosingClassList.add(qualifiedClassName);
-        }
-
-        enclosingClassList.addAll(getEnclosingClassList(node));
-
-        return enclosingClassList;
     }
 
     private static List<String> getNonEnclosingAccessibleClassListForInstantiation(ASTNode methodNode,
