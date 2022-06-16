@@ -309,6 +309,10 @@ public class TypeInferenceV2API {
         ClassInstanceCreation classInstanceCreation = (ClassInstanceCreation)
                 InferenceUtility.getClosestASTNode(anonymousClassDeclaration, ClassInstanceCreation.class);
 
+        if (Objects.isNull(classInstanceCreation)) {
+            return null;
+        }
+
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
                 getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList),
                 Collections.emptyList());
