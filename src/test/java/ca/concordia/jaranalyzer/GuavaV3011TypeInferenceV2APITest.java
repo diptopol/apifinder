@@ -646,7 +646,7 @@ public class GuavaV3011TypeInferenceV2APITest {
     private static void loadGuava() {
         String guavaGroupId = "com.google.guava";
         String guavaArtifactId = "guava";
-        String guavaVersion = "30.1-jre";
+        String guavaVersion = "30.1.1-jre";
         TypeInferenceFluentAPI.getInstance().loadJar(new Artifact(guavaGroupId, guavaArtifactId, guavaVersion));
         jarInformationSet.add(new Artifact(guavaGroupId, guavaArtifactId, guavaVersion));
     }
