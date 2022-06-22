@@ -7,6 +7,8 @@ import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import org.eclipse.jdt.core.dom.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -16,198 +18,235 @@ import java.util.*;
  */
 public class TypeInferenceV2API {
 
+    private static Logger logger = LoggerFactory.getLogger(TypeInferenceV2API.class);
+
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            MethodInvocation methodInvocation) {
 
-        CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(methodInvocation);
+        try {
+            CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(methodInvocation);
 
-        List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
+            List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+            InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                InferenceUtility.getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion, importStatementList),
-                Collections.emptyList());
+            OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                    InferenceUtility.getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                    Collections.emptyList());
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
-                javaVersion, importStatementList, owningClassInfo, methodInvocation));
+            owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
+                    javaVersion, importStatementList, owningClassInfo, methodInvocation));
 
-        Map<String, Set<VariableDeclarationDto>> variableNameMap =
-                InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                        methodInvocation, owningClassInfo);
+            Map<String, Set<VariableDeclarationDto>> variableNameMap =
+                    InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
+                            methodInvocation, owningClassInfo);
 
-        List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                methodInvocation, importStatementList, variableNameMap, owningClassInfo);
+            List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                    methodInvocation, importStatementList, variableNameMap, owningClassInfo);
 
-        return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+            return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+
+        } catch (Exception e) {
+            logger.error("Exception occurred", e);
+        }
+
+        return null;
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            SuperMethodInvocation superMethodInvocation) {
 
-        CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superMethodInvocation);
+        try {
+            CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superMethodInvocation);
 
-        List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
+            List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+            InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                InferenceUtility.getAllEnclosingClassList(superMethodInvocation, dependentArtifactSet, javaVersion, importStatementList),
-                Collections.emptyList());
+            OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                    InferenceUtility.getAllEnclosingClassList(superMethodInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                    Collections.emptyList());
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
-                javaVersion, importStatementList, owningClassInfo, superMethodInvocation));
+            owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
+                    javaVersion, importStatementList, owningClassInfo, superMethodInvocation));
 
-        Map<String, Set<VariableDeclarationDto>> variableNameMap =
-                InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                        superMethodInvocation, owningClassInfo);
+            Map<String, Set<VariableDeclarationDto>> variableNameMap =
+                    InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
+                            superMethodInvocation, owningClassInfo);
 
-        List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                superMethodInvocation, importStatementList, variableNameMap, owningClassInfo);
+            List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                    superMethodInvocation, importStatementList, variableNameMap, owningClassInfo);
 
-        return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+            return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+
+        } catch (Exception e) {
+            logger.error("Exception occurred", e);
+        }
+
+        return null;
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            ClassInstanceCreation classInstanceCreation) {
 
-        CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(classInstanceCreation);
+        try {
+            CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(classInstanceCreation);
 
-        List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
+            List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+            InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        List<String> enclosingClassQNameList =
-                InferenceUtility.getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
+            List<String> enclosingClassQNameList =
+                    InferenceUtility.getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
 
-        List<String> nonEnclosingAccessibleClassQNameList =
-                InferenceUtility.getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
+            List<String> nonEnclosingAccessibleClassQNameList =
+                    InferenceUtility.getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
 
-        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                enclosingClassQNameList, nonEnclosingAccessibleClassQNameList);
+            OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                    enclosingClassQNameList, nonEnclosingAccessibleClassQNameList);
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
-                javaVersion, importStatementList, owningClassInfo, classInstanceCreation));
+            owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
+                    javaVersion, importStatementList, owningClassInfo, classInstanceCreation));
 
-        Map<String, Set<VariableDeclarationDto>> variableNameMap =
-                InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                        classInstanceCreation, owningClassInfo);
+            Map<String, Set<VariableDeclarationDto>> variableNameMap =
+                    InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
+                            classInstanceCreation, owningClassInfo);
 
-        List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                classInstanceCreation, importStatementList, variableNameMap, owningClassInfo);
+            List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                    classInstanceCreation, importStatementList, variableNameMap, owningClassInfo);
 
-        return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+            return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+
+        } catch (Exception e) {
+            logger.error("Exception occurred", e);
+        }
+
+        return null;
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            ConstructorInvocation constructorInvocation) {
 
-        CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(constructorInvocation);
+        try {
+            CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(constructorInvocation);
 
-        List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
+            List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+            InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                InferenceUtility.getAllEnclosingClassList(constructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
-                Collections.emptyList());
+            OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                    InferenceUtility.getAllEnclosingClassList(constructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                    Collections.emptyList());
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
-                javaVersion, importStatementList, owningClassInfo, constructorInvocation));
+            owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
+                    javaVersion, importStatementList, owningClassInfo, constructorInvocation));
 
-        Map<String, Set<VariableDeclarationDto>> variableNameMap =
-                InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                        constructorInvocation, owningClassInfo);
+            Map<String, Set<VariableDeclarationDto>> variableNameMap =
+                    InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
+                            constructorInvocation, owningClassInfo);
 
-        MethodDeclaration methodDeclaration =
-                (MethodDeclaration) InferenceUtility.getClosestASTNode(constructorInvocation, MethodDeclaration.class);
+            MethodDeclaration methodDeclaration =
+                    (MethodDeclaration) InferenceUtility.getClosestASTNode(constructorInvocation, MethodDeclaration.class);
 
-        String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
-        String invokerClassName = className.replace("%", "").replace("$", ".");
+            String className = InferenceUtility.getDeclaringClassQualifiedName(methodDeclaration);
+            String invokerClassName = className.replace("%", "").replace("$", ".");
 
-        String methodName;
+            String methodName;
 
-        if (className.contains("%.")) {
-            methodName = className.substring(className.lastIndexOf("%.") + 2);
-        } else if (className.contains(".")) {
-            methodName = className.substring(className.lastIndexOf(".") + 1);
-        } else {
-            methodName = className;
+            if (className.contains("%.")) {
+                methodName = className.substring(className.lastIndexOf("%.") + 2);
+            } else if (className.contains(".")) {
+                methodName = className.substring(className.lastIndexOf(".") + 1);
+            } else {
+                methodName = className;
+            }
+
+            methodName = methodName.replace("$", ".");
+
+            List<Expression> argumentList = constructorInvocation.arguments();
+            int numberOfParameters = argumentList.size();
+
+            List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
+                    javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
+
+            TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                    .new Criteria(dependentArtifactSet, javaVersion,
+                    importStatementList, methodName, numberOfParameters)
+                    .setInvokerClassName(invokerClassName)
+                    .setOwningClassInfo(owningClassInfo);
+
+            for (int i = 0; i < argumentTypeInfoList.size(); i++) {
+                searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
+            }
+
+            List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+            return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+
+        } catch (Exception e) {
+            logger.error("Exception occurred", e);
         }
 
-        methodName = methodName.replace("$", ".");
-
-        List<Expression> argumentList = constructorInvocation.arguments();
-        int numberOfParameters = argumentList.size();
-
-        List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
-                javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
-
-        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
-                .new Criteria(dependentArtifactSet, javaVersion,
-                importStatementList, methodName, numberOfParameters)
-                .setInvokerClassName(invokerClassName)
-                .setOwningClassInfo(owningClassInfo);
-
-        for (int i = 0; i < argumentTypeInfoList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
-        }
-
-        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
-
-        return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+        return null;
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            SuperConstructorInvocation superConstructorInvocation) {
 
-        CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superConstructorInvocation);
+        try {
+            CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superConstructorInvocation);
 
-        List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
-        InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
+            List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
+            InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-        OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                InferenceUtility.getAllEnclosingClassList(superConstructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
-                Collections.emptyList());
+            OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
+                    InferenceUtility.getAllEnclosingClassList(superConstructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
+                    Collections.emptyList());
 
-        owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
-                javaVersion, importStatementList, owningClassInfo, superConstructorInvocation));
+            owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
+                    javaVersion, importStatementList, owningClassInfo, superConstructorInvocation));
 
-        Map<String, Set<VariableDeclarationDto>> variableNameMap =
-                InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion,
-                        importStatementList, superConstructorInvocation, owningClassInfo);
+            Map<String, Set<VariableDeclarationDto>> variableNameMap =
+                    InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion,
+                            importStatementList, superConstructorInvocation, owningClassInfo);
 
-        TypeDeclaration typeDeclaration = (TypeDeclaration) InferenceUtility.getTypeDeclaration(superConstructorInvocation);
-        Type superClassType = typeDeclaration.getSuperclassType();
-        String superClassName;
+            TypeDeclaration typeDeclaration = (TypeDeclaration) InferenceUtility.getTypeDeclaration(superConstructorInvocation);
+            Type superClassType = typeDeclaration.getSuperclassType();
+            String superClassName;
 
-        if (superClassType == null) {
-            superClassName = "java.lang.Object";
-        } else {
-            superClassName = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
-                    importStatementList, superClassType, owningClassInfo).getQualifiedClassName();
+            if (superClassType == null) {
+                superClassName = "java.lang.Object";
+            } else {
+                superClassName = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
+                        importStatementList, superClassType, owningClassInfo).getQualifiedClassName();
+            }
+
+            List<Expression> argumentList = superConstructorInvocation.arguments();
+            int numberOfParameters = argumentList.size();
+
+            List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
+                    javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
+
+            TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                    .new Criteria(dependentArtifactSet, javaVersion,
+                    importStatementList, superClassName, numberOfParameters)
+                    .setOwningClassInfo(owningClassInfo)
+                    .setSuperInvoker(true);
+
+            for (int i = 0; i < argumentTypeInfoList.size(); i++) {
+                searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
+            }
+
+            List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+            return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+
+        } catch (Exception e) {
+            logger.error("Exception occurred", e);
         }
 
-        List<Expression> argumentList = superConstructorInvocation.arguments();
-        int numberOfParameters = argumentList.size();
-
-        List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependentArtifactSet,
-                javaVersion, importStatementList, variableNameMap, argumentList, owningClassInfo);
-
-        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
-                .new Criteria(dependentArtifactSet, javaVersion,
-                importStatementList, superClassName, numberOfParameters)
-                .setOwningClassInfo(owningClassInfo)
-                .setSuperInvoker(true);
-
-        for (int i = 0; i < argumentTypeInfoList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
-        }
-
-        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
-
-        return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+        return null;
     }
 
 }
