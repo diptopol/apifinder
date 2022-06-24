@@ -1,15 +1,16 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.models.Artifact;
-import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.NullTypeInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.SimpleTypeInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
 import io.vavr.Tuple2;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.jgit.api.Git;
-import org.objectweb.asm.Type;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -82,25 +83,16 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         Set<String> importedClassQNameSet = getImportedQNameSet(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
-        String previousInvokerClassName = criteria.getInvokerClassName();
-
-        criteria.setInvokerClassName(
-                resolveQNameForClass(criteria.getInvokerClassName(), criteria.getOwningClassInfo(), jarVertexIds, importedClassQNameSet,
-                        packageNameList, tinkerGraph));
-        resolveQNameForArgumentTypes(criteria, jarVertexIds, importedClassQNameSet, packageNameList);
+        resolveQNameForInvokerTypeInfo(criteria);
+        resolveQNameForArgumentTypes(criteria);
 
         methodName = processMethodName(methodName, importedClassQNameSet);
 
         /*
           STEP 0
          */
-        String invokerClassName = criteria.getInvokerClassName();
-        if (invokerClassName != null && StringUtils.countMatches(invokerClassName, ".") > 1) {
-            List<ClassInfo> classInfoList = resolveQClassInfoForClass(previousInvokerClassName, jarVertexIds,
-                    importedClassQNameSet, packageNameList, tinkerGraph, criteria.getOwningClassInfo());
-            Set<String> classQNameSet = classInfoList.isEmpty()
-                    ? new LinkedHashSet<>(List.of(invokerClassName))
-                    : new LinkedHashSet<>(classInfoList.stream().map(ClassInfo::getQualifiedName).collect(Collectors.toList()));
+        if (Objects.nonNull(criteria.getInvokerTypeInfo())) {
+            Set<String> classQNameSet = new LinkedHashSet<>(Arrays.asList(criteria.getInvokerTypeInfo().getQualifiedClassName()));
 
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
             List<String> classQNameDeclarationOrderList = new ArrayList<>(classQNameSet);
@@ -145,7 +137,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         /*
           STEP 1
          */
-        if (Objects.isNull(criteria.getInvokerClassName()) && Objects.nonNull(criteria.getOwningClassInfo())) {
+        if (Objects.isNull(criteria.getInvokerTypeInfo()) && Objects.nonNull(criteria.getOwningClassInfo())) {
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
             for (int i = 0; i < criteria.getOwningClassInfo().getQualifiedClassNameSetInHierarchy().size(); i++) {
@@ -282,19 +274,24 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         }
 
         populateClassInfo(methodInfoList, tinkerGraph);
-        modifyMethodInfoForArray(methodInfoList, criteria.getInvokerClassName());
+        modifyMethodInfoForArray(methodInfoList, criteria.getInvokerTypeInfo());
 
-        String firstArgumentQualifiedClassName = criteria.getArgumentTypeWithIndexList().stream()
+        TypeInfo firstArgumentTypeInfo = criteria.getArgumentTypeInfoWithIndexList().stream()
                 .filter(a -> a._1() == 0).map(Tuple2::_2)
                 .findFirst()
                 .orElse(null);
+
+        String firstArgumentQualifiedClassName = Objects.nonNull(firstArgumentTypeInfo)
+                ? firstArgumentTypeInfo.getQualifiedClassName()
+                : null;
+
         reduceArgumentForInnerClassConstructorIfRequired(methodInfoList, firstArgumentQualifiedClassName,
                 criteria.getNumberOfParameters(), jarVertexIds, tinkerGraph);
 
-        methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getInvokerClassName(),
+        methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getInvokerTypeInfo(),
                 criteria.isSuperInvoker(), jarVertexIds, tinkerGraph);
 
-        if (!(criteria.getNumberOfParameters() > 0 && criteria.getArgumentTypeWithIndexList().isEmpty())) {
+        if (!(criteria.getNumberOfParameters() > 0 && criteria.getArgumentTypeInfoWithIndexList().isEmpty())) {
             methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
         }
 
@@ -319,77 +316,94 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
     private List<MethodInfo> filterByMethodArgumentTypes(List<MethodInfo> methodInfoList, Criteria criteria, Object[] jarVertexIds) {
         if (!methodInfoList.isEmpty()) {
-            List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList();
+            List<Tuple2<Integer, TypeInfo>> argumentTypeInfoWithIndexList = criteria.getArgumentTypeInfoWithIndexList();
 
             methodInfoList = methodInfoList.stream().filter(methodInfo -> {
-                argumentTypeWithIndexList.sort(Comparator.comparingInt(Tuple2::_1));
-                List<String> argumentTypeClassNameList = getOrderedArgumentClassQualifiedNameList(argumentTypeWithIndexList);
-                List<String> methodArgumentClassNameList = getOrderedMethodArgumentClassQualifiedNameList(argumentTypeWithIndexList, methodInfo);
+                argumentTypeInfoWithIndexList.sort(Comparator.comparingInt(Tuple2::_1));
+                List<TypeInfo> argumentTypeInfoList = getOrderedArgumentTypeInfoList(argumentTypeInfoWithIndexList);
+                List<TypeInfo> methodArgumentTypeInfoList = getOrderedMethodArgumentTypeInfoList(argumentTypeInfoWithIndexList, methodInfo);
 
-                return matchMethodArguments(argumentTypeClassNameList, methodArgumentClassNameList, jarVertexIds,
+                return matchMethodArguments(argumentTypeInfoList, methodArgumentTypeInfoList, jarVertexIds,
                         tinkerGraph, methodInfo);
             }).collect(Collectors.toList());
-
-            return methodInfoList;
-        } else {
-            return methodInfoList;
-        }
-    }
-
-    private List<String> getOrderedArgumentClassQualifiedNameList(List<Tuple2<Integer, String>> argumentTypeWithIndexListOrderedByIndex) {
-        List<String> argumentTypeClassNameList = new ArrayList<>();
-
-        for (Tuple2<Integer, String> argumentIndexTuple : argumentTypeWithIndexListOrderedByIndex) {
-            argumentTypeClassNameList.add(argumentIndexTuple._2());
         }
 
-        return argumentTypeClassNameList;
+        return methodInfoList;
     }
 
-    private List<String> getOrderedMethodArgumentClassQualifiedNameList(List<Tuple2<Integer, String>> argumentTypeWithIndexListOrderedByIndex,
+    private List<TypeInfo> getOrderedArgumentTypeInfoList(List<Tuple2<Integer, TypeInfo>> argumentTypeInfoWithIndexListOrderedByIndex) {
+        List<TypeInfo> argumentTypeInfoList = new ArrayList<>();
+
+        for (Tuple2<Integer, TypeInfo> argumentIndexTuple : argumentTypeInfoWithIndexListOrderedByIndex) {
+            argumentTypeInfoList.add(argumentIndexTuple._2());
+        }
+
+        return argumentTypeInfoList;
+    }
+
+    private List<TypeInfo> getOrderedMethodArgumentTypeInfoList(List<Tuple2<Integer, TypeInfo>> argumentTypeInfoWithIndexListOrderedByIndex,
                                                                         MethodInfo methodInfo) {
-        List<String> methodArgumentClassNameList = new ArrayList<>();
-        List<Type> methodArgumentTypeList = new ArrayList<>(Arrays.asList(methodInfo.getArgumentTypes()));
+        List<TypeInfo> orderedMethodArgumentTypeInfoList = new ArrayList<>();
+        List<TypeInfo> methodArgumentTypeInfoList = new ArrayList<>(methodInfo.getArgumentTypeInfoList());
 
-        List<Integer> argumentIndexList = argumentTypeWithIndexListOrderedByIndex
+        List<Integer> argumentIndexList = argumentTypeInfoWithIndexListOrderedByIndex
                 .stream()
                 .map(Tuple2::_1)
                 .collect(Collectors.toList());
 
-        int lastIndex = methodArgumentTypeList.size() > 0 ? methodArgumentTypeList.size() - 1 : 0;
+        int lastIndex = methodArgumentTypeInfoList.size() > 0 ? methodArgumentTypeInfoList.size() - 1 : 0;
 
-        for (int i = 0; i < methodArgumentTypeList.size(); i++) {
+        for (int i = 0; i < methodArgumentTypeInfoList.size(); i++) {
             if (argumentIndexList.contains(i) || (methodInfo.isVarargs() && i == lastIndex)) {
-                methodArgumentClassNameList.add(methodArgumentTypeList.get(i).getClassName());
+                orderedMethodArgumentTypeInfoList.add(methodArgumentTypeInfoList.get(i));
             }
         }
 
-        return methodArgumentClassNameList;
+        return orderedMethodArgumentTypeInfoList;
     }
 
-    private void resolveQNameForArgumentTypes(Criteria criteria,
-                                              Object[] jarVertexIds,
-                                              Set<String> importedClassQNameSet,
-                                              List<String> packageNameList) {
-        if (!criteria.getArgumentTypeWithIndexList().isEmpty()) {
-            List<Tuple2<Integer, String>> argumentTypeWithIndexList = criteria.getArgumentTypeWithIndexList().stream()
+    private void resolveQNameForInvokerTypeInfo(Criteria criteria) {
+        if (Objects.nonNull(criteria.getInvokerTypeInfo()) && criteria.getInvokerTypeInfo().isSimpleTypeInfo()) {
+            SimpleTypeInfo simpleTypeInfo = (SimpleTypeInfo) criteria.getInvokerTypeInfo();
+
+            TypeInfo invokerTypeInfo;
+
+            if (simpleTypeInfo.getClassName().equals("null")) {
+                invokerTypeInfo = new NullTypeInfo();
+            } else {
+                invokerTypeInfo = InferenceUtility.getTypeInfoFromClassName(criteria.getDependentArtifactSet(),
+                        criteria.getJavaVersion(), criteria.getImportList(), simpleTypeInfo.getClassName(),
+                        criteria.getOwningClassInfo());
+            }
+
+            criteria.setInvokerTypeInfo(invokerTypeInfo);
+        }
+    }
+
+    private void resolveQNameForArgumentTypes(Criteria criteria) {
+        if (!criteria.getArgumentTypeInfoWithIndexList().isEmpty()) {
+            List<Tuple2<Integer, TypeInfo>> argumentTypeWithIndexList = criteria.getArgumentTypeInfoWithIndexList().stream()
                     .map(argumentTypeWithIndex -> {
                         Integer argumentIndex = argumentTypeWithIndex._1();
-                        String argumentType = argumentTypeWithIndex._2();
+                        TypeInfo argumentTypeInfo = argumentTypeWithIndex._2();
 
-                        List<ClassInfo> qualifiedClassInfoList =
-                                resolveQClassInfoForClass(argumentType, jarVertexIds, importedClassQNameSet,
-                                        packageNameList, tinkerGraph, criteria.getOwningClassInfo());
+                        if (Objects.nonNull(argumentTypeInfo) && argumentTypeInfo.isSimpleTypeInfo()) {
+                            SimpleTypeInfo simpleTypeInfo = (SimpleTypeInfo) argumentTypeInfo;
 
-                        qualifiedClassInfoList = filtrationBasedOnPrioritization(argumentType, criteria.getOwningClassInfo(),
-                                importedClassQNameSet, qualifiedClassInfoList);
+                            if (simpleTypeInfo.getClassName().equals("null")) {
+                                argumentTypeInfo = new NullTypeInfo();
 
-                        return qualifiedClassInfoList.isEmpty()
-                                ? argumentTypeWithIndex
-                                : new Tuple2<>(argumentIndex, qualifiedClassInfoList.get(0).getQualifiedName());
+                            } else {
+                                argumentTypeInfo = InferenceUtility.getTypeInfoFromClassName(criteria.getDependentArtifactSet(),
+                                        criteria.getJavaVersion(), criteria.getImportList(), simpleTypeInfo.getClassName(),
+                                        criteria.getOwningClassInfo());
+                            }
+                        }
+
+                        return new Tuple2<>(argumentIndex, argumentTypeInfo);
                     }).collect(Collectors.toList());
 
-            criteria.setArgumentTypeWithIndexList(argumentTypeWithIndexList);
+            criteria.setArgumentTypeInfoWithIndexList(argumentTypeWithIndexList);
         }
     }
 
@@ -399,7 +413,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private List<String> importList;
         private String methodName;
         private int numberOfParameters;
-        private String invokerClassName;
+        private TypeInfo invokerTypeInfo;
         private OwningClassInfo owningClassInfo;
 
         /*
@@ -408,7 +422,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
          * classes.
          */
         private boolean isSuperInvoker;
-        private Map<Integer, String> argumentTypeMap;
+        private Map<Integer, TypeInfo> argumentTypeInfoMap;
 
         private Set<Artifact> getDependentArtifactSet() {
             return dependentArtifactSet;
@@ -430,8 +444,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return numberOfParameters;
         }
 
-        private String getInvokerClassName() {
-            return invokerClassName;
+        private TypeInfo getInvokerTypeInfo() {
+            return this.invokerTypeInfo;
         }
 
         public OwningClassInfo getOwningClassInfo() {
@@ -442,19 +456,19 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return isSuperInvoker;
         }
 
-        private List<Tuple2<Integer, String>> getArgumentTypeWithIndexList() {
-            if (argumentTypeMap.isEmpty()) {
+        public List<Tuple2<Integer, TypeInfo>> getArgumentTypeInfoWithIndexList() {
+            if (argumentTypeInfoMap.isEmpty()) {
                 return Collections.emptyList();
             }
 
-            return argumentTypeMap.entrySet().stream()
+            return argumentTypeInfoMap.entrySet().stream()
                     .map(e -> new Tuple2<>(e.getKey(), e.getValue()))
                     .collect(Collectors.toList());
         }
 
-        private void setArgumentTypeWithIndexList(List<Tuple2<Integer, String>> argumentTypeWithIndexList) {
-            if (!argumentTypeWithIndexList.isEmpty()) {
-                argumentTypeMap = argumentTypeWithIndexList.stream()
+        private void setArgumentTypeInfoWithIndexList(List<Tuple2<Integer, TypeInfo>> argumentTypeInfoWithIndexList) {
+            if (!argumentTypeInfoWithIndexList.isEmpty()) {
+                argumentTypeInfoMap = argumentTypeInfoWithIndexList.stream()
                         .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
             }
         }
@@ -470,12 +484,17 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             this.importList = importList;
             this.methodName = methodName;
             this.numberOfParameters = numberOfParameters;
-
-            this.argumentTypeMap = new HashMap<>();
+            this.argumentTypeInfoMap = new HashMap<>();
         }
 
         public Criteria setInvokerClassName(String invokerClassName) {
-            this.invokerClassName = invokerClassName;
+            this.invokerTypeInfo = new SimpleTypeInfo(invokerClassName);
+
+            return this;
+        }
+
+        public Criteria setInvokerTypeInfo(TypeInfo invokerTypeInfo) {
+            this.invokerTypeInfo = invokerTypeInfo;
 
             return this;
         }
@@ -496,7 +515,13 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
          * argumentIndex is assumed to be starts with 0 and will consider the max value of argumentIndex as last value.
          */
         public Criteria setArgumentType(int argumentIndex, String argumentType) {
-            this.argumentTypeMap.put(argumentIndex, argumentType);
+            this.argumentTypeInfoMap.put(argumentIndex, new SimpleTypeInfo(argumentType));
+
+            return this;
+        }
+
+        public Criteria setArgumentTypeInfo(int argumentIndex, TypeInfo argumentTypeInfo) {
+            this.argumentTypeInfoMap.put(argumentIndex, argumentTypeInfo);
 
             return this;
         }

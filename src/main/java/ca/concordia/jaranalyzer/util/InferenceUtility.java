@@ -68,23 +68,20 @@ public class InferenceUtility {
         Expression expression = methodInvocation.getExpression();
 
         TypeInfo invokerClassTypeInfo = null;
-        String invokerClassName = null;
 
         if (Objects.nonNull(expression)) {
             invokerClassTypeInfo = InferenceUtility.getTypeInfoFromExpression(dependentArtifactSet, javaVersion,
                     importStatementList, variableNameMap, expression, owningClassInfo);
-
-            invokerClassName = invokerClassTypeInfo.getQualifiedClassName();
         }
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerClassName(invokerClassName)
+                .setInvokerTypeInfo(invokerClassTypeInfo)
                 .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
+            searchCriteria.setArgumentTypeInfo(i, argumentTypeInfoList.get(i));
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
@@ -121,22 +118,14 @@ public class InferenceUtility {
         List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
                 importStatementList, typeArgumentList, owningClassInfo);
 
-
-        BodyDeclaration bodyDeclaration =
-                (BodyDeclaration) InferenceUtility.getClosestASTNode(superMethodInvocation, BodyDeclaration.class);
-
-        String className = InferenceUtility.getDeclaringClassQualifiedName(bodyDeclaration);
-        String invokerClassName = className.replace("%", "").replace("$", ".");
-
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
-                .setInvokerClassName(invokerClassName)
                 .setOwningClassInfo(owningClassInfo)
                 .setSuperInvoker(true);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
+            searchCriteria.setArgumentTypeInfo(i, argumentTypeInfoList.get(i));
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
@@ -212,7 +201,7 @@ public class InferenceUtility {
                 .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {
-            searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
+            searchCriteria.setArgumentTypeInfo(i, argumentTypeInfoList.get(i));
         }
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
@@ -1737,7 +1726,7 @@ public class InferenceUtility {
         }
     }
 
-    private static TypeInfo getTypeInfoFromClassInfo(String className, ClassInfo classInfo) {
+    public static TypeInfo getTypeInfoFromClassInfo(String className, ClassInfo classInfo) {
         /*
          * When we are constructing typeinfo from classname, if we find signature not null, we will construct a
          *  parameterized type info. Parameterized type info has list of type arguments.

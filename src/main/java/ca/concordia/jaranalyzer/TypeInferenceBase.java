@@ -4,7 +4,10 @@ import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.ArrayTypeInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
+import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple2;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -88,11 +91,12 @@ public abstract class TypeInferenceBase {
     }
 
     static List<MethodInfo> filterByMethodInvoker(List<MethodInfo> methodInfoList,
-                                                  String invokerClassName,
+                                                  TypeInfo invokerTypeInfo,
                                                   boolean isSuperInvoker,
                                                   Object[] jarVertexIds,
                                                   TinkerGraph tinkerGraph) {
-        if (!methodInfoList.isEmpty() && Objects.nonNull(invokerClassName) && !invokerClassName.equals("")) {
+        if (!methodInfoList.isEmpty() && Objects.nonNull(invokerTypeInfo)) {
+            String invokerClassName = invokerTypeInfo.getQualifiedClassName();
             Map<String, List<MethodInfo>> methodInfoDeclaringClassNameMap = new HashMap<>();
 
             String methodInfoClassName;
@@ -177,155 +181,161 @@ public abstract class TypeInferenceBase {
         }
     }
 
-    static boolean matchMethodArguments(List<String> argumentTypeClassNameList,
-                                        List<String> methodArgumentClassNameList,
+    static boolean matchMethodArguments(List<TypeInfo> argumentTypeInfoList,
+                                        List<TypeInfo> methodArgumentTypeInfoList,
                                         Object[] jarVertexIds,
                                         TinkerGraph tinkerGraph,
                                         MethodInfo methodInfo) {
-        List<String> commonClassNameList = getCommonClassNameList(argumentTypeClassNameList, methodArgumentClassNameList);
+        List<TypeInfo> commonTypeInfoList = getCommonTypeInfoList(argumentTypeInfoList, methodArgumentTypeInfoList);
 
-        for (String commonClassName : commonClassNameList) {
-            argumentTypeClassNameList.remove(commonClassName);
-            methodArgumentClassNameList.remove(commonClassName);
+        for (TypeInfo commonTypeInfo : commonTypeInfoList) {
+            Predicate<TypeInfo> removalCondition = a -> Objects.nonNull(a)
+                    && a.getQualifiedClassName().equals(commonTypeInfo.getQualifiedClassName());
+
+            Utility.removeSingleElementFromCollection(argumentTypeInfoList, removalCondition);
+            Utility.removeSingleElementFromCollection(methodArgumentTypeInfoList, removalCondition);
         }
 
-        if (argumentTypeClassNameList.isEmpty() && methodArgumentClassNameList.isEmpty()) {
+        if (argumentTypeInfoList.isEmpty() && methodArgumentTypeInfoList.isEmpty()) {
             return true;
         }
 
         //varargs can be matched with first arguments.
-        if (methodArgumentClassNameList.isEmpty()) {
+        if (methodArgumentTypeInfoList.isEmpty()) {
             return false;
         }
 
-        List<String> matchedMethodArgumentTypeList = new ArrayList<>();
+        List<TypeInfo> matchedMethodArgumentTypeInfoList = new ArrayList<>();
 
-        for (int index = 0; index < argumentTypeClassNameList.size(); index++) {
-            String argumentTypeClassName = argumentTypeClassNameList.get(index);
-            String methodArgumentTypeClassName = methodArgumentClassNameList.get(index);
+        for (int index = 0; index < argumentTypeInfoList.size(); index++) {
+            TypeInfo argumentTypeInfo = argumentTypeInfoList.get(index);
+            TypeInfo methodArgumentTypeInfo = methodArgumentTypeInfoList.get(index);
 
-            if (InferenceUtility.isPrimitiveType(argumentTypeClassName) && InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)) {
-                if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
-                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
-                            + PRIMITIVE_TYPE_WIDENING_DISTANCE);
-                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+            if (Objects.nonNull(argumentTypeInfo) && Objects.nonNull(methodArgumentTypeInfo)) {
+                String argumentTypeClassName = argumentTypeInfo.getQualifiedClassName();
+                String methodArgumentTypeClassName = methodArgumentTypeInfo.getQualifiedClassName();
 
-                } else if (isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
-                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
-                            + PRIMITIVE_TYPE_NARROWING_DISTANCE);
-                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                if (InferenceUtility.isPrimitiveType(argumentTypeClassName) && InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)) {
+                    if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
+                                + PRIMITIVE_TYPE_WIDENING_DISTANCE);
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
 
-                } else {
+                    } else if (isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
+                                + PRIMITIVE_TYPE_NARROWING_DISTANCE);
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+
+                    } else {
+                        return false;
+                    }
+                }
+
+                if (isNullType(argumentTypeClassName) && !InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)) {
+                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+
+                    continue;
+                }
+
+                // this check has to be done before `isArrayDimensionMismatch` checking
+                if (methodArgumentTypeClassName.endsWith("[]") && methodInfo.isVarargs()
+                        && isVarArgsMatch(methodArgumentTypeClassName,
+                        argumentTypeInfoList.subList(index, argumentTypeInfoList.size()), jarVertexIds, tinkerGraph)) {
+
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + VARARGS_DISTANCE);
+                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                    break;
+                }
+
+                if (!methodArgumentTypeClassName.equals("java.lang.Object")
+                        && matchObjectArrayDimensionForArgument(argumentTypeClassName, methodArgumentTypeClassName)) {
+                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                    continue;
+                }
+
+                if (!methodArgumentTypeClassName.equals("java.lang.Object")
+                        && isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
                     return false;
                 }
-            }
 
-            if (isNullType(argumentTypeClassName) && !InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)) {
-                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-
-                continue;
-            }
-
-            // this check has to be done before `isArrayDimensionMismatch` checking
-            if (methodArgumentTypeClassName.endsWith("[]") && methodInfo.isVarargs()
-                    && isVarArgsMatch(methodArgumentTypeClassName,
-                    argumentTypeClassNameList.subList(index, argumentTypeClassNameList.size()), jarVertexIds, tinkerGraph)) {
-
-                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + VARARGS_DISTANCE);
-                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                break;
-            }
-
-            if (!methodArgumentTypeClassName.equals("java.lang.Object")
-                    && matchObjectArrayDimensionForArgument(argumentTypeClassName, methodArgumentTypeClassName)) {
-                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                continue;
-            }
-
-            if (!methodArgumentTypeClassName.equals("java.lang.Object")
-                    && isArrayDimensionMismatch(argumentTypeClassName, methodArgumentTypeClassName)) {
-                return false;
-            }
-
-            if (InferenceUtility.isPrimitiveType(argumentTypeClassName)) {
-                if (PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
-                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_WRAPPING_DISTANCE);
-                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-
-                } else if ("java.lang.Comparable".equals(methodArgumentTypeClassName)) {
-                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_COMPARABLE_DISTANCE);
-                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                }
-            }
-
-            if (InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)
-                    && PRIMITIVE_UN_WRAPPER_CLASS_MAP.containsKey(argumentTypeClassName)
-                    && PRIMITIVE_UN_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
-
-                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_UNWRAPPING_DISTANCE);
-                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                continue;
-            }
-
-            /*
-             * Trimmed down array dimension before searching for super classes.
-             */
-            boolean isArgumentArray = argumentTypeClassName.contains("[]");
-            argumentTypeClassName = argumentTypeClassName.replaceAll("\\[]", "");
-            methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("\\[]", "");
-            methodArgumentClassNameList.set(index, methodArgumentTypeClassName);
-
-            if (methodArgumentTypeClassName.contains("$")) {
-                methodArgumentTypeClassName = methodArgumentTypeClassName.replace("$", ".");
-                methodArgumentClassNameList.set(index, methodArgumentTypeClassName);
-
-                if (methodArgumentTypeClassName.equals(argumentTypeClassName)) {
-                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                    continue;
-                }
-            }
-
-            if (methodArgumentTypeClassName.equals("java.lang.Object")) {
                 if (InferenceUtility.isPrimitiveType(argumentTypeClassName)) {
-                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
-                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                    continue;
-                } else if (argumentTypeClassName.equals("java.lang.Object")) {
-                    if (isArgumentArray) {
-                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + OBJECT_ARRAY_TO_OBJECT_DISTANCE);
-                    }
+                    if (PRIMITIVE_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_WRAPPING_DISTANCE);
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
 
-                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
+                    } else if ("java.lang.Comparable".equals(methodArgumentTypeClassName)) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_COMPARABLE_DISTANCE);
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                    }
+                }
+
+                if (InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)
+                        && PRIMITIVE_UN_WRAPPER_CLASS_MAP.containsKey(argumentTypeClassName)
+                        && PRIMITIVE_UN_WRAPPER_CLASS_MAP.get(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
+
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_UNWRAPPING_DISTANCE);
+                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
                     continue;
                 }
-            }
 
-            if (methodArgumentTypeClassName.equals("java.lang.Number")
-                    && PRIMITIVE_NUMERIC_TYPE_LIST.contains(argumentTypeClassName)) {
-                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_NUMBER_DISTANCE);
-                matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                continue;
-            }
+                /*
+                 * Trimmed down array dimension before searching for super classes.
+                 */
+                boolean isArgumentArray = argumentTypeClassName.contains("[]");
+                argumentTypeClassName = argumentTypeClassName.replaceAll("\\[]", "");
+                methodArgumentTypeClassName = methodArgumentTypeClassName.replaceAll("\\[]", "");
 
-            Set<String> classNameList = new HashSet<>();
-            classNameList.add(argumentTypeClassName);
+                if (methodArgumentTypeClassName.contains("$")) {
+                    methodArgumentTypeClassName = methodArgumentTypeClassName.replace("$", ".");
 
-            int distance = 0;
-
-            while (!classNameList.isEmpty()) {
-                classNameList = getSuperClassQNameSet(classNameList, jarVertexIds, tinkerGraph);
-
-                distance++;
-
-                if (classNameList.contains(methodArgumentTypeClassName)) {
-                    if (methodArgumentTypeClassName.equals("java.lang.Object")) {
-                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
-                    } else {
-                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + distance);
+                    if (methodArgumentTypeClassName.equals(argumentTypeClassName)) {
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        continue;
                     }
+                }
 
-                    matchedMethodArgumentTypeList.add(methodArgumentTypeClassName);
-                    break;
+                if (methodArgumentTypeClassName.equals("java.lang.Object")) {
+                    if (InferenceUtility.isPrimitiveType(argumentTypeClassName)) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        continue;
+                    } else if (argumentTypeClassName.equals("java.lang.Object")) {
+                        if (isArgumentArray) {
+                            methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + OBJECT_ARRAY_TO_OBJECT_DISTANCE);
+                        }
+
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        continue;
+                    }
+                }
+
+                if (methodArgumentTypeClassName.equals("java.lang.Number")
+                        && PRIMITIVE_NUMERIC_TYPE_LIST.contains(argumentTypeClassName)) {
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_NUMBER_DISTANCE);
+                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                    continue;
+                }
+
+                Set<String> classNameList = new HashSet<>();
+                classNameList.add(argumentTypeClassName);
+
+                int distance = 0;
+
+                while (!classNameList.isEmpty()) {
+                    classNameList = getSuperClassQNameSet(classNameList, jarVertexIds, tinkerGraph);
+
+                    distance++;
+
+                    if (classNameList.contains(methodArgumentTypeClassName)) {
+                        if (methodArgumentTypeClassName.equals("java.lang.Object")) {
+                            methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + MAX_SUPER_CLASS_DISTANCE);
+                        } else {
+                            methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + distance);
+                        }
+
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        break;
+                    }
                 }
             }
         }
@@ -334,14 +344,21 @@ public abstract class TypeInferenceBase {
          * For varargs method number of arguments can be one less. So considered that as matching.
          */
         if (methodInfo.isVarargs()
-                && argumentTypeClassNameList.size() == methodArgumentClassNameList.size() - 1) {
+                && argumentTypeInfoList.size() == methodArgumentTypeInfoList.size() - 1) {
             methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + VARARGS_DISTANCE);
-            matchedMethodArgumentTypeList.add(methodArgumentClassNameList.get(methodArgumentClassNameList.size() - 1));
+            matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfoList.get(methodArgumentTypeInfoList.size() - 1));
         }
 
-        methodArgumentClassNameList.removeAll(matchedMethodArgumentTypeList);
+        List<String> matchedMethodArgumentClassNameList = matchedMethodArgumentTypeInfoList.stream()
+                .map(TypeInfo::getQualifiedClassName)
+                .collect(Collectors.toList());
 
-        return methodArgumentClassNameList.isEmpty();
+        for (String matchedMethodArgumentClassName: matchedMethodArgumentClassNameList) {
+            Utility.removeSingleElementFromCollection(methodArgumentTypeInfoList,
+                    a -> matchedMethodArgumentClassName.equals(a.getQualifiedClassName()));
+        }
+
+        return methodArgumentTypeInfoList.isEmpty();
     }
 
     static List<MethodInfo> populateClassInfo(List<MethodInfo> qualifiedMethodInfoList, TinkerGraph tinkerGraph) {
@@ -811,14 +828,16 @@ public abstract class TypeInferenceBase {
                 .orElse(0);
     }
 
-    static void modifyMethodInfoForArray(List<MethodInfo> methodInfoList, String invokerClassName) {
-        if (invokerClassName != null && invokerClassName.endsWith("[]")) {
-            int dimension = StringUtils.countMatches(invokerClassName, "[]");
-            String typeName = invokerClassName.replaceAll("\\[]", "");
+    static void modifyMethodInfoForArray(List<MethodInfo> methodInfoList, TypeInfo invokerTypeInfo) {
+        if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isArrayTypeInfo()) {
+            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) invokerTypeInfo;
 
-            typeName = InferenceUtility.isPrimitiveType(typeName)
-                    ? getTypeDescriptorForPrimitive(typeName)
-                    : "L" + typeName.replaceAll("\\.", "/") + ";";
+            int dimension = arrayTypeInfo.getDimension();
+            TypeInfo elementTypeInfo = arrayTypeInfo.getElementTypeInfo();
+
+            String typeName = elementTypeInfo.isPrimitiveTypeInfo()
+                    ? getTypeDescriptorForPrimitive(elementTypeInfo.getQualifiedClassName())
+                    : "L" + elementTypeInfo.getQualifiedClassName().replaceAll("\\.", "/") + ";";
 
             Type returnType = Type.getType(StringUtils.repeat("[", dimension) + typeName);
 
@@ -898,10 +917,6 @@ public abstract class TypeInferenceBase {
             default:
                 throw new IllegalStateException();
         }
-    }
-
-    static Set<MethodInfo> filteredNonAbstractMethod(Set<MethodInfo> methodInfoSet) {
-        return new HashSet<>(filteredNonAbstractMethod(new ArrayList<>(methodInfoSet)));
     }
 
     static List<MethodInfo> filteredNonAbstractMethod(List<MethodInfo> methodInfoList) {
@@ -1144,19 +1159,24 @@ public abstract class TypeInferenceBase {
         return PRIMITIVE_TYPE_NARROWING_MAP.containsKey(type1) && PRIMITIVE_TYPE_NARROWING_MAP.get(type1).contains(type2);
     }
 
-    private static List<String> getCommonClassNameList(List<String> argumentTypeClassNameList,
-                                                       List<String> methodArgumentClassNameList) {
+    //TODO: check the impact of notnull check
+    private static List<TypeInfo> getCommonTypeInfoList(List<TypeInfo> argumentTypeInfoList,
+                                                        List<TypeInfo> methodArgumentTypeInfoList) {
 
-        int size = Math.min(argumentTypeClassNameList.size(), methodArgumentClassNameList.size());
-        List<String> commonClassNameList = new ArrayList<>();
+        int size = Math.min(argumentTypeInfoList.size(), methodArgumentTypeInfoList.size());
+        List<TypeInfo> commonTypeInfoList = new ArrayList<>();
 
         for (int index = 0; index < size; index++) {
-            if (argumentTypeClassNameList.get(index).equals(methodArgumentClassNameList.get(index))) {
-                commonClassNameList.add(argumentTypeClassNameList.get(index));
+            TypeInfo argumentTypeInfo = argumentTypeInfoList.get(index);
+
+            if (Objects.nonNull(argumentTypeInfo)
+                    && Objects.nonNull(methodArgumentTypeInfoList.get(index))
+                    && argumentTypeInfo.getQualifiedClassName().equals(methodArgumentTypeInfoList.get(index).getQualifiedClassName())) {
+                commonTypeInfoList.add(argumentTypeInfo);
             }
         }
 
-        return commonClassNameList;
+        return commonTypeInfoList;
     }
 
     private static boolean matchObjectArrayDimensionForArgument(String argumentTypeClassName,
@@ -1186,22 +1206,30 @@ public abstract class TypeInferenceBase {
     }
 
     private static boolean isVarArgsMatch(String methodArgumentTypeClassName,
-                                          List<String> varArgsTypeClassNameList,
+                                          List<TypeInfo> varArgsTypeTypeInfoList,
                                           Object[] jarVertexIds,
                                           TinkerGraph tinkerGraph) {
         String typeClassName = methodArgumentTypeClassName.replaceAll("\\[]$", "");
 
-        if (varArgsTypeClassNameList.stream().anyMatch(name -> isArrayDimensionMismatch(name, typeClassName))) {
+        if (varArgsTypeTypeInfoList.stream()
+                .filter(Objects::nonNull)
+                .map(TypeInfo::getQualifiedClassName)
+                .anyMatch(name -> isArrayDimensionMismatch(name, typeClassName))) {
             return false;
         }
 
-        if (varArgsTypeClassNameList.stream().allMatch(name -> name.equals(typeClassName))) {
+        if (varArgsTypeTypeInfoList.stream()
+                .filter(Objects::nonNull)
+                .map(TypeInfo::getQualifiedClassName)
+                .allMatch(name -> name.equals(typeClassName))) {
             return true;
         }
 
         String methodArgumentTypeName = typeClassName.replaceAll("\\[]", "");
 
-        varArgsTypeClassNameList = varArgsTypeClassNameList.stream().distinct().collect(Collectors.toList());
+        List<String> varArgsTypeClassNameList = varArgsTypeTypeInfoList.stream()
+                .filter(Objects::nonNull)
+                .map(TypeInfo::getQualifiedClassName).distinct().collect(Collectors.toList());
 
         return varArgsTypeClassNameList.stream().allMatch(varArgTypeName -> {
             varArgTypeName = varArgTypeName.replaceAll("\\[]", "");

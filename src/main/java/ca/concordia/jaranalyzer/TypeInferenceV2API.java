@@ -176,7 +176,7 @@ public class TypeInferenceV2API {
                     .setOwningClassInfo(owningClassInfo);
 
             for (int i = 0; i < argumentTypeInfoList.size(); i++) {
-                searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
+                searchCriteria.setArgumentTypeInfo(i, argumentTypeInfoList.get(i));
             }
 
             List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
@@ -235,7 +235,7 @@ public class TypeInferenceV2API {
                     .setSuperInvoker(true);
 
             for (int i = 0; i < argumentTypeInfoList.size(); i++) {
-                searchCriteria.setArgumentType(i, argumentTypeInfoList.get(i).getQualifiedClassName());
+                searchCriteria.setArgumentTypeInfo(i, argumentTypeInfoList.get(i));
             }
 
             List<MethodInfo> methodInfoList = searchCriteria.getMethodList();

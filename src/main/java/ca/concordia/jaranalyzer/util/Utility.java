@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
@@ -77,6 +78,15 @@ public class Utility {
         Path pathToCorpus = Path.of(getProperty("corpus.path"));
 
         return pathToCorpus.resolve("Project_" + projectName);
+    }
+
+    public static <T> void removeSingleElementFromCollection(Collection<T> collection, Predicate<T> condition) {
+        for (T element: collection) {
+            if (condition.test(element)) {
+                collection.remove(element);
+                break;
+            }
+        }
     }
 
     private static Set<org.eclipse.aether.artifact.Artifact> filterOutDependencyArtifact(Set<org.eclipse.aether.artifact.Artifact> artifactSet,

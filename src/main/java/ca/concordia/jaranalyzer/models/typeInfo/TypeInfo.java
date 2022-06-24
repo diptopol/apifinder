@@ -40,4 +40,8 @@ public abstract class TypeInfo {
         return this instanceof ArrayTypeInfo;
     }
 
+    public boolean isSimpleTypeInfo() {
+        return this instanceof SimpleTypeInfo;
+    }
+
 }
