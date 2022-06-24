@@ -50,7 +50,7 @@ public class InMemoryDatabaseTest {
         String projectUrl = "https://github.com/fabric8io/kubernetes-client.git";
         String startCommitId = "54a0dcd9fa0303a10c7a2a595e7c26526d7006a0";
         //int numberOfCommitsToVisit = 100;
-        int numberOfCommitsToVisit = 10;
+        int numberOfCommitsToVisit = 1;
 
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
         Git git = GitUtil.openRepository(projectName, projectUrl, projectDirectory);
