@@ -572,7 +572,7 @@ public abstract class TypeInferenceBase {
     }
 
     static List<MethodInfo> getQualifiedMethodInfoList(String methodName,
-                                                       int numberOfParameters,
+                                                       Integer numberOfParameters,
                                                        Object[] jarVertexIds,
                                                        Set<String> classQNameSet,
                                                        TinkerGraph tinkerGraph) {
@@ -1110,7 +1110,7 @@ public abstract class TypeInferenceBase {
                 .collect(Collectors.toMap(Tuple2::_2, Tuple2::_1));
     }
 
-    private static boolean filtrationBasedOnCriteria(int numberOfParameters,
+    private static boolean filtrationBasedOnCriteria(Integer numberOfParameters,
                                                      String outerClassPrefix,
                                                      MethodInfo methodInfo) {
         boolean outerClassPrefixMatchingForInnerClassConstructor = true;
@@ -1125,7 +1125,12 @@ public abstract class TypeInferenceBase {
                 && checkMethodArgumentLength(numberOfParameters, methodInfo);
     }
 
-    private static boolean checkMethodArgumentLength(int numberOfParameters, MethodInfo methodInfo) {
+    private static boolean checkMethodArgumentLength(Integer numberOfParameters, MethodInfo methodInfo) {
+        //for finding all methodReference instances we want to circumvent numberOfParameters check
+        if (Objects.isNull(numberOfParameters)) {
+            return true;
+        }
+
         if (methodInfo.isVarargs()) {
             return methodInfo.getArgumentTypes().length - 1 <= numberOfParameters;
         } else if (methodInfo.isInnerClassConstructor()) {

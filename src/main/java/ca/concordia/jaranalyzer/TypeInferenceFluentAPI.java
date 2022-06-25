@@ -276,22 +276,25 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         populateClassInfo(methodInfoList, tinkerGraph);
         modifyMethodInfoForArray(methodInfoList, criteria.getInvokerTypeInfo());
 
-        TypeInfo firstArgumentTypeInfo = criteria.getArgumentTypeInfoWithIndexList().stream()
-                .filter(a -> a._1() == 0).map(Tuple2::_2)
-                .findFirst()
-                .orElse(null);
+        if (Objects.nonNull(criteria.getNumberOfParameters())) {
+            TypeInfo firstArgumentTypeInfo = criteria.getArgumentTypeInfoWithIndexList().stream()
+                    .filter(a -> a._1() == 0).map(Tuple2::_2)
+                    .findFirst()
+                    .orElse(null);
 
-        String firstArgumentQualifiedClassName = Objects.nonNull(firstArgumentTypeInfo)
-                ? firstArgumentTypeInfo.getQualifiedClassName()
-                : null;
+            String firstArgumentQualifiedClassName = Objects.nonNull(firstArgumentTypeInfo)
+                    ? firstArgumentTypeInfo.getQualifiedClassName()
+                    : null;
 
-        reduceArgumentForInnerClassConstructorIfRequired(methodInfoList, firstArgumentQualifiedClassName,
-                criteria.getNumberOfParameters(), jarVertexIds, tinkerGraph);
+            reduceArgumentForInnerClassConstructorIfRequired(methodInfoList, firstArgumentQualifiedClassName,
+                    criteria.getNumberOfParameters(), jarVertexIds, tinkerGraph);
+        }
 
         methodInfoList = filterByMethodInvoker(methodInfoList, criteria.getInvokerTypeInfo(),
                 criteria.isSuperInvoker(), jarVertexIds, tinkerGraph);
 
-        if (!(criteria.getNumberOfParameters() > 0 && criteria.getArgumentTypeInfoWithIndexList().isEmpty())) {
+        if (Objects.nonNull(criteria.getNumberOfParameters())
+                && !(criteria.getNumberOfParameters() > 0 && criteria.getArgumentTypeInfoWithIndexList().isEmpty())) {
             methodInfoList = filterByMethodArgumentTypes(methodInfoList, criteria, jarVertexIds);
         }
 
@@ -412,7 +415,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private String javaVersion;
         private List<String> importList;
         private String methodName;
-        private int numberOfParameters;
+        private Integer numberOfParameters;
         private TypeInfo invokerTypeInfo;
         private OwningClassInfo owningClassInfo;
 
@@ -440,7 +443,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return methodName;
         }
 
-        private int getNumberOfParameters() {
+        private Integer getNumberOfParameters() {
             return numberOfParameters;
         }
 
@@ -484,6 +487,19 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             this.importList = importList;
             this.methodName = methodName;
             this.numberOfParameters = numberOfParameters;
+            this.argumentTypeInfoMap = new HashMap<>();
+        }
+
+        public Criteria(Set<Artifact> dependentArtifactSet,
+                        String javaVersion,
+                        List<String> importList,
+                        String methodName) {
+
+            this.dependentArtifactSet = dependentArtifactSet;
+            this.javaVersion = javaVersion;
+            this.importList = importList;
+            this.methodName = methodName;
+
             this.argumentTypeInfoMap = new HashMap<>();
         }
 
