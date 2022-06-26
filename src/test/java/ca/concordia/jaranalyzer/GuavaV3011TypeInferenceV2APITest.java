@@ -112,6 +112,36 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testFormalTypeParameterResolutionForExpressionReference() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ArrayTable.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("CollectSpliterators.indexed(size(),Spliterator.ORDERED,this::getEntry)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.CollectSpliterators" +
+                            "::static java.util.Spliterator indexed(int, int," +
+                            " java.util.function.IntFunction)").equals(methodInfo.toString());
+
+                    assert ("[PrimitiveTypeInfo{qualifiedClassName='int'}, PrimitiveTypeInfo{qualifiedClassName='int'}," +
+                            " ParameterizedTypeInfo{qualifiedClassName='java.util.function.IntFunction'," +
+                            " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='R'," +
+                            " baseTypeInfo=ParameterizedTypeInfo{qualifiedClassName='java.util.Map.Entry'," +
+                            " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='K'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                            " FormalTypeParameterInfo{typeParameter='V'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}}]}]")
+                            .equals(methodInfo.getArgumentTypeInfoList().toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testOwningClassInfoRelativeToPositionOfFieldDeclaration() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/MapMakerInternalMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
