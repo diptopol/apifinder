@@ -75,9 +75,9 @@ public class GuavaV3011TypeInferenceV2APITest {
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation classInstanceCreation) {
-                if (classInstanceCreation.toString().startsWith("invokeAccessibleNonThrowingMethod(getStackTraceElementMethod,jla,t,n)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("invokeAccessibleNonThrowingMethod(getStackTraceElementMethod,jla,t,n)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("com.google.common.base.Throwables" +
                             "::private static java.lang.Object invokeAccessibleNonThrowingMethod(java.lang.reflect.Method," +
@@ -95,9 +95,9 @@ public class GuavaV3011TypeInferenceV2APITest {
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(SuperConstructorInvocation methodInvocation) {
-                if (methodInvocation.toString().startsWith("super(prefix,from,function,FlatMapSpliteratorOfInt::new")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+            public boolean visit(SuperConstructorInvocation superConstructorInvocation) {
+                if (superConstructorInvocation.toString().startsWith("super(prefix,from,function,FlatMapSpliteratorOfInt::new")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superConstructorInvocation);
 
                     assert ("com.google.common.collect.CollectSpliterators.FlatMapSpliteratorOfPrimitive" +
                             "::void CollectSpliterators$FlatMapSpliteratorOfPrimitive(java.util.Spliterator.OfPrimitive," +
@@ -166,9 +166,9 @@ public class GuavaV3011TypeInferenceV2APITest {
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
         compilationUnit.accept(new ASTVisitor() {
             @Override
-            public boolean visit(MethodInvocation classInstanceCreation) {
-                if (classInstanceCreation.toString().startsWith("Math.min(builder.getConcurrencyLevel(),MAX_SEGMENTS)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("Math.min(builder.getConcurrencyLevel(),MAX_SEGMENTS)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
 
                     assert ("java.lang.Math::public static int min(int, int)").equals(methodInfo.toString());
                 }
