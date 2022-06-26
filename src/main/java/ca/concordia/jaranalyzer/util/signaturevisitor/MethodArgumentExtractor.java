@@ -77,7 +77,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
         if (classBoundVisit) {
             String typeParameter = formalTypeParameterNameStack.pop();
             TypeInfo baseType = new FormalTypeParameterInfo(typeParameter,
-                    new QualifiedTypeInfo(name.replaceAll("/", ".")));
+                    new QualifiedTypeInfo(getQualifiedName(name)));
             formalTypeParameterMap.put(typeParameter, baseType);
 
             classBoundVisit = false;
@@ -97,7 +97,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
             String typeParameter = formalTypeParameterNameStack.pop();
 
             TypeInfo baseType = new FormalTypeParameterInfo(typeParameter,
-                    new QualifiedTypeInfo(name.replaceAll("/", ".")));
+                    new QualifiedTypeInfo(getQualifiedName(name)));
             formalTypeParameterMap.put(typeParameter, baseType);
 
             interfaceBoundVisit = false;
@@ -106,7 +106,7 @@ public class MethodArgumentExtractor extends SignatureVisitor {
 
             if (visitingMethodArguments) {
                 this.methodArgumentTypeInfoStack.add(
-                        convertToArrayTypeIfRequired(new QualifiedTypeInfo(name.replaceAll("/", "."))));
+                        convertToArrayTypeIfRequired(new QualifiedTypeInfo(getQualifiedName(name))));
             }
         }
     }
@@ -349,6 +349,10 @@ public class MethodArgumentExtractor extends SignatureVisitor {
         }
 
         return typeInfo;
+    }
+
+    private String getQualifiedName(String name) {
+        return name.replaceAll("/", ".").replaceAll("\\$", ".");
     }
 
 }

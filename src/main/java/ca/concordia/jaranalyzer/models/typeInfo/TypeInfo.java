@@ -44,4 +44,8 @@ public abstract class TypeInfo {
         return this instanceof SimpleTypeInfo;
     }
 
+    public boolean isFunctionTypeInfo() {
+        return this instanceof FunctionTypeInfo;
+    }
+
 }

@@ -208,6 +208,154 @@ public class InferenceUtility {
 
         InferenceUtility.transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
                 owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, invokerClassTypeInfo);
+        conversionToVarargsMethodArgument(methodInfoList);
+
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> getEligibleMethodInfoList(Set<Artifact> dependentArtifactSet,
+                                                             String javaVersion,
+                                                             ExpressionMethodReference expressionMethodReference,
+                                                             List<String> importStatementList,
+                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                             OwningClassInfo owningClassInfo) {
+
+        String methodName = expressionMethodReference.getName().getIdentifier();
+        Expression expression = expressionMethodReference.getExpression();
+
+        List<Type> typeArgumentList = expressionMethodReference.typeArguments();
+
+        List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
+                importStatementList, typeArgumentList, owningClassInfo);
+
+        TypeInfo invokerClassTypeInfo = null;
+
+        if (Objects.nonNull(expression)) {
+            invokerClassTypeInfo = InferenceUtility.getTypeInfoFromExpression(dependentArtifactSet, javaVersion,
+                    importStatementList, variableNameMap, expression, owningClassInfo);
+        }
+
+        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(dependentArtifactSet, javaVersion, importStatementList, methodName)
+                .setInvokerTypeInfo(invokerClassTypeInfo)
+                .setOwningClassInfo(owningClassInfo);
+
+        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+        /*
+         * According to my current understanding we do not need arguments for any type inference.This may change with
+         * any unanticipated scenario.
+         *
+         * Order of transformTypeInfoRepresentation and conversionToVarargsMethodArgument matters. since we are
+         * converting last argument array type to vararg.
+         */
+        transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
+                owningClassInfo, methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, invokerClassTypeInfo);
+        conversionToVarargsMethodArgument(methodInfoList);
+
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> getEligibleMethodInfoList(Set<Artifact> dependentArtifactSet,
+                                                             String javaVersion,
+                                                             CreationReference creationReference,
+                                                             List<String> importStatementList,
+                                                             OwningClassInfo owningClassInfo) {
+
+        String methodName = creationReference.getType().toString();
+
+        List<Type> typeArgumentList = creationReference.typeArguments();
+
+        List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
+                importStatementList, typeArgumentList, owningClassInfo);
+
+        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(dependentArtifactSet, javaVersion, importStatementList, methodName)
+                .setOwningClassInfo(owningClassInfo);
+
+        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+        /*
+         * According to my current understanding we do not need arguments for any type inference.This may change with
+         * any unanticipated scenario.
+         *
+         * Order of transformTypeInfoRepresentation and conversionToVarargsMethodArgument matters. since we are
+         * converting last argument array type to vararg.
+         */
+        transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
+                owningClassInfo, methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, null);
+        conversionToVarargsMethodArgument(methodInfoList);
+
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> getEligibleMethodInfoList(Set<Artifact> dependentArtifactSet,
+                                                             String javaVersion,
+                                                             SuperMethodReference superMethodReference,
+                                                             List<String> importStatementList,
+                                                             OwningClassInfo owningClassInfo) {
+
+        String methodName = superMethodReference.getName().getIdentifier();
+
+        List<Type> typeArgumentList = superMethodReference.typeArguments();
+
+        List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
+                importStatementList, typeArgumentList, owningClassInfo);
+
+        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(dependentArtifactSet, javaVersion, importStatementList, methodName)
+                .setOwningClassInfo(owningClassInfo)
+                .setSuperInvoker(true);
+
+        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+        /*
+         * According to my current understanding we do not need arguments for any type inference.This may change with
+         * any unanticipated scenario.
+         *
+         * Order of transformTypeInfoRepresentation and conversionToVarargsMethodArgument matters. since we are
+         * converting last argument array type to vararg.
+         */
+        transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
+                owningClassInfo, methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, null);
+        conversionToVarargsMethodArgument(methodInfoList);
+
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> getEligibleMethodInfoList(Set<Artifact> dependentArtifactSet,
+                                                             String javaVersion,
+                                                             TypeMethodReference typeMethodReference,
+                                                             List<String> importStatementList,
+                                                             OwningClassInfo owningClassInfo) {
+
+        String methodName = typeMethodReference.getName().getIdentifier();
+
+        List<Type> typeArgumentList = typeMethodReference.typeArguments();
+
+        List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
+                importStatementList, typeArgumentList, owningClassInfo);
+
+        TypeInfo invokerClassTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
+                importStatementList, typeMethodReference.getType(), owningClassInfo);
+
+        TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
+                .new Criteria(dependentArtifactSet, javaVersion, importStatementList, methodName)
+                .setInvokerTypeInfo(invokerClassTypeInfo)
+                .setOwningClassInfo(owningClassInfo);
+
+        List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+        /*
+         * According to my current understanding we do not need arguments for any type inference.This may change with
+         * any unanticipated scenario.
+         *
+         * Order of transformTypeInfoRepresentation and conversionToVarargsMethodArgument matters. since we are
+         * converting last argument array type to vararg.
+         */
+        transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
+                owningClassInfo, methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, invokerClassTypeInfo);
+        conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
     }
@@ -718,6 +866,54 @@ public class InferenceUtility {
                 return new NullTypeInfo();
             }
 
+        } else if (expression instanceof ExpressionMethodReference) {
+            ExpressionMethodReference expressionMethodReference = (ExpressionMethodReference) expression;
+
+            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                    expressionMethodReference, importStatementList, variableNameMap, owningClassInfo);
+
+            List<FunctionTypeInfo.FunctionDefinition> functionDefinitionList = methodInfoList.stream()
+                    .map(m -> new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), m.getArgumentTypeInfoList()))
+                    .collect(Collectors.toList());
+
+            return new FunctionTypeInfo(functionDefinitionList);
+
+        } else if (expression instanceof CreationReference) {
+            CreationReference creationReference = (CreationReference) expression;
+
+            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                    creationReference, importStatementList, owningClassInfo);
+
+            List<FunctionTypeInfo.FunctionDefinition> functionDefinitionList = methodInfoList.stream()
+                    .map(m -> new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), m.getArgumentTypeInfoList()))
+                    .collect(Collectors.toList());
+
+            return new FunctionTypeInfo(functionDefinitionList);
+
+        } else if (expression instanceof SuperMethodReference) {
+            SuperMethodReference superMethodReference = (SuperMethodReference) expression;
+
+            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                    superMethodReference, importStatementList, owningClassInfo);
+
+            List<FunctionTypeInfo.FunctionDefinition> functionDefinitionList = methodInfoList.stream()
+                    .map(m -> new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), m.getArgumentTypeInfoList()))
+                    .collect(Collectors.toList());
+
+            return new FunctionTypeInfo(functionDefinitionList);
+
+        } else if (expression instanceof TypeMethodReference) {
+            TypeMethodReference typeMethodReference = (TypeMethodReference) expression;
+
+            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                    typeMethodReference, importStatementList, owningClassInfo);
+
+            List<FunctionTypeInfo.FunctionDefinition> functionDefinitionList = methodInfoList.stream()
+                    .map(m -> new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), m.getArgumentTypeInfoList()))
+                    .collect(Collectors.toList());
+
+            return new FunctionTypeInfo(functionDefinitionList);
+
         } else if (expression instanceof Assignment) {
             Assignment assignment = (Assignment) expression;
 
@@ -1141,7 +1337,7 @@ public class InferenceUtility {
                             .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
                                     FormalTypeParameterInfo::getBaseTypeInfo))
             );
-        } else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo)) {
+        } else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo) && !argumentTypeInfoList.isEmpty()) {
             inferredTypeInfoMap.putAll(getInferredFormalTypeParameterMapUsingMethodArguments(methodInfo,
                     argumentTypeInfoList, inferredTypeInfoMap));
         }

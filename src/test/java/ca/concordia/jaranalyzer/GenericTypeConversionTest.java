@@ -488,7 +488,7 @@ public class GenericTypeConversionTest {
                 " ParameterizedTypeInfo{qualifiedClassName='java.util.function.Function', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                 " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
-                " ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture$OrApply', isParameterized=true," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.concurrent.CompletableFuture.OrApply', isParameterized=true," +
                 " typeArgumentList=[FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                 " FormalTypeParameterInfo{typeParameter='R', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                 " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")

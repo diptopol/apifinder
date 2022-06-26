@@ -90,6 +90,28 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testResolutionOfCreationReference() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/CollectSpliterators.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(SuperConstructorInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("super(prefix,from,function,FlatMapSpliteratorOfInt::new")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.CollectSpliterators.FlatMapSpliteratorOfPrimitive" +
+                            "::void CollectSpliterators$FlatMapSpliteratorOfPrimitive(java.util.Spliterator.OfPrimitive," +
+                            " java.util.Spliterator, java.util.function.Function," +
+                            " com.google.common.collect.CollectSpliterators.FlatMapSpliterator.Factory," +
+                            " int, long)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testOwningClassInfoRelativeToPositionOfFieldDeclaration() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/MapMakerInternalMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

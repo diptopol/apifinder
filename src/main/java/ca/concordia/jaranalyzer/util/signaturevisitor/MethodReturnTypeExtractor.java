@@ -81,7 +81,7 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
         if (classBoundVisit) {
             String typeParameter = formalTypeParameterNameStack.pop();
             TypeInfo baseType = new FormalTypeParameterInfo(typeParameter,
-                    new QualifiedTypeInfo(name.replaceAll("/", ".")));
+                    new QualifiedTypeInfo(getQualifiedName(name)));
             formalTypeParameterMap.put(typeParameter, baseType);
 
             classBoundVisit = false;
@@ -100,7 +100,7 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
 
             String typeParameter = formalTypeParameterNameStack.pop();
             TypeInfo baseType = new FormalTypeParameterInfo(typeParameter,
-                    new QualifiedTypeInfo(name.replaceAll("/", ".")));
+                    new QualifiedTypeInfo(getQualifiedName(name)));
             formalTypeParameterMap.put(typeParameter, baseType);
 
             interfaceBoundVisit = false;
@@ -109,7 +109,7 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
 
             if (visitingReturnType) {
                 this.methodReturnTypeInfoStack.push(
-                        convertToArrayTypeIfRequired(new QualifiedTypeInfo(name.replaceAll("/", "."))));
+                        convertToArrayTypeIfRequired(new QualifiedTypeInfo(getQualifiedName(name))));
             }
         }
     }
@@ -348,6 +348,10 @@ public class MethodReturnTypeExtractor extends SignatureVisitor {
         }
 
         return typeInfo;
+    }
+
+    private String getQualifiedName(String name) {
+        return name.replaceAll("/", ".").replaceAll("\\$", ".");
     }
 
 }

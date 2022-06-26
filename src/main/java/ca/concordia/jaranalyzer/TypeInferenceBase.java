@@ -5,6 +5,7 @@ import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.ArrayTypeInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.FunctionTypeInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.Utility;
@@ -181,11 +182,60 @@ public abstract class TypeInferenceBase {
         }
     }
 
+    static boolean convertFunctionalTypeInfo(List<TypeInfo> argumentTypeInfoList,
+                                          List<TypeInfo> methodArgumentTypeInfoList,
+                                          Object[] jarVertexIds,
+                                          TinkerGraph tinkerGraph) {
+
+        for (int index = 0; index < argumentTypeInfoList.size(); index++) {
+            TypeInfo argumentTypeInfo = argumentTypeInfoList.get(index);
+
+            if (Objects.nonNull(argumentTypeInfo) && argumentTypeInfo.isFunctionTypeInfo()) {
+                TypeInfo methodArgumentType = methodArgumentTypeInfoList.get(index);
+
+                FunctionTypeInfo functionTypeInfo = (FunctionTypeInfo) argumentTypeInfo;
+                List<FunctionTypeInfo.FunctionDefinition> functionDefinitionList = functionTypeInfo.getFunctionDefinitionList();
+
+                List<MethodInfo> abstractMethodInfoList = getAbstractMethodInfoListForFunctionalInterface(jarVertexIds,
+                        tinkerGraph, methodArgumentType.getQualifiedClassName());
+
+                if (abstractMethodInfoList.size() != 1) {
+                    return false;
+                }
+
+                MethodInfo abstractMethodInfo = abstractMethodInfoList.get(0);
+
+                boolean matches = false;
+
+                for (FunctionTypeInfo.FunctionDefinition functionDefinition: functionDefinitionList) {
+                    if (functionDefinition.getArgumentTypeInfoList().size() == abstractMethodInfo.getArgumentTypeInfoList().size()) {
+                        argumentTypeInfoList.set(index, methodArgumentType);
+                        matches = true;
+                        break;
+                    }
+                }
+
+                if (!matches) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     static boolean matchMethodArguments(List<TypeInfo> argumentTypeInfoList,
                                         List<TypeInfo> methodArgumentTypeInfoList,
                                         Object[] jarVertexIds,
                                         TinkerGraph tinkerGraph,
                                         MethodInfo methodInfo) {
+
+        boolean isSuccess = convertFunctionalTypeInfo(argumentTypeInfoList, methodArgumentTypeInfoList, jarVertexIds, tinkerGraph);
+
+        if (!isSuccess) {
+            return false;
+        }
+
         List<TypeInfo> commonTypeInfoList = getCommonTypeInfoList(argumentTypeInfoList, methodArgumentTypeInfoList);
 
         for (TypeInfo commonTypeInfo : commonTypeInfoList) {
@@ -648,6 +698,22 @@ public abstract class TypeInferenceBase {
         importedClassQNameSet.addAll(classNameListForPackgage);
 
         return getQualifiedMethodInfoList(methodName, numberOfParameters, jarVertexIds, classNameListForPackgage, tinkerGraph);
+    }
+
+    static List<MethodInfo> getAbstractMethodInfoListForFunctionalInterface(Object[] jarVertexIds,
+                                                                            TinkerGraph tinkerGraph,
+                                                                            String qualifiedClassName) {
+
+        return tinkerGraph.traversal().V(jarVertexIds)
+                .out("ContainsPkg").out("Contains")
+                .has("Kind", "Class")
+                .has("QName", TextP.within(qualifiedClassName))
+                .out("Declares")
+                .has("Kind", "Method")
+                .has("isAbstract", true)
+                .toStream()
+                .map(MethodInfo::new)
+                .collect(Collectors.toList());
     }
 
     static Map<String, List<String>> getSuperClassQNameMapPerClass(Set<String> classQNameSet,
