@@ -855,16 +855,23 @@ public class InferenceUtility {
         } else if (expression instanceof LambdaExpression) {
             LambdaExpression lambdaExpression = (LambdaExpression) expression;
 
-            ASTNode body = lambdaExpression.getBody();
+            List<VariableDeclaration> parameterList = lambdaExpression.parameters();
 
-            if (body instanceof Expression) {
-                Expression bodyExpression = (Expression) body;
+            List<TypeInfo> argumentTypeInfoList = new ArrayList<>();
+            for (VariableDeclaration parameter: parameterList) {
+                if (parameter instanceof SingleVariableDeclaration) {
+                    SingleVariableDeclaration singleVariableDeclaration = (SingleVariableDeclaration) parameter;
 
-                return getTypeInfoFromExpression(dependentArtifactSet, javaVersion, importStatementList, variableNameMap,
-                        bodyExpression, owningClassInfo);
-            } else {
-                return new NullTypeInfo();
+                    TypeInfo parameterTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
+                            singleVariableDeclaration.getType(), owningClassInfo);
+
+                    argumentTypeInfoList.add(parameterTypeInfo);
+                } else if (parameter instanceof VariableDeclarationFragment) {
+                    argumentTypeInfoList.add(new QualifiedTypeInfo("java.lang.Object"));
+                }
             }
+
+            return new FunctionTypeInfo(Collections.singletonList(new FunctionTypeInfo.FunctionDefinition(null, argumentTypeInfoList)));
 
         } else if (expression instanceof ExpressionMethodReference) {
             ExpressionMethodReference expressionMethodReference = (ExpressionMethodReference) expression;

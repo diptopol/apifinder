@@ -1130,7 +1130,7 @@ public abstract class TypeInferenceBase {
                 }
             }
 
-            if (abstractMethodInfo.getReturnTypeInfo().isFormalTypeParameterInfo()) {
+            if (abstractMethodInfo.getReturnTypeInfo().isFormalTypeParameterInfo() && Objects.nonNull(functionDefinition.getReturnTypeInfo())) {
                 FormalTypeParameterInfo returnFormalTypeParameterInfo = (FormalTypeParameterInfo) abstractMethodInfo.getReturnTypeInfo();
 
                 if (formalTypeParameterInfoMap.containsKey(returnFormalTypeParameterInfo.getTypeParameter())) {

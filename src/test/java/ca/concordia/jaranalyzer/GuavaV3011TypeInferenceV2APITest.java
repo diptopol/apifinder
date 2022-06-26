@@ -142,6 +142,25 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testResolutionOfLambdaExpression() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/util/concurrent/AtomicLongMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("getAndUpdate(key,x")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.util.concurrent.AtomicLongMap::public long getAndUpdate(K," +
+                            " java.util.function.LongUnaryOperator)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testOwningClassInfoRelativeToPositionOfFieldDeclaration() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/MapMakerInternalMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
