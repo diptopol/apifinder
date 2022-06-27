@@ -443,6 +443,7 @@ public abstract class TypeInferenceBase {
                                                      List<String> packageNameList,
                                                      TinkerGraph tinkerGraph,
                                                      OwningClassInfo owningClassInfo) {
+        Set<String> importedClassQNameSetForSelection = new LinkedHashSet<>(importedClassQNameSet);
 
         if (Objects.nonNull(typeClassName) && !InferenceUtility.isPrimitiveType(typeClassName)
                 && StringUtils.countMatches(typeClassName, ".") <= 1) {
@@ -456,7 +457,7 @@ public abstract class TypeInferenceBase {
                     .replaceAll("\\[]", "");
 
             if (Objects.nonNull(owningClassInfo) && !owningClassInfo.getAvailableQualifiedClassNameSet().isEmpty()) {
-                importedClassQNameSet.addAll(owningClassInfo.getAvailableQualifiedClassNameSet());
+                importedClassQNameSetForSelection.addAll(owningClassInfo.getAvailableQualifiedClassNameSet());
             }
 
             List<ClassInfo> qualifiedClassInfoList = tinkerGraph.traversal().V(jarVertexIds)
@@ -488,8 +489,8 @@ public abstract class TypeInferenceBase {
                         String qualifiedOuterClassName = classInfo.getQualifiedName()
                                 .substring(0, classInfo.getQualifiedName().lastIndexOf("."));
 
-                        return importedClassQNameSet.contains(qualifiedClassName)
-                                || importedClassQNameSet.contains(qualifiedOuterClassName)
+                        return importedClassQNameSetForSelection.contains(qualifiedClassName)
+                                || importedClassQNameSetForSelection.contains(qualifiedOuterClassName)
                                 || packageNameList.contains(classInfo.getPackageName());
 
                     } else {
@@ -497,7 +498,7 @@ public abstract class TypeInferenceBase {
                     }
                 } else {
                     return classInfo.getName().equals(postProcessedTypeClassName)
-                            && (importedClassQNameSet.contains(classInfo.getQualifiedName())
+                            && (importedClassQNameSetForSelection.contains(classInfo.getQualifiedName())
                             || packageNameList.contains(classInfo.getPackageName()));
                 }
             }).collect(Collectors.toList());
@@ -560,8 +561,18 @@ public abstract class TypeInferenceBase {
 
             for (Set<String> qClassNameSet : qClassNameSetInHierarchy) {
                 if (qualifiedClassInfoList.stream().anyMatch(c -> qClassNameSet.contains(c.getQualifiedName()))) {
-                    return qualifiedClassInfoList.stream().filter(c -> qClassNameSet.contains(c.getQualifiedName()))
-                            .collect(Collectors.toList());
+
+                    Map<String, ClassInfo> qualifiedClassInfoMap = qualifiedClassInfoList.stream()
+                            .collect(Collectors.toMap(ClassInfo::getQualifiedName, c -> c));
+
+                    List<ClassInfo> orderedQualifiedClassInfoList = new ArrayList<>();
+                    for (String qClassName: qClassNameSet) {
+                        if (qualifiedClassInfoMap.containsKey(qClassName)) {
+                            orderedQualifiedClassInfoList.add(qualifiedClassInfoMap.get(qClassName));
+                        }
+                    }
+
+                    return orderedQualifiedClassInfoList;
                 }
             }
         }

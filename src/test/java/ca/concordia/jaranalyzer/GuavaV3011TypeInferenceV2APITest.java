@@ -182,6 +182,26 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testContextSpecificOwningClassInfoCreation() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ImmutableMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("makeBuilder(keySet.size())")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.ImmutableMap.SerializedForm" +
+                            "::com.google.common.collect.ImmutableMap.Builder makeBuilder(int)")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testOwningClassInfoRelativeToPositionOfFieldDeclaration() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/MapMakerInternalMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

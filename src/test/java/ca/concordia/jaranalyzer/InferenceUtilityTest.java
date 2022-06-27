@@ -14,10 +14,7 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
@@ -91,7 +88,7 @@ public class InferenceUtilityTest {
 
                     Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
                             = InferenceUtility.getFieldVariableDeclarationDtoList(jarInformationSet, javaVersion,
-                            importStatementList, methodInvocation);
+                            importStatementList, methodInvocation, new HashMap<>());
 
                     assert "[altKey, ctrlKey, enabled, id, metaKey, shiftKey]"
                             .equals(fieldVariableDeclarationDtoList.stream()
