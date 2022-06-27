@@ -671,7 +671,7 @@ public abstract class TypeInferenceBase {
     }
 
     static List<MethodInfo> getQualifiedMethodInfoListForInnerClass(String methodName,
-                                                                    int numberOfParameters,
+                                                                    Integer numberOfParameters,
                                                                     Object[] jarVertexIds,
                                                                     Set<String> classQNameSet,
                                                                     TinkerGraph tinkerGraph) {
@@ -700,7 +700,7 @@ public abstract class TypeInferenceBase {
 
 
     static List<MethodInfo> getQualifiedMethodInfoListForPackageImport(String methodName,
-                                                                       int numberOfParameters,
+                                                                       Integer numberOfParameters,
                                                                        List<String> packageNameList,
                                                                        Set<String> importedClassQNameSet,
                                                                        Object[] jarVertexIds,
@@ -963,7 +963,7 @@ public abstract class TypeInferenceBase {
      */
     static void reduceArgumentForInnerClassConstructorIfRequired(List<MethodInfo> methodInfoList,
                                                                  String firstArgumentQualifiedClassName,
-                                                                 int numberOfParameters,
+                                                                 Integer numberOfParameters,
                                                                  Object[] jarVertexIds,
                                                                  TinkerGraph tinkerGraph) {
 
