@@ -202,6 +202,24 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testThisExpressionAsInvokerType() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/CompactHashMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("CompactHashMap.this.remove(keys[indexToRemove])")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.CompactHashMap::public V remove(java.lang.Object)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testContextSpecificOwningClassInfoCreation() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ImmutableMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

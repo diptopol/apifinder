@@ -590,12 +590,18 @@ public class InferenceUtility {
 
         } else if (expression instanceof ThisExpression) {
             ThisExpression thisExpression = (ThisExpression) expression;
-            String className = thisExpression.getQualifier() != null ? thisExpression.getQualifier().getFullyQualifiedName()
-                    : getDeclaringClassQualifiedName(typeDeclaration);
 
-            className = className.replace("%", "").replace("$", ".");
+            if (Objects.nonNull(thisExpression.getQualifier())) {
+                String className = thisExpression.getQualifier().getFullyQualifiedName();
 
-            return new QualifiedTypeInfo(className);
+                return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, className, owningClassInfo);
+
+            } else {
+                String className = getDeclaringClassQualifiedName(typeDeclaration);
+                className = className.replace("%", "").replace("$", ".");
+
+                return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, className, owningClassInfo);
+            }
 
         } else if (expression instanceof TypeLiteral) {
             Type argumentType = ((TypeLiteral) expression).getType();
