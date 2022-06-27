@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.util;
 
 import ca.concordia.jaranalyzer.TypeInferenceAPI;
+import ca.concordia.jaranalyzer.TypeInferenceBase;
 import ca.concordia.jaranalyzer.TypeInferenceFluentAPI;
 import ca.concordia.jaranalyzer.models.*;
 import ca.concordia.jaranalyzer.models.typeInfo.*;
@@ -242,6 +243,14 @@ public class InferenceUtility {
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
+        for (MethodInfo methodInfo: methodInfoList) {
+            if (methodInfo.isVarargs()) {
+                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + TypeInferenceBase.VARARGS_DISTANCE);
+            }
+        }
+
+        methodInfoList.sort(Comparator.comparingDouble(MethodInfo::getArgumentMatchingDistance));
+
         /*
          * According to my current understanding we do not need arguments for any type inference.This may change with
          * any unanticipated scenario.
@@ -274,6 +283,14 @@ public class InferenceUtility {
                 .setOwningClassInfo(owningClassInfo);
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+        for (MethodInfo methodInfo: methodInfoList) {
+            if (methodInfo.isVarargs()) {
+                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + TypeInferenceBase.VARARGS_DISTANCE);
+            }
+        }
+
+        methodInfoList.sort(Comparator.comparingDouble(MethodInfo::getArgumentMatchingDistance));
 
         /*
          * According to my current understanding we do not need arguments for any type inference.This may change with
@@ -308,6 +325,14 @@ public class InferenceUtility {
                 .setSuperInvoker(true);
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+        for (MethodInfo methodInfo: methodInfoList) {
+            if (methodInfo.isVarargs()) {
+                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + TypeInferenceBase.VARARGS_DISTANCE);
+            }
+        }
+
+        methodInfoList.sort(Comparator.comparingDouble(MethodInfo::getArgumentMatchingDistance));
 
         /*
          * According to my current understanding we do not need arguments for any type inference.This may change with
@@ -345,6 +370,14 @@ public class InferenceUtility {
                 .setOwningClassInfo(owningClassInfo);
 
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+        for (MethodInfo methodInfo: methodInfoList) {
+            if (methodInfo.isVarargs()) {
+                methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + TypeInferenceBase.VARARGS_DISTANCE);
+            }
+        }
+
+        methodInfoList.sort(Comparator.comparingDouble(MethodInfo::getArgumentMatchingDistance));
 
         /*
          * According to my current understanding we do not need arguments for any type inference.This may change with
@@ -880,7 +913,24 @@ public class InferenceUtility {
                     expressionMethodReference, importStatementList, variableNameMap, owningClassInfo);
 
             List<FunctionTypeInfo.FunctionDefinition> functionDefinitionList = methodInfoList.stream()
-                    .map(m -> new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), m.getArgumentTypeInfoList()))
+                    .map(m -> {
+                        List<TypeInfo> argumentTypeInfoList = new ArrayList<>(m.getArgumentTypeInfoList());
+
+                        /*
+                         * For non-static method expressionMethodReference, we can call method upon invoker
+                         * (e.g., ImmutableList.Builder::add), in this case the first argument of functional interface
+                         * is the invoker itself. So matched the string form of expression before adding invoker
+                         * as first argument.
+                         */
+                        String expressionStr = expressionMethodReference.getExpression().toString();
+                        if (!m.isStatic()
+                                && (m.getQualifiedClassName().equals(expressionStr)
+                                || m.getQualifiedClassName().matches((".*\\.").concat(expressionStr).concat("$")))) {
+                            argumentTypeInfoList.add(0, m.getClassInfo().getTypeInfo());
+                        }
+
+                        return new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), argumentTypeInfoList);
+                    })
                     .collect(Collectors.toList());
 
             return new FunctionTypeInfo(functionDefinitionList);

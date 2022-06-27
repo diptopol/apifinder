@@ -112,6 +112,27 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testFormalTypeResolutionForFunctionInterfaceArguments() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/CollectCollectors.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("Collector.of(ImmutableList::builder,ImmutableList.Builder::add")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("java.util.stream.Collector::public static java.util.stream.Collector of(java.util.function.Supplier," +
+                            " java.util.function.BiConsumer, java.util.function.BinaryOperator," +
+                            " java.util.function.Function, java.util.stream.Collector.Characteristics[])")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testFormalTypeParameterResolutionForExpressionReference() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ArrayTable.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

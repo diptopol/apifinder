@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 public abstract class TypeInferenceBase {
 
     private static final int MAX_SUPER_CLASS_DISTANCE = 1000;
-    private static final int VARARGS_DISTANCE = 10001;
     private static final int PRIMITIVE_TYPE_WIDENING_DISTANCE = 1;
     private static final int PRIMITIVE_TYPE_NARROWING_DISTANCE = 2;
     private static final int PRIMITIVE_TYPE_WRAPPING_DISTANCE = 1;
@@ -37,6 +36,8 @@ public abstract class TypeInferenceBase {
     /*Increased the distance of matching the wrapped objects to primitives*/
     private static final double PRIMITIVE_TYPE_UNWRAPPING_DISTANCE = 1.5;
     private static final int PRIMITIVE_TYPE_NUMBER_DISTANCE = 1;
+
+    public static final int VARARGS_DISTANCE = 10001;
 
     private static Map<String, List<String>> PRIMITIVE_TYPE_WIDENING_MAP = new HashMap<>();
     private static Map<String, List<String>> PRIMITIVE_TYPE_NARROWING_MAP = new HashMap<>();
@@ -208,7 +209,12 @@ public abstract class TypeInferenceBase {
                 boolean matches = false;
 
                 for (FunctionTypeInfo.FunctionDefinition functionDefinition: functionDefinitionList) {
-                    if (functionDefinition.getArgumentTypeInfoList().size() == abstractMethodInfo.getArgumentTypeInfoList().size()) {
+                    boolean isFunctionDefinitionMatches =
+                            (functionDefinition.getArgumentTypeInfoList().size() == abstractMethodInfo.getArgumentTypeInfoList().size())
+                                    || (functionDefinition.getArgumentTypeInfoList().size() > 0
+                                    && functionDefinition.getArgumentTypeInfoList().get(functionDefinition.getArgumentTypeInfoList().size() - 1).isVarargTypeInfo());
+
+                    if (isFunctionDefinitionMatches) {
                         populateFormalTypeParameterForFunctionalInterfaceArgument(abstractMethodInfo, functionDefinition,
                                 methodInfo.getArgumentTypeInfoList().get(index));
                         argumentTypeInfoList.set(index, methodArgumentType);
@@ -706,16 +712,35 @@ public abstract class TypeInferenceBase {
                                                                             TinkerGraph tinkerGraph,
                                                                             String qualifiedClassName) {
 
-        return tinkerGraph.traversal().V(jarVertexIds)
-                .out("ContainsPkg").out("Contains")
-                .has("Kind", "Class")
-                .has("QName", TextP.within(qualifiedClassName))
-                .out("Declares")
-                .has("Kind", "Method")
-                .has("isAbstract", true)
-                .toStream()
-                .map(MethodInfo::new)
-                .collect(Collectors.toList());
+        Set<String> classQNameSet = Collections.singleton(qualifiedClassName);
+
+        while (!classQNameSet.isEmpty()) {
+            List<MethodInfo> methodInfoList = tinkerGraph.traversal().V(jarVertexIds)
+                    .out("ContainsPkg").out("Contains")
+                    .has("Kind", "Class")
+                    .has("QName", TextP.within(classQNameSet))
+                    .out("Declares")
+                    .has("Kind", "Method")
+                    .has("isAbstract", true)
+                    .toStream()
+                    .map(MethodInfo::new)
+                    .collect(Collectors.toList());
+
+            if (!methodInfoList.isEmpty()) {
+                return methodInfoList;
+            }
+
+            classQNameSet = tinkerGraph.traversal().V(jarVertexIds)
+                    .out("ContainsPkg").out("Contains")
+                    .has("Kind", "Class")
+                    .has("QName", TextP.within(classQNameSet))
+                    .out("implements")
+                    .order().by("Order")
+                    .<String>values("Name")
+                    .toSet();
+        }
+
+        return Collections.emptyList();
     }
 
     static Map<String, List<String>> getSuperClassQNameMapPerClass(Set<String> classQNameSet,
