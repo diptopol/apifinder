@@ -206,6 +206,20 @@ public abstract class TypeInferenceBase {
                 MethodInfo abstractMethodInfo = abstractMethodInfoList.get(0);
                 populateClassInfo(Collections.singletonList(abstractMethodInfo), tinkerGraph);
 
+                if (functionTypeInfo.isInnerClassConstructor()) {
+                    for (FunctionTypeInfo.FunctionDefinition functionDefinition: functionDefinitionList) {
+                        if (functionDefinition.getArgumentTypeInfoList().size() > abstractMethodInfo.getArgumentTypeInfoList().size()) {
+                            int numberOfArgumentDifference = functionDefinition.getArgumentTypeInfoList().size()
+                                    - abstractMethodInfo.getArgumentTypeInfoList().size();
+
+                            functionDefinition.setArgumentTypeInfoList(
+                                    functionDefinition.getArgumentTypeInfoList()
+                                            .subList(numberOfArgumentDifference, functionDefinition.getArgumentTypeInfoList().size()));
+                        }
+                    }
+
+                }
+
                 boolean matches = false;
 
                 for (FunctionTypeInfo.FunctionDefinition functionDefinition: functionDefinitionList) {

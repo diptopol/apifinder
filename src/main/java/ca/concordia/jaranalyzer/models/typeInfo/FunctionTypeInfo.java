@@ -8,10 +8,21 @@ import java.util.List;
  */
 public class FunctionTypeInfo extends TypeInfo {
 
+    private boolean innerClassConstructor;
+
     private final List<FunctionDefinition> functionDefinitionList;
 
     public FunctionTypeInfo(List<FunctionDefinition> functionDefinitionList) {
         this.functionDefinitionList = functionDefinitionList;
+    }
+
+    public FunctionTypeInfo(boolean innerClassConstructor, List<FunctionDefinition> functionDefinitionList) {
+        this.innerClassConstructor = innerClassConstructor;
+        this.functionDefinitionList = functionDefinitionList;
+    }
+
+    public boolean isInnerClassConstructor() {
+        return innerClassConstructor;
     }
 
     public List<FunctionDefinition> getFunctionDefinitionList() {
@@ -49,6 +60,10 @@ public class FunctionTypeInfo extends TypeInfo {
 
         public List<TypeInfo> getArgumentTypeInfoList() {
             return argumentTypeInfoList;
+        }
+
+        public void setArgumentTypeInfoList(List<TypeInfo> argumentTypeInfoList) {
+            this.argumentTypeInfoList = argumentTypeInfoList;
         }
     }
 }

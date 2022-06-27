@@ -182,6 +182,26 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testCreationReferenceWithInnerClassConstructorWithByteCodeAddedArgument() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/CompactHashMap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("CollectSpliterators.indexed(")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+
+                    assert ("com.google.common.collect.CollectSpliterators" +
+                            "::static java.util.Spliterator indexed(int, int, java.util.function.IntFunction)")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testContextSpecificOwningClassInfoCreation() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ImmutableMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

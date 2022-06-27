@@ -958,7 +958,9 @@ public class InferenceUtility {
                     .map(m -> new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), m.getArgumentTypeInfoList()))
                     .collect(Collectors.toList());
 
-            return new FunctionTypeInfo(functionDefinitionList);
+            boolean isInnerClassConstructor = !methodInfoList.isEmpty() && methodInfoList.get(0).isInnerClassConstructor();
+
+            return new FunctionTypeInfo(isInnerClassConstructor, functionDefinitionList);
 
         } else if (expression instanceof SuperMethodReference) {
             SuperMethodReference superMethodReference = (SuperMethodReference) expression;
