@@ -88,7 +88,9 @@ public class InMemoryDatabaseTest {
         Path pathToProject = Utility.getProjectPath(projectName);
         Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
 
-        return TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
+        //TypeInferenceFluentAPI.resetCaching();
+
+        return TypeInferenceFluentAPI.getInstance("JavaJars").loadExternalJars(commitId, projectName, git);
     }
 
 }

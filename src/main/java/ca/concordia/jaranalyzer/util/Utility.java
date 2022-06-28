@@ -71,7 +71,13 @@ public class Utility {
 
     public static Path getJarStoragePath() {
         return Path.of(PropertyReader.getProperty("jar.storage.directory"))
-                .resolve(PropertyReader.getProperty("jar.storage.filename"));
+                .resolve(PropertyReader.getProperty("jar.storage.filename")
+                        .concat(".").concat(PropertyReader.getProperty("jar.storage.file.extension")));
+    }
+
+    public static Path getJarStoragePath(String storageFileName) {
+        return Path.of(PropertyReader.getProperty("jar.storage.directory"))
+                .resolve(storageFileName.concat(".").concat(PropertyReader.getProperty("jar.storage.file.extension")));
     }
 
     public static Path getProjectPath(String projectName) {

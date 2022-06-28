@@ -34,13 +34,31 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         return instance;
     }
 
+    public static TypeInferenceFluentAPI getInstance(String storageFileName) {
+        if (instance == null) {
+            instance = new TypeInferenceFluentAPI(storageFileName);
+        }
+
+        return instance;
+    }
+
     private TypeInferenceFluentAPI() {
         tinkerGraph = TinkerGraphStorageUtility.getTinkerGraph();
         jarAnalyzer = TinkerGraphStorageUtility.getJarAnalyzer();
     }
 
+    private TypeInferenceFluentAPI(String storageFileName) {
+        tinkerGraph = TinkerGraphStorageUtility.getTinkerGraph(storageFileName);
+        jarAnalyzer = TinkerGraphStorageUtility.getJarAnalyzer();
+    }
+
     public Set<Artifact> loadExternalJars(String commitId, String projectName, Git git) {
         return jarAnalyzer.loadExternalJars(commitId, projectName, git);
+    }
+
+    public static void resetCaching() {
+        TinkerGraphStorageUtility.resetTinkerGraph();
+        instance = null;
     }
 
     public void loadJar(Artifact artifact) {

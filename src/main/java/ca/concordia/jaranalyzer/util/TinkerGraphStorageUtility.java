@@ -26,9 +26,9 @@ public class TinkerGraphStorageUtility {
 
             tinkerGraph = TinkerGraph.open(configuration);
 
-            jarAnalyzer = new JarAnalyzer(tinkerGraph);
+            jarAnalyzer = new JarAnalyzer(tinkerGraph, getJarStoragePath());
 
-            if (!Files.exists(getJarStoragePath())) {
+            if (!Files.exists(jarAnalyzer.getStorageFilePath())) {
                 jarAnalyzer.createClassStructureGraphForJavaJars();
                 jarAnalyzer.storeClassStructureGraph();
             } else {
@@ -39,8 +39,38 @@ public class TinkerGraphStorageUtility {
         return tinkerGraph;
     }
 
+    public static TinkerGraph getTinkerGraph(String storageFileName) {
+        if (tinkerGraph == null) {
+            Configuration configuration = new BaseConfiguration();
+            configuration.addProperty("gremlin.tinkergraph.defaultVertexPropertyCardinality", "list");
+
+            tinkerGraph = TinkerGraph.open(configuration);
+
+            jarAnalyzer = new JarAnalyzer(tinkerGraph, getJarStoragePath(storageFileName));
+
+            if (!Files.exists(jarAnalyzer.getStorageFilePath())) {
+                jarAnalyzer.createClassStructureGraphForJavaJars();
+                jarAnalyzer.storeClassStructureGraph();
+            } else {
+                jarAnalyzer.loadClassStructureGraph();
+            }
+        }
+
+        return tinkerGraph;
+    }
+
+    public static void resetTinkerGraph() {
+        tinkerGraph = null;
+    }
+
     public static JarAnalyzer getJarAnalyzer() {
         getTinkerGraph();
+
+        return jarAnalyzer;
+    }
+
+    public static JarAnalyzer getJarAnalyzer(String storageFileName) {
+        getTinkerGraph(storageFileName);
 
         return jarAnalyzer;
     }

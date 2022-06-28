@@ -4,8 +4,8 @@ import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractor;
 import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.ClassInfo;
-import ca.concordia.jaranalyzer.models.PackageInfo;
 import ca.concordia.jaranalyzer.models.JarInfo;
+import ca.concordia.jaranalyzer.models.PackageInfo;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -26,7 +26,6 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
-import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
 
 
 public class JarAnalyzer {
@@ -38,14 +37,21 @@ public class JarAnalyzer {
      */
     public TinkerGraph graph;
 
+    private Path storageFilePath;
+
     public JarAnalyzer() {
         graph = TinkerGraph.open();
         graph.createIndex("Kind", Vertex.class);
     }
 
-    public JarAnalyzer(TinkerGraph graph) {
+    public JarAnalyzer(TinkerGraph graph, Path storageFilePath) {
         this.graph = graph;
+        this.storageFilePath = storageFilePath;
         this.graph.createIndex("Kind", Vertex.class);
+    }
+
+    public Path getStorageFilePath() {
+        return storageFilePath;
     }
 
     public void toGraph(Set<JarInfo> jarInfoSet) {
@@ -215,7 +221,7 @@ public class JarAnalyzer {
     public void storeClassStructureGraph() {
         logger.info("storing graph");
 
-        graph.traversal().io(getJarStoragePath().toString())
+        graph.traversal().io(this.storageFilePath.toString())
                 .with(IO.writer, IO.gryo)
                 .write().iterate();
     }
@@ -223,7 +229,7 @@ public class JarAnalyzer {
     public void loadClassStructureGraph() {
         logger.info("loading graph");
 
-        graph.traversal().io(getJarStoragePath().toString())
+        graph.traversal().io(this.storageFilePath.toString())
                 .with(IO.reader, IO.gryo)
                 .read().iterate();
     }
