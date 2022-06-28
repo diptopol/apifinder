@@ -6,6 +6,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static ca.concordia.jaranalyzer.util.Utility.getJarStoragePath;
 
@@ -26,6 +27,8 @@ public class TinkerGraphStorageUtility {
 
             tinkerGraph = TinkerGraph.open(configuration);
 
+            FileUtils.createFolderIfAbsent(Path.of(PropertyReader.getProperty("jar.storage.directory")));
+
             jarAnalyzer = new JarAnalyzer(tinkerGraph, getJarStoragePath());
 
             if (!Files.exists(jarAnalyzer.getStorageFilePath())) {
@@ -45,6 +48,8 @@ public class TinkerGraphStorageUtility {
             configuration.addProperty("gremlin.tinkergraph.defaultVertexPropertyCardinality", "list");
 
             tinkerGraph = TinkerGraph.open(configuration);
+
+            FileUtils.createFolderIfAbsent(Path.of(PropertyReader.getProperty("jar.storage.directory")));
 
             jarAnalyzer = new JarAnalyzer(tinkerGraph, getJarStoragePath(storageFileName));
 
