@@ -75,7 +75,8 @@ public class InferenceUtility {
                     importStatementList, variableNameMap, expression, owningClassInfo);
         }
 
-        TypeInfo returnTypeInfo = getReturnParameterizedTypeInfo(methodInvocation, variableNameMap);
+        TypeInfo returnTypeInfo = getReturnParameterizedTypeInfo(methodInvocation, dependentArtifactSet, javaVersion,
+                importStatementList, owningClassInfo, variableNameMap);
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
@@ -169,7 +170,8 @@ public class InferenceUtility {
         TypeInfo returnTypeInfo = null;
 
         if (type.isParameterizedType() && ((ParameterizedType) type).typeArguments().isEmpty()) {
-            returnTypeInfo = getReturnParameterizedTypeInfo(classInstanceCreation, variableNameMap);
+            returnTypeInfo = getReturnParameterizedTypeInfo(classInstanceCreation, dependentArtifactSet, javaVersion,
+                    importStatementList, owningClassInfo, variableNameMap);
         }
 
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
@@ -1251,23 +1253,68 @@ public class InferenceUtility {
 
 
     private static TypeInfo getReturnParameterizedTypeInfo(ASTNode methodNode,
+                                                           Set<Artifact> dependentArtifactSet,
+                                                           String javaVersion,
+                                                           List<String> importStatementList,
+                                                           OwningClassInfo owningClassInfo,
                                                            Map<String, Set<VariableDeclarationDto>> variableNameMap) {
-        VariableDeclarationStatement variableDeclarationStatement
-                = (VariableDeclarationStatement) InferenceUtility.getClosestASTNode(methodNode, VariableDeclarationStatement.class);
 
-        if (Objects.nonNull(variableDeclarationStatement)) {
-            List<VariableDeclarationFragment> fragmentList = variableDeclarationStatement.fragments();
+        if (Objects.nonNull(methodNode.getParent()) && methodNode.getParent() instanceof ReturnStatement) {
+            ReturnStatement returnStatement = (ReturnStatement) methodNode.getParent();
+            MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(returnStatement, MethodDeclaration.class);
 
-            if (!fragmentList.isEmpty()) {
-                VariableDeclarationFragment fragment = fragmentList.get(0);
-                String variableName = fragment.getName().getFullyQualifiedName();
+            TypeInfo typeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, methodDeclaration.getReturnType2(), owningClassInfo);
 
-                VariableDeclarationDto variableDeclarationDto =
-                        getVariableDeclarationDtoFromVariableMap(variableName, fragment.getStartPosition(), variableNameMap);
+            if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
+                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
 
-                if (Objects.nonNull(variableDeclarationDto)) {
-                    return variableDeclarationDto.getTypeInfo();
+                List<TypeParameter> typeParameterList = methodDeclaration.typeParameters();
+
+                Map<String, Type> typeParameterMap = new HashMap<>();
+                for (TypeParameter typeParameter: typeParameterList) {
+                    String name = typeParameter.getName().getFullyQualifiedName();
+
+                    if (!typeParameter.typeBounds().isEmpty()) {
+                        List<Type> typeParameterBoundList = typeParameter.typeBounds();
+
+                        typeParameterMap.put(name, typeParameterBoundList.get(0));
+                    }
                 }
+
+                for (TypeInfo typeArgument: parameterizedTypeInfo.getTypeArgumentList()) {
+                    if (typeArgument.isFormalTypeParameterInfo()) {
+                        FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeArgument;
+                        TypeInfo baseType = formalTypeParameterInfo.getBaseTypeInfo();
+
+                        if (baseType.isFormalTypeParameterInfo()
+                                && typeParameterMap.containsKey(((FormalTypeParameterInfo) baseType).getTypeParameter())) {
+
+                            FormalTypeParameterInfo baseFormalTypeParameterInfo = (FormalTypeParameterInfo) baseType;
+                            Type boundType = typeParameterMap.get(baseFormalTypeParameterInfo.getTypeParameter());
+
+                            TypeInfo boundTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
+                                    boundType, owningClassInfo);
+
+                            if (!boundTypeInfo.getQualifiedClassName().equals(baseFormalTypeParameterInfo.getBaseTypeInfo().getQualifiedClassName())) {
+                                baseFormalTypeParameterInfo.setBaseTypeInfo(boundTypeInfo);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return typeInfo;
+        }
+
+        if (Objects.nonNull(methodNode.getParent()) && methodNode.getParent() instanceof VariableDeclarationFragment) {
+            VariableDeclarationFragment variableDeclarationFragment = (VariableDeclarationFragment) methodNode.getParent();
+            String variableName = variableDeclarationFragment.getName().getFullyQualifiedName();
+
+            VariableDeclarationDto variableDeclarationDto =
+                    getVariableDeclarationDtoFromVariableMap(variableName, variableDeclarationFragment.getStartPosition(), variableNameMap);
+
+            if (Objects.nonNull(variableDeclarationDto)) {
+                return variableDeclarationDto.getTypeInfo();
             }
         }
 
@@ -1397,18 +1444,28 @@ public class InferenceUtility {
             );
         }
 
-        if (Objects.nonNull(returnTypeInfo)
-                && returnTypeInfo.isParameterizedTypeInfo()
-                && ((ParameterizedTypeInfo) returnTypeInfo).isParameterized()
-                && returnTypeInfo.getQualifiedClassName().equals(methodInfo.getReturnTypeInfo().getQualifiedClassName())) {
-            ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) returnTypeInfo;
+        if (Objects.nonNull(returnTypeInfo)) {
+            if (methodInfo.getReturnTypeInfo().isFormalTypeParameterInfo()) {
+                FormalTypeParameterInfo methodReturnFormalTypeParameterInfo =
+                        (FormalTypeParameterInfo) methodInfo.getReturnTypeInfo();
 
-            for (TypeInfo typeArgumentInfo : parameterizedTypeInfo.getTypeArgumentList()) {
-                if (typeArgumentInfo.isFormalTypeParameterInfo()) {
-                    FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeArgumentInfo;
+                if (!inferredTypeInfoMap.containsKey(methodReturnFormalTypeParameterInfo.getTypeParameter())) {
+                    inferredTypeInfoMap.put(methodReturnFormalTypeParameterInfo.getTypeParameter(), returnTypeInfo);
+                }
+            } else if ((methodInfo.getReturnTypeInfo().isParameterizedTypeInfo() || methodInfo.isConstructor())
+                    && returnTypeInfo.isParameterizedTypeInfo()
+                    && ((ParameterizedTypeInfo) returnTypeInfo).isParameterized()
+                    && returnTypeInfo.getQualifiedClassName().equals(methodInfo.getReturnTypeInfo().getQualifiedClassName())) {
 
-                    if (!inferredTypeInfoMap.containsKey(formalTypeParameterInfo.getTypeParameter())) {
-                        inferredTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo.getBaseTypeInfo());
+                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) returnTypeInfo;
+
+                for (TypeInfo typeArgumentInfo : parameterizedTypeInfo.getTypeArgumentList()) {
+                    if (typeArgumentInfo.isFormalTypeParameterInfo()) {
+                        FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeArgumentInfo;
+
+                        if (!inferredTypeInfoMap.containsKey(formalTypeParameterInfo.getTypeParameter())) {
+                            inferredTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo.getBaseTypeInfo());
+                        }
                     }
                 }
             }

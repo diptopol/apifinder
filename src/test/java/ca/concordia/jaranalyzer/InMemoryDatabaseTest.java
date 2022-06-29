@@ -41,7 +41,7 @@ public class InMemoryDatabaseTest {
 
         Set<Artifact> jarInformationSet = loadExternalJars(projectName, projectUrl, commitId);
 
-        assert jarInformationSet.size() == 104;
+        assert jarInformationSet.size() == 106;
     }
 
     @Test
