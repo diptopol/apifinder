@@ -46,7 +46,7 @@ public class TypeInferenceV2API {
 
             return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
 
-        } catch (Exception e) {
+        } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
         }
 
@@ -79,7 +79,7 @@ public class TypeInferenceV2API {
 
             return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
 
-        } catch (Exception e) {
+        } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
         }
 
@@ -117,7 +117,7 @@ public class TypeInferenceV2API {
 
             return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
 
-        } catch (Exception e) {
+        } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
         }
 
@@ -183,7 +183,7 @@ public class TypeInferenceV2API {
 
             return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
 
-        } catch (Exception e) {
+        } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
         }
 
@@ -242,7 +242,7 @@ public class TypeInferenceV2API {
 
             return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
 
-        } catch (Exception e) {
+        } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
         }
 
