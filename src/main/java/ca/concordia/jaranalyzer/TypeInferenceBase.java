@@ -983,10 +983,14 @@ public abstract class TypeInferenceBase {
 
         Set<String> eligibleFirstArgumentClassNameSet = new LinkedHashSet<>();
 
-        eligibleFirstArgumentClassNameSet.add(firstArgumentQualifiedClassName);
-        eligibleFirstArgumentClassNameSet.addAll(
-                getAllSuperClassSet(Collections.singleton(firstArgumentQualifiedClassName), jarVertexIds, tinkerGraph));
-        eligibleFirstArgumentClassNameSet.remove("java.lang.Object");
+        if (Objects.nonNull(firstArgumentQualifiedClassName)) {
+            eligibleFirstArgumentClassNameSet.add(firstArgumentQualifiedClassName);
+
+            eligibleFirstArgumentClassNameSet.addAll(
+                    getAllSuperClassSet(Collections.singleton(firstArgumentQualifiedClassName), jarVertexIds, tinkerGraph));
+
+            eligibleFirstArgumentClassNameSet.remove("java.lang.Object");
+        }
 
         for (MethodInfo methodInfo: methodInfoList) {
             if (methodInfo.isInnerClassConstructor()) {
