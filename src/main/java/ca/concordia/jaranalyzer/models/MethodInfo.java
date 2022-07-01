@@ -45,6 +45,8 @@ public class MethodInfo {
 
     private List<TypeInfo> formalTypeParameterList;
 
+    private boolean owningClassAttribute;
+
     public MethodInfo(Vertex vertex) {
         this.id = vertex.id();
         this.name = vertex.<String>property("Name").value();
@@ -358,6 +360,14 @@ public class MethodInfo {
 
     public List<TypeInfo> getFormalTypeParameterList() {
         return formalTypeParameterList;
+    }
+
+    public boolean isOwningClassAttribute() {
+        return owningClassAttribute;
+    }
+
+    public void setOwningClassAttribute(boolean owningClassAttribute) {
+        this.owningClassAttribute = owningClassAttribute;
     }
 
     @Override

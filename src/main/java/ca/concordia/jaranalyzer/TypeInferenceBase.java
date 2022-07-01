@@ -1037,7 +1037,28 @@ public abstract class TypeInferenceBase {
         }
     }
 
-    static List<MethodInfo> filteredNonAbstractMethod(List<MethodInfo> methodInfoList) {
+
+    public static List<MethodInfo> filterMethodInfoListBasedOnOwningClass(List<MethodInfo> methodInfoList) {
+        if (methodInfoList.size() > 1 && methodInfoList.stream().noneMatch(MethodInfo::isOwningClassAttribute)) {
+            methodInfoList = methodInfoList.stream()
+                    .filter(m -> !m.isPrivate())
+                    .collect(Collectors.toList());
+        }
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> prioritizeMethodInfoListBasedOnArguments(List<MethodInfo> methodInfoList) {
+        if (methodInfoList.size() > 1 && !methodInfoList.stream().allMatch(m -> m.getArgumentTypes().length == 0)) {
+            double minArgumentMatchingDistance = getMinimumArgumentMatchingDistance(methodInfoList);
+
+            methodInfoList = methodInfoList.stream()
+                    .filter(m -> m.getArgumentMatchingDistance() == minArgumentMatchingDistance)
+                    .collect(Collectors.toList());
+        }
+        return methodInfoList;
+    }
+
+    public static List<MethodInfo> filteredNonAbstractMethod(List<MethodInfo> methodInfoList) {
         if (methodInfoList.size() > 1 && methodInfoList.stream().anyMatch(m -> !m.isAbstract())) {
             return methodInfoList.stream().filter(m -> !m.isAbstract()).collect(Collectors.toList());
         } else {
