@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -57,8 +58,10 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
 
                         GradleModuleVersion gradleModuleVersion = ideaSingleEntryLibraryDependency.getGradleModuleVersion();
 
-                        artifactSet.add(new Artifact(gradleModuleVersion.getGroup(), gradleModuleVersion.getName(),
-                                gradleModuleVersion.getVersion(), getType(ideaSingleEntryLibraryDependency.getFile().getName())));
+                        if (Objects.nonNull(gradleModuleVersion)) {
+                            artifactSet.add(new Artifact(gradleModuleVersion.getGroup(), gradleModuleVersion.getName(),
+                                    gradleModuleVersion.getVersion(), getType(ideaSingleEntryLibraryDependency.getFile().getName())));
+                        }
                     }
                 }
             }
@@ -72,7 +75,7 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
     private GradleConnector getGradleConnector() {
         GradleConnector connector = GradleConnector.newConnector();
         connector.useInstallation(new File(GRADLE_HOME_PATH));
-        connector.forProjectDirectory(Utility.getProjectPath(projectName).toFile());
+        connector.forProjectDirectory(Utility.getProjectPath(projectName).resolve(projectName).toFile());
 
         return connector;
     }

@@ -81,4 +81,19 @@ public class ArtifactExtractorTest {
                 && "2.0.2".equals(artifact.getVersion());
     }
 
+    @Test
+    public void testArtifactExtractionFromGradle() {
+        String projectName = "mokito";
+        Path pathToProject = Utility.getProjectPath(projectName);
+
+        Git git = GitUtil.openRepository(projectName, "https://github.com/mockito/mockito.git", pathToProject);
+
+        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver("ff98622a8f4bbe96ef5405434b5d788fcd118bb4", projectName, git);
+
+        ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
+        Set<Artifact> dependentArtifactSet = extractor.getDependentArtifactSet();
+
+        assert dependentArtifactSet.size() == 58;
+    }
+
 }
