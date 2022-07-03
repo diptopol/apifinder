@@ -46,7 +46,6 @@ public class InferenceUtilityTest {
 
         loadTestProjectDirectory(projectName, projectUrl, commitId);
         loadExternalJars(projectName, projectUrl, commitId);
-        loadJFreeChartFx();
     }
 
     @AfterClass
@@ -170,14 +169,6 @@ public class InferenceUtilityTest {
         Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
 
         jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
-    }
-
-    private static void loadJFreeChartFx() {
-        String jFreeChartGroupId = "org.jfree";
-        String jFreeChartArtifactId = "org.jfree.chart.fx";
-        String jFreeChartVersion = "2.0";
-        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
-        jarInformationSet.add(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
     }
 
 }

@@ -43,7 +43,6 @@ public class GuavaV3011TypeInferenceV2APITest {
 
         loadTestProjectDirectory(projectName, projectUrl, commitId);
         loadExternalJars(projectName, projectUrl, commitId);
-        loadGuava();
     }
 
     @AfterClass
@@ -829,14 +828,6 @@ public class GuavaV3011TypeInferenceV2APITest {
         Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
 
         jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
-    }
-
-    private static void loadGuava() {
-        String guavaGroupId = "com.google.guava";
-        String guavaArtifactId = "guava";
-        String guavaVersion = "30.1.1-jre";
-        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact(guavaGroupId, guavaArtifactId, guavaVersion));
-        jarInformationSet.add(new Artifact(guavaGroupId, guavaArtifactId, guavaVersion));
     }
 
 }

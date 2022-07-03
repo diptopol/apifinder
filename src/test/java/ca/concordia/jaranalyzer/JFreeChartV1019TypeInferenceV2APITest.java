@@ -44,7 +44,6 @@ public class JFreeChartV1019TypeInferenceV2APITest {
 
         loadTestProjectDirectory(projectName, projectUrl, commitId);
         loadExternalJars(projectName, projectUrl, commitId);
-        loadJFreeChart();
     }
 
     @AfterClass
@@ -254,14 +253,6 @@ public class JFreeChartV1019TypeInferenceV2APITest {
         Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
 
         jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
-    }
-
-    private static void loadJFreeChart() {
-        String jFreeChartGroupId = "org.jfree";
-        String jFreeChartArtifactId = "jfreechart";
-        String jFreeChartVersion = "1.0.19";
-        TypeInferenceFluentAPI.getInstance().loadJar(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
-        jarInformationSet.add(new Artifact(jFreeChartGroupId, jFreeChartArtifactId, jFreeChartVersion));
     }
 
 }

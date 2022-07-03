@@ -153,9 +153,9 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
                 }
             }
 
-            return dependentArtifactSet.stream()
-                    .filter(artifact -> !projectArtifactSet.contains(artifact))
-                    .collect(Collectors.toSet());
+            dependentArtifactSet.addAll(projectArtifactSet);
+
+            return dependentArtifactSet;
 
         } catch (IOException | JDOMException e) {
             logger.error("Error", e);

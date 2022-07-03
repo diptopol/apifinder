@@ -27,13 +27,9 @@ public class ArtifactExtractorTest {
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         Set<Artifact> jarArtifactInfoSet = extractor.getDependentArtifactSet();
 
-        assert jarArtifactInfoSet.size() == 1;
+        assert jarArtifactInfoSet.size() == 2;
 
-        Artifact jarArtifactInfo = jarArtifactInfoSet.iterator().next();
-
-        assert "com.github.tsantalis".equals(jarArtifactInfo.getGroupId())
-                && "refactoring-miner".equals(jarArtifactInfo.getArtifactId())
-                && "2.0.2".equals(jarArtifactInfo.getVersion());
+        assert jarArtifactInfoSet.contains(new Artifact("com.github.tsantalis", "refactoring-miner", "2.0.2"));
     }
 
     @Test
@@ -45,9 +41,12 @@ public class ArtifactExtractorTest {
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         Set<Artifact> dependentArtifactSet = extractor.getDependentArtifactSet();
 
-        assert dependentArtifactSet.size() == 1;
+        assert dependentArtifactSet.size() == 2;
 
-        Artifact artifact = dependentArtifactSet.iterator().next();
+        Artifact artifact = dependentArtifactSet.stream()
+                .filter(d -> d.getArtifactId().equals("refactoring-miner"))
+                .findFirst()
+                .orElse(null);
 
         Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifact);
 
@@ -74,11 +73,7 @@ public class ArtifactExtractorTest {
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         Set<Artifact> dependentArtifactSet = extractor.getDependentArtifactSet();
 
-        Artifact artifact = dependentArtifactSet.iterator().next();
-
-        assert "com.github.tsantalis".equals(artifact.getGroupId())
-                && "refactoring-miner".equals(artifact.getArtifactId())
-                && "2.0.2".equals(artifact.getVersion());
+        assert dependentArtifactSet.contains(new Artifact("com.github.tsantalis", "refactoring-miner", "2.0.2"));
     }
 
     @Test

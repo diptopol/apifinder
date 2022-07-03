@@ -30,7 +30,7 @@ public class InMemoryDatabaseTest {
 
         Set<Artifact> jarInformationSet = loadExternalJars(projectName, projectUrl, commitId);
 
-        assert jarInformationSet.size() == 40;
+        assert jarInformationSet.size() == 55;
     }
 
     @Test
@@ -41,7 +41,7 @@ public class InMemoryDatabaseTest {
 
         Set<Artifact> jarInformationSet = loadExternalJars(projectName, projectUrl, commitId);
 
-        assert jarInformationSet.size() == 106;
+        assert jarInformationSet.size() == 250;
     }
 
     @Test
@@ -90,7 +90,7 @@ public class InMemoryDatabaseTest {
 
         //TypeInferenceFluentAPI.resetCaching();
 
-        return TypeInferenceFluentAPI.getInstance("JavaJars").loadExternalJars(commitId, projectName, git);
+        return TypeInferenceFluentAPI.getInstance("JavaJars-kubernetes").loadExternalJars(commitId, projectName, git);
     }
 
 }
