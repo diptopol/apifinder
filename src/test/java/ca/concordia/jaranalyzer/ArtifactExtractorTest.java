@@ -88,6 +88,8 @@ public class ArtifactExtractorTest {
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         Set<Artifact> dependentArtifactSet = extractor.getDependentArtifactSet();
 
+
+        assert extractor.getJavaVersion().equals("11");
         assert dependentArtifactSet.size() == 58;
     }
 

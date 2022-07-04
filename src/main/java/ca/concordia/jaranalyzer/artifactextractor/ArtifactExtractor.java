@@ -10,6 +10,8 @@ import java.util.Set;
  */
 public abstract class ArtifactExtractor {
 
+    public abstract String getJavaVersion();
+
     public abstract Set<Artifact> getDependentArtifactSet();
 
 }

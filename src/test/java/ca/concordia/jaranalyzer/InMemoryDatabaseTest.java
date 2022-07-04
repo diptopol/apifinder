@@ -1,5 +1,7 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractor;
+import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
@@ -42,6 +44,17 @@ public class InMemoryDatabaseTest {
         Set<Artifact> jarInformationSet = loadExternalJars(projectName, projectUrl, commitId);
 
         assert jarInformationSet.size() == 250;
+    }
+
+    @Test
+    public void testJavaVersion() {
+        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver("54a0dcd9fa0303a10c7a2a595e7c26526d7006a0",
+                "kubernetes-client",
+                "https://github.com/fabric8io/kubernetes-client.git");
+
+        ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
+
+        assert "11".equals(extractor.getJavaVersion());
     }
 
     @Test

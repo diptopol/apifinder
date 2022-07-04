@@ -5,6 +5,7 @@ import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.PropertyReader;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.eclipse.jgit.api.Git;
+import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.GradleModuleVersion;
@@ -41,6 +42,25 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
     }
 
     @Override
+    public String getJavaVersion() {
+        String branchName = GitUtil.checkoutToCommit(git, this.commitId);
+        GradleConnector connector = getGradleConnector();
+        String javaVersion = null;
+
+        try (ProjectConnection connection = connector.connect()) {
+            IdeaProject project = connection.getModel(IdeaProject.class);
+
+            javaVersion = project.getJavaLanguageSettings().getLanguageLevel().getMajorVersion();
+        } catch (GradleConnectionException e) {
+            logger.error("Error occurred", e);
+        }
+
+        GitUtil.checkoutToCommit(git, branchName);
+
+        return javaVersion;
+    }
+
+    @Override
     public Set<Artifact> getDependentArtifactSet() {
         Set<Artifact> artifactSet = new HashSet<>();
         String branchName = GitUtil.checkoutToCommit(git, this.commitId);
@@ -65,6 +85,8 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
                     }
                 }
             }
+        } catch (GradleConnectionException e) {
+            logger.error("Error occurred", e);
         }
 
         GitUtil.checkoutToCommit(git, branchName);

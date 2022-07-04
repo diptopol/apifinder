@@ -37,16 +37,22 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
     private final String commitId;
     private final String projectName;
     private final Git git;
+    private final String effectivePOMContent;
 
     public MavenArtifactExtractor(String commitId, String projectName, Git git) {
         this.commitId = commitId;
         this.projectName = projectName;
         this.git = git;
+        this.effectivePOMContent = getEffectivePOMContent();
+    }
+
+    @Override
+    public String getJavaVersion() {
+        return getJavaVersion(effectivePOMContent);
     }
 
     @Override
     public Set<Artifact> getDependentArtifactSet() {
-        String effectivePOMContent = getEffectivePOMContent();
         return getDependentArtifactSet(effectivePOMContent);
     }
 
@@ -90,6 +96,43 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
         deleteDirectory(p);
 
         return effectivePomPathContent;
+    }
+
+    private static String getJavaVersion(String pomContent) {
+        if (Objects.isNull(pomContent)) {
+            return null;
+        }
+
+        List<String> javaVersionList = new ArrayList<>();
+
+        try {
+            SAXBuilder saxBuilder = new SAXBuilder();
+            Document document = saxBuilder.build(new ByteArrayInputStream(pomContent.getBytes(StandardCharsets.UTF_8)));
+
+            Element root = document.getRootElement();
+
+            List<Element> projectElementList = getProjectElementList(root);
+
+            for (Element project: projectElementList) {
+                Element propertiesElement = getChildElement(project, "properties");
+
+                if (Objects.nonNull(propertiesElement)) {
+                    List<Element> propertyElementList = propertiesElement.getChildren();
+
+                    for (Element propertyElement: propertyElementList) {
+                        if (propertyElement.getName().equals("maven.compiler.release")) {
+                            javaVersionList.add(propertyElement.getValue());
+                        }
+                    }
+                }
+            }
+        } catch (IOException | JDOMException e) {
+            logger.error("Error", e);
+        }
+
+        int javaVersion = Collections.max(javaVersionList.stream().map(Integer::valueOf).collect(Collectors.toList()));
+
+        return String.valueOf(javaVersion);
     }
 
     private static Set<Artifact> getDependentArtifactSet(String pomContent) {
