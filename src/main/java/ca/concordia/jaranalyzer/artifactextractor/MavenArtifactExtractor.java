@@ -113,6 +113,7 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
 
             List<Element> projectElementList = getProjectElementList(root);
 
+            //java 9 and onwards
             for (Element project: projectElementList) {
                 Element propertiesElement = getChildElement(project, "properties");
 
@@ -126,11 +127,42 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
                     }
                 }
             }
+
+            //spring boot specification
+            if (javaVersionList.isEmpty()) {
+                for (Element project: projectElementList) {
+                    Element propertiesElement = getChildElement(project, "properties");
+
+                    if (Objects.nonNull(propertiesElement)) {
+                        List<Element> propertyElementList = propertiesElement.getChildren();
+
+                        for (Element propertyElement: propertyElementList) {
+                            if (propertyElement.getName().equals("java.version")) {
+                                javaVersionList.add(Utility.convertJavaVersion(propertyElement.getValue()));
+                            }
+                        }
+                    }
+                }
+            }
+
+            //maven compiler-plugin
+            if (javaVersionList.isEmpty()) {
+                for (Element project: projectElementList) {
+                    javaVersionList.add(getJavaVersionFromPlugin(project));
+                }
+            }
         } catch (IOException | JDOMException e) {
             logger.error("Error", e);
         }
 
-        int javaVersion = Collections.max(javaVersionList.stream().map(Integer::valueOf).collect(Collectors.toList()));
+        if (javaVersionList.isEmpty()) {
+            return getProperty("java.version");
+        }
+
+        int javaVersion = Collections.max(javaVersionList.stream()
+                .filter(Objects::nonNull)
+                .map(Integer::valueOf)
+                .collect(Collectors.toList()));
 
         return String.valueOf(javaVersion);
     }
@@ -209,6 +241,50 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
 
     private static String getElementValue(Element element) {
         return Objects.nonNull(element) ? element.getValue() : null;
+    }
+
+    private static String getJavaVersionFromPlugin(Element project) {
+        Element buildElement = getChildElement(project, "build");
+
+        if (Objects.nonNull(buildElement)) {
+            String javaVersion = getJavaVersionFromMavenCompilerPlugin(buildElement);
+
+            if (Objects.nonNull(javaVersion)) {
+                return javaVersion;
+            }
+
+            Element pluginManagementElement = getChildElement(buildElement, "pluginManagement");
+
+            javaVersion = getJavaVersionFromMavenCompilerPlugin(pluginManagementElement);
+
+            if (Objects.nonNull(javaVersion)) {
+                return javaVersion;
+            }
+        }
+
+        return null;
+    }
+
+    private static String getJavaVersionFromMavenCompilerPlugin(Element element) {
+        Element pluginsElement = getChildElement(element, "plugins");
+
+        if (Objects.nonNull(pluginsElement)) {
+            for (Element pluginElement: pluginsElement.getChildren()) {
+                Element artifactIdElement = getChildElement(pluginElement, "artifactId");
+                String artifactId = getElementValue(artifactIdElement);
+
+                if ("maven-compiler-plugin".equals(artifactId)) {
+                    Element configurationElement = getChildElement(pluginElement, "configuration");
+
+                    if (Objects.nonNull(configurationElement)) {
+                        Element sourceElement = getChildElement(configurationElement, "source");
+                        return Utility.convertJavaVersion(getElementValue(sourceElement));
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     private static Element getDependenciesElement(Element project) {

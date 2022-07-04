@@ -29,6 +29,11 @@ public class TypeInferenceAPITest {
     }
 
     @Test
+    public void testLoadingJava11() {
+        TypeInferenceAPI.loadJavaPackage(11);
+    }
+
+    @Test
     public void testLoadExternalJars() {
         String commitId = "b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c";
         String projectName = "RefactoringMinerIssueReproduction";
@@ -37,8 +42,8 @@ public class TypeInferenceAPITest {
         Git git = GitUtil.openRepository(projectName,
                 "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", pathToProject);
 
-        TypeInferenceAPI.loadExternalJars(commitId, projectName, git);
-        TypeInferenceAPI.loadExternalJars(commitId, projectName, git);
+        TypeInferenceAPI.loadJavaAndExternalJars(commitId, projectName, git);
+        TypeInferenceAPI.loadJavaAndExternalJars(commitId, projectName, git);
 
         List<String> qualifiedNameList = TypeInferenceAPI.getQualifiedClassName("Refactoring");
 

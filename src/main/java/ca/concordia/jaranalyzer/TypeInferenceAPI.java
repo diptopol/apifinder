@@ -5,6 +5,7 @@ import ca.concordia.jaranalyzer.models.typeInfo.NullTypeInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.TinkerGraphStorageUtility;
+import io.vavr.Tuple2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.TextP;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
@@ -27,8 +28,12 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         jarAnalyzer = TinkerGraphStorageUtility.getJarAnalyzer();
     }
 
-    public static Set<Artifact> loadExternalJars(String commitId, String projectName, Git git) {
-        return jarAnalyzer.loadExternalJars(commitId, projectName, git);
+    public static Tuple2<String, Set<Artifact>> loadJavaAndExternalJars(String commitId, String projectName, Git git) {
+        return jarAnalyzer.loadJavaAndExternalJars(commitId, projectName, git);
+    }
+
+    public static void loadJavaPackage(int majorJavaVersion) {
+        jarAnalyzer.loadJavaPackage(majorJavaVersion);
     }
 
     public static void loadJar(Artifact artifact) {

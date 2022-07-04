@@ -6,6 +6,7 @@ import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.Utility;
+import io.vavr.Tuple2;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jgit.api.Git;
 import org.junit.AfterClass;
@@ -17,16 +18,13 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
-
 /**
  * @author Diptopol
  * @since 9/19/2021 12:17 PM
  */
 public class InferenceUtilityTest {
 
-    private static Set<Artifact> jarInformationSet;
-    private static String javaVersion;
+    private static Tuple2<String, Set<Artifact>> dependencyTuple;
 
     /*
      * For running the test we have to check out to a specific commit. So after completion of all test we intend to
@@ -38,8 +36,6 @@ public class InferenceUtilityTest {
 
     @BeforeClass
     public static void loadExternalLibrary() {
-        javaVersion = getProperty("java.version");
-
         String projectName = "jfreechart-fx";
         String projectUrl = "https://github.com/jfree/jfreechart-fx.git";
         String commitId = "35d53459e854a2bb39d6f012ce9b78ec8ab7f0f9";
@@ -86,7 +82,7 @@ public class InferenceUtilityTest {
                     InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
                     Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
-                            = InferenceUtility.getFieldVariableDeclarationDtoList(jarInformationSet, javaVersion,
+                            = InferenceUtility.getFieldVariableDeclarationDtoList(dependencyTuple._2(), dependencyTuple._1(),
                             importStatementList, methodInvocation, new HashMap<>());
 
                     assert "[altKey, ctrlKey, enabled, id, metaKey, shiftKey]"
@@ -137,13 +133,13 @@ public class InferenceUtilityTest {
                     InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
                     Map<String, Set<VariableDeclarationDto>> variableNameMap =
-                            InferenceUtility.getVariableNameMap(jarInformationSet, javaVersion,
+                            InferenceUtility.getVariableNameMap(dependencyTuple._2(), dependencyTuple._1(),
                                     importStatementList, methodInvocation, null);
 
                     List<Expression> argumentList = methodInvocation.arguments();
 
                     List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(Collections.emptySet(),
-                            javaVersion, importStatementList, variableNameMap, argumentList, null);
+                            dependencyTuple._1(), importStatementList, variableNameMap, argumentList, null);
 
                     List<String> argumentTypeClassNameList = argumentTypeInfoList.stream()
                             .map(TypeInfo::getQualifiedClassName)
@@ -168,7 +164,7 @@ public class InferenceUtilityTest {
         Path pathToProject = Utility.getProjectPath(projectName);
         Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
 
-        jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
+        dependencyTuple = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
     }
 
 }

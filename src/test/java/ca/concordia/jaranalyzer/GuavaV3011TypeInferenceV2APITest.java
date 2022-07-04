@@ -4,6 +4,7 @@ import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
+import io.vavr.Tuple2;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jgit.api.Git;
 import org.junit.AfterClass;
@@ -14,16 +15,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
-import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
-
 /**
  * @author Diptopol
  * @since 3/23/2022 3:06 PM
  */
 public class GuavaV3011TypeInferenceV2APITest {
 
-    private static Set<Artifact> jarInformationSet;
-    private static String javaVersion;
+    private static Tuple2<String, Set<Artifact>> dependencyTuple;
 
     /*
      * For running the test we have to check out to a specific commit. So after completion of all test we intend to
@@ -35,14 +33,12 @@ public class GuavaV3011TypeInferenceV2APITest {
 
     @BeforeClass
     public static void loadExternalLibrary() {
-        javaVersion = getProperty("java.version");
-
         String projectName = "guava";
         String projectUrl = "https://github.com/google/guava.git";
         String commitId = "43a53bc0328c7efd1da152f3b56b1fd241c88d4c";
 
         loadTestProjectDirectory(projectName, projectUrl, commitId);
-        loadExternalJars(projectName, projectUrl, commitId);
+        loadJavaPackageAndExternalJars(projectName, projectUrl, commitId);
     }
 
     @AfterClass
@@ -58,7 +54,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(ClassInstanceCreation classInstanceCreation) {
                 if (classInstanceCreation.toString().startsWith("new AwaitHealthGuard()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
 
                     assert ("com.google.common.util.concurrent.ServiceManager.ServiceManagerState.AwaitHealthGuard::void ServiceManager$ServiceManagerState$AwaitHealthGuard()").equals(methodInfo.toString());
                 }
@@ -76,7 +72,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("invokeAccessibleNonThrowingMethod(getStackTraceElementMethod,jla,t,n)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.base.Throwables" +
                             "::private static java.lang.Object invokeAccessibleNonThrowingMethod(java.lang.reflect.Method," +
@@ -96,7 +92,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(SuperConstructorInvocation superConstructorInvocation) {
                 if (superConstructorInvocation.toString().startsWith("super(prefix,from,function,FlatMapSpliteratorOfInt::new")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superConstructorInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), superConstructorInvocation);
 
                     assert ("com.google.common.collect.CollectSpliterators.FlatMapSpliteratorOfPrimitive" +
                             "::void CollectSpliterators$FlatMapSpliteratorOfPrimitive(java.util.Spliterator.OfPrimitive," +
@@ -118,7 +114,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Collector.of(ImmutableList::builder,ImmutableList.Builder::add")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("java.util.stream.Collector::public static java.util.stream.Collector of(java.util.function.Supplier," +
                             " java.util.function.BiConsumer, java.util.function.BinaryOperator," +
@@ -139,7 +135,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("CollectSpliterators.indexed(size(),Spliterator.ORDERED,this::getEntry)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.CollectSpliterators" +
                             "::static java.util.Spliterator indexed(int, int," +
@@ -169,7 +165,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("getAndUpdate(key,x")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.util.concurrent.AtomicLongMap::public long getAndUpdate(K," +
                             " java.util.function.LongUnaryOperator)").equals(methodInfo.toString());
@@ -188,7 +184,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("CollectSpliterators.indexed(")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.CollectSpliterators" +
                             "::static java.util.Spliterator indexed(int, int, java.util.function.IntFunction)")
@@ -208,7 +204,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().equals("CompactHashMap.this.remove(keys[indexToRemove])")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.CompactHashMap::public V remove(java.lang.Object)").equals(methodInfo.toString());
                 }
@@ -226,7 +222,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("makeBuilder(keySet.size())")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableMap.SerializedForm" +
                             "::com.google.common.collect.ImmutableMap.Builder makeBuilder(int)")
@@ -246,7 +242,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Math.min(builder.getConcurrencyLevel(),MAX_SEGMENTS)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("java.lang.Math::public static int min(int, int)").equals(methodInfo.toString());
                 }
@@ -264,7 +260,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Lists.newArrayList()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.Lists" +
                             "::public static java.util.ArrayList newArrayList()").equals(methodInfo.toString());
@@ -283,7 +279,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("logger.log(Level.FINE,\"Service {0} has terminated. Previous state was: {1}\"")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("java.util.logging.Logger::" +
                             "public void log(java.util.logging.Level, java.lang.String, java.lang.Object[])")
@@ -303,7 +299,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("ImmutableList.<Service>of(new NoOpService())")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableList" +
                             "::public static com.google.common.collect.ImmutableList of(com.google.common.util.concurrent.Service)")
@@ -324,7 +320,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.getParent().toString().equals("candidateKey=entry.getKey()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableEntry::public final java.lang.Object getKey()").equals(methodInfo.toString());
                 }
@@ -343,7 +339,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().equals("Preconditions.checkNotNull(delegate)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.base.Preconditions::public static com.google.common.util.concurrent.ListenableFuture" +
                             " checkNotNull(com.google.common.util.concurrent.ListenableFuture)").equals(methodInfo.toString());
@@ -363,7 +359,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(ClassInstanceCreation classInstanceCreation) {
                 if (classInstanceCreation.toString().equals("new FailedService(service)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
 
                     assert ("com.google.common.util.concurrent.ServiceManager.FailedService" +
                             "::void ServiceManager$FailedService(com.google.common.util.concurrent.Service)").equals(methodInfo.toString());
@@ -383,7 +379,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().equals("fromEntries(Ordering.natural(),false,entries,entries.length)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableSortedMap::" +
                             "private static com.google.common.collect.ImmutableSortedMap fromEntries(java.util.Comparator," +
@@ -404,7 +400,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().equals("fromEntries(comparator,false,entries,size)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableSortedMap::" +
                             "private static com.google.common.collect.ImmutableSortedMap fromEntries(java.util.Comparator," +
@@ -425,7 +421,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().equals("Ordering.natural().equals(comparator)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("java.lang.Object::public boolean equals(java.lang.Object)").equals(methodInfo.toString());
                 }
@@ -444,7 +440,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(SuperMethodInvocation superMethodInvocation) {
                 if (superMethodInvocation.toString().startsWith("super.put(key,value)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superMethodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), superMethodInvocation);
 
                     assert ("com.google.common.collect.ImmutableMap.Builder" +
                             "::public com.google.common.collect.ImmutableMap.Builder put(K, V)").equals(methodInfo.toString());
@@ -464,7 +460,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().equals("ImmutableList.of(k1)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableList" +
                             "::public static com.google.common.collect.ImmutableList of(K)").equals(methodInfo.toString());
@@ -484,7 +480,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().equals("asList().iterator()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableList" +
                             "::public com.google.common.collect.UnmodifiableIterator iterator()").equals(methodInfo.toString());
@@ -504,7 +500,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(ClassInstanceCreation classInstanceCreation) {
                 if (classInstanceCreation.toString().equals("new SerializedForm<>(this)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
 
                     assert ("com.google.common.collect.ImmutableSortedMap.SerializedForm" +
                             "::void ImmutableSortedMap$SerializedForm(com.google.common.collect.ImmutableSortedMap)")
@@ -525,7 +521,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(SuperConstructorInvocation superConstructorInvocation) {
                 if (superConstructorInvocation.toString().startsWith("super(sortedMap)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, superConstructorInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), superConstructorInvocation);
 
                     assert ("com.google.common.collect.ImmutableMap.SerializedForm" +
                             "::void ImmutableMap$SerializedForm(com.google.common.collect.ImmutableMap)")
@@ -549,7 +545,7 @@ public class GuavaV3011TypeInferenceV2APITest {
                         && methodInvocation.getParent().toString()
                         .equals("CollectSpliterators.indexed(size(),ImmutableSet.SPLITERATOR_CHARACTERISTICS,this::get)")) {
 
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.ImmutableAsList::public int size()").equals(methodInfo.toString());
                 }
@@ -568,7 +564,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(ClassInstanceCreation classInstanceCreation) {
                 if (classInstanceCreation.toString().equals("new AssertionError(\"should never be called\")")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
 
                     assert ("java.lang.AssertionError::public void AssertionError(java.lang.Object)").equals(methodInfo.toString());
                 }
@@ -587,7 +583,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(ClassInstanceCreation classInstanceCreation) {
                 if (classInstanceCreation.toString().startsWith("new AbstractMap.SimpleImmutableEntry<>(")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, classInstanceCreation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
 
                     assert ("java.util.AbstractMap.SimpleImmutableEntry" +
                             "::public void AbstractMap$SimpleImmutableEntry(K, V)").equals(methodInfo.toString());
@@ -607,7 +603,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("comparator.compare(e1.getKey()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("java.util.Comparator::public abstract int compare(K, K)")
                             .equals(methodInfo.toString());
@@ -627,7 +623,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().equals("delegate()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.util.concurrent.ForwardingListenableFuture" +
                             "::protected abstract com.google.common.util.concurrent.ListenableFuture delegate()")
@@ -648,7 +644,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("NaturalOrdering.INSTANCE.max(a,b,c,rest")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.Ordering::public E max(E, E, E, E[])").equals(methodInfo.toString());
                 }
@@ -667,7 +663,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("checkState(canRemove,\"no calls to next() since the last call to remove()\")")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.base.Preconditions" +
                             "::public static void checkState(boolean, java.lang.Object)").equals(methodInfo.toString());
@@ -687,7 +683,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("fromNullable(javaUtilOptional.orElse(null))")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.base.Optional" +
                             "::public static com.google.common.base.Optional fromNullable(T)").equals(methodInfo.toString());
@@ -707,7 +703,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("iterator.hasNext()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("java.util.Iterator::public abstract boolean hasNext()").equals(methodInfo.toString());
                 }
@@ -726,7 +722,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("listener.onRemoval(notification)")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.cache.RemovalListener" +
                             "::public abstract void onRemoval(com.google.common.cache.RemovalNotification)")
@@ -747,7 +743,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("inputs[i].iterator()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("java.lang.Iterable::public abstract java.util.Iterator iterator()")
                             .equals(methodInfo.toString());
@@ -766,7 +762,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("Maps.immutableEntry(service")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.Maps" +
                             "::public static java.util.Map.Entry immutableEntry(com.google.common.util.concurrent.Service, java.lang.Long)")
@@ -786,7 +782,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("TrustedListenableFutureTask.create(command,")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.util.concurrent.TrustedListenableFutureTask" +
                             "::static com.google.common.util.concurrent.TrustedListenableFutureTask create(java.lang.Runnable," +
@@ -806,7 +802,7 @@ public class GuavaV3011TypeInferenceV2APITest {
             @Override
             public boolean visit(MethodInvocation methodInvocation) {
                 if (methodInvocation.toString().startsWith("endOfData()")) {
-                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(jarInformationSet, javaVersion, methodInvocation);
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
                     assert ("com.google.common.collect.AbstractIterator::protected final java.util.List endOfData()").equals(methodInfo.toString());
                 }
@@ -823,11 +819,11 @@ public class GuavaV3011TypeInferenceV2APITest {
         defaultBranchName = GitUtil.checkoutToCommit(git, commitId);
     }
 
-    private static void loadExternalJars(String projectName, String projectUrl, String commitId) {
+    private static void loadJavaPackageAndExternalJars(String projectName, String projectUrl, String commitId) {
         Path pathToProject = Utility.getProjectPath(projectName);
         Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
 
-        jarInformationSet = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
+        dependencyTuple = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
     }
 
 }

@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author Diptopol
@@ -25,6 +27,15 @@ public class JarInfo {
     private final Artifact artifact;
 
     private final Map<String, PackageInfo> packageInfoMap;
+
+    public JarInfo(String groupId, String artifactId, String version, ZipFile jmodFile) {
+        logger.info("Processing JarInfo of {}:{}:{}", groupId, artifactId, version);
+
+        this.name = Utility.getJarName(jmodFile.getName());
+        this.artifact = new Artifact(groupId, artifactId, version);
+        this.packageInfoMap = getPackageInfoMap(jmodFile);
+
+    }
 
     public JarInfo(String groupId, String artifactId, String version, JarFile jarFile) {
         logger.info("Processing JarInfo of {}:{}:{}", groupId, artifactId, version);
@@ -46,6 +57,26 @@ public class JarInfo {
         return this.packageInfoMap.values();
     }
 
+    private Map<String, PackageInfo> getPackageInfoMap(ZipFile jmodFile) {
+        Map<String, PackageInfo> packageInfoMap = new HashMap<>();
+        Enumeration<? extends ZipEntry> entries = jmodFile.entries();
+
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            String entryName = entry.getName();
+
+            if (entryName.startsWith("classes/")
+                    && entryName.endsWith(".class") && !entryName.equals("classes/module-info.class")) {
+                ClassNode classNode = getClassNode(jmodFile, entry);
+                populateClassInfo(classNode, packageInfoMap);
+            }
+        }
+
+        populateSuperClassAndInterface(packageInfoMap);
+
+        return packageInfoMap;
+    }
+
     private Map<String, PackageInfo> getPackageInfoMap(JarFile jarFile) {
         Map<String, PackageInfo> packageInfoMap = new HashMap<>();
         Enumeration<JarEntry> entries = jarFile.entries();
@@ -57,31 +88,56 @@ public class JarInfo {
             //only fetching class file (except: module-info.class)
             if (entryName.endsWith(".class") && !entryName.equals("module-info.class")) {
                 ClassNode classNode = getClassNode(jarFile, entry);
-
-                if (Objects.nonNull(classNode)) {
-                    ClassInfo classInfo = new ClassInfo(classNode);
-
-                    int packageNameConcludingIndex = classInfo.isInnerClass()
-                            ? classInfo.getQualifiedName().substring(0, classInfo.getQualifiedName().lastIndexOf('.')).lastIndexOf(".")
-                            : classInfo.getQualifiedName().lastIndexOf('.');
-
-                    if (packageNameConcludingIndex >= 0) {
-                        String packageName = classInfo.getQualifiedName().substring(0, packageNameConcludingIndex);
-
-                        if (packageInfoMap.containsKey(packageName)) {
-                            PackageInfo packageInfo = packageInfoMap.get(packageName);
-                            packageInfo.addClass(classInfo);
-                        } else {
-                            PackageInfo packageInfo = new PackageInfo(packageName);
-                            packageInfo.addClass(classInfo);
-
-                            packageInfoMap.put(packageName, packageInfo);
-                        }
-                    }
-                }
+                populateClassInfo(classNode, packageInfoMap);
             }
         }
 
+        populateSuperClassAndInterface(packageInfoMap);
+
+        return packageInfoMap;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        JarInfo jarInfo = (JarInfo) o;
+
+        return name.equals(jarInfo.name) && artifact.equals(jarInfo.artifact);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, artifact);
+    }
+
+
+    private void populateClassInfo(ClassNode classNode, Map<String, PackageInfo> packageInfoMap) {
+        if (Objects.nonNull(classNode)) {
+            ClassInfo classInfo = new ClassInfo(classNode);
+
+            int packageNameConcludingIndex = classInfo.isInnerClass()
+                    ? classInfo.getQualifiedName().substring(0, classInfo.getQualifiedName().lastIndexOf('.')).lastIndexOf(".")
+                    : classInfo.getQualifiedName().lastIndexOf('.');
+
+            if (packageNameConcludingIndex >= 0) {
+                String packageName = classInfo.getQualifiedName().substring(0, packageNameConcludingIndex);
+
+                if (packageInfoMap.containsKey(packageName)) {
+                    PackageInfo packageInfo = packageInfoMap.get(packageName);
+                    packageInfo.addClass(classInfo);
+                } else {
+                    PackageInfo packageInfo = new PackageInfo(packageName);
+                    packageInfo.addClass(classInfo);
+
+                    packageInfoMap.put(packageName, packageInfo);
+                }
+            }
+        }
+    }
+
+
+    private void populateSuperClassAndInterface(Map<String, PackageInfo> packageInfoMap) {
         List<ClassInfo> classInfoList = getClassInfoList(packageInfoMap.values());
 
         for (ClassInfo classInfo : classInfoList) {
@@ -101,22 +157,21 @@ public class JarInfo {
                 }
             }
         }
-
-        return packageInfoMap;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        JarInfo jarInfo = (JarInfo) o;
+    private ClassNode getClassNode(ZipFile zipFile, ZipEntry zipEntry) {
+        try (InputStream classFileInputStream = zipFile.getInputStream(zipEntry)) {
+            ClassNode classNode = new ClassNode();
 
-        return name.equals(jarInfo.name) && artifact.equals(jarInfo.artifact);
-    }
+            ClassReader classReader = new ClassReader(classFileInputStream);
+            classReader.accept(classNode, 0);
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, artifact);
+            return classNode;
+        } catch (IOException e) {
+            logger.error("Error", e);
+        }
+
+        return null;
     }
 
     private ClassNode getClassNode(JarFile jarFile, JarEntry jarEntry) {

@@ -52,8 +52,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         jarAnalyzer = TinkerGraphStorageUtility.getJarAnalyzer();
     }
 
-    public Set<Artifact> loadExternalJars(String commitId, String projectName, Git git) {
-        return jarAnalyzer.loadExternalJars(commitId, projectName, git);
+    public Tuple2<String, Set<Artifact>> loadExternalJars(String commitId, String projectName, Git git) {
+        return jarAnalyzer.loadJavaAndExternalJars(commitId, projectName, git);
     }
 
     public static void resetCaching() {

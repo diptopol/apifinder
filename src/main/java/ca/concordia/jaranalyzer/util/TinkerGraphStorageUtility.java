@@ -31,11 +31,8 @@ public class TinkerGraphStorageUtility {
 
             jarAnalyzer = new JarAnalyzer(tinkerGraph, getJarStoragePath());
 
-            if (!Files.exists(jarAnalyzer.getStorageFilePath())) {
-                jarAnalyzer.createClassStructureGraphForJavaJars();
-                jarAnalyzer.storeClassStructureGraph();
-            } else {
-                jarAnalyzer.loadClassStructureGraph();
+            if (Files.exists(jarAnalyzer.getStorageFilePath())) {
+               jarAnalyzer.loadClassStructureGraph();
             }
         }
 
@@ -53,10 +50,7 @@ public class TinkerGraphStorageUtility {
 
             jarAnalyzer = new JarAnalyzer(tinkerGraph, getJarStoragePath(storageFileName));
 
-            if (!Files.exists(jarAnalyzer.getStorageFilePath())) {
-                jarAnalyzer.createClassStructureGraphForJavaJars();
-                jarAnalyzer.storeClassStructureGraph();
-            } else {
+            if (Files.exists(jarAnalyzer.getStorageFilePath())) {
                 jarAnalyzer.loadClassStructureGraph();
             }
         }

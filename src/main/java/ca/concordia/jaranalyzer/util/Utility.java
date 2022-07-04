@@ -95,6 +95,45 @@ public class Utility {
         }
     }
 
+    public static Integer getMajorJavaVersion(String javaVersion) {
+        if (Objects.isNull(javaVersion)) {
+            javaVersion = "8";
+        }
+
+        Integer majorJavaVersion = parseJavaVersion(javaVersion);
+
+        if (Objects.isNull(majorJavaVersion)) {
+            logger.error("Could not find Java Version, Version: {}", javaVersion);
+            majorJavaVersion = Utility.parseJavaVersion("8");
+        }
+
+        return majorJavaVersion;
+    }
+
+    public static String convertJavaVersion(String javaVersion) {
+        return Objects.nonNull(javaVersion) && javaVersion.startsWith("1.")
+                ? javaVersion.replace("1.", "")
+                : javaVersion;
+    }
+
+    private static Integer parseJavaVersion(String javaVersion) {
+        try {
+            javaVersion = convertJavaVersion(javaVersion);
+
+            double version = Double.parseDouble(javaVersion);
+
+            if (version >= 9) {
+                return (int) version;
+            } else {
+                return (int) version;
+            }
+        } catch (NumberFormatException e) {
+            logger.error("Error", e);
+        }
+
+        return null;
+    }
+
     private static Set<org.eclipse.aether.artifact.Artifact> filterOutDependencyArtifact(Set<org.eclipse.aether.artifact.Artifact> artifactSet,
                                                                                          Set<Artifact> artifactDtoSet) {
 
