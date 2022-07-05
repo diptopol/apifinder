@@ -113,7 +113,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         /*
           STEP 0
          */
-        if (Objects.nonNull(criteria.getInvokerTypeInfo())) {
+        if (Objects.nonNull(criteria.getInvokerTypeInfo()) && !criteria.getInvokerTypeInfo().isNullTypeInfo()) {
             Set<String> classQNameSet = new LinkedHashSet<>(Arrays.asList(criteria.getInvokerTypeInfo().getQualifiedClassName()));
 
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();

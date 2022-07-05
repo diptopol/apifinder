@@ -524,9 +524,9 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                     .map(ClassInfo::new)
                     .collect(Collectors.toSet());
 
-            assert classInfoSet.size() == 1;
-
-            f.setClassInfo(classInfoSet.iterator().next());
+            if (!classInfoSet.isEmpty()) {
+                f.setClassInfo(classInfoSet.iterator().next());
+            }
         });
 
         return qualifiedFieldInfoList;

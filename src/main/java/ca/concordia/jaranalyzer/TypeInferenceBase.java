@@ -442,9 +442,9 @@ public abstract class TypeInferenceBase {
                     .map(ClassInfo::new)
                     .collect(Collectors.toSet());
 
-            assert classInfoSet.size() == 1;
-
-            m.setClassInfo(classInfoSet.iterator().next());
+            if (!classInfoSet.isEmpty()) {
+                m.setClassInfo(classInfoSet.iterator().next());
+            }
         });
 
         return qualifiedMethodInfoList;

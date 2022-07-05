@@ -218,8 +218,12 @@ public class TypeInferenceV2API {
             if (superClassType == null) {
                 superClassName = "java.lang.Object";
             } else {
-                superClassName = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
-                        importStatementList, superClassType, owningClassInfo).getQualifiedClassName();
+                TypeInfo superClassTypeInfo = InferenceUtility.getTypeInfo(dependentArtifactSet, javaVersion,
+                        importStatementList, superClassType, owningClassInfo);
+
+                superClassName = Objects.nonNull(superClassTypeInfo)
+                        ? superClassTypeInfo.getQualifiedClassName()
+                        : null;
             }
 
             List<Expression> argumentList = superConstructorInvocation.arguments();

@@ -586,6 +586,10 @@ public class InferenceUtility {
             TypeInfo argumentTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                     argumentType, owningClassInfo);
 
+            if (Objects.isNull(argumentTypeInfo)) {
+                argumentTypeInfo = new QualifiedTypeInfo("java.lang.Object");
+            }
+
             ParameterizedTypeInfo parameterizedClassTypeInfo = new ParameterizedTypeInfo("java.lang.Class");
             parameterizedClassTypeInfo.setParameterized(true);
             parameterizedClassTypeInfo.setTypeArgumentList(Collections.singletonList(
@@ -623,7 +627,9 @@ public class InferenceUtility {
             TypeInfo fieldTypeInfo = getTypeInfoFromFieldName(dependentArtifactSet, javaVersion,
                     importStatementList, name, owningClassInfo);
 
-            assert Objects.nonNull(fieldTypeInfo);
+            if (Objects.isNull(fieldTypeInfo)) {
+                return new NullTypeInfo();
+            }
 
             return fieldTypeInfo;
         } else if (expression instanceof SuperFieldAccess) {
@@ -634,7 +640,9 @@ public class InferenceUtility {
             TypeInfo fieldTypeInfo = getTypeInfoFromFieldName(dependentArtifactSet, javaVersion,
                     importStatementList, name, owningClassInfo);
 
-            assert Objects.nonNull(fieldTypeInfo);
+            if (Objects.isNull(fieldTypeInfo)) {
+                return new NullTypeInfo();
+            }
 
             return fieldTypeInfo;
         } else if (expression instanceof BooleanLiteral) {
@@ -661,7 +669,13 @@ public class InferenceUtility {
         } else if (expression instanceof CastExpression) {
             Type castedType = ((CastExpression) expression).getType();
 
-            return getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, castedType, owningClassInfo);
+            TypeInfo castedTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, castedType, owningClassInfo);
+
+            if (Objects.isNull(castedTypeInfo)) {
+                return new NullTypeInfo();
+            }
+
+            return castedTypeInfo;
 
         } else if (expression instanceof NumberLiteral) {
             return new PrimitiveTypeInfo(getPrimitiveType((NumberLiteral) expression));
@@ -669,9 +683,17 @@ public class InferenceUtility {
         } else if (expression instanceof ArrayCreation) {
             ArrayCreation arrayCreation = (ArrayCreation) expression;
 
+            int dimension = arrayCreation.dimensions().size();
             ArrayType arrayType = arrayCreation.getType();
 
-            return getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, arrayType, owningClassInfo);
+            TypeInfo arrayTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, arrayType, owningClassInfo);
+
+            if (Objects.isNull(arrayTypeInfo)) {
+                return new NullTypeInfo();
+            }
+
+            return new ArrayTypeInfo(arrayTypeInfo, dimension);
+
         } else if (expression instanceof ArrayAccess) {
             /*
              * In array access, we are trying to determine the type of the variable. There can be two scenarios.
@@ -827,7 +849,11 @@ public class InferenceUtility {
                 TypeInfo classTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
                         importStatementList, className, owningClassInfo);
 
-                if (Objects.nonNull(classTypeInfo) && classTypeInfo.isParameterizedTypeInfo()) {
+                if (Objects.isNull(classTypeInfo)) {
+                    return new NullTypeInfo();
+                }
+
+                if (classTypeInfo.isParameterizedTypeInfo()) {
                     ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
 
                     if (!typeArgumentList.isEmpty()) {
@@ -856,7 +882,11 @@ public class InferenceUtility {
                     TypeInfo returnClassTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
                             importStatementList, returnTypeInfo.getQualifiedClassName(), owningClassInfo);
 
-                    if (Objects.nonNull(returnClassTypeInfo) && returnClassTypeInfo.isParameterizedTypeInfo()) {
+                    if (Objects.isNull(returnClassTypeInfo)) {
+                        return new NullTypeInfo();
+                    }
+
+                    if (returnClassTypeInfo.isParameterizedTypeInfo()) {
                         ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) returnClassTypeInfo;
 
                         if (!typeArgumentList.isEmpty()) {
@@ -894,6 +924,10 @@ public class InferenceUtility {
 
                     TypeInfo parameterTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                             singleVariableDeclaration.getType(), owningClassInfo);
+
+                    if (Objects.isNull(parameterTypeInfo)) {
+                        parameterTypeInfo = new NullTypeInfo();
+                    }
 
                     argumentTypeInfoList.add(parameterTypeInfo);
                 } else if (parameter instanceof VariableDeclarationFragment) {
@@ -977,7 +1011,7 @@ public class InferenceUtility {
                     variableNameMap, assignment.getLeftHandSide(), owningClassInfo);
 
         } else {
-            return null;
+            return new NullTypeInfo();
         }
     }
 
@@ -1002,11 +1036,19 @@ public class InferenceUtility {
                     TypeInfo typeInfo = getTypeInfoFromSimpleType(dependentArtifactSet, javaVersion,
                             importStatementList, ((SimpleType) elementType), owningClassInfo);
 
+                    if (Objects.isNull(typeInfo)) {
+                        return null;
+                    }
+
                     return new ArrayTypeInfo(typeInfo, arrayType.getDimensions());
 
                 } else if (elementType instanceof QualifiedType) {
                     TypeInfo typeInfo = getTypeInfoFromQualifiedType(dependentArtifactSet, javaVersion,
                             importStatementList, (QualifiedType) elementType, owningClassInfo);
+
+                    if (Objects.isNull(typeInfo)) {
+                        return null;
+                    }
 
                     return new ArrayTypeInfo(typeInfo, arrayType.getDimensions());
 
@@ -1019,16 +1061,20 @@ public class InferenceUtility {
                     TypeInfo typeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                             parameterizedType.getType(), owningClassInfo);
 
-                    assert typeInfo.isParameterizedTypeInfo();
-
-                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
-
-                    if (!typeArgumentList.isEmpty()) {
-                        parameterizedTypeInfo.setParameterized(true);
-                        parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                    if (Objects.isNull(typeInfo)) {
+                        return null;
                     }
 
-                    return new ArrayTypeInfo(parameterizedTypeInfo, arrayType.getDimensions());
+                    if (typeInfo.isParameterizedTypeInfo()) {
+                        ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
+
+                        if (!typeArgumentList.isEmpty()) {
+                            parameterizedTypeInfo.setParameterized(true);
+                            parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                        }
+                    }
+
+                    return new ArrayTypeInfo(typeInfo, arrayType.getDimensions());
                 } else {
                     throw new IllegalStateException();
                 }
@@ -1041,12 +1087,24 @@ public class InferenceUtility {
                     (SimpleType) type, owningClassInfo);
 
         } else if (type instanceof QualifiedType) {
-            return getTypeInfoFromQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
+            TypeInfo typeInfo = getTypeInfoFromQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
                     (QualifiedType) type, owningClassInfo);
 
+            if (Objects.isNull(typeInfo)) {
+                return new NullTypeInfo();
+            }
+
+            return typeInfo;
+
         } else if (type instanceof NameQualifiedType) {
-            return getTypeInfoFromNameQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
+            TypeInfo typeInfo = getTypeInfoFromNameQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
                     (NameQualifiedType) type, owningClassInfo);
+
+            if (Objects.isNull(typeInfo)) {
+                return new NullTypeInfo();
+            }
+
+            return typeInfo;
 
         } else if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
@@ -1059,46 +1117,46 @@ public class InferenceUtility {
                 TypeInfo typeInfo = getTypeInfoFromSimpleType(dependentArtifactSet, javaVersion, importStatementList,
                         (SimpleType) internalType, owningClassInfo);
 
-                assert typeInfo.isParameterizedTypeInfo();
+                if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
+                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
 
-                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
-
-                if (!typeArgumentList.isEmpty()) {
-                    parameterizedTypeInfo.setParameterized(true);
-                    parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                    if (!typeArgumentList.isEmpty()) {
+                        parameterizedTypeInfo.setParameterized(true);
+                        parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                    }
                 }
 
-                return parameterizedTypeInfo;
+                return typeInfo;
 
             } else if (internalType instanceof QualifiedType) {
                 TypeInfo typeInfo = getTypeInfoFromQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
                         (QualifiedType) internalType, owningClassInfo);
 
-                assert typeInfo.isParameterizedTypeInfo();
+                if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
+                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
 
-                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
-
-                if (!typeArgumentList.isEmpty()) {
-                    parameterizedTypeInfo.setParameterized(true);
-                    parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                    if (!typeArgumentList.isEmpty()) {
+                        parameterizedTypeInfo.setParameterized(true);
+                        parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                    }
                 }
 
-                return parameterizedTypeInfo;
+                return typeInfo;
 
             } else if (internalType instanceof NameQualifiedType) {
                 TypeInfo typeInfo = getTypeInfoFromNameQualifiedType(dependentArtifactSet, javaVersion,
                         importStatementList, (NameQualifiedType) internalType, owningClassInfo);
 
-                assert typeInfo.isParameterizedTypeInfo();
+                if (Objects.nonNull(typeInfo) && typeInfo.isParameterizedTypeInfo()) {
+                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
 
-                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
-
-                if (!typeArgumentList.isEmpty()) {
-                    parameterizedTypeInfo.setParameterized(true);
-                    parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                    if (!typeArgumentList.isEmpty()) {
+                        parameterizedTypeInfo.setParameterized(true);
+                        parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
+                    }
                 }
 
-                return parameterizedTypeInfo;
+                return typeInfo;
 
             } else {
                 throw new IllegalStateException();
@@ -1295,7 +1353,8 @@ public class InferenceUtility {
                             TypeInfo boundTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                                     boundType, owningClassInfo);
 
-                            if (!boundTypeInfo.getQualifiedClassName().equals(baseFormalTypeParameterInfo.getBaseTypeInfo().getQualifiedClassName())) {
+                            if (Objects.nonNull(boundTypeInfo)
+                                    && !boundTypeInfo.getQualifiedClassName().equals(baseFormalTypeParameterInfo.getBaseTypeInfo().getQualifiedClassName())) {
                                 baseFormalTypeParameterInfo.setBaseTypeInfo(boundTypeInfo);
                             }
                         }
@@ -1355,7 +1414,7 @@ public class InferenceUtility {
         if (typeInfo.isQualifiedTypeInfo()) {
             QualifiedTypeInfo qualifiedTypeInfo = (QualifiedTypeInfo) typeInfo;
 
-            TypeInfo fetchedTypeInfo = InferenceUtility.getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
+            TypeInfo fetchedTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
                     importStatementList, qualifiedTypeInfo.getQualifiedClassName(), owningClassInfo);
 
             if (Objects.nonNull(fetchedTypeInfo) && fetchedTypeInfo.isParameterizedTypeInfo()) {
@@ -1473,8 +1532,6 @@ public class InferenceUtility {
 
         if (!typeArgumentTypeInfoList.isEmpty()) {
             List<TypeInfo> formalTypeParameterList = methodInfo.getFormalTypeParameterList();
-
-            assert formalTypeParameterList.size() == typeArgumentTypeInfoList.size();
 
             for (int i = 0; i < typeArgumentTypeInfoList.size(); i++) {
                 TypeInfo typeArgumentInfo = typeArgumentTypeInfoList.get(i);
@@ -1849,7 +1906,7 @@ public class InferenceUtility {
 
     private static TypeInfo convertVarargsIfRequired(SingleVariableDeclaration singleVariableDeclaration,
                                                      TypeInfo typeInfo) {
-        if (singleVariableDeclaration.isVarargs()) {
+        if (Objects.nonNull(typeInfo) && singleVariableDeclaration.isVarargs()) {
             return new VarargTypeInfo(typeInfo);
         } else {
             return typeInfo;
@@ -1865,6 +1922,10 @@ public class InferenceUtility {
         Type declarationType = declaration.getType();
         TypeInfo declarationTypeInfo = convertVarargsIfRequired(declaration,
                 getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, declarationType, owningClassInfo));
+
+        if (Objects.isNull(declarationTypeInfo)) {
+            declarationTypeInfo = new NullTypeInfo();
+        }
 
         ASTNode scopedNode = getVariableDeclarationScopedNode(declaration);
 
@@ -1898,6 +1959,10 @@ public class InferenceUtility {
                 if (vs.getStartOffset() <= position && position <= vs.getEndOffset()) {
                     selectedVariableDeclarationDto.add(vd);
                 }
+            }
+
+            if (selectedVariableDeclarationDto.isEmpty()) {
+                return null;
             }
 
             selectedVariableDeclarationDto.sort(Comparator.comparingInt(o -> (position - o.getScope().getStartOffset())));
@@ -1974,7 +2039,9 @@ public class InferenceUtility {
 
             int endOffSet = startOffset + (scopedNode != null ? scopedNode.getLength() : 0);
 
-            return new VariableDeclarationDto(name, declarationTypeInfo, new VariableScope(startOffset, endOffSet), declarationType);
+            return new VariableDeclarationDto(name,
+                    Objects.nonNull(declarationTypeInfo) ? declarationTypeInfo : new NullTypeInfo(),
+                    new VariableScope(startOffset, endOffSet), declarationType);
 
         }).collect(Collectors.toList());
     }
@@ -2017,6 +2084,10 @@ public class InferenceUtility {
 
                         TypeInfo boundTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                                 boundType, owningClassInfo);
+
+                        if (Objects.isNull(boundTypeInfo)) {
+                            boundTypeInfo = new QualifiedTypeInfo("java.lang.Object");
+                        }
 
                         return new FormalTypeParameterInfo(name, new QualifiedTypeInfo(boundTypeInfo.getQualifiedClassName()));
                     } else {
@@ -2095,16 +2166,19 @@ public class InferenceUtility {
                 String typeParameter = ((FormalTypeParameterInfo) typeInfoExtractedFromFieldSignature).getTypeParameter();
 
                 TypeInfo fieldClassTypeInfo = fieldInfo.getClassInfo().getTypeInfo();
-                assert Objects.nonNull(fieldClassTypeInfo) && fieldClassTypeInfo.isParameterizedTypeInfo();
 
-                ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) fieldClassTypeInfo;
+                if (fieldClassTypeInfo.isParameterizedTypeInfo()) {
+                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) fieldClassTypeInfo;
 
-                return parameterizedTypeInfo.getTypeArgumentList().stream()
-                        .filter(TypeInfo::isFormalTypeParameterInfo)
-                        .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
-                        .filter(formalTypeParameterInfo -> formalTypeParameterInfo.getTypeParameter().equals(typeParameter))
-                        .collect(Collectors.toList())
-                        .get(0);
+                    return parameterizedTypeInfo.getTypeArgumentList().stream()
+                            .filter(TypeInfo::isFormalTypeParameterInfo)
+                            .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
+                            .filter(formalTypeParameterInfo -> formalTypeParameterInfo.getTypeParameter().equals(typeParameter))
+                            .collect(Collectors.toList())
+                            .get(0);
+                } else {
+                    return null;
+                }
 
             } else {
                 String fieldTypeClassName = typeInfoExtractedFromFieldSignature.getQualifiedClassName();
@@ -2271,16 +2345,16 @@ public class InferenceUtility {
                                         new QualifiedTypeInfo("java.lang.Object")));
 
                     } else {
-                        TypeInfo baseType = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
+                        TypeInfo baseTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                                 typeList.get(0), owningClassInfo);
 
-                        if (Objects.isNull(baseType) && typeList.get(0).isSimpleType()) {
+                        if (Objects.isNull(baseTypeInfo) && typeList.get(0).isSimpleType()) {
                             String typeName = ((SimpleType) typeList.get(0)).getName().getFullyQualifiedName();
-                            baseType = new FormalTypeParameterInfo(typeName, new QualifiedTypeInfo("java.lang.Object"));
+                            baseTypeInfo = new FormalTypeParameterInfo(typeName, new QualifiedTypeInfo("java.lang.Object"));
                         }
 
                         accessibleFormalTypeParameterList.add(
-                                new FormalTypeParameterInfo(typeParameter.getName().getFullyQualifiedName(), baseType));
+                                new FormalTypeParameterInfo(typeParameter.getName().getFullyQualifiedName(), baseTypeInfo));
                     }
                 }
             }
@@ -2363,9 +2437,7 @@ public class InferenceUtility {
         TypeInfo classTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion,
                 importStatementList, type, owningClassInfo);
 
-        assert Objects.nonNull(classTypeInfo);
-
-        return classTypeInfo.getQualifiedClassName();
+        return Objects.nonNull(classTypeInfo) ? classTypeInfo.getQualifiedClassName() : null;
     }
 
 }
