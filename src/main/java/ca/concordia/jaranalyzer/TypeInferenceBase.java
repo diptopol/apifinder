@@ -577,7 +577,7 @@ public abstract class TypeInferenceBase {
                 if (qualifiedClassInfoList.stream().anyMatch(c -> qClassNameSet.contains(c.getQualifiedName()))) {
 
                     Map<String, ClassInfo> qualifiedClassInfoMap = qualifiedClassInfoList.stream()
-                            .collect(Collectors.toMap(ClassInfo::getQualifiedName, c -> c));
+                            .collect(Collectors.toMap(ClassInfo::getQualifiedName, c -> c, (p, q) -> p));
 
                     List<ClassInfo> orderedQualifiedClassInfoList = new ArrayList<>();
                     for (String qClassName: qClassNameSet) {
@@ -1305,7 +1305,7 @@ public abstract class TypeInferenceBase {
                 .toStream()
                 .map(m -> new ArrayList(m.values()))
                 .map(a -> new Tuple2<>((Long) a.get(0), (String) ((ArrayList) a.get(2)).get(0)))
-                .collect(Collectors.toMap(Tuple2::_2, Tuple2::_1));
+                .collect(Collectors.toMap(Tuple2::_2, Tuple2::_1, (p, q) -> p));
     }
 
     private static boolean filtrationBasedOnCriteria(Integer numberOfParameters,
