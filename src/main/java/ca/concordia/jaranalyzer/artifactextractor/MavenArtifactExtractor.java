@@ -194,7 +194,7 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
                     projectVersion = propertyMap.get(projectVersion);
                 }
 
-                String projectType = getElementValue(getChildElement(project, "type"));
+                String projectType = getElementValue(getChildElement(project, "packaging"));
 
                 if (Objects.isNull(projectType)) {
                     projectType = "jar";
