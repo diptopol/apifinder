@@ -335,12 +335,15 @@ public class JarAnalyzer {
                 .collect(Collectors.toSet());
 
         Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifactSet);
-        jarInfoSet = jarInfoSet.stream()
-                .filter(jarInfo -> !isJarExists(jarInfo.getArtifact()))
-                .collect(Collectors.toSet());
+        boolean saveGraph = false;
+        for (JarInfo jarInfo: jarInfoSet) {
+            if (!isJarExists(jarInfo.getArtifact())) {
+                saveGraph = true;
+                toGraph(jarInfoSet);
+            }
+        }
 
-        if (!jarInfoSet.isEmpty()) {
-            toGraph(jarInfoSet);
+        if (saveGraph) {
             storeClassStructureGraph();
         }
     }
