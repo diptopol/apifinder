@@ -104,7 +104,7 @@ public class InMemoryDatabaseTest {
 
         //TypeInferenceFluentAPI.resetCaching();
 
-        return TypeInferenceFluentAPI.getInstance("JavaJars-kubernetes").loadExternalJars(commitId, projectName, git);
+        return TypeInferenceFluentAPI.getInstance("JavaJars-".concat(projectName).concat(commitId)).loadExternalJars(commitId, projectName, git);
     }
 
     @Test

@@ -24,7 +24,7 @@ public class TypeInferenceAPITest {
     public void testGetQualifiedClassName() {
         List<String> qualifiedNameList = TypeInferenceAPI.getQualifiedClassName("AtomicLong");
 
-        assert qualifiedNameList.size() == 1;
+        assert qualifiedNameList.stream().distinct().count() == 1;
         assert "java.util.concurrent.atomic.AtomicLong".equals(qualifiedNameList.get(0));
     }
 

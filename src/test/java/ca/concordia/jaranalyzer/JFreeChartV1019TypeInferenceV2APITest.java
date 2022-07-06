@@ -243,7 +243,7 @@ public class JFreeChartV1019TypeInferenceV2APITest {
         Path pathToProject = Utility.getProjectPath(projectName);
         Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
 
-        dependencyTuple = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
+        dependencyTuple = TypeInferenceFluentAPI.getInstance("JavaJars-JFv1019").loadExternalJars(commitId, projectName, git);
     }
 
 }
