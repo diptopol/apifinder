@@ -107,4 +107,18 @@ public class InMemoryDatabaseTest {
         return TypeInferenceFluentAPI.getInstance("JavaJars-kubernetes").loadExternalJars(commitId, projectName, git);
     }
 
+    @Test
+    public void testNearestTag() {
+        String projectName = "kubernetes-client";
+        String projectUrl = "https://github.com/fabric8io/kubernetes-client.git";
+        String commitId = "1ce8e203a1785b5abbaf20738a37d5129962d9f6";
+
+        Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
+        Git git = GitUtil.openRepository(projectName, projectUrl, projectDirectory);
+
+        String nearestTagCommit = GitUtil.getNearestTagCommit(commitId, git);
+
+        assert "54a0dcd9fa0303a10c7a2a595e7c26526d7006a0".equals(nearestTagCommit);
+    }
+
 }

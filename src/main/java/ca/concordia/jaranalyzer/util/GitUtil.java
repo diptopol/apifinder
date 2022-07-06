@@ -2,11 +2,12 @@ package ca.concordia.jaranalyzer.util;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
@@ -24,22 +25,48 @@ import static ca.concordia.jaranalyzer.util.FileUtils.createFolderIfAbsent;
 
 public class GitUtil {
 
-    public static Optional<RevCommit> findCommit(String SHAId, Repository repo) {
-        List<RevCommit> mergeCommits = io.vavr.control.Try.of(() -> {
-            RevWalk walk = new RevWalk(repo);
-            walk.markStart(walk.parseCommit(repo.resolve("HEAD")));
-            walk.setRevFilter(RevFilter.ONLY_MERGES);
-            return walk;
-        }).map(walk -> {
-            Iterator<RevCommit> iter = walk.iterator();
-            List<RevCommit> l = new ArrayList<>();
-            while (iter.hasNext()) {
-                l.add(iter.next());
+    public static String getNearestTagCommit(String SHAId, Git git) {
+        Repository repository = git.getRepository();
+
+        String tagName = null;
+
+        try (RevWalk walk = new RevWalk(repository)) {
+            walk.sort(RevSort.COMMIT_TIME_DESC, true);
+            walk.markStart(walk.parseCommit(ObjectId.fromString(SHAId)));
+
+            for (RevCommit revCommit : walk) {
+                Map<ObjectId, String> namedCommits = git.nameRev().addPrefix("refs/tags/").add(revCommit.getId()).call();
+
+                if (namedCommits.containsKey(revCommit.getId())) {
+                    tagName = namedCommits.get(revCommit.getId());
+
+                    if (tagName.contains("~")) {
+                        tagName = tagName.substring(0, tagName.indexOf("~"));
+                    }
+
+                    break;
+                }
             }
-            walk.dispose();
-            walk.close();
-            return l;
-        }).getOrElse(new ArrayList<>());
+
+        } catch (IOException | GitAPIException e) {
+            e.printStackTrace();
+        }
+
+
+        String nearestTagCommitId = null;
+        if (Objects.nonNull(tagName)) {
+            try (RevWalk walk = new RevWalk(repository)) {
+                nearestTagCommitId = walk.parseCommit(repository.resolve("refs/tags/".concat(tagName))).getName();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return Objects.nonNull(nearestTagCommitId) ? nearestTagCommitId : SHAId;
+    }
+
+    public static Optional<RevCommit> findCommit(String SHAId, Repository repo) {
+        List<RevCommit> mergeCommits = getMergedCommitList(repo);
 
         if (mergeCommits.stream().anyMatch(x -> x.getId().getName().equals(SHAId)))
             return Optional.empty();
@@ -124,6 +151,24 @@ public class GitUtil {
         } catch (GitAPIException e) {
             throw new RuntimeException("Could not checkout to : " + commitIdOrBranchName, e);
         }
+    }
+
+    private static List<RevCommit> getMergedCommitList(Repository repo) {
+        return io.vavr.control.Try.of(() -> {
+            RevWalk walk = new RevWalk(repo);
+            walk.markStart(walk.parseCommit(repo.resolve("HEAD")));
+            walk.setRevFilter(RevFilter.ONLY_MERGES);
+            return walk;
+        }).map(walk -> {
+            Iterator<RevCommit> iter = walk.iterator();
+            List<RevCommit> l = new ArrayList<>();
+            while (iter.hasNext()) {
+                l.add(iter.next());
+            }
+            walk.dispose();
+            walk.close();
+            return l;
+        }).getOrElse(new ArrayList<>());
     }
 
 }

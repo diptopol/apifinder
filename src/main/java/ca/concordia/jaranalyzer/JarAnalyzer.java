@@ -6,6 +6,7 @@ import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.ClassInfo;
 import ca.concordia.jaranalyzer.models.JarInfo;
 import ca.concordia.jaranalyzer.models.PackageInfo;
+import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple2;
 import org.apache.tinkerpop.gremlin.process.traversal.IO;
@@ -222,7 +223,8 @@ public class JarAnalyzer {
     }
 
     public Tuple2<String, Set<Artifact>> loadJavaAndExternalJars(String commitId, String projectName, Git git) {
-        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver(commitId, projectName, git);
+        String nearestTagCommit = GitUtil.getNearestTagCommit(commitId, git);
+        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver(nearestTagCommit, projectName, git);
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         String javaVersion = extractor.getJavaVersion();
         Integer majorJavaVersion = Utility.getMajorJavaVersion(javaVersion);
