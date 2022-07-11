@@ -264,31 +264,6 @@ public class JarAnalyzer {
                 .read().iterate();
     }
 
-    public void createClassStructureGraphForJavaJars() {
-        String javaJarDirectory = getProperty("java.jar.directory");
-        String javaVersion = getProperty("java.version");
-
-        logger.info("Java Jar Directory: {}", javaJarDirectory);
-        logger.info("Java Version: {}", javaVersion);
-
-        if (javaJarDirectory != null) {
-            List<String> jarFiles = Utility.getFiles(javaJarDirectory, "jar");
-            for (String jarLocation : jarFiles) {
-                try {
-                    Path path = Paths.get(jarLocation);
-                    if (Files.exists(path)) {
-                        JarFile jarFile = new JarFile(new File(jarLocation));
-                        JarInfo jarInfo = new JarInfo(path.getFileName().toString(), "Java", javaVersion, jarFile);
-
-                        toGraph(jarInfo);
-                    }
-                } catch (Exception e) {
-                    logger.error("Could not open the JAR", e);
-                }
-            }
-        }
-    }
-
     public void createClassStructureGraphForJavaJars(Integer majorJavaVersion) {
         String javaJarDirectory = JAVA_STORAGE_PATH.get(majorJavaVersion);
 
