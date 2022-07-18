@@ -3,8 +3,13 @@ package ca.concordia.jaranalyzer.util;
 import ca.concordia.jaranalyzer.TypeInferenceAPI;
 import ca.concordia.jaranalyzer.TypeInferenceBase;
 import ca.concordia.jaranalyzer.TypeInferenceFluentAPI;
+import ca.concordia.jaranalyzer.entity.ClassInfo;
+import ca.concordia.jaranalyzer.entity.FieldInfo;
+import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.models.*;
 import ca.concordia.jaranalyzer.models.typeInfo.*;
+import ca.concordia.jaranalyzer.service.ClassInfoService;
+import ca.concordia.jaranalyzer.service.JarInfoService;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.FieldSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.GenericTypeResolutionAdapter;
@@ -375,7 +380,8 @@ public class InferenceUtility {
                                                                               String javaVersion,
                                                                               List<String> importStatementList,
                                                                               ASTNode methodExpression,
-                                                                              OwningClassInfo owningClassInfo) {
+                                                                              JarInfoService jarInfoService,
+                                                                              ClassInfoService classInfoService) {
 
         assert methodExpression instanceof MethodInvocation
                 || methodExpression instanceof SuperMethodInvocation
@@ -388,15 +394,15 @@ public class InferenceUtility {
 
         Set<VariableDeclarationDto> fieldVariableDeclarationSet =
                 getFieldVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                        methodExpression, owningClassInfoMap);
+                        methodExpression, owningClassInfoMap, jarInfoService, classInfoService);
 
         populateVariableNameMap(variableNameMap, fieldVariableDeclarationSet);
 
         populateVariableNameMapForMethod(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfoMap, methodExpression, variableNameMap);
+                owningClassInfoMap, methodExpression, variableNameMap, jarInfoService, classInfoService);
 
         populateVariableNameMapForStaticBlock(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfoMap, methodExpression, variableNameMap);
+                owningClassInfoMap, methodExpression, variableNameMap, jarInfoService, classInfoService);
 
         return variableNameMap;
     }
@@ -425,7 +431,9 @@ public class InferenceUtility {
                                                                                  String javaVersion,
                                                                                  List<String> importStatementList,
                                                                                  ASTNode node,
-                                                                                 Map<String, OwningClassInfo> owningClassInfoMap) {
+                                                                                 Map<String, OwningClassInfo> owningClassInfoMap,
+                                                                                 JarInfoService jarInfoService,
+                                                                                 ClassInfoService classInfoService) {
 
         AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(node);
         List<FieldDeclaration> fieldDeclarationList = new ArrayList<>();
@@ -433,11 +441,12 @@ public class InferenceUtility {
         abstractTypeDeclaration.accept(new ASTVisitor() {
             @Override
             public boolean visit(FieldDeclaration fieldDeclaration) {
-                String firstEnclosingClassName = getFirstEnclosingClassQName(fieldDeclaration, dependentArtifactSet, javaVersion, importStatementList);
+                String firstEnclosingClassName = getFirstEnclosingClassQName(fieldDeclaration, dependentArtifactSet,
+                        javaVersion, importStatementList, jarInfoService, classInfoService);
 
                 if (!owningClassInfoMap.containsKey(firstEnclosingClassName)) {
                     OwningClassInfo owningClassInfo = getOwningClassInfo(fieldDeclaration, dependentArtifactSet,
-                            javaVersion, importStatementList);
+                            javaVersion, importStatementList, jarInfoService, classInfoService);
 
                     owningClassInfoMap.put(firstEnclosingClassName, owningClassInfo);
                 }
@@ -452,7 +461,7 @@ public class InferenceUtility {
                     List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
 
                     String firstEnclosingClassName = getFirstEnclosingClassQName(fieldDeclaration, dependentArtifactSet,
-                            javaVersion, importStatementList);
+                            javaVersion, importStatementList, jarInfoService, classInfoService);
 
                     return getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
                             fieldDeclaration.getType(), fieldDeclaration.getParent().getStartPosition(), fragmentList,
@@ -464,13 +473,16 @@ public class InferenceUtility {
     public static OwningClassInfo getOwningClassInfo(ASTNode astNode,
                                                      Set<Artifact> dependentArtifactSet,
                                                      String javaVersion,
-                                                     List<String> importStatementList) {
+                                                     List<String> importStatementList,
+                                                     JarInfoService jarInfoService,
+                                                     ClassInfoService classInfoService) {
 
-        List<String> enclosingClassQNameList = getAllEnclosingClassList(astNode, dependentArtifactSet, javaVersion, importStatementList);
+        List<String> enclosingClassQNameList = getAllEnclosingClassList(astNode, dependentArtifactSet, javaVersion,
+                importStatementList, jarInfoService, classInfoService);
         List<String> nonEnclosingClassQNameList = getNonEnclosingAccessibleClassListForInstantiation(astNode, enclosingClassQNameList);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                enclosingClassQNameList, nonEnclosingClassQNameList);
+                enclosingClassQNameList, nonEnclosingClassQNameList, jarInfoService, classInfoService);
 
         owningClassInfo.setAccessibleFormalTypeParameterList(
                 getAccessibleFormalTypeParameterList(dependentArtifactSet, javaVersion, importStatementList,
@@ -1722,20 +1734,22 @@ public class InferenceUtility {
                                                          List<String> importStatementList,
                                                          Map<String, OwningClassInfo> owningClassInfoMap,
                                                          ASTNode node,
-                                                         Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+                                                         Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                         JarInfoService jarInfoService,
+                                                         ClassInfoService classInfoService) {
 
         MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(node, MethodDeclaration.class);
 
         if (methodDeclaration != null) {
             Set<VariableDeclarationDto> methodParameterVariableDeclarationSet =
                     getMethodParameterVariableDeclarationDtoList(dependentArtifactSet, javaVersion,
-                            importStatementList, methodDeclaration, owningClassInfoMap);
+                            importStatementList, methodDeclaration, owningClassInfoMap, jarInfoService, classInfoService);
 
             populateVariableNameMap(variableNameMap, methodParameterVariableDeclarationSet);
 
             Set<VariableDeclarationDto> localVariableDeclarationList =
                     getLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                            methodDeclaration.getBody(), owningClassInfoMap);
+                            methodDeclaration.getBody(), owningClassInfoMap, jarInfoService, classInfoService);
 
             populateVariableNameMap(variableNameMap, localVariableDeclarationList);
 
@@ -1744,7 +1758,7 @@ public class InferenceUtility {
 
             if (Objects.nonNull(anonymousClassDeclaration)) {
                 populateVariableNameMapForMethod(dependentArtifactSet, javaVersion, importStatementList,
-                        owningClassInfoMap, anonymousClassDeclaration, variableNameMap);
+                        owningClassInfoMap, anonymousClassDeclaration, variableNameMap, jarInfoService, classInfoService);
             }
         }
     }
@@ -1754,14 +1768,16 @@ public class InferenceUtility {
                                                               List<String> importStatementList,
                                                               Map<String, OwningClassInfo> owningClassInfoMap,
                                                               ASTNode node,
-                                                              Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+                                                              Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                              JarInfoService jarInfoService,
+                                                              ClassInfoService classInfoService) {
 
         Initializer initializer = (Initializer) getClosestASTNode(node, Initializer.class);
 
         if (Objects.nonNull(initializer)) {
             Set<VariableDeclarationDto> localVariableDeclarationList =
                     getLocalVariableDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                            initializer.getBody(), owningClassInfoMap);
+                            initializer.getBody(), owningClassInfoMap, jarInfoService, classInfoService);
 
             populateVariableNameMap(variableNameMap, localVariableDeclarationList);
         }
@@ -1789,17 +1805,21 @@ public class InferenceUtility {
                                                                                             String javaVersion,
                                                                                             List<String> importStatementList,
                                                                                             MethodDeclaration methodDeclaration,
-                                                                                            Map<String, OwningClassInfo> owningClassInfoMap) {
+                                                                                            Map<String, OwningClassInfo> owningClassInfoMap,
+                                                                                            JarInfoService jarInfoService,
+                                                                                            ClassInfoService classInfoService) {
         if (methodDeclaration != null) {
             List<SingleVariableDeclaration> declarationList = methodDeclaration.parameters();
 
-            String firstEnclosingQName = getFirstEnclosingClassQName(methodDeclaration, dependentArtifactSet, javaVersion, importStatementList);
+            String firstEnclosingQName = getFirstEnclosingClassQName(methodDeclaration, dependentArtifactSet,
+                    javaVersion, importStatementList, jarInfoService, classInfoService);
             OwningClassInfo owningClassInfo;
 
             if (owningClassInfoMap.containsKey(firstEnclosingQName)) {
                 owningClassInfo = owningClassInfoMap.get(firstEnclosingQName);
             } else {
-                owningClassInfo = getOwningClassInfo(methodDeclaration, dependentArtifactSet, javaVersion, importStatementList);
+                owningClassInfo = getOwningClassInfo(methodDeclaration, dependentArtifactSet, javaVersion,
+                        importStatementList, jarInfoService, classInfoService);
                 owningClassInfoMap.put(firstEnclosingQName, owningClassInfo);
             }
 
@@ -1819,7 +1839,9 @@ public class InferenceUtility {
                                                                        String javaVersion,
                                                                        List<String> importStatementList,
                                                                        Block bodyBlock,
-                                                                       Map<String, OwningClassInfo> owningClassInfoMap) {
+                                                                       Map<String, OwningClassInfo> owningClassInfoMap,
+                                                                       JarInfoService jarInfoService,
+                                                                       ClassInfoService classInfoService) {
         if (Objects.isNull(bodyBlock)) {
             return Collections.emptySet();
         }
@@ -1830,14 +1852,15 @@ public class InferenceUtility {
             @Override
             public boolean visit(SingleVariableDeclaration singleVariableDeclaration) {
                 String firstEnclosingClassQName = getFirstEnclosingClassQName(singleVariableDeclaration,
-                        dependentArtifactSet, javaVersion, importStatementList);
+                        dependentArtifactSet, javaVersion, importStatementList, jarInfoService, classInfoService);
 
                 OwningClassInfo owningClassInfo;
 
                 if (owningClassInfoMap.containsKey(firstEnclosingClassQName)) {
                     owningClassInfo = owningClassInfoMap.get(firstEnclosingClassQName);
                 } else {
-                    owningClassInfo = getOwningClassInfo(singleVariableDeclaration, dependentArtifactSet, javaVersion, importStatementList);
+                    owningClassInfo = getOwningClassInfo(singleVariableDeclaration, dependentArtifactSet, javaVersion,
+                            importStatementList, jarInfoService, classInfoService);
 
                     owningClassInfoMap.put(firstEnclosingClassQName, owningClassInfo);
                 }
@@ -1854,7 +1877,7 @@ public class InferenceUtility {
             @Override
             public void endVisit(VariableDeclarationExpression variableDeclarationExpression) {
                 String firstEnclosingClassQName = getFirstEnclosingClassQName(variableDeclarationExpression,
-                        dependentArtifactSet, javaVersion, importStatementList);
+                        dependentArtifactSet, javaVersion, importStatementList, jarInfoService, classInfoService);
 
                 OwningClassInfo owningClassInfo;
 
@@ -1862,7 +1885,7 @@ public class InferenceUtility {
                     owningClassInfo = owningClassInfoMap.get(firstEnclosingClassQName);
                 } else {
                     owningClassInfo = getOwningClassInfo(variableDeclarationExpression, dependentArtifactSet,
-                            javaVersion, importStatementList);
+                            javaVersion, importStatementList, jarInfoService, classInfoService);
 
                     owningClassInfoMap.put(firstEnclosingClassQName, owningClassInfo);
                 }
@@ -1879,14 +1902,15 @@ public class InferenceUtility {
             @Override
             public void endVisit(VariableDeclarationStatement variableDeclarationStatement) {
                 String firstEnclosingClassQName = getFirstEnclosingClassQName(variableDeclarationStatement,
-                        dependentArtifactSet, javaVersion, importStatementList);
+                        dependentArtifactSet, javaVersion, importStatementList, jarInfoService, classInfoService);
 
                 OwningClassInfo owningClassInfo;
 
                 if (owningClassInfoMap.containsKey(firstEnclosingClassQName)) {
                     owningClassInfo = owningClassInfoMap.get(firstEnclosingClassQName);
                 } else {
-                    owningClassInfo = getOwningClassInfo(variableDeclarationStatement, dependentArtifactSet, javaVersion, importStatementList);
+                    owningClassInfo = getOwningClassInfo(variableDeclarationStatement, dependentArtifactSet, javaVersion,
+                            importStatementList, jarInfoService, classInfoService);
 
                     owningClassInfoMap.put(firstEnclosingClassQName, owningClassInfo);
                 }
@@ -2200,7 +2224,7 @@ public class InferenceUtility {
                 return typeInfo;
             }
         } else {
-            String fieldTypeClassName = fieldInfo.getTypeAsStr();
+            String fieldTypeClassName = fieldInfo.getType().getClassName();
 
             return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
                     fieldTypeClassName, owningClassInfo);
@@ -2288,12 +2312,15 @@ public class InferenceUtility {
     public static List<String> getAllEnclosingClassList(ASTNode node,
                                                         Set<Artifact> dependentArtifactSet,
                                                         String javaVersion,
-                                                        List<String> importStatementList) {
+                                                        List<String> importStatementList,
+                                                        JarInfoService jarInfoService,
+                                                        ClassInfoService classInfoService) {
 
         List<String> enclosingClassList = new ArrayList<>();
 
         String qualifiedClassName =
-                getClassInstanceCreationQualifiedName(node, dependentArtifactSet, javaVersion, importStatementList);
+                getClassInstanceCreationQualifiedName(node, dependentArtifactSet, javaVersion, importStatementList,
+                        jarInfoService, classInfoService);
 
         if (Objects.nonNull(qualifiedClassName)) {
             enclosingClassList.add(qualifiedClassName);
@@ -2368,10 +2395,12 @@ public class InferenceUtility {
     private static String getFirstEnclosingClassQName(ASTNode node,
                                                       Set<Artifact> dependentArtifactSet,
                                                       String javaVersion,
-                                                      List<String> importStatementList) {
+                                                      List<String> importStatementList,
+                                                      JarInfoService jarInfoService,
+                                                      ClassInfoService classInfoService) {
         String classInstanceQualifiedClassName =
-                getClassInstanceCreationQualifiedName(node, dependentArtifactSet, javaVersion, importStatementList);
-
+                getClassInstanceCreationQualifiedName(node, dependentArtifactSet, javaVersion, importStatementList,
+                        jarInfoService, classInfoService);
 
         if (Objects.nonNull(classInstanceQualifiedClassName)) {
             return classInstanceQualifiedClassName;
@@ -2404,7 +2433,9 @@ public class InferenceUtility {
     private static String getClassInstanceCreationQualifiedName(ASTNode node,
                                                                 Set<Artifact> dependentArtifactSet,
                                                                 String javaVersion,
-                                                                List<String> importStatementList) {
+                                                                List<String> importStatementList,
+                                                                JarInfoService jarInfoService,
+                                                                ClassInfoService classInfoService) {
 
          AnonymousClassDeclaration anonymousClassDeclaration =
                 (AnonymousClassDeclaration) getClosestASTNode(node.getParent(), AnonymousClassDeclaration.class);
@@ -2421,13 +2452,14 @@ public class InferenceUtility {
         }
 
         List<String> enclosingClassQNameList =
-                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
+                getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion,
+                        importStatementList, jarInfoService, classInfoService);
 
         List<String> nonEnclosingAccessibleClassQNameList =
                 getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
 
         OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                enclosingClassQNameList, nonEnclosingAccessibleClassQNameList);
+                enclosingClassQNameList, nonEnclosingAccessibleClassQNameList, jarInfoService, classInfoService);
 
         owningClassInfo.setAccessibleFormalTypeParameterList(
                 getAccessibleFormalTypeParameterList(dependentArtifactSet, javaVersion, importStatementList,

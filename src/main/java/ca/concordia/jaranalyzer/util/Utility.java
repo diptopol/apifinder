@@ -1,9 +1,10 @@
 package ca.concordia.jaranalyzer.util;
 
-import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.artifactresolver.ArtifactResolver;
 import ca.concordia.jaranalyzer.artifactresolver.ArtifactResolverFactory;
-import ca.concordia.jaranalyzer.models.JarInfo;
+import ca.concordia.jaranalyzer.entity.JarInfo;
+import ca.concordia.jaranalyzer.entityExtractor.JarInfoExtractor;
+import ca.concordia.jaranalyzer.models.Artifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,17 +68,6 @@ public class Utility {
         }
 
         return jarFiles;
-    }
-
-    public static Path getJarStoragePath() {
-        return Path.of(PropertyReader.getProperty("jar.storage.directory"))
-                .resolve(PropertyReader.getProperty("jar.storage.filename")
-                        .concat(".").concat(PropertyReader.getProperty("jar.storage.file.extension")));
-    }
-
-    public static Path getJarStoragePath(String storageFileName) {
-        return Path.of(PropertyReader.getProperty("jar.storage.directory"))
-                .resolve(storageFileName.concat(".").concat(PropertyReader.getProperty("jar.storage.file.extension")));
     }
 
     public static Path getProjectPath(String projectName) {
@@ -154,7 +144,9 @@ public class Utility {
             JarFile jarFile = getJarFile(artifact.getFile());
 
             if (Objects.nonNull(jarFile)) {
-                jarInfoSet.add(new JarInfo(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), jarFile));
+                JarInfo jarInfo =
+                        JarInfoExtractor.getJarInfo(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), jarFile);
+                jarInfoSet.add(jarInfo);
             }
         }
 

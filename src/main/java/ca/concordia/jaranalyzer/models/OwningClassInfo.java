@@ -2,7 +2,9 @@ package ca.concordia.jaranalyzer.models;
 
 import ca.concordia.jaranalyzer.models.typeInfo.FormalTypeParameterInfo;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

@@ -1,7 +1,7 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.models.Artifact;
-import ca.concordia.jaranalyzer.models.MethodInfo;
+import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple2;
@@ -243,7 +243,7 @@ public class JFreeChartV1019TypeInferenceV2APITest {
         Path pathToProject = Utility.getProjectPath(projectName);
         Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
 
-        dependencyTuple = TypeInferenceFluentAPI.getInstance("JavaJars-JFv1019").loadExternalJars(commitId, projectName, git);
+        dependencyTuple = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
     }
 
 }

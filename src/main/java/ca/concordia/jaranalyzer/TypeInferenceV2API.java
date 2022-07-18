@@ -1,10 +1,12 @@
 package ca.concordia.jaranalyzer;
 
+import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.models.Artifact;
-import ca.concordia.jaranalyzer.models.MethodInfo;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.service.ClassInfoService;
+import ca.concordia.jaranalyzer.service.JarInfoService;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import org.eclipse.jdt.core.dom.*;
 import org.slf4j.Logger;
@@ -20,6 +22,14 @@ public class TypeInferenceV2API {
 
     private static Logger logger = LoggerFactory.getLogger(TypeInferenceV2API.class);
 
+    private static JarInfoService jarInfoService;
+    private static ClassInfoService classInfoService;
+
+    static {
+        jarInfoService = new JarInfoService();
+        classInfoService = new ClassInfoService();
+    }
+
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            MethodInvocation methodInvocation) {
@@ -30,16 +40,18 @@ public class TypeInferenceV2API {
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
+            List<String> enclosingQualifiedClassNameList =
+                    InferenceUtility.getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion,
+                            importStatementList, jarInfoService, classInfoService);
             OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                    InferenceUtility.getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion, importStatementList),
-                    Collections.emptyList());
+                    enclosingQualifiedClassNameList, Collections.emptyList(), jarInfoService, classInfoService);
 
             owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                     javaVersion, importStatementList, owningClassInfo, methodInvocation));
 
             Map<String, Set<VariableDeclarationDto>> variableNameMap =
                     InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                            methodInvocation, owningClassInfo);
+                            methodInvocation, jarInfoService, classInfoService);
 
             List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
                     methodInvocation, importStatementList, variableNameMap, owningClassInfo);
@@ -63,16 +75,17 @@ public class TypeInferenceV2API {
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
+            List<String> enclosingClassQNameList = InferenceUtility.getAllEnclosingClassList(superMethodInvocation,
+                    dependentArtifactSet, javaVersion, importStatementList, jarInfoService, classInfoService);
             OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                    InferenceUtility.getAllEnclosingClassList(superMethodInvocation, dependentArtifactSet, javaVersion, importStatementList),
-                    Collections.emptyList());
+                    enclosingClassQNameList, Collections.emptyList(), jarInfoService, classInfoService);
 
             owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                     javaVersion, importStatementList, owningClassInfo, superMethodInvocation));
 
             Map<String, Set<VariableDeclarationDto>> variableNameMap =
                     InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                            superMethodInvocation, owningClassInfo);
+                            superMethodInvocation, jarInfoService, classInfoService);
 
             List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
                     superMethodInvocation, importStatementList, variableNameMap, owningClassInfo);
@@ -97,20 +110,21 @@ public class TypeInferenceV2API {
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
             List<String> enclosingClassQNameList =
-                    InferenceUtility.getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion, importStatementList);
+                    InferenceUtility.getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion,
+                            importStatementList, jarInfoService, classInfoService);
 
             List<String> nonEnclosingAccessibleClassQNameList =
                     InferenceUtility.getNonEnclosingAccessibleClassListForInstantiation(classInstanceCreation, enclosingClassQNameList);
 
             OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                    enclosingClassQNameList, nonEnclosingAccessibleClassQNameList);
+                    enclosingClassQNameList, nonEnclosingAccessibleClassQNameList, jarInfoService, classInfoService);
 
             owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                     javaVersion, importStatementList, owningClassInfo, classInstanceCreation));
 
             Map<String, Set<VariableDeclarationDto>> variableNameMap =
                     InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                            classInstanceCreation, owningClassInfo);
+                            classInstanceCreation, jarInfoService, classInfoService);
 
             List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
                     classInstanceCreation, importStatementList, variableNameMap, owningClassInfo);
@@ -134,16 +148,17 @@ public class TypeInferenceV2API {
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
+            List<String> enclosingClassQNameList = InferenceUtility.getAllEnclosingClassList(constructorInvocation,
+                    dependentArtifactSet, javaVersion, importStatementList, jarInfoService, classInfoService);
             OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                    InferenceUtility.getAllEnclosingClassList(constructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
-                    Collections.emptyList());
+                    enclosingClassQNameList, Collections.emptyList(), jarInfoService, classInfoService);
 
             owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                     javaVersion, importStatementList, owningClassInfo, constructorInvocation));
 
             Map<String, Set<VariableDeclarationDto>> variableNameMap =
                     InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
-                            constructorInvocation, owningClassInfo);
+                            constructorInvocation, jarInfoService, classInfoService);
 
             MethodDeclaration methodDeclaration =
                     (MethodDeclaration) InferenceUtility.getClosestASTNode(constructorInvocation, MethodDeclaration.class);
@@ -200,16 +215,17 @@ public class TypeInferenceV2API {
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
+            List<String> enclosingClassQNameList = InferenceUtility.getAllEnclosingClassList(superConstructorInvocation,
+                    dependentArtifactSet, javaVersion, importStatementList, jarInfoService, classInfoService);
             OwningClassInfo owningClassInfo = TypeInferenceAPI.getOwningClassInfo(dependentArtifactSet, javaVersion,
-                    InferenceUtility.getAllEnclosingClassList(superConstructorInvocation, dependentArtifactSet, javaVersion, importStatementList),
-                    Collections.emptyList());
+                    enclosingClassQNameList, Collections.emptyList(), jarInfoService, classInfoService);
 
             owningClassInfo.setAccessibleFormalTypeParameterList(InferenceUtility.getAccessibleFormalTypeParameterList(dependentArtifactSet,
                     javaVersion, importStatementList, owningClassInfo, superConstructorInvocation));
 
             Map<String, Set<VariableDeclarationDto>> variableNameMap =
-                    InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion,
-                            importStatementList, superConstructorInvocation, owningClassInfo);
+                    InferenceUtility.getVariableNameMap(dependentArtifactSet, javaVersion, importStatementList,
+                            superConstructorInvocation, jarInfoService, classInfoService);
 
             TypeDeclaration typeDeclaration = (TypeDeclaration) InferenceUtility.getTypeDeclaration(superConstructorInvocation);
             Type superClassType = typeDeclaration.getSuperclassType();

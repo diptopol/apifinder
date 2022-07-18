@@ -2,9 +2,9 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractor;
 import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
+import ca.concordia.jaranalyzer.entity.JarInfo;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.GitUtil;
-import ca.concordia.jaranalyzer.models.JarInfo;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.eclipse.jgit.api.Git;
 import org.junit.Test;
@@ -54,9 +54,9 @@ public class ArtifactExtractorTest {
 
         JarInfo jarInfo = jarInfoSet.iterator().next();
 
-        assert "com.github.tsantalis".equals(jarInfo.getArtifact().getGroupId())
-                && "refactoring-miner".equals(jarInfo.getArtifact().getArtifactId())
-                && "2.0.2".equals(jarInfo.getArtifact().getVersion());
+        assert "com.github.tsantalis".equals(jarInfo.getGroupId())
+                && "refactoring-miner".equals(jarInfo.getArtifactId())
+                && "2.0.2".equals(jarInfo.getVersion());
     }
 
     @Test

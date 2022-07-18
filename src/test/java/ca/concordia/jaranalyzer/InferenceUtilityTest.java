@@ -3,6 +3,8 @@ package ca.concordia.jaranalyzer;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.service.ClassInfoService;
+import ca.concordia.jaranalyzer.service.JarInfoService;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.Utility;
@@ -26,6 +28,9 @@ public class InferenceUtilityTest {
 
     private static Tuple2<String, Set<Artifact>> dependencyTuple;
 
+    private static JarInfoService jarInfoService;
+    private static ClassInfoService classInfoService;
+
     /*
      * For running the test we have to check out to a specific commit. So after completion of all test we intend to
      * revert the change. So to do the revert we are storing the defaultBranchName here.
@@ -39,6 +44,9 @@ public class InferenceUtilityTest {
         String projectName = "jfreechart-fx";
         String projectUrl = "https://github.com/jfree/jfreechart-fx.git";
         String commitId = "35d53459e854a2bb39d6f012ce9b78ec8ab7f0f9";
+
+        jarInfoService = new JarInfoService();
+        classInfoService = new ClassInfoService();
 
         loadTestProjectDirectory(projectName, projectUrl, commitId);
         loadExternalJars(projectName, projectUrl, commitId);
@@ -83,7 +91,7 @@ public class InferenceUtilityTest {
 
                     Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
                             = InferenceUtility.getFieldVariableDeclarationDtoList(dependencyTuple._2(), dependencyTuple._1(),
-                            importStatementList, methodInvocation, new HashMap<>());
+                            importStatementList, methodInvocation, new HashMap<>(), jarInfoService, classInfoService);
 
                     assert "[altKey, ctrlKey, enabled, id, metaKey, shiftKey]"
                             .equals(fieldVariableDeclarationDtoList.stream()
@@ -134,7 +142,7 @@ public class InferenceUtilityTest {
 
                     Map<String, Set<VariableDeclarationDto>> variableNameMap =
                             InferenceUtility.getVariableNameMap(dependencyTuple._2(), dependencyTuple._1(),
-                                    importStatementList, methodInvocation, null);
+                                    importStatementList, methodInvocation, jarInfoService, classInfoService);
 
                     List<Expression> argumentList = methodInvocation.arguments();
 

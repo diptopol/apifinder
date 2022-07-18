@@ -1,6 +1,6 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.models.MethodInfo;
+import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.util.PropertyReader;
 import ca.concordia.jaranalyzer.models.Artifact;
 import org.eclipse.jdt.core.dom.ASTVisitor;
