@@ -12,6 +12,7 @@ public class Artifact implements Serializable {
     private static final long serialVersionUID = 42L;
 
     private static final String MAVEN_PLUGIN_TYPE = "maven-plugin";
+    private static final String BUNDLE_TYPE = "bundle";
 
     public static final String JAR_TYPE = "jar";
     public static final String POM_TYPE= "pom";
@@ -25,7 +26,7 @@ public class Artifact implements Serializable {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
-        this.type = (MAVEN_PLUGIN_TYPE.equals(type)) ? JAR_TYPE : type;
+        this.type = (MAVEN_PLUGIN_TYPE.equals(type) || BUNDLE_TYPE.equals(type)) ? JAR_TYPE : type;
     }
 
     public Artifact(String groupId, String artifactId, String version) {
