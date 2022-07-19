@@ -932,6 +932,15 @@ public abstract class TypeInferenceBase {
         }
     }
 
+    public static List<MethodInfo> filterBasedOnClassInstantiation(List<MethodInfo> methodInfoList) {
+        if (methodInfoList.size() > 1) {
+            methodInfoList = methodInfoList.stream()
+                    .filter(MethodInfo::isConstructor)
+                    .collect(Collectors.toList());
+        }
+
+        return methodInfoList;
+    }
 
     public static List<MethodInfo> filterMethodInfoListBasedOnOwningClass(List<MethodInfo> methodInfoList) {
         if (methodInfoList.size() > 1 && methodInfoList.stream().noneMatch(MethodInfo::isOwningClassAttribute)) {

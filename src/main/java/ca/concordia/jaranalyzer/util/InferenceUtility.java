@@ -182,6 +182,7 @@ public class InferenceUtility {
         TypeInferenceFluentAPI.Criteria searchCriteria = TypeInferenceFluentAPI.getInstance()
                 .new Criteria(dependentArtifactSet, javaVersion,
                 importStatementList, methodName, numberOfParameters)
+                .setClassInstantiation(true)
                 .setOwningClassInfo(owningClassInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {

@@ -63,7 +63,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                  String methodName,
                                                  int numberOfParameters) {
         return getAllMethods(dependentArtifactSet, javaVersion, importList, methodName, numberOfParameters,
-                null, false, null, null);
+                null, false, null, null, false);
     }
 
     /**
@@ -97,6 +97,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                  boolean isSuperInvoker,
                                                  List<String> enclosingQualifiedClassNameList,
                                                  List<String> nonClosingQualifiedClassNameList,
+                                                 boolean isClassInstantiation,
                                                  String... argumentTypes) {
         List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion);
 
@@ -134,7 +135,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                         jarIdList, classQNameSet, classInfoService, methodInfoService);
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                        argumentTypeInfoList, numberOfParameters, jarIdList);
+                        isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -177,7 +178,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 qualifiedMethodInfoList.forEach(m -> m.setOwningClassAttribute(isOwningClassAttribute));
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, null, isSuperInvoker,
-                        argumentTypeInfoList, numberOfParameters, jarIdList);
+                        isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -207,7 +208,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 jarIdList, importedClassQNameSet, classInfoService, methodInfoService);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                argumentTypeInfoList, numberOfParameters, jarIdList);
+                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
 
         Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
@@ -227,7 +228,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = methodInfoService.getInnerClassMethodInfoList(importedClassQNameSet, jarIdList, methodName);;
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                argumentTypeInfoList, numberOfParameters, jarIdList);
+                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -246,7 +247,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 packageNameList, importedClassQNameSet, jarIdList, classInfoService, methodInfoService);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                argumentTypeInfoList, numberOfParameters, jarIdList);
+                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -271,7 +272,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                     classQNameSet, classInfoService, methodInfoService);
 
             qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                    argumentTypeInfoList, numberOfParameters, jarIdList);
+                    isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
 
             if (!qualifiedMethodInfoList.isEmpty()
                     && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -460,6 +461,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
     private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList,
                                                   TypeInfo invokerTypeInfo,
                                                   boolean isSuperInvoker,
+                                                  boolean isClassInstantiation,
                                                   List<TypeInfo> argumentTypeInfoList,
                                                   int numberOfParameters,
                                                   List<Integer> jarIdList) {
@@ -476,6 +478,10 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         reduceArgumentForInnerClassConstructorIfRequired(methodInfoList, firstArgumentQualifiedClassName,
                 numberOfParameters, jarIdList, classInfoService);
+
+        if (isClassInstantiation) {
+            methodInfoList = filterBasedOnClassInstantiation(methodInfoList);
+        }
 
         methodInfoList = filterByMethodInvoker(methodInfoList, invokerTypeInfo, isSuperInvoker, jarIdList, classInfoService);
 

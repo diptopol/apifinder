@@ -324,6 +324,10 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         methodInfoList = filterMethodInfoListBasedOnArguments(methodInfoList, criteria, jarIdList, classInfoService,
                 methodInfoService);
 
+        if (criteria.isClassInstantiation()) {
+            methodInfoList = filterBasedOnClassInstantiation(methodInfoList);
+        }
+
         methodInfoList = filterMethodInfoListBasedOnOwningClass(methodInfoList);
 
         methodInfoList = prioritizeMethodInfoListBasedOnArguments(methodInfoList);
@@ -437,6 +441,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         private String methodName;
         private Integer numberOfParameters;
         private TypeInfo invokerTypeInfo;
+        private boolean isClassInstantiation;
         private OwningClassInfo owningClassInfo;
 
         /*
@@ -469,6 +474,10 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         private TypeInfo getInvokerTypeInfo() {
             return this.invokerTypeInfo;
+        }
+
+        public boolean isClassInstantiation() {
+            return isClassInstantiation;
         }
 
         public OwningClassInfo getOwningClassInfo() {
@@ -537,6 +546,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         public Criteria setSuperInvoker(boolean isSuperInvoker) {
             this.isSuperInvoker = isSuperInvoker;
+
+            return this;
+        }
+
+        public Criteria setClassInstantiation(boolean isClassInstantiation) {
+            this.isClassInstantiation = isClassInstantiation;
 
             return this;
         }

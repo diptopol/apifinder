@@ -812,6 +812,26 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testClassInstantiationFiltering() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/Multimaps.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new UnmodifiableMultimap<>(delegate)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
+
+                    assert ("com.google.common.collect.Multimaps.UnmodifiableMultimap" +
+                            "::void Multimaps$UnmodifiableMultimap(com.google.common.collect.Multimap)")
+                            .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
