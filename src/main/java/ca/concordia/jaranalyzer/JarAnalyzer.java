@@ -35,6 +35,7 @@ public class JarAnalyzer {
 
     static {
         JAVA_STORAGE_PATH.put(6, getProperty("java.6.jar.directory"));
+        JAVA_STORAGE_PATH.put(7, getProperty("java.7.jar.directory"));
         JAVA_STORAGE_PATH.put(8, getProperty("java.8.jar.directory"));
         JAVA_STORAGE_PATH.put(10, getProperty("java.10.jar.directory"));
         JAVA_STORAGE_PATH.put(11, getProperty("java.11.jar.directory"));
