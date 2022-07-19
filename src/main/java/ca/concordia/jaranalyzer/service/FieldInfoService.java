@@ -72,7 +72,7 @@ public class FieldInfoService {
                 " JOIN class c ON (f.class_id = c.id)" +
                 " WHERE c.jar_id IN (" + DbUtils.getInClausePlaceHolder(jarIdList.size()) + ")" +
                 " AND c.q_name IN (" + DbUtils.getInClausePlaceHolder(qualifiedClassNameSet.size()) + ")" +
-                " AND f.name = ?";
+                " AND f.name = BINARY ?";
 
         try {
             pst = connection.prepareStatement(query);
