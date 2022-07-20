@@ -902,7 +902,7 @@ public abstract class TypeInferenceBase {
             }
         }
 
-        methodInfoList.removeIf(m -> m.isInnerClassConstructor() && m.getArgumentTypes().length != numberOfParameters);
+        methodInfoList.removeIf(m -> m.isInnerClassConstructor() && m.getArgumentTypeInfoList().size() != numberOfParameters);
     }
 
     static String getTypeDescriptorForPrimitive(String type) {

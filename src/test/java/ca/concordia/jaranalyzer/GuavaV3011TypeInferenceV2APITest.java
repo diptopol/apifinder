@@ -852,6 +852,25 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testRemovalOfInferredArgumentOfInnerCLass() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/AbstractSetMultimap.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation methodInvocation) {
+                if (methodInvocation.toString().startsWith("new WrappedSet(key,")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                    assert ("com.google.common.collect.AbstractMapBasedMultimap.WrappedSet" +
+                            "::void AbstractMapBasedMultimap$WrappedSet(K, java.util.Set)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 

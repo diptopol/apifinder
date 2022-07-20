@@ -285,7 +285,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                     .findFirst()
                     .orElse(null);
 
-            String firstArgumentQualifiedClassName = (Objects.nonNull(firstArgumentTypeInfo) && !firstArgumentTypeInfo.isFunctionTypeInfo())
+            String firstArgumentQualifiedClassName = (Objects.nonNull(firstArgumentTypeInfo)
+                    && !firstArgumentTypeInfo.isFunctionTypeInfo() && !firstArgumentTypeInfo.isFormalTypeParameterInfo())
                     ? firstArgumentTypeInfo.getQualifiedClassName()
                     : null;
 
