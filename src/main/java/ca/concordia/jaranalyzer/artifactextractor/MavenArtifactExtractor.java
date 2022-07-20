@@ -174,6 +174,8 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
             logger.error("Error", e);
         }
 
+        javaVersionList = javaVersionList.stream().filter(Objects::nonNull).collect(Collectors.toList());
+
         if (javaVersionList.isEmpty()) {
             return getProperty("java.version");
         }
