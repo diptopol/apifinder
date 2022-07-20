@@ -1616,6 +1616,16 @@ public class InferenceUtility {
                     FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
                     inferredFormalTypeParameterValueMap.put(formalTypeParameterInfo.getTypeParameter(), argArray.getElementTypeInfo());
                 }
+            } else if (methodArgument.isArrayTypeInfo() && Objects.nonNull(argument) && argument.isVarargTypeInfo()) {
+                ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
+                VarargTypeInfo argVararg = (VarargTypeInfo) argument;
+
+                if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()
+                        && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgArray.getElementTypeInfo()).getTypeParameter())) {
+                    FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
+                    inferredFormalTypeParameterValueMap.put(formalTypeParameterInfo.getTypeParameter(), argVararg.getElementTypeInfo());
+                }
+
             } else if (methodArgument.isParameterizedTypeInfo() && Objects.nonNull(argument)
                     && argument.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) argument).isParameterized()) {
                 ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) argument;
