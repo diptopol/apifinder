@@ -1,3 +1,11 @@
+CREATE TABLE maven_effective_pom (
+project_remote_url VARCHAR(300),
+commit_id VARCHAR(200),
+effective_pom mediumtext
+);
+
+create index idx_url_commit_id ON maven_effective_pom (project_remote_url, commit_id);
+
 CREATE TABLE jar (
 id INT NOT NULL AUTO_INCREMENT,
 group_id VARCHAR(100),
