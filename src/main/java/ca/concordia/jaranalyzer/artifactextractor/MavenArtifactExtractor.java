@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.artifactextractor;
 
 import ca.concordia.jaranalyzer.models.Artifact;
+import ca.concordia.jaranalyzer.service.MavenPOMService;
 import ca.concordia.jaranalyzer.util.FileUtils;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
@@ -37,13 +38,19 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
     private final String commitId;
     private final String projectName;
     private final Git git;
+    private final String remoteUrl;
     private final String effectivePOMContent;
 
+    private final MavenPOMService mavenPOMService;
+
     public MavenArtifactExtractor(String commitId, String projectName, Git git) {
+        mavenPOMService = new MavenPOMService();
+
         this.commitId = commitId;
         this.projectName = projectName;
         this.git = git;
-        this.effectivePOMContent = getEffectivePOMContent();
+        this.remoteUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
+        this.effectivePOMContent = loadEffectivePOMContent();
     }
 
     @Override
@@ -54,6 +61,18 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
     @Override
     public Set<Artifact> getDependentArtifactSet() {
         return getDependentArtifactSet(effectivePOMContent);
+    }
+
+    private String loadEffectivePOMContent() {
+        String effectivePOM = mavenPOMService.getEffectivePOM(this.remoteUrl, this.commitId);
+
+        if (Objects.isNull(effectivePOM)) {
+            effectivePOM = getEffectivePOMContent();
+
+            mavenPOMService.saveEffectivePOM(this.remoteUrl, this.commitId, effectivePOM);
+        }
+
+        return effectivePOM;
     }
 
     private String getEffectivePOMContent() {
