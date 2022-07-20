@@ -574,7 +574,7 @@ public class InferenceUtility {
             return null;
         }
 
-        TypeDeclaration typeDeclaration = (TypeDeclaration) getTypeDeclaration(expression);
+        AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(expression);
 
         if (expression instanceof NullLiteral) {
             return new NullTypeInfo();
@@ -588,7 +588,7 @@ public class InferenceUtility {
                 return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, className, owningClassInfo);
 
             } else {
-                String className = getDeclaringClassQualifiedName(typeDeclaration);
+                String className = getDeclaringClassQualifiedName(abstractTypeDeclaration);
                 className = className.replace("%", "").replace("$", ".");
 
                 return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, className, owningClassInfo);
