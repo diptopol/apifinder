@@ -167,7 +167,27 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
             //maven compiler-plugin
             if (javaVersionList.isEmpty()) {
                 for (Element project: projectElementList) {
-                    javaVersionList.add(getJavaVersionFromPlugin(project));
+                    String javaVersion = getJavaVersionFromPlugin(project);
+                    if (Objects.nonNull(javaVersion)) {
+                        javaVersionList.add(javaVersion);
+                    }
+                }
+            }
+
+            //maven.compiler.target properties
+            if (javaVersionList.isEmpty()) {
+                for (Element project: projectElementList) {
+                    Element propertiesElement = getChildElement(project, "properties");
+
+                    if (Objects.nonNull(propertiesElement)) {
+                        List<Element> propertyElementList = propertiesElement.getChildren();
+
+                        for (Element propertyElement: propertyElementList) {
+                            if (propertyElement.getName().equals("maven.compiler.target")) {
+                                javaVersionList.add(Utility.convertJavaVersion(propertyElement.getValue()));
+                            }
+                        }
+                    }
                 }
             }
         } catch (IOException | JDOMException e) {
