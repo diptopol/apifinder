@@ -810,12 +810,31 @@ public class InferenceUtility {
                 VariableDeclarationDto selected = getVariableDeclarationDtoFromVariableMap(firstPart, expression, variableNameMap);
                 String className = selected != null ? selected.getTypeInfo().getQualifiedClassName() : null;
 
-                if (className != null) {
-                    name = className + name.substring(name.indexOf("."));
+                if (Objects.isNull(className)) {
+                    TypeInfo typeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
+                            firstPart, owningClassInfo);
+
+                    if (Objects.nonNull(typeInfo)) {
+                        className = typeInfo.getQualifiedClassName();
+                    }
                 }
 
-                TypeInfo fieldTypeInfo = getTypeInfoFromFieldName(dependentArtifactSet, javaVersion,
-                        importStatementList, name, owningClassInfo);
+                String[] propertyNameList = name.substring(name.indexOf(".") + 1).split("\\.");
+
+                TypeInfo fieldTypeInfo = null;
+
+                for (String property: propertyNameList) {
+                    if (className != null) {
+                        name = className.concat(".").concat(property);
+
+                        fieldTypeInfo = getTypeInfoFromFieldName(dependentArtifactSet, javaVersion, importStatementList,
+                                name, owningClassInfo);
+
+                        if (Objects.nonNull(fieldTypeInfo)) {
+                            className = fieldTypeInfo.getQualifiedClassName();
+                        }
+                    }
+                }
 
                 if (Objects.nonNull(fieldTypeInfo)) {
                     return fieldTypeInfo;
