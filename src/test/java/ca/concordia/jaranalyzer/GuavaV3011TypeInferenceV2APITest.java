@@ -95,7 +95,7 @@ public class GuavaV3011TypeInferenceV2APITest {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), superConstructorInvocation);
 
                     assert ("com.google.common.collect.CollectSpliterators.FlatMapSpliteratorOfPrimitive" +
-                            "::void CollectSpliterators$FlatMapSpliteratorOfPrimitive(java.util.Spliterator.OfPrimitive," +
+                            "::void CollectSpliterators$FlatMapSpliteratorOfPrimitive(java.util.Spliterator.OfInt," +
                             " java.util.Spliterator, java.util.function.Function," +
                             " com.google.common.collect.CollectSpliterators.FlatMapSpliterator.Factory," +
                             " int, long)").equals(methodInfo.toString());
@@ -904,6 +904,26 @@ public class GuavaV3011TypeInferenceV2APITest {
                     assert ("com.google.common.hash.BloomFilterStrategies.LockFreeBitArray" +
                             "::public static long[] toPlainArray(java.util.concurrent.atomic.AtomicLongArray)")
                             .equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
+    public void testFormalTypeParameterResolutionForSuperConstructorInvocation() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/base/FinalizableWeakReference.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(SuperConstructorInvocation superConstructorInvocation) {
+                if (superConstructorInvocation.toString().startsWith("super(referent,")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(),
+                            superConstructorInvocation);
+
+                    assert ("java.lang.ref.WeakReference" +
+                            "::public void WeakReference(T, java.lang.ref.ReferenceQueue)").equals(methodInfo.toString());
                 }
 
                 return true;

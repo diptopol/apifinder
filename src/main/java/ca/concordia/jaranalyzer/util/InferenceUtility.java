@@ -1583,8 +1583,7 @@ public class InferenceUtility {
                                     FormalTypeParameterInfo::getBaseTypeInfo))
             );
         } else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo) && !argumentTypeInfoList.isEmpty()) {
-            inferredTypeInfoMap.putAll(getInferredFormalTypeParameterMapUsingMethodArguments(methodInfo,
-                    argumentTypeInfoList, inferredTypeInfoMap));
+            populateInferredFormalTypeParameterMapUsingMethodArguments(methodInfo, argumentTypeInfoList, inferredTypeInfoMap);
         }
 
         return inferredTypeInfoMap;
@@ -1601,11 +1600,10 @@ public class InferenceUtility {
         return true;
     }
 
-    private static Map<String, TypeInfo> getInferredFormalTypeParameterMapUsingMethodArguments(MethodInfo methodInfo,
-                                                                                               List<TypeInfo> argumentTypeInfoList,
-                                                                                               Map<String, TypeInfo> formalTypeInfoMap) {
+    private static void populateInferredFormalTypeParameterMapUsingMethodArguments(MethodInfo methodInfo,
+                                                                                   List<TypeInfo> argumentTypeInfoList,
+                                                                                   Map<String, TypeInfo> formalTypeInfoMap) {
         List<TypeInfo> methodArgumentTypeInfoList = methodInfo.getArgumentTypeInfoList();
-        Map<String, TypeInfo> inferredFormalTypeParameterValueMap = new HashMap<>();
 
         for (int i = 0; i < methodArgumentTypeInfoList.size(); i++) {
             TypeInfo methodArgument = methodArgumentTypeInfoList.get(i);
@@ -1624,7 +1622,7 @@ public class InferenceUtility {
                     && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgument).getTypeParameter())
                     && Objects.nonNull(argument) && !argument.isNullTypeInfo()) {
                 FormalTypeParameterInfo formalTypeParameterMethodArgInfo = (FormalTypeParameterInfo) methodArgument;
-                inferredFormalTypeParameterValueMap.put(formalTypeParameterMethodArgInfo.getTypeParameter(), argument);
+                formalTypeInfoMap.put(formalTypeParameterMethodArgInfo.getTypeParameter(), argument);
 
             } else if (methodArgument.isArrayTypeInfo() && Objects.nonNull(argument) && argument.isArrayTypeInfo()) {
                 ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
@@ -1633,7 +1631,7 @@ public class InferenceUtility {
                 if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()
                         && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgArray.getElementTypeInfo()).getTypeParameter())) {
                     FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
-                    inferredFormalTypeParameterValueMap.put(formalTypeParameterInfo.getTypeParameter(), argArray.getElementTypeInfo());
+                    formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), argArray.getElementTypeInfo());
                 }
             } else if (methodArgument.isArrayTypeInfo() && Objects.nonNull(argument) && argument.isVarargTypeInfo()) {
                 ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
@@ -1642,24 +1640,22 @@ public class InferenceUtility {
                 if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()
                         && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgArray.getElementTypeInfo()).getTypeParameter())) {
                     FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
-                    inferredFormalTypeParameterValueMap.put(formalTypeParameterInfo.getTypeParameter(), argVararg.getElementTypeInfo());
+                    formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), argVararg.getElementTypeInfo());
                 }
 
             } else if (methodArgument.isParameterizedTypeInfo() && Objects.nonNull(argument)
                     && argument.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) argument).isParameterized()) {
                 ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) argument;
 
-                for (TypeInfo typeArgument: parameterizedArgTypeInfo.getTypeArgumentList()) {
+                for (TypeInfo typeArgument : parameterizedArgTypeInfo.getTypeArgumentList()) {
                     if (typeArgument.isFormalTypeParameterInfo()
                             && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) typeArgument).getTypeParameter())) {
                         FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeArgument;
-                        inferredFormalTypeParameterValueMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo.getBaseTypeInfo());
+                        formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo.getBaseTypeInfo());
                     }
                 }
             }
         }
-
-        return inferredFormalTypeParameterValueMap;
     }
 
     private static void populateFormalTypeParametersOfOwningClass(MethodInfo methodInfo, Map<String, TypeInfo> replacedTypeInfoMap) {
@@ -1819,7 +1815,7 @@ public class InferenceUtility {
      * 2: An array can be passed
      * 3: Same type of multiple arguments can be passed
      */
-    private static void conversionToVarargsMethodArgument(List<MethodInfo> methodInfoList) {
+    public static void conversionToVarargsMethodArgument(List<MethodInfo> methodInfoList) {
 
         for (MethodInfo methodInfo : methodInfoList) {
             if (methodInfo.isVarargs()) {
@@ -2049,7 +2045,7 @@ public class InferenceUtility {
         }
     }
 
-    private static List<TypeInfo> getTypeInfoList(Set<Artifact> dependentArtifactSet,
+    public static List<TypeInfo> getTypeInfoList(Set<Artifact> dependentArtifactSet,
                                                    String javaVersion,
                                                    List<String> importStatementList,
                                                    List<Type> typeList,

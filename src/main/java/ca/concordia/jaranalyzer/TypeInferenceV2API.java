@@ -242,6 +242,10 @@ public class TypeInferenceV2API {
                         : null;
             }
 
+            List<Type> typeArgumentList = superConstructorInvocation.typeArguments();
+            List<TypeInfo> typeArgumentTypeInfoList = InferenceUtility.getTypeInfoList(dependentArtifactSet, javaVersion,
+                    importStatementList, typeArgumentList, owningClassInfo);
+
             List<Expression> argumentList = superConstructorInvocation.arguments();
             int numberOfParameters = argumentList.size();
 
@@ -259,6 +263,10 @@ public class TypeInferenceV2API {
             }
 
             List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
+
+            InferenceUtility.transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
+                    owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, null, null);
+            InferenceUtility.conversionToVarargsMethodArgument(methodInfoList);
 
             return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
 
