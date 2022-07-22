@@ -839,22 +839,40 @@ public abstract class TypeInferenceBase {
     }
 
     static void modifyMethodInfoForArray(List<MethodInfo> methodInfoList, TypeInfo invokerTypeInfo) {
-        if (Objects.nonNull(invokerTypeInfo) && invokerTypeInfo.isArrayTypeInfo()) {
-            ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) invokerTypeInfo;
+        if (Objects.nonNull(invokerTypeInfo)) {
+            if (invokerTypeInfo.isArrayTypeInfo()) {
+                ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) invokerTypeInfo;
 
-            int dimension = arrayTypeInfo.getDimension();
-            TypeInfo elementTypeInfo = arrayTypeInfo.getElementTypeInfo();
+                int dimension = arrayTypeInfo.getDimension();
+                TypeInfo elementTypeInfo = arrayTypeInfo.getElementTypeInfo();
 
-            String typeName = elementTypeInfo.isPrimitiveTypeInfo()
-                    ? getTypeDescriptorForPrimitive(elementTypeInfo.getQualifiedClassName())
-                    : "L" + elementTypeInfo.getQualifiedClassName().replaceAll("\\.", "/") + ";";
+                String typeName = elementTypeInfo.isPrimitiveTypeInfo()
+                        ? getTypeDescriptorForPrimitive(elementTypeInfo.getQualifiedClassName())
+                        : "L" + elementTypeInfo.getQualifiedClassName().replaceAll("\\.", "/") + ";";
 
-            Type returnType = Type.getType(StringUtils.repeat("[", dimension) + typeName);
+                Type returnType = Type.getType(StringUtils.repeat("[", dimension) + typeName);
 
-            methodInfoList.forEach(m -> {
-                m.setReturnType(returnType);
-                m.setThrownInternalClassNames(Collections.emptyList());
-            });
+                methodInfoList.forEach(m -> {
+                    m.setReturnType(returnType);
+                    m.setThrownInternalClassNames(Collections.emptyList());
+                });
+            } else if (invokerTypeInfo.isVarargTypeInfo()) {
+                VarargTypeInfo varargTypeInfo = (VarargTypeInfo) invokerTypeInfo;
+
+                int dimension = varargTypeInfo.getDimension();
+                TypeInfo elementTypeInfo = varargTypeInfo.getElementTypeInfo();
+
+                String typeName = elementTypeInfo.isPrimitiveTypeInfo()
+                        ? getTypeDescriptorForPrimitive(elementTypeInfo.getQualifiedClassName())
+                        : "L" + elementTypeInfo.getQualifiedClassName().replaceAll("\\.", "/") + ";";
+
+                Type returnType = Type.getType(StringUtils.repeat("[", dimension) + typeName);
+
+                methodInfoList.forEach(m -> {
+                    m.setReturnType(returnType);
+                    m.setThrownInternalClassNames(Collections.emptyList());
+                });
+            }
         }
     }
 

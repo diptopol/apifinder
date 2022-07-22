@@ -1,5 +1,7 @@
 package ca.concordia.jaranalyzer.models.typeInfo;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author Diptopol
  * @since 2/4/2022 4:12 PM
@@ -14,7 +16,7 @@ public class VarargTypeInfo extends TypeInfo {
 
     @Override
     public String getQualifiedClassName() {
-        return this.elementTypeInfo.getQualifiedClassName().concat("[]");
+        return this.elementTypeInfo.getQualifiedClassName().concat(StringUtils.repeat("[]", getDimension()));
     }
 
     @Override
@@ -33,6 +35,10 @@ public class VarargTypeInfo extends TypeInfo {
     @Override
     public String getName() {
         return this.elementTypeInfo.getName().concat("...");
+    }
+
+    public int getDimension() {
+        return 1;
     }
 
     @Override
