@@ -90,7 +90,7 @@ public class ArtifactExtractorTest {
 
 
         assert extractor.getJavaVersion().equals("11");
-        assert dependentArtifactSet.size() == 58;
+        assert dependentArtifactSet.size() == 65;
     }
 
 }
