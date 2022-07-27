@@ -99,7 +99,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                  List<String> nonClosingQualifiedClassNameList,
                                                  boolean isClassInstantiation,
                                                  String... argumentTypes) {
-        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion);
+        List<Integer> internalDependencyJarIdList = new ArrayList<>();
+        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, internalDependencyJarIdList);
 
         Set<String> importedClassQNameSet = getImportedQNameSet(importList);
         List<String> packageNameList = getPackageNameList(importList);
@@ -135,7 +136,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                         jarIdList, classQNameSet, classInfoService, methodInfoService);
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                        isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
+                        isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList, internalDependencyJarIdList);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -178,7 +179,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 qualifiedMethodInfoList.forEach(m -> m.setOwningClassAttribute(isOwningClassAttribute));
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, null, isSuperInvoker,
-                        isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
+                        isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList, internalDependencyJarIdList);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -208,7 +209,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 jarIdList, importedClassQNameSet, classInfoService, methodInfoService);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
+                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList, internalDependencyJarIdList);
 
         Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
@@ -228,7 +229,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = methodInfoService.getInnerClassMethodInfoList(importedClassQNameSet, jarIdList, methodName);;
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
+                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList, internalDependencyJarIdList);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -247,7 +248,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 packageNameList, importedClassQNameSet, jarIdList, classInfoService, methodInfoService);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
+                isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList, internalDependencyJarIdList);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -272,7 +273,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                     classQNameSet, classInfoService, methodInfoService);
 
             qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
-                    isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList);
+                    isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList, internalDependencyJarIdList);
 
             if (!qualifiedMethodInfoList.isEmpty()
                     && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -315,7 +316,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             return Collections.emptyList();
         }
 
-        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion);
+        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, null);
         Set<String> importedClassQNameSet = getImportedQNameSet(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
@@ -344,7 +345,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                    List<String> importList,
                                                    String fieldName,
                                                    OwningClassInfo owningClassInfo) {
-        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion);
+        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, null);
 
         Set<String> importedClassQNameSet = getImportedQNameSet(importList);
         List<String> packageNameList = getPackageNameList(importList);
@@ -464,12 +465,14 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                   boolean isClassInstantiation,
                                                   List<TypeInfo> argumentTypeInfoList,
                                                   int numberOfParameters,
-                                                  List<Integer> jarIdList) {
+                                                  List<Integer> jarIdList,
+                                                  List<Integer> internalDependencyJarIdList) {
         if (methodInfoList.isEmpty()) {
             return methodInfoList;
         }
 
         modifyMethodInfoForArray(methodInfoList, invokerTypeInfo);
+        setInternalDependencyProperty(methodInfoList, internalDependencyJarIdList);
 
         TypeInfo firstArgumentTypeInfo = argumentTypeInfoList.isEmpty() ? null : argumentTypeInfoList.get(0);
         String firstArgumentQualifiedClassName = Objects.nonNull(firstArgumentTypeInfo)

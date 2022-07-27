@@ -876,6 +876,19 @@ public abstract class TypeInferenceBase {
         }
     }
 
+    static void setInternalDependencyProperty(List<MethodInfo> methodInfoList, List<Integer> internalDependencyJarIdList) {
+
+        for (MethodInfo methodInfo: methodInfoList) {
+            ClassInfo classInfo = methodInfo.getClassInfo();
+
+            if (Objects.nonNull(classInfo)
+                    && Objects.nonNull(internalDependencyJarIdList)
+                    && internalDependencyJarIdList.contains(classInfo.getJarId())) {
+                classInfo.setInternalDependency(true);
+            }
+        }
+    }
+
 
     /*
      * Java Compiler can add outer class as first argument to the inner class constructors if not present. We will
@@ -996,7 +1009,7 @@ public abstract class TypeInferenceBase {
             return null;
         }
 
-        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion);
+        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, null);
         List<Set<String>> qClassNameSetInHierarchy = new ArrayList<>();
 
         String outerMostClassName = enclosingQualifiedClassNameList.get(enclosingQualifiedClassNameList.size() - 1);

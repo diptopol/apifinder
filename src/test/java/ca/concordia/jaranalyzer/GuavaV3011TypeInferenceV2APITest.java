@@ -284,6 +284,8 @@ public class GuavaV3011TypeInferenceV2APITest {
                     assert ("java.util.logging.Logger::" +
                             "public void log(java.util.logging.Level, java.lang.String, java.lang.Object[])")
                             .equals(methodInfo.toString());
+
+                    assert !methodInfo.getClassInfo().isInternalDependency();
                 }
 
                 return true;
@@ -363,6 +365,8 @@ public class GuavaV3011TypeInferenceV2APITest {
 
                     assert ("com.google.common.util.concurrent.ServiceManager.FailedService" +
                             "::void ServiceManager$FailedService(com.google.common.util.concurrent.Service)").equals(methodInfo.toString());
+
+                    assert methodInfo.getClassInfo().isInternalDependency();
                 }
 
                 return true;

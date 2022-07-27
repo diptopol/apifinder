@@ -39,6 +39,10 @@ public class ClassInfo {
     private List<MethodInfo> methodInfoList;
     private List<FieldInfo> fieldInfoList;
 
+    private int jarId;
+
+    private boolean isInternalDependency;
+
     public ClassInfo() {
     }
 
@@ -208,6 +212,22 @@ public class ClassInfo {
         }
 
         return this.qualifiedName.substring(0, this.qualifiedName.lastIndexOf("."));
+    }
+
+    public int getJarId() {
+        return jarId;
+    }
+
+    public void setJarId(int jarId) {
+        this.jarId = jarId;
+    }
+
+    public boolean isInternalDependency() {
+        return isInternalDependency;
+    }
+
+    public void setInternalDependency(boolean internalDependency) {
+        this.isInternalDependency = internalDependency;
     }
 
     public String toString() {

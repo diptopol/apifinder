@@ -241,7 +241,10 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
                     projectType = "jar";
                 }
 
-                projectArtifactSet.add(new Artifact(projectGroupId, projectArtifactId, projectVersion, projectType));
+                Artifact projectArtifact = new Artifact(projectGroupId, projectArtifactId, projectVersion, projectType);
+                projectArtifact.setInternalDependency(true);
+
+                projectArtifactSet.add(projectArtifact);
 
                 Element dependenciesElement = getDependenciesElement(project);
 
@@ -269,6 +272,7 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
                 }
             }
 
+            dependentArtifactSet.removeIf(projectArtifactSet::contains);
             dependentArtifactSet.addAll(projectArtifactSet);
 
             return dependentArtifactSet;

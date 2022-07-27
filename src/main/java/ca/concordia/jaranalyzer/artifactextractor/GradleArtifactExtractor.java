@@ -120,6 +120,7 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
                     GradleModuleVersion gradleModuleVersion = gradlePublication.getId();
 
                     artifact = new Artifact(gradleModuleVersion.getGroup(), gradleModuleVersion.getName(), gradleModuleVersion.getVersion());
+                    artifact.setInternalDependency(true);
                 }
             }
 

@@ -22,6 +22,8 @@ public class Artifact implements Serializable {
     private final String version;
     private final String type;
 
+    private boolean isInternalDependency;
+
     public Artifact(String groupId, String artifactId, String version, String type) {
         this.groupId = groupId;
         this.artifactId = artifactId;
@@ -47,6 +49,14 @@ public class Artifact implements Serializable {
 
     public String getType() {
         return type;
+    }
+
+    public boolean isInternalDependency() {
+        return isInternalDependency;
+    }
+
+    public void setInternalDependency(boolean internalDependency) {
+        this.isInternalDependency = internalDependency;
     }
 
     @Override

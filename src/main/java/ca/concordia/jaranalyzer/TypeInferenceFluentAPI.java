@@ -81,7 +81,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
      * reached, then if no method is found an empty list will be returned.<br>
      */
     private List<MethodInfo> getAllMethods(Criteria criteria) {
-        List<Integer> jarIdList = jarInfoService.getJarIdList(criteria.getDependentArtifactSet(), criteria.getJavaVersion());
+        List<Integer> internalDependencyJarIdList = new ArrayList<>();
+        List<Integer> jarIdList = jarInfoService.getJarIdList(criteria.getDependentArtifactSet(), criteria.getJavaVersion(), internalDependencyJarIdList);
         List<String> importList = criteria.getImportList();
         String methodName = criteria.getMethodName();
 
@@ -108,7 +109,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                         jarIdList, classQNameSet, classInfoService, methodInfoService);
 
-                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList);
+                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList, internalDependencyJarIdList);
 
                 if (!qualifiedMethodInfoList.isEmpty()
                         && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -160,7 +161,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 boolean isOwningClassAttribute = (i == 0);
                 qualifiedMethodInfoList.forEach(m -> m.setOwningClassAttribute(isOwningClassAttribute));
 
-                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList);
+                qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList, internalDependencyJarIdList);
 
                 if (i != 0
                         && !qualifiedMethodInfoList.isEmpty()
@@ -192,7 +193,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                 jarIdList, importedClassQNameSet, classInfoService, methodInfoService);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList);
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList, internalDependencyJarIdList);
 
         Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
 
@@ -212,7 +213,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoListForInnerClass(methodName, criteria.getNumberOfParameters(),
                 jarIdList, importedClassQNameSet, methodInfoService);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList);
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList, internalDependencyJarIdList);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -230,7 +231,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         qualifiedMethodInfoList = getQualifiedMethodInfoListForPackageImport(methodName, criteria.getNumberOfParameters(),
                 packageNameList, importedClassQNameSet, jarIdList, classInfoService, methodInfoService);
 
-        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList);
+        qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList, internalDependencyJarIdList);
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -253,7 +254,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(), jarIdList,
                     classQNameSet, classInfoService, methodInfoService);
 
-            qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList);
+            qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList, internalDependencyJarIdList);
 
             if (!qualifiedMethodInfoList.isEmpty()
                     && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
@@ -310,12 +311,15 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
     private List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList,
                                            Criteria criteria,
-                                           List<Integer> jarIdList) {
+                                           List<Integer> jarIdList,
+                                           List<Integer> internalDependencyJarIdList) {
         if (methodInfoList.isEmpty()) {
             return methodInfoList;
         }
 
         modifyMethodInfoForArray(methodInfoList, criteria.getInvokerTypeInfo());
+
+        setInternalDependencyProperty(methodInfoList, internalDependencyJarIdList);
 
         reduceByteCodeAddedArgumentsForInnerClassConstructor(methodInfoList, criteria, jarIdList, classInfoService);
 

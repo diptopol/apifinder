@@ -10,9 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Diptopol
@@ -81,13 +79,17 @@ public class JarInfoService {
         return exists;
     }
 
-    public List<Integer> getJarIdList(Set<Artifact> artifactSet, String javaVersion) {
+    public List<Integer> getJarIdList(Set<Artifact> artifactSet, String javaVersion, List<Integer> internalDependencyJarIdList) {
         List<Integer> jarIdList = new ArrayList<>();
 
         artifactSet.forEach(artifact -> {
             int jarId = getJarInfoId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
 
             if (jarId > 0) {
+                if (artifact.isInternalDependency() && Objects.nonNull(internalDependencyJarIdList)) {
+                    internalDependencyJarIdList.add(jarId);
+                }
+
                 jarIdList.add(jarId);
             }
         });

@@ -404,6 +404,7 @@ public class ClassInfoService {
 
         classInfo.setType(Type.getType(resultSet.getString("type_descriptor")));
         classInfo.setSignature(resultSet.getString("signature"));
+        classInfo.setJarId(resultSet.getInt("jar_id"));
 
         classInfo.setTypeInfo(getClassTypeInfo(classInfo.getType(), classInfo.getQualifiedName(), classInfo.getSignature()));
 
