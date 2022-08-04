@@ -8,6 +8,7 @@ import ca.concordia.jaranalyzer.models.typeInfo.*;
 import ca.concordia.jaranalyzer.service.ClassInfoService;
 import ca.concordia.jaranalyzer.service.JarInfoService;
 import ca.concordia.jaranalyzer.service.MethodInfoService;
+import ca.concordia.jaranalyzer.util.EntityUtils;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.apache.commons.collections4.CollectionUtils;
@@ -854,6 +855,7 @@ public abstract class TypeInferenceBase {
 
                 methodInfoList.forEach(m -> {
                     m.setReturnType(returnType);
+                    m.setReturnTypeInfo(EntityUtils.getTypeInfo(m.getReturnType()));
                     m.setThrownInternalClassNames(Collections.emptyList());
                 });
             } else if (invokerTypeInfo.isVarargTypeInfo()) {
@@ -870,6 +872,7 @@ public abstract class TypeInferenceBase {
 
                 methodInfoList.forEach(m -> {
                     m.setReturnType(returnType);
+                    m.setReturnTypeInfo(EntityUtils.getTypeInfo(m.getReturnType()));
                     m.setThrownInternalClassNames(Collections.emptyList());
                 });
             }

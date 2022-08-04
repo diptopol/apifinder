@@ -1009,6 +1009,25 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testCloneMethodReturnType() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/math/Quantiles.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new ScaleAndIndexes(scale,indexes.clone())")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
+
+                    assert ("com.google.common.math.Quantiles.ScaleAndIndexes" +
+                            "::private void Quantiles$ScaleAndIndexes(int, int[])").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 

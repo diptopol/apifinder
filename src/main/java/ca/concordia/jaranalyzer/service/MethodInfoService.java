@@ -4,6 +4,7 @@ import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.*;
 import ca.concordia.jaranalyzer.util.DataSource;
 import ca.concordia.jaranalyzer.util.DbUtils;
+import ca.concordia.jaranalyzer.util.EntityUtils;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import ca.concordia.jaranalyzer.util.signaturevisitor.MethodArgumentExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.MethodReturnTypeExtractor;
@@ -318,7 +319,7 @@ public class MethodInfoService {
             methodInfo.setArgumentTypeInfoList(methodArgumentExtractor.getArgumentList());
         } else {
             for (Type argumentType: methodInfo.getArgumentTypes()) {
-                argumentTypeInfoList.add(getTypeInfo(argumentType));
+                argumentTypeInfoList.add(EntityUtils.getTypeInfo(argumentType));
             }
 
             methodInfo.setFormalTypeParameterList(formalTypeParameterList);
@@ -338,29 +339,7 @@ public class MethodInfoService {
             if (Type.VOID_TYPE.equals(methodInfo.getReturnType())) {
                 methodInfo.setReturnTypeInfo(new VoidTypeInfo());
             } else {
-                methodInfo.setReturnTypeInfo(getTypeInfo(methodInfo.getReturnType()));
-            }
-        }
-    }
-
-    private TypeInfo getTypeInfo(Type type) {
-        String typeClassName = type.getClassName()
-                .replaceAll("\\$", ".");
-
-        if (typeClassName.endsWith("[]")) {
-            int dimension = type.getDimensions();
-            String className = typeClassName.replaceAll("\\[]", "");
-
-            if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(className)) {
-                return new ArrayTypeInfo(new PrimitiveTypeInfo(className), dimension);
-            } else {
-                return new ArrayTypeInfo(new QualifiedTypeInfo(className), dimension);
-            }
-        } else {
-            if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(typeClassName)) {
-                return new PrimitiveTypeInfo(typeClassName);
-            } else {
-                return new QualifiedTypeInfo(typeClassName);
+                methodInfo.setReturnTypeInfo(EntityUtils.getTypeInfo(methodInfo.getReturnType()));
             }
         }
     }
