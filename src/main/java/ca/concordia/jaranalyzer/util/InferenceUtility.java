@@ -2340,22 +2340,29 @@ public class InferenceUtility {
     public static List<String> getNonEnclosingAccessibleClassListForInstantiation(ASTNode methodNode,
                                                                                   List<String> enclosingQClassNameList) {
 
-        AbstractTypeDeclaration topMostAbstractTypeDeclaration = null;
+        AbstractTypeDeclaration abstractTypeDeclaration = null;
         ASTNode node = methodNode;
+
+        List<String> orderedInnerQNameList = new ArrayList<>();
 
         while (Objects.nonNull(node)) {
             if (node instanceof AbstractTypeDeclaration) {
-                topMostAbstractTypeDeclaration = (AbstractTypeDeclaration) node;
+                abstractTypeDeclaration = (AbstractTypeDeclaration) node;
+                List<String> innerClassQNameList = getInnerClassQNameList(abstractTypeDeclaration);
+
+                for (String innerClassQName: innerClassQNameList) {
+                    if (!orderedInnerQNameList.contains(innerClassQName)) {
+                        orderedInnerQNameList.add(innerClassQName);
+                    }
+                }
             }
 
             node = node.getParent();
         }
 
-        List<String> innerQNameList = getInnerClassQNameList(topMostAbstractTypeDeclaration);
+        orderedInnerQNameList.removeIf(enclosingQClassNameList::contains);
 
-        innerQNameList.removeIf(enclosingQClassNameList::contains);
-
-        return innerQNameList;
+        return orderedInnerQNameList;
     }
 
     /*

@@ -1028,6 +1028,25 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testOrderingOfNonEnclosingInnerClass() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/StandardTable.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new EntrySet()")
+                        && classInstanceCreation.getParent().getParent().getParent().toString().startsWith("@Override protected Set<Entry<R,Map<C,V>>> createEntrySet(){")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
+
+                    assert ("com.google.common.collect.StandardTable.RowMap.EntrySet::void StandardTable$RowMap$EntrySet()").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
