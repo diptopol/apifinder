@@ -600,7 +600,7 @@ public abstract class TypeInferenceBase {
         int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(methodInfoSet);
 
         if (methodInfoSet.size() > 1
-                && !methodInfoSet.stream().allMatch(MethodInfo::isAbstract)
+                && ((!methodInfoSet.stream().allMatch(MethodInfo::isAbstract)) || methodInfoSet.stream().allMatch(MethodInfo::isAbstract))
                 && !methodInfoSet.stream().allMatch(m -> m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)) {
             Set<MethodInfo> filteredMethodInfoSet = new LinkedHashSet<>();
 
