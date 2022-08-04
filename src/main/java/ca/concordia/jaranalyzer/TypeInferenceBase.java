@@ -1219,7 +1219,7 @@ public abstract class TypeInferenceBase {
 
         if (Objects.nonNull(outerClassPrefix) && methodInfo.isInnerClassConstructor()) {
             outerClassPrefixMatchingForInnerClassConstructor =
-                    methodInfo.getInternalClassConstructorPrefix().equals(outerClassPrefix + "$");
+                    methodInfo.getInternalClassConstructorPrefix().endsWith(outerClassPrefix + "$");
         }
 
         return outerClassPrefixMatchingForInnerClassConstructor

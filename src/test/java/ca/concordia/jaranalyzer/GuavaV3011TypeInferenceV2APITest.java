@@ -990,6 +990,25 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testNestedInnerClassConstructor() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/graph/DirectedGraphConnections.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(ClassInstanceCreation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("new NodeConnection.Pred<>(thisNode)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
+
+                    assert ("com.google.common.graph.DirectedGraphConnections.NodeConnection.Pred" +
+                            "::void DirectedGraphConnections$NodeConnection$Pred(N)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
