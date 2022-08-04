@@ -1280,7 +1280,7 @@ public class InferenceUtility {
 
             if (Objects.nonNull(owningClassInfo) && Objects.nonNull(invokerTypeInfo)
                     && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(invokerTypeInfo.getQualifiedClassName())) {
-                populateFormalTypeParametersOfOwningClass(methodInfo, replacedTypeInfoMap);
+                populateFormalTypeParametersOfOwningClass(methodInfo, argumentTypeInfoList, formalTypeParameterMap, replacedTypeInfoMap);
             }
 
             transformTypeInfoRepresentationUsingInferredFormalTypeParameterMap(formalTypeParameterMap, methodInfo, replacedTypeInfoMap);
@@ -1607,7 +1607,7 @@ public class InferenceUtility {
 
         for (int i = 0; i < methodArgumentTypeInfoList.size(); i++) {
             TypeInfo methodArgument = methodArgumentTypeInfoList.get(i);
-            TypeInfo argument = (methodInfo.isVarargs() && methodArgument.isArrayTypeInfo() && i == argumentTypeInfoList.size() || i >= argumentTypeInfoList.size())
+            TypeInfo argument = (methodInfo.isVarargs() && methodArgument.isArrayTypeInfo() && i >= argumentTypeInfoList.size())
                     ? null
                     : argumentTypeInfoList.get(i);
 
@@ -1658,19 +1658,45 @@ public class InferenceUtility {
         }
     }
 
-    private static void populateFormalTypeParametersOfOwningClass(MethodInfo methodInfo, Map<String, TypeInfo> replacedTypeInfoMap) {
-        List<TypeInfo> typeInfoList = methodInfo.getArgumentTypeInfoList();
-        for (TypeInfo typeInfo : typeInfoList) {
-            if (typeInfo.isFormalTypeParameterInfo()) {
-                FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeInfo;
-                replacedTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo);
+    private static void populateFormalTypeParametersOfOwningClass(MethodInfo methodInfo,
+                                                                  List<TypeInfo> argumentTypeInfoList,
+                                                                  Map<String, TypeInfo> formalTypeParameterMap,
+                                                                  Map<String, TypeInfo> replacedTypeInfoMap) {
+
+        for (int i = 0; i < methodInfo.getArgumentTypeInfoList().size(); i++) {
+            TypeInfo methodArgumentTypeInfo = methodInfo.getArgumentTypeInfoList().get(i);
+            boolean varargCondition = methodInfo.isVarargs() && methodArgumentTypeInfo.isArrayTypeInfo() && i >= argumentTypeInfoList.size();
+            TypeInfo argumentTypeInfo = (argumentTypeInfoList.isEmpty() || varargCondition)
+                    ? null
+                    : argumentTypeInfoList.get(i);
+
+            if (methodArgumentTypeInfo.isFormalTypeParameterInfo()) {
+                FormalTypeParameterInfo methodArgumentFormalTypeParameterInfo = (FormalTypeParameterInfo) methodArgumentTypeInfo;
+                TypeInfo baseType = methodArgumentFormalTypeParameterInfo;
+
+                if (Objects.nonNull(argumentTypeInfo) && argumentTypeInfo.isFormalTypeParameterInfo()) {
+                    FormalTypeParameterInfo argumentFormalTypeParameterInfo = (FormalTypeParameterInfo) argumentTypeInfo;
+                    if (!argumentFormalTypeParameterInfo.getTypeParameter().equals(methodArgumentFormalTypeParameterInfo.getTypeParameter())) {
+                        if (!formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) methodArgumentTypeInfo).getTypeParameter())) {
+                            baseType = argumentFormalTypeParameterInfo;
+                            formalTypeParameterMap.put(methodArgumentFormalTypeParameterInfo.getTypeParameter(), baseType);
+                        }
+                    }
+                }
+
+                replacedTypeInfoMap.put(methodArgumentFormalTypeParameterInfo.getTypeParameter(), baseType);
             }
         }
 
         TypeInfo returnTypeInfo = methodInfo.getReturnTypeInfo();
         if (returnTypeInfo.isFormalTypeParameterInfo()) {
             FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) returnTypeInfo;
-            replacedTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo);
+
+            TypeInfo baseType = formalTypeParameterMap.containsKey(formalTypeParameterInfo.getTypeParameter())
+                    ? formalTypeParameterMap.get(formalTypeParameterInfo.getTypeParameter())
+                    : formalTypeParameterInfo;
+
+            replacedTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), baseType);
         }
     }
 
