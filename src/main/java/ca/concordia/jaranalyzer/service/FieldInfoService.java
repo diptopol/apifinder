@@ -11,10 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Diptopol
@@ -52,7 +49,32 @@ public class FieldInfoService {
             logger.error("Error", e);
         }
 
-        return fieldInfoList;
+        Map<String, List<FieldInfo>> fieldInfoListByClassNameMap = new HashMap<>();
+
+        for (FieldInfo fieldInfo: fieldInfoList) {
+            if (fieldInfoListByClassNameMap.containsKey(fieldInfo.getClassInfo().getQualifiedName())) {
+                List<FieldInfo> fieldInfoListPerClass =
+                        fieldInfoListByClassNameMap.get(fieldInfo.getClassInfo().getQualifiedName());
+
+                fieldInfoListPerClass.add(fieldInfo);
+
+            } else {
+                List<FieldInfo> fieldInfoListPerClass = new ArrayList<>();
+                fieldInfoListPerClass.add(fieldInfo);
+
+                fieldInfoListByClassNameMap.put(fieldInfo.getClassInfo().getQualifiedName(), fieldInfoListPerClass);
+            }
+        }
+
+        List<FieldInfo> orderedFieldInfoList = new ArrayList<>();
+
+        for (String qualifiedClassName: qualifiedClassNameSet) {
+            if (fieldInfoListByClassNameMap.containsKey(qualifiedClassName)) {
+                orderedFieldInfoList.addAll(fieldInfoListByClassNameMap.get(qualifiedClassName));
+            }
+        }
+
+        return orderedFieldInfoList;
     }
 
     public List<FieldInfo> fetchCoreFieldInfo(Set<String> qualifiedClassNameSet,

@@ -3,6 +3,7 @@ package ca.concordia.jaranalyzer.entity;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import org.objectweb.asm.Type;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,6 +45,7 @@ public class ClassInfo {
     private boolean isInternalDependency;
 
     public ClassInfo() {
+        this.innerClassQNameList = new ArrayList<>();
     }
 
     public int getId() {

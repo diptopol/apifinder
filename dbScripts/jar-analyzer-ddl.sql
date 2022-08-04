@@ -98,9 +98,8 @@ PRIMARY KEY (id),
 foreign key (class_id) REFERENCES class (id)
 );
 
-CREATE TABLE inner_class (
-inner_class_id INT NOT NULL,
+CREATE TABLE inner_class_name (
 parent_class_id INT NOT NULL,
-foreign key (inner_class_id) REFERENCES class (id),
+inner_class_q_name VARCHAR(1000) NOT NULL,
 foreign key (parent_class_id) REFERENCES class (id)
 );

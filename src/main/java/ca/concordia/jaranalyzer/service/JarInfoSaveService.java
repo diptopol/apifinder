@@ -30,7 +30,6 @@ public class JarInfoSaveService {
         try {
             connection = DataSource.getConnection();
             int jarId = insertJarInfo(jarInfo, connection);
-            Map<Integer, List<String>> innerClassQNameMap = new HashMap<>();
 
             if (jarId > 0) {
                 for (ClassInfo classInfo : jarInfo.getClassInfoList()) {
@@ -47,16 +46,8 @@ public class JarInfoSaveService {
 
                         insertSuperClassRelation(classInfo, classInfoId, connection);
 
-                        if (!classInfo.isInnerClass()) {
-                            innerClassQNameMap.put(classInfoId, classInfo.getInnerClassQNameList());
-                        }
+                        insertInnerClassQNameList(classInfoId, classInfo.getInnerClassQNameList(), connection);
                     }
-                }
-
-                for (Map.Entry<Integer, List<String>> entry: innerClassQNameMap.entrySet()) {
-                    int classInfoId = entry.getKey();
-                    List<String> innerClassQNameList = entry.getValue();
-                    insertInnerClassQNameList(classInfoId, innerClassQNameList, jarId, connection);
                 }
             }
 
@@ -84,15 +75,12 @@ public class JarInfoSaveService {
         }
     }
 
-    private void insertInnerClassQNameList(int classInfoId, List<String> innerClassQNameList,
-                                           int jarId, Connection connection) throws SQLException {
+    private void insertInnerClassQNameList(int classInfoId,
+                                           List<String> innerClassQNameList,
+                                           Connection connection) throws SQLException {
 
         for (String classQName: innerClassQNameList) {
-            int innerClassInfoId = getClassInfoId(classQName, jarId, connection);
-
-            if (innerClassInfoId > 0) {
-                insertInnerClassRelation(classInfoId, innerClassInfoId, connection);
-            }
+            insertInnerClassRelation(classInfoId, classQName, connection);
         }
     }
 
@@ -243,7 +231,7 @@ public class JarInfoSaveService {
                 pst.setInt(1, classInfoId);
                 pst.setString(2, classInfo.getSuperClassQName());
                 pst.setString(3, "SUPER_CLASS");
-                pst.setInt(4, precedenceOrder);
+                pst.setInt(4, precedenceOrder++);
 
                 pst.executeUpdate();
             }
@@ -254,19 +242,19 @@ public class JarInfoSaveService {
                 pst.setInt(1, classInfoId);
                 pst.setString(2, interfaceQName);
                 pst.setString(3, "INTERFACE");
-                pst.setInt(4, precedenceOrder);
+                pst.setInt(4, precedenceOrder++);
 
                 pst.executeUpdate();
             }
         }
     }
 
-    private void insertInnerClassRelation(int classInfoId, int innerClassInfoId, Connection connection) throws SQLException {
-        String insertQuery = "INSERT INTO inner_class(parent_class_id, inner_class_id) VALUES(?, ?)";
+    private void insertInnerClassRelation(int classInfoId, String innerClassQName, Connection connection) throws SQLException {
+        String insertQuery = "INSERT INTO inner_class_name(parent_class_id, inner_class_q_name) VALUES(?, ?)";
 
         try (PreparedStatement pst = connection.prepareStatement(insertQuery)) {
             pst.setInt(1, classInfoId);
-            pst.setInt(2, innerClassInfoId);
+            pst.setString(2, innerClassQName);
 
             pst.executeUpdate();
         }

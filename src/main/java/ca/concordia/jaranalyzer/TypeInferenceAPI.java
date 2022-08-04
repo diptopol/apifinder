@@ -226,7 +226,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         /*
           STEP 3
          */
-        qualifiedMethodInfoList = methodInfoService.getInnerClassMethodInfoList(importedClassQNameSet, jarIdList, methodName);;
+        qualifiedMethodInfoList = getQualifiedMethodInfoListForInnerClass(methodName, numberOfParameters, jarIdList, importedClassQNameSet, methodInfoService);
 
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, invokerTypeInfo, isSuperInvoker,
                 isClassInstantiation, argumentTypeInfoList, numberOfParameters, jarIdList, internalDependencyJarIdList);

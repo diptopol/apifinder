@@ -65,22 +65,18 @@ public class MethodInfoService {
     public List<MethodInfo> getInnerClassMethodInfoList(Set<String> qualifiedClassNameSet,
                                                         List<Integer> jarIdList,
                                                         String methodName) {
+        Set<String> innerClassQNameSet = classInfoService.getInnerClassQualifiedNameSet(qualifiedClassNameSet, jarIdList);
         List<MethodInfo> methodInfoList = new ArrayList<>();
 
-        try (Connection connection = DataSource.getConnection()) {
-            methodInfoList = fetchMethodInfoCoreForInnerClass(qualifiedClassNameSet, jarIdList, methodName, connection);
-            populateArgumentList(methodInfoList, connection);
-            populateThrownClassNameList(methodInfoList, connection);
+        while (!innerClassQNameSet.isEmpty()) {
+            List<Integer> innerClassIdList = classInfoService.getClassInfoIdList(jarIdList, innerClassQNameSet);
+            methodInfoList = getMethodInfoList(innerClassIdList, methodName);
 
-            for (MethodInfo methodInfo: methodInfoList) {
-                populateMethodArgumentTypeInfoList(methodInfo);
-                populateMethodReturnTypeInfo(methodInfo);
-                methodInfo.setClassInfo(classInfoService.getClassInfo(methodInfo.getClassInfoId(), connection));
+            if (!methodInfoList.isEmpty()) {
+                return methodInfoList;
             }
 
-            connection.commit();
-        } catch (SQLException e) {
-            logger.error("Error", e);
+            innerClassQNameSet = classInfoService.getInnerClassQualifiedNameSet(innerClassQNameSet, jarIdList);
         }
 
         return methodInfoList;
@@ -131,49 +127,6 @@ public class MethodInfoService {
             for (String packageName : packageNameList) {
                 pst.setString(index++, packageName);
             }
-
-            resultSet = pst.executeQuery();
-
-            while (resultSet.next()) {
-                MethodInfo methodInfo = getMethodInfo(resultSet);
-                methodInfoList.add(methodInfo);
-            }
-
-        } finally {
-            DbUtils.closeResources(pst, resultSet);
-        }
-
-        return methodInfoList;
-    }
-
-    private List<MethodInfo> fetchMethodInfoCoreForInnerClass(Set<String> qualifiedClassNameSet,
-                                                              List<Integer> jarIdList,
-                                                              String methodName,
-                                                              Connection connection) throws SQLException {
-        List<MethodInfo> methodInfoList = new ArrayList<>();
-
-        PreparedStatement pst = null;
-        ResultSet resultSet = null;
-
-        String query = "SELECT m.* FROM method m JOIN inner_class ic ON (m.class_id = ic.inner_class_id)" +
-                " JOIN class c ON (ic.parent_class_id = c.id)" +
-                " WHERE c.jar_id IN (" + DbUtils.getInClausePlaceHolder(jarIdList.size()) + ")" +
-                " AND c.q_name IN (" + DbUtils.getInClausePlaceHolder(qualifiedClassNameSet.size()) + ")" +
-                " AND m.name = ?";
-
-        try {
-            pst = connection.prepareStatement(query);
-
-            int index = 1;
-            for (Integer jarId : jarIdList) {
-                pst.setInt(index++, jarId);
-            }
-
-            for (String qName : qualifiedClassNameSet) {
-                pst.setString(index++, qName);
-            }
-
-            pst.setString(index, methodName);
 
             resultSet = pst.executeQuery();
 

@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -32,7 +29,7 @@ public class ClassInfoExtractor {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassInfoExtractor.class);
 
-    private static final String ANONYMOUS_INNER_CLASS_NAME_REGEX = ".*\\$[0-9]+";
+    private static final String ANONYMOUS_INNER_CLASS_NAME_REGEX = ".*\\.[0-9]+";
 
     public static List<ClassInfo> getClassInfoList(ZipFile jmodFile) {
         Enumeration<? extends ZipEntry> entries = jmodFile.entries();
@@ -57,6 +54,8 @@ public class ClassInfoExtractor {
             }
         }
 
+        populateInnerClassList(classInfoList);
+
         return classInfoList;
     }
 
@@ -80,6 +79,8 @@ public class ClassInfoExtractor {
                 }
             }
         }
+
+        populateInnerClassList(classInfoList);
 
         return classInfoList;
     }
@@ -140,7 +141,6 @@ public class ClassInfoExtractor {
         }
 
         classInfo.setInterfaceQNameList(getInterfaceQNameList(classNode));
-        classInfo.setInnerClassQNameList(getInnerClassQNameList(classNode));
 
         return classInfo;
     }
@@ -165,18 +165,6 @@ public class ClassInfoExtractor {
         }
 
         return methodInfoList;
-    }
-
-    private static List<String> getInnerClassQNameList(ClassNode classNode) {
-        List<String> innerClassQNameList = new ArrayList<>();
-
-        for (InnerClassNode innerClassNode : classNode.innerClasses) {
-            if (!innerClassNode.name.matches(ANONYMOUS_INNER_CLASS_NAME_REGEX)) {
-                innerClassQNameList.add(getQualifiedClassName(innerClassNode.name));
-            }
-        }
-
-        return innerClassQNameList;
     }
 
     private static List<String> getInterfaceQNameList(ClassNode classNode) {
@@ -226,6 +214,28 @@ public class ClassInfoExtractor {
         }
 
         return null;
+    }
+
+    private static void populateInnerClassList(List<ClassInfo> classInfoList) {
+        Map<String, ClassInfo> classInfoMap = new HashMap<>();
+
+        for (ClassInfo classInfo: classInfoList) {
+            if (!classInfoMap.containsKey(classInfo.getQualifiedName())) {
+                classInfoMap.put(classInfo.getQualifiedName(), classInfo);
+            }
+        }
+
+        for (ClassInfo classInfo: classInfoList) {
+            if (classInfo.isInnerClass() && !classInfo.getQualifiedName().matches(ANONYMOUS_INNER_CLASS_NAME_REGEX)) {
+                String outerClassQualifiedName = classInfo.getOuterClassQualifiedName();
+
+                if (classInfoMap.containsKey(outerClassQualifiedName)) {
+                    ClassInfo outerClassInfo = classInfoMap.get(outerClassQualifiedName);
+
+                    outerClassInfo.getInnerClassQNameList().add(classInfo.getQualifiedName());
+                }
+            }
+        }
     }
 
 }

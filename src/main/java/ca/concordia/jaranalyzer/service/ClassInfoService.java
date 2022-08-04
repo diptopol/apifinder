@@ -254,14 +254,17 @@ public class ClassInfoService {
     }
 
     public Set<String> getInnerClassQualifiedNameSet(Set<String> classQualifiedNameSet, List<Integer> jarIdList) {
+        if (classQualifiedNameSet.isEmpty()) {
+            return Collections.emptySet();
+        }
+
         List<String> innerClassQualifiedNameList = new ArrayList<>();
 
         PreparedStatement pst = null;
         ResultSet resultSet = null;
 
-        String query = "SELECT ic.q_name q_name from inner_class icr" +
+        String query = "SELECT icr.inner_class_q_name q_name from inner_class_name icr" +
                 " JOIN class pc ON (icr.parent_class_id = pc.id)" +
-                " JOIN class ic ON (icr.inner_class_id = ic.id)" +
                 " WHERE pc.jar_id IN (" + DbUtils.getInClausePlaceHolder(jarIdList.size()) + ")" +
                 " AND pc.q_name IN (" + DbUtils.getInClausePlaceHolder(classQualifiedNameSet.size()) + ")";
 
