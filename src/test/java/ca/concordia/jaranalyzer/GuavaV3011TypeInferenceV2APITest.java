@@ -1047,6 +1047,26 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+
+    @Test
+    public void testArrayCreation() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/reflect/TypeResolver.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("combined.toArray(new Type[0])")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                    assert ("java.util.Set" +
+                            "::public abstract java.lang.reflect.Type[] toArray(java.lang.reflect.Type[])").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 

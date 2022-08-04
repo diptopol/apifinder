@@ -695,8 +695,6 @@ public class InferenceUtility {
 
         } else if (expression instanceof ArrayCreation) {
             ArrayCreation arrayCreation = (ArrayCreation) expression;
-
-            int dimension = arrayCreation.dimensions().size();
             ArrayType arrayType = arrayCreation.getType();
 
             TypeInfo arrayTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, arrayType, owningClassInfo);
@@ -705,7 +703,7 @@ public class InferenceUtility {
                 return new NullTypeInfo();
             }
 
-            return new ArrayTypeInfo(arrayTypeInfo, dimension);
+            return arrayTypeInfo;
 
         } else if (expression instanceof ArrayAccess) {
             /*
