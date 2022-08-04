@@ -1533,6 +1533,30 @@ public class InferenceUtility {
             );
         }
 
+        if (!typeArgumentTypeInfoList.isEmpty()) {
+            List<TypeInfo> formalTypeParameterList = methodInfo.getFormalTypeParameterList();
+
+            for (int i = 0; i < typeArgumentTypeInfoList.size(); i++) {
+                TypeInfo typeArgumentInfo = typeArgumentTypeInfoList.get(i);
+                TypeInfo methodTypeArgumentInfo = formalTypeParameterList.get(i);
+
+                if (methodTypeArgumentInfo.isFormalTypeParameterInfo()) {
+                    FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodTypeArgumentInfo;
+                    formalTypeParameterInfo.setBaseTypeInfo(typeArgumentInfo);
+                }
+            }
+
+            inferredTypeInfoMap.putAll(
+                    formalTypeParameterList.stream()
+                            .filter(TypeInfo::isFormalTypeParameterInfo)
+                            .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
+                            .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
+                                    FormalTypeParameterInfo::getBaseTypeInfo))
+            );
+        } else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo) && !argumentTypeInfoList.isEmpty()) {
+            populateInferredFormalTypeParameterMapUsingMethodArguments(methodInfo, argumentTypeInfoList, inferredTypeInfoMap);
+        }
+
         if (Objects.nonNull(returnTypeInfo)) {
             if (methodInfo.getReturnTypeInfo().isFormalTypeParameterInfo()) {
                 FormalTypeParameterInfo methodReturnFormalTypeParameterInfo =
@@ -1558,30 +1582,6 @@ public class InferenceUtility {
                     }
                 }
             }
-        }
-
-        if (!typeArgumentTypeInfoList.isEmpty()) {
-            List<TypeInfo> formalTypeParameterList = methodInfo.getFormalTypeParameterList();
-
-            for (int i = 0; i < typeArgumentTypeInfoList.size(); i++) {
-                TypeInfo typeArgumentInfo = typeArgumentTypeInfoList.get(i);
-                TypeInfo methodTypeArgumentInfo = formalTypeParameterList.get(i);
-
-                if (methodTypeArgumentInfo.isFormalTypeParameterInfo()) {
-                    FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodTypeArgumentInfo;
-                    formalTypeParameterInfo.setBaseTypeInfo(typeArgumentInfo);
-                }
-            }
-
-            inferredTypeInfoMap.putAll(
-                    formalTypeParameterList.stream()
-                            .filter(TypeInfo::isFormalTypeParameterInfo)
-                            .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
-                            .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
-                                    FormalTypeParameterInfo::getBaseTypeInfo))
-            );
-        } else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo) && !argumentTypeInfoList.isEmpty()) {
-            populateInferredFormalTypeParameterMapUsingMethodArguments(methodInfo, argumentTypeInfoList, inferredTypeInfoMap);
         }
 
         return inferredTypeInfoMap;

@@ -1067,6 +1067,26 @@ public class GuavaV3011TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testOrderOfReturnStatement() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/Multimaps.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("checkNotNull(delegate)")
+                        && methodInvocation.getParent().getParent().getParent().toString().contains("unmodifiableMultimap(ImmutableMultimap<K,V> delegate)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                    assert ("com.google.common.base.Preconditions" +
+                            "::public static com.google.common.collect.ImmutableMultimap checkNotNull(com.google.common.collect.ImmutableMultimap)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
