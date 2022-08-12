@@ -12,20 +12,30 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.kohsuke.github.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static ca.concordia.jaranalyzer.util.FileUtils.createFolderIfAbsent;
 
 public class GitUtil {
 
-    public static String getNearestTagCommit(String SHAId, Git git) {
+    private static final Logger logger = LoggerFactory.getLogger(GitUtil.class);
+
+    private static GitHub GITHUB = null;
+    private static final String GITHUB_URL = "https://github.com/";
+
+    public static String getNearestTagCommitIdFromLocalGit(String SHAId, Git git) {
         Repository repository = git.getRepository();
 
         String tagName = null;
@@ -49,7 +59,7 @@ public class GitUtil {
             }
 
         } catch (IOException | GitAPIException e) {
-            e.printStackTrace();
+            logger.error("Error occurred", e);
         }
 
 
@@ -65,6 +75,59 @@ public class GitUtil {
         return Objects.nonNull(nearestTagCommitId) ? nearestTagCommitId : SHAId;
     }
 
+    public static String getNearestTagCommitId(String cloneUrl, String commitId) {
+        String nearestTagCommitId = null;
+
+        try {
+            GitHub gitHub = GitUtil.connectGithub();
+            String repositoryName = GitUtil.extractRepositoryName(cloneUrl);
+            GHRepository ghRepository = gitHub.getRepository(repositoryName);
+
+            PagedIterable<GHTag> tagList = ghRepository.listTags();
+            GHCommit ghCommit = ghRepository.getCommit(commitId);
+            Date commitDate = ghCommit.getCommitDate();
+
+            List<GHTag> eligibleTagList = new ArrayList<>();
+
+            for (GHTag ghTag: tagList) {
+                if (ghTag.getCommit().getCommitDate().getTime() >= ghCommit.getCommitDate().getTime()) {
+                    eligibleTagList.add(ghTag);
+                } else {
+                    break;
+                }
+            }
+
+            Collections.reverse(eligibleTagList);
+
+            for (GHTag ghTag: eligibleTagList) {
+                PagedIterable<GHCommit> commitListInTag = ghRepository.queryCommits().from(ghTag.getName())
+                        .since(getPreviousDay(commitDate)).until(ghTag.getCommit().getCommitDate()).list();
+
+                for (GHCommit commitInTag: commitListInTag) {
+                    if (commitInTag.getSHA1().equals(ghCommit.getSHA1())) {
+                        nearestTagCommitId = ghTag.getCommit().getSHA1();
+                        break;
+                    }
+                }
+
+                if (Objects.nonNull(nearestTagCommitId)) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error occurred", e);
+        }
+
+        return Objects.nonNull(nearestTagCommitId) ? nearestTagCommitId : commitId;
+    }
+
+    private static Date getPreviousDay(Date date) {
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        localDateTime = localDateTime.minusDays(1);
+
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
     public static Optional<RevCommit> findCommit(String SHAId, Repository repo) {
         List<RevCommit> mergeCommits = getMergedCommitList(repo);
 
@@ -76,6 +139,47 @@ public class GitUtil {
                 })
                 .onFailure(e -> e.printStackTrace())
                 .toJavaOptional();
+    }
+
+    public static Map<Path, String> populateFileContents(GHTree ghTree,
+                                                         List<String> matchingFileNameList,
+                                                         List<String> matchingFileExtensionList,
+                                                         List<String> exclusionDirectoryList) {
+        Map<Path, String> pomFileContentsMap = new HashMap<>();
+
+        try {
+            populateFileContents("", ghTree, pomFileContentsMap, matchingFileNameList, matchingFileExtensionList, exclusionDirectoryList);
+        } catch (IOException e) {
+            logger.error("Error occurred", e);
+        }
+
+        return pomFileContentsMap;
+    }
+
+    public static GitHub connectGithub() throws IOException {
+        if (Objects.isNull(GITHUB)) {
+            GITHUB = new GitHubBuilder()
+                    .withOAuthToken(PropertyReader.getProperty("github.oauth.token"))
+                    .build();
+        }
+
+        return GITHUB;
+    }
+
+    public static String extractRepositoryName(String cloneURL) {
+        int hostLength = 0;
+        if (cloneURL.startsWith(GITHUB_URL)) {
+            hostLength = GITHUB_URL.length();
+        }
+
+        int indexOfDotGit = cloneURL.length();
+        if (cloneURL.endsWith(".git")) {
+            indexOfDotGit = cloneURL.indexOf(".git");
+        } else if (cloneURL.endsWith("/")) {
+            indexOfDotGit = cloneURL.length() - 1;
+        }
+
+        return cloneURL.substring(hostLength, indexOfDotGit);
     }
 
     /**
@@ -113,7 +217,7 @@ public class GitUtil {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Error occurred", e);
             }
         }
         return fileContents;
@@ -153,6 +257,52 @@ public class GitUtil {
         }
     }
 
+    public static boolean isFileExists(String cloneUrl, String matchingFileName) {
+        try {
+            GitHub gitHub = GitUtil.connectGithub();
+            String repositoryName = GitUtil.extractRepositoryName(cloneUrl);
+            GHRepository ghRepository = gitHub.getRepository(repositoryName);
+
+            GHTree ghTree = ghRepository.getTree("HEAD");
+
+            for (GHTreeEntry ghTreeEntry : ghTree.getTree()) {
+                if (matchingFileName.contains(ghTreeEntry.getPath())) {
+                    return true;
+                }
+            }
+
+        } catch (IOException e) {
+            logger.error("Error occurred", e);
+        }
+
+        return false;
+    }
+
+    private static void populateFileContents(String path, GHTree ghTree,
+                                             Map<Path, String> pomFileContentsMap,
+                                             List<String> matchingFileNameList,
+                                             List<String> matchingFileExtensionList,
+                                             List<String> exclusionDirectoryList)
+            throws IOException {
+        for (GHTreeEntry ghTreeEntry : ghTree.getTree()) {
+            if (ghTreeEntry.getType().equals("tree") && !exclusionDirectoryList.contains(ghTreeEntry.getPath())) {
+                populateFileContents(path.concat(ghTreeEntry.getPath()).concat("\\"), ghTreeEntry.asTree(),
+                        pomFileContentsMap, matchingFileNameList, matchingFileExtensionList, exclusionDirectoryList);
+            } else {
+                if (matchingFileNameList.contains(ghTreeEntry.getPath())
+                        || matchingFileExtensionList.stream().anyMatch(ext -> ghTreeEntry.getPath().contains(ext))) {
+                    pomFileContentsMap.put(Paths.get(path.concat(ghTreeEntry.getPath())), getPomContent(ghTreeEntry.readAsBlob()));
+                }
+            }
+        }
+    }
+
+    private static String getPomContent(InputStream inputStream) {
+        return new BufferedReader(new InputStreamReader(inputStream))
+                .lines()
+                .collect(Collectors.joining("\n"));
+    }
+
     private static List<RevCommit> getMergedCommitList(Repository repo) {
         return io.vavr.control.Try.of(() -> {
             RevWalk walk = new RevWalk(repo);
@@ -160,10 +310,10 @@ public class GitUtil {
             walk.setRevFilter(RevFilter.ONLY_MERGES);
             return walk;
         }).map(walk -> {
-            Iterator<RevCommit> iter = walk.iterator();
+            Iterator<RevCommit> iterator = walk.iterator();
             List<RevCommit> l = new ArrayList<>();
-            while (iter.hasNext()) {
-                l.add(iter.next());
+            while (iterator.hasNext()) {
+                l.add(iterator.next());
             }
             walk.dispose();
             walk.close();

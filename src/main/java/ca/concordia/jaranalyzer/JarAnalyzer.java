@@ -53,8 +53,23 @@ public class JarAnalyzer {
         jarInfoService = new JarInfoService();
     }
 
+    public Tuple2<String, Set<Artifact>> loadJavaAndExternalJars(String commitId, String projectName, String cloneUrl) {
+        String nearestTagCommit = GitUtil.getNearestTagCommitId(cloneUrl, commitId);
+        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver(nearestTagCommit, projectName, cloneUrl);
+        ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
+        String javaVersion = extractor.getJavaVersion();
+        Integer majorJavaVersion = Utility.getMajorJavaVersion(javaVersion);
+
+        loadJavaPackage(majorJavaVersion);
+
+        Set<Artifact> jarArtifactInfoSet = extractor.getDependentArtifactSet();
+        storeArtifactSet(jarArtifactInfoSet);
+
+        return new Tuple2<>(String.valueOf(majorJavaVersion), jarArtifactInfoSet);
+    }
+
     public Tuple2<String, Set<Artifact>> loadJavaAndExternalJars(String commitId, String projectName, Git git) {
-        String nearestTagCommit = GitUtil.getNearestTagCommit(commitId, git);
+        String nearestTagCommit = GitUtil.getNearestTagCommitIdFromLocalGit(commitId, git);
         ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver(nearestTagCommit, projectName, git);
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         String javaVersion = extractor.getJavaVersion();

@@ -1,12 +1,12 @@
 package ca.concordia.jaranalyzer.artifactextractor;
 
 import ca.concordia.jaranalyzer.util.GitUtil;
-import ca.concordia.jaranalyzer.util.Utility;
 import org.eclipse.jgit.api.Git;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * @author Diptopol
@@ -23,7 +23,9 @@ public class ArtifactExtractorResolver {
 
     private final String commitId;
     private final String projectName;
-    private final Git git;
+
+    private Git git;
+    private String cloneUrl;
 
     public ArtifactExtractorResolver(String commitId,
                                      String projectName,
@@ -38,9 +40,7 @@ public class ArtifactExtractorResolver {
                                      String cloneLink) {
         this.commitId = commitId;
         this.projectName = projectName;
-
-        Path pathToProject = Utility.getProjectPath(projectName);
-        this.git = GitUtil.openRepository(projectName, cloneLink, pathToProject);
+        this.cloneUrl = cloneLink;
     }
 
     /*
@@ -48,30 +48,43 @@ public class ArtifactExtractorResolver {
      * of .git directory.
      */
     public ArtifactExtractor getArtifactExtractor() {
-        Path projectDirectory = this.git.getRepository().getDirectory().getParentFile().toPath();
-        BuildTool buildTool = getBuildTool(projectDirectory);
+        BuildTool buildTool = getBuildTool();
 
         ArtifactExtractor artifactExtractor;
 
         if (BuildTool.MAVEN.equals(buildTool)) {
-            artifactExtractor = new MavenArtifactExtractor(commitId, projectName, git);
+            artifactExtractor = Objects.nonNull(git)
+                    ? new MavenArtifactExtractor(commitId, projectName, git)
+                    : new MavenArtifactExtractor(commitId, projectName, cloneUrl);
 
         } else if (BuildTool.GRADLE.equals(buildTool)) {
-            artifactExtractor = new GradleArtifactExtractor(commitId, projectName, git);
+            artifactExtractor = Objects.nonNull(git)
+                    ? new GradleArtifactExtractor(commitId, projectName, git)
+                    : new GradleArtifactExtractor(commitId, projectName, cloneUrl);
 
         } else {
-            logger.info("Build Tool not recognized for Project: {}, Path: {}", projectName, projectDirectory);
+            logger.info("Build Tool not recognized for Project: {}", projectName);
             throw new IllegalStateException();
         }
 
         return artifactExtractor;
     }
 
-    private static BuildTool getBuildTool(Path projectDirectory) {
-        if (projectDirectory.resolve("pom.xml").toFile().exists()) {
-            return BuildTool.MAVEN;
-        } else if (projectDirectory.resolve("build.gradle").toFile().exists()) {
-            return BuildTool.GRADLE;
+    private BuildTool getBuildTool() {
+        if (Objects.nonNull(this.git)) {
+            Path projectDirectory = this.git.getRepository().getDirectory().getParentFile().toPath();
+
+            if (projectDirectory.resolve("pom.xml").toFile().exists()) {
+                return BuildTool.MAVEN;
+            } else if (projectDirectory.resolve("build.gradle").toFile().exists()) {
+                return BuildTool.GRADLE;
+            }
+        } else {
+            if (GitUtil.isFileExists(this.cloneUrl, "pom.xml")) {
+                return BuildTool.MAVEN;
+            } else if (GitUtil.isFileExists(this.cloneUrl, "build.gradle")) {
+                return BuildTool.GRADLE;
+            }
         }
 
         return null;

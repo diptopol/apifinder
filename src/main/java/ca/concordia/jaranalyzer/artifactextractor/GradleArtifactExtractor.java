@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.artifactextractor;
 
 import ca.concordia.jaranalyzer.models.Artifact;
+import ca.concordia.jaranalyzer.util.FileUtils;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.PropertyReader;
 import ca.concordia.jaranalyzer.util.Utility;
@@ -13,17 +14,19 @@ import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.GradlePublication;
 import org.gradle.tooling.model.gradle.ProjectPublications;
-import org.gradle.tooling.model.idea.IdeaDependency;
-import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaProject;
-import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency;
+import org.gradle.tooling.model.idea.*;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHTree;
+import org.kohsuke.github.GitHub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.*;
+
+import static ca.concordia.jaranalyzer.util.FileUtils.deleteDirectory;
 
 /**
  * @author Diptopol
@@ -36,43 +39,99 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
     private static final String GRADLE_HOME_PATH = PropertyReader.getProperty("gradle.home");
 
     private final String commitId;
-    private final Git git;
-    private final File projectDirectory;
+    private String projectName;
+    private final String cloneUrl;
+
+    private String javaVersion;
+    private Set<Artifact> artifactSet;
+    private Git git;
+    private File projectDirectory;
+
+    public GradleArtifactExtractor(String commitId, String projectName, String cloneUrl) {
+        this.commitId = commitId;
+        this.projectName = projectName;
+        this.cloneUrl = cloneUrl;
+        populateDependencyInfo();
+    }
 
     public GradleArtifactExtractor(String commitId, String projectName, Git git) {
         this.commitId = commitId;
+        this.projectName = projectName;
         this.git = git;
+        this.cloneUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
         this.projectDirectory = Utility.getProjectPath(projectName).resolve(projectName).toFile();
+        populateDependencyInfo();
+    }
+
+    private void populateDependencyInfo() {
+        if (!new File(GRADLE_HOME_PATH).exists()) {
+            throw new RuntimeException("Maven Home is not configured properly");
+        }
+
+        if (Objects.nonNull(git)) {
+            populateDependencyInfoFromLocal();
+        } else {
+            populateDependencyInfoFromRemote();
+        }
+    }
+
+    private void populateDependencyInfoFromLocal() {
+        String branchName = GitUtil.checkoutToCommit(git, this.commitId);
+
+        GradleConnector connector = getGradleConnector(this.projectDirectory);
+        populateJavaVersionAndArtifactSet(connector);
+
+        GitUtil.checkoutToCommit(git, branchName);
+    }
+
+    private void populateDependencyInfoFromRemote() {
+        Path projectPath = Utility.getProjectPath(this.projectName);
+        FileUtils.createFolderIfAbsent(projectPath);
+
+        Map<Path, String> gradleFileContentsMap = new HashMap<>();
+        try {
+            GitHub gitHub = GitUtil.connectGithub();
+            String repositoryName = GitUtil.extractRepositoryName(this.cloneUrl);
+            GHRepository ghRepository = gitHub.getRepository(repositoryName);
+            GHTree ghTree = ghRepository.getTree(this.commitId);
+            gradleFileContentsMap = GitUtil.populateFileContents(ghTree,
+                    new ArrayList<>(Arrays.asList("build.gradle", "settings.gradle")),
+                    new ArrayList<>(Arrays.asList(".gradle", ".header")),
+                    new ArrayList<>(Arrays.asList(".github")));
+        } catch (IOException e) {
+            logger.error("Error occurred", e);
+        }
+
+        if (gradleFileContentsMap.isEmpty()) {
+            return;
+        }
+
+        Path projectDirectory = projectPath.resolve("tmp").resolve(this.commitId);
+        FileUtils.materializeAtBase(projectDirectory, gradleFileContentsMap);
+
+        GradleConnector connector = getGradleConnector(projectDirectory.toFile());
+        populateJavaVersionAndArtifactSet(connector);
+
+        deleteDirectory(projectDirectory);
     }
 
     @Override
     public String getJavaVersion() {
-        String branchName = GitUtil.checkoutToCommit(git, this.commitId);
-        GradleConnector connector = getGradleConnector(this.projectDirectory);
-        String javaVersion = null;
-
-        try (ProjectConnection connection = connector.connect()) {
-            IdeaProject project = connection.getModel(IdeaProject.class);
-
-            javaVersion = project.getJavaLanguageSettings().getLanguageLevel().getMajorVersion();
-        } catch (GradleConnectionException e) {
-            logger.error("Error occurred", e);
-        }
-
-        GitUtil.checkoutToCommit(git, branchName);
-
-        return javaVersion;
+        return this.javaVersion;
     }
 
     @Override
     public Set<Artifact> getDependentArtifactSet() {
-        Set<Artifact> artifactSet = new HashSet<>();
-        String branchName = GitUtil.checkoutToCommit(git, this.commitId);
+        return this.artifactSet;
+    }
 
-        GradleConnector connector = getGradleConnector(this.projectDirectory);
+    private void populateJavaVersionAndArtifactSet(GradleConnector connector) {
+        Set<Artifact> artifactSet = new HashSet<>();
 
         try (ProjectConnection connection = connector.connect()) {
             IdeaProject project = connection.getModel(IdeaProject.class);
+
+            this.javaVersion = project.getJavaLanguageSettings().getLanguageLevel().getMajorVersion();
 
             for (IdeaModule module : project.getModules()) {
                 Artifact moduleArtifact = getProjectArtifact(module);
@@ -99,9 +158,7 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
             logger.error("Error occurred", e);
         }
 
-        GitUtil.checkoutToCommit(git, branchName);
-
-        return artifactSet;
+        this.artifactSet = artifactSet;
     }
 
     private Artifact getProjectArtifact(IdeaModule module) {

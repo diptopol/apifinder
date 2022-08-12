@@ -4,7 +4,6 @@ import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractor;
 import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.GitUtil;
-import ca.concordia.jaranalyzer.util.Utility;
 import io.vavr.Tuple2;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
@@ -99,22 +98,15 @@ public class InMemoryDatabaseTest {
     }
 
     private static Tuple2<String, Set<Artifact>> loadExternalJars(String projectName, String projectUrl, String commitId) {
-        Path pathToProject = Utility.getProjectPath(projectName);
-        Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
-
-        return TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
+        return TypeInferenceFluentAPI.getInstance().loadJavaAndExternalJars(commitId, projectName, projectUrl);
     }
 
     @Test
     public void testNearestTag() {
-        String projectName = "kubernetes-client";
         String projectUrl = "https://github.com/fabric8io/kubernetes-client.git";
         String commitId = "1ce8e203a1785b5abbaf20738a37d5129962d9f6";
 
-        Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
-        Git git = GitUtil.openRepository(projectName, projectUrl, projectDirectory);
-
-        String nearestTagCommit = GitUtil.getNearestTagCommit(commitId, git);
+        String nearestTagCommit = GitUtil.getNearestTagCommitId(projectUrl, commitId);
 
         assert "54a0dcd9fa0303a10c7a2a595e7c26526d7006a0".equals(nearestTagCommit);
     }

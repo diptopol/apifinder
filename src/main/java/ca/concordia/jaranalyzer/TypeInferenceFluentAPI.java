@@ -46,8 +46,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         methodInfoService = new MethodInfoService(classInfoService);
     }
 
-    public Tuple2<String, Set<Artifact>> loadExternalJars(String commitId, String projectName, Git git) {
+    public Tuple2<String, Set<Artifact>> loadJavaAndExternalJars(String commitId, String projectName, Git git) {
         return jarAnalyzer.loadJavaAndExternalJars(commitId, projectName, git);
+    }
+
+    public Tuple2<String, Set<Artifact>> loadJavaAndExternalJars(String commitId, String projectName, String cloneUrl) {
+        return jarAnalyzer.loadJavaAndExternalJars(commitId, projectName, cloneUrl);
     }
 
     public void loadJar(Artifact artifact) {

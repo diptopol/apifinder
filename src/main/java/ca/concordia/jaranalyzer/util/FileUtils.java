@@ -33,15 +33,14 @@ public class FileUtils {
         fileContent.forEach((k,v) -> materializeFile(basePath.resolve(k), v));
     }
 
-    public static void deleteDirectory(Path p){
-        try{
+    public static void deleteDirectory(Path p) {
+        try {
             Files.walk(p).sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
                     .forEach(File::delete);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
 }

@@ -6,10 +6,15 @@ import ca.concordia.jaranalyzer.entity.JarInfo;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
-import org.eclipse.jgit.api.Git;
 import org.junit.Test;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHTree;
+import org.kohsuke.github.GitHub;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -61,14 +66,9 @@ public class ArtifactExtractorTest {
 
     @Test
     public void testGenerateEffectivePOMFromRepository() {
-        String projectName = "RefactoringMinerIssueReproduction";
-        Path pathToProject = Utility.getProjectPath(projectName);
-
-        Git git = GitUtil.openRepository(projectName,
-                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git", pathToProject);
-
         ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
-                "RefactoringMinerIssueReproduction", git);
+                "RefactoringMinerIssueReproduction",
+                "https://github.com/diptopol/RefactoringMinerIssueReproduction.git");
 
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         Set<Artifact> dependentArtifactSet = extractor.getDependentArtifactSet();
@@ -79,11 +79,10 @@ public class ArtifactExtractorTest {
     @Test
     public void testArtifactExtractionFromGradle() {
         String projectName = "mokito";
-        Path pathToProject = Utility.getProjectPath(projectName);
+        String projectCloneLink = "https://github.com/mockito/mockito.git";
 
-        Git git = GitUtil.openRepository(projectName, "https://github.com/mockito/mockito.git", pathToProject);
-
-        ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver("ff98622a8f4bbe96ef5405434b5d788fcd118bb4", projectName, git);
+        ArtifactExtractorResolver extractorResolver =
+                new ArtifactExtractorResolver("ff98622a8f4bbe96ef5405434b5d788fcd118bb4", projectName, projectCloneLink);
 
         ArtifactExtractor extractor = extractorResolver.getArtifactExtractor();
         Set<Artifact> dependentArtifactSet = extractor.getDependentArtifactSet();
@@ -91,6 +90,27 @@ public class ArtifactExtractorTest {
 
         assert extractor.getJavaVersion().equals("11");
         assert dependentArtifactSet.size() == 65;
+    }
+
+    @Test
+    public void testPomFileContentExtraction() {
+        String cloneUrl = "https://github.com/google/guava.git";
+        String commitId = "43a53bc0328c7efd1da152f3b56b1fd241c88d4c";
+
+        try {
+            GitHub gitHub = GitUtil.connectGithub();
+            String repositoryName = GitUtil.extractRepositoryName(cloneUrl);
+            GHRepository ghRepository = gitHub.getRepository(repositoryName);
+
+            GHTree ghTree = ghRepository.getTree(commitId);
+            Map<Path, String> pomFileContentsMap = GitUtil.populateFileContents(ghTree,
+                    Collections.singletonList("pom.xml"), Collections.emptyList(), Collections.singletonList(".github"));
+
+            assert 14 == pomFileContentsMap.size();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

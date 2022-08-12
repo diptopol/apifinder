@@ -1,7 +1,6 @@
 package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.service.JarInfoService;
-import ca.concordia.jaranalyzer.util.DbUtils;
 import org.junit.Test;
 
 /**

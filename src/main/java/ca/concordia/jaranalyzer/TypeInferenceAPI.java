@@ -45,6 +45,10 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         return jarAnalyzer.loadJavaAndExternalJars(commitId, projectName, git);
     }
 
+    public static Tuple2<String, Set<Artifact>> loadJavaAndExternalJars(String commitId, String projectName, String cloneUrl) {
+        return jarAnalyzer.loadJavaAndExternalJars(commitId, projectName, cloneUrl);
+    }
+
     public static void loadJavaPackage(int majorJavaVersion) {
         jarAnalyzer.loadJavaPackage(majorJavaVersion);
     }

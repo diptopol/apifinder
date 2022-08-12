@@ -80,6 +80,13 @@
             <artifactId>org.eclipse.jgit</artifactId>
             <version>5.10.0.202012080955-r</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.kohsuke</groupId>
+            <artifactId>github-api</artifactId>
+            <version>1.307</version>
+        </dependency>
+
         <dependency>
             <groupId>com.jason-goodwin</groupId>
             <artifactId>better-monads</artifactId>

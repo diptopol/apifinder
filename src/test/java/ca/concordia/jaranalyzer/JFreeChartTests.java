@@ -1,15 +1,11 @@
 package ca.concordia.jaranalyzer;
 
-import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.entity.MethodInfo;
-import ca.concordia.jaranalyzer.util.GitUtil;
-import ca.concordia.jaranalyzer.util.Utility;
+import ca.concordia.jaranalyzer.models.Artifact;
 import io.vavr.Tuple2;
-import org.eclipse.jgit.api.Git;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.nio.file.Path;
 import java.util.*;
 
 import static ca.concordia.jaranalyzer.util.PropertyReader.getProperty;
@@ -925,10 +921,7 @@ public class JFreeChartTests {
     }
 
     private static void loadExternalJars(String projectName, String projectUrl, String commitId) {
-        Path pathToProject = Utility.getProjectPath(projectName);
-        Git git = GitUtil.openRepository(projectName, projectUrl, pathToProject);
-
-        dependencyTuple = TypeInferenceFluentAPI.getInstance().loadExternalJars(commitId, projectName, git);
+        dependencyTuple = TypeInferenceFluentAPI.getInstance().loadJavaAndExternalJars(commitId, projectName, projectUrl);
     }
 
     private static void loadPreviousJFreeChartJar() {

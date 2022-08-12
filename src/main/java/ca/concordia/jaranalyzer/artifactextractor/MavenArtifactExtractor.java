@@ -12,6 +12,9 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHTree;
+import org.kohsuke.github.GitHub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +40,21 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
 
     private final String commitId;
     private final String projectName;
-    private final Git git;
-    private final String remoteUrl;
+    private final String cloneUrl;
     private final String effectivePOMContent;
 
     private final MavenPOMService mavenPOMService;
+
+    private Git git;
+
+    public MavenArtifactExtractor(String commitId, String projectName, String cloneUrl) {
+        mavenPOMService = new MavenPOMService();
+
+        this.commitId = commitId;
+        this.projectName = projectName;
+        this.cloneUrl = cloneUrl;
+        this.effectivePOMContent = loadEffectivePOMContent();
+    }
 
     public MavenArtifactExtractor(String commitId, String projectName, Git git) {
         mavenPOMService = new MavenPOMService();
@@ -49,7 +62,7 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
         this.commitId = commitId;
         this.projectName = projectName;
         this.git = git;
-        this.remoteUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
+        this.cloneUrl = git.getRepository().getConfig().getString("remote", "origin", "url");
         this.effectivePOMContent = loadEffectivePOMContent();
     }
 
@@ -64,12 +77,12 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
     }
 
     private String loadEffectivePOMContent() {
-        String effectivePOM = mavenPOMService.getEffectivePOM(this.remoteUrl, this.commitId);
+        String effectivePOM = mavenPOMService.getEffectivePOM(this.cloneUrl, this.commitId);
 
         if (Objects.isNull(effectivePOM)) {
             effectivePOM = getEffectivePOMContent();
 
-            mavenPOMService.saveEffectivePOM(this.remoteUrl, this.commitId, effectivePOM);
+            mavenPOMService.saveEffectivePOM(this.cloneUrl, this.commitId, effectivePOM);
         }
 
         return effectivePOM;
@@ -78,7 +91,6 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
     private String getEffectivePOMContent() {
         String mavenHome = getProperty("maven.home");
         Path projectPath = Utility.getProjectPath(this.projectName);
-        Repository repository = this.git.getRepository();
 
         if (!new File(mavenHome).exists()) {
             throw new RuntimeException("Maven Home is not configured properly");
@@ -86,9 +98,14 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
 
         FileUtils.createFolderIfAbsent(projectPath);
 
-        Map<Path, String> poms = GitUtil.populateFileContents(repository, this.commitId, x -> x.endsWith("pom.xml"));
+        Map<Path, String> pomFileContentsMap = getPOMFileContents();
+
+        if (pomFileContentsMap.isEmpty()) {
+            return null;
+        }
+
         Path p = projectPath.resolve("tmp").resolve(this.commitId);
-        FileUtils.materializeAtBase(p, poms);
+        FileUtils.materializeAtBase(p, pomFileContentsMap);
         Path effectivePomPath = p.resolve("effectivePom.xml");
 
         if (!effectivePomPath.toFile().exists()) {
@@ -115,6 +132,37 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
         deleteDirectory(p);
 
         return effectivePomPathContent;
+    }
+
+    private Map<Path, String> getPOMFileContents() {
+        if (Objects.nonNull(this.git)) {
+            return getPOMFileContentsFromLocal();
+        } else {
+            return getPOMFileContentsFromRemote();
+        }
+    }
+
+    private Map<Path, String> getPOMFileContentsFromLocal() {
+        Repository repository = this.git.getRepository();
+
+        return GitUtil.populateFileContents(repository, this.commitId, x -> x.endsWith("pom.xml"));
+    }
+
+    private Map<Path, String> getPOMFileContentsFromRemote() {
+        Map<Path, String> pomFileContentsMap = new HashMap<>();
+        try {
+            GitHub gitHub = GitUtil.connectGithub();
+            String repositoryName = GitUtil.extractRepositoryName(this.cloneUrl);
+            GHRepository ghRepository = gitHub.getRepository(repositoryName);
+            GHTree ghTree = ghRepository.getTree(this.commitId);
+            pomFileContentsMap = GitUtil.populateFileContents(ghTree, Collections.singletonList("pom.xml"),
+                    Collections.emptyList(),
+                    Collections.singletonList(".github"));
+        } catch (IOException e) {
+            logger.error("Error occurred", e);
+        }
+
+        return pomFileContentsMap;
     }
 
     private static String getJavaVersion(String pomContent) {
