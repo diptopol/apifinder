@@ -5,6 +5,7 @@ import ca.concordia.jaranalyzer.entity.FieldInfo;
 import ca.concordia.jaranalyzer.entity.JarInfo;
 import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.util.DataSource;
+import ca.concordia.jaranalyzer.util.PropertyReader;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,51 +24,73 @@ public class JarInfoSaveService {
 
     private static final Logger logger = LoggerFactory.getLogger(JarInfoSaveService.class);
 
+    private static final int INSERT_BATCH_SIZE = Integer.parseInt(PropertyReader.getProperty("jar.info.insert.batch.size"));
+
     public void saveJarInfo(JarInfo jarInfo) {
         logger.info("Save JarInfo of {}:{}:{}", jarInfo.getGroupId(), jarInfo.getArtifactId(), jarInfo.getVersion());
 
-        Connection connection = null;
+        Connection classInfoInsertConnection = null;
+        int jarId = 0;
+
         try {
-            connection = DataSource.getConnection();
-            int jarId = insertJarInfo(jarInfo, connection);
+            jarId = insertJarInfo(jarInfo);
 
             if (jarId > 0) {
+                int insertedClassCount = 0;
+
                 for (ClassInfo classInfo : jarInfo.getClassInfoList()) {
-                    int classInfoId = insertClassInfo(classInfo, jarId, connection);
+                    if (insertedClassCount % INSERT_BATCH_SIZE == 0) {
+                        if (Objects.nonNull(classInfoInsertConnection)) {
+                            classInfoInsertConnection.commit();
+                            classInfoInsertConnection.close();
+                        }
+
+                        classInfoInsertConnection = DataSource.getConnection();
+                    }
+
+                    int classInfoId = insertClassInfo(classInfo, jarId, classInfoInsertConnection);
 
                     if (classInfoId > 0) {
-                        for (MethodInfo methodInfo: classInfo.getMethodInfoList()) {
-                            insertMethodInfo(methodInfo, classInfoId, connection);
+                        for (MethodInfo methodInfo : classInfo.getMethodInfoList()) {
+                            insertMethodInfo(methodInfo, classInfoId, classInfoInsertConnection);
                         }
 
-                        for (FieldInfo fieldInfo: classInfo.getFieldInfoList()) {
-                            insertFieldInfo(fieldInfo, classInfoId, connection);
+                        for (FieldInfo fieldInfo : classInfo.getFieldInfoList()) {
+                            insertFieldInfo(fieldInfo, classInfoId, classInfoInsertConnection);
                         }
 
-                        insertSuperClassRelation(classInfo, classInfoId, connection);
+                        insertSuperClassRelation(classInfo, classInfoId, classInfoInsertConnection);
 
-                        insertInnerClassQNameList(classInfoId, classInfo.getInnerClassQNameList(), connection);
+                        insertInnerClassQNameList(classInfoId, classInfo.getInnerClassQNameList(), classInfoInsertConnection);
                     }
+
+                    insertedClassCount++;
+                }
+
+                if (Objects.nonNull(classInfoInsertConnection)) {
+                    classInfoInsertConnection.commit();
+                    classInfoInsertConnection.close();
                 }
             }
-
-            connection.commit();
         } catch (SQLException e) {
             logger.error("Could not process JarInfo of {}:{}:{}", jarInfo.getGroupId(), jarInfo.getArtifactId(), jarInfo.getVersion());
             logger.error("Error", e);
 
-            if (Objects.nonNull(connection)) {
-                try {
-                    connection.rollback();
-                } catch (SQLException ex) {
-                    logger.error("Could not process JarInfo of {}:{}:{}", jarInfo.getGroupId(), jarInfo.getArtifactId(), jarInfo.getVersion());
-                    logger.error("Error", e);
+            if (jarId > 0) {
+                insertedClassCleanup(jarId);
+            }
+
+            try {
+                if (Objects.nonNull(classInfoInsertConnection)) {
+                    classInfoInsertConnection.rollback();
                 }
+            } catch (SQLException ex) {
+                logger.error("could not rollback", e);
             }
         } finally {
             try {
-                if (Objects.nonNull(connection)) {
-                    connection.close();
+                if (Objects.nonNull(classInfoInsertConnection)) {
+                    classInfoInsertConnection.close();
                 }
             } catch (SQLException e) {
                 logger.error("Could not close connection", e);
@@ -79,52 +102,36 @@ public class JarInfoSaveService {
                                            List<String> innerClassQNameList,
                                            Connection connection) throws SQLException {
 
-        for (String classQName: innerClassQNameList) {
+        for (String classQName : innerClassQNameList) {
             insertInnerClassRelation(classInfoId, classQName, connection);
         }
     }
 
-    private int getClassInfoId(String classQName, int jarId, Connection connection) throws SQLException {
-        String query = "SELECT id from class WHERE q_name = ? AND jar_id = ?";
-        ResultSet resultSet = null;
-        Integer classInfoId = null;
-
-        try (PreparedStatement pst = connection.prepareStatement(query)) {
-            pst.setString(1, classQName);
-            pst.setInt(2, jarId);
-
-            resultSet = pst.executeQuery();
-
-            while (resultSet.next()) {
-                classInfoId = resultSet.getInt("id");
-            }
-        } finally {
-            if (Objects.nonNull(resultSet)) {
-                resultSet.close();
-            }
-        }
-
-        return Objects.nonNull(classInfoId) ? classInfoId : 0;
-    }
-
-    private int insertJarInfo(JarInfo jarInfo, Connection connection) throws SQLException {
+    private int insertJarInfo(JarInfo jarInfo) throws SQLException {
         String insertQuery = "INSERT INTO jar (group_id, artifact_id, version) VALUES (?, ?, ?)";
+        int jarId = 0;
 
-        try (PreparedStatement pst = connection.prepareStatement(insertQuery)) {
+        try (Connection connection = DataSource.getConnection();
+             PreparedStatement pst = connection.prepareStatement(insertQuery)) {
             pst.setString(1, jarInfo.getGroupId());
             pst.setString(2, jarInfo.getArtifactId());
             pst.setString(3, jarInfo.getVersion());
 
             pst.executeUpdate();
+
+            jarId = getLastInsertedId(connection);
+            connection.commit();
+        } catch (SQLException e) {
+            logger.error("Error", e);
         }
 
-        return getLastInsertedId(connection);
+        return jarId;
     }
 
     private void insertThrownClassNameList(MethodInfo methodInfo, int methodInfoId, Connection connection) throws SQLException {
         int precedenceOrder = 0;
 
-        for (String thrownClassName: methodInfo.getThrownInternalClassNames()) {
+        for (String thrownClassName : methodInfo.getThrownInternalClassNames()) {
             String insertQuery = "INSERT INTO thrown_class_name(precedence_order, thrown_class_name, method_id)" +
                     " VALUES(?, ?, ?)";
 
@@ -237,7 +244,7 @@ public class JarInfoSaveService {
             }
         }
 
-        for (String interfaceQName: classInfo.getInterfaceQNameList()) {
+        for (String interfaceQName : classInfo.getInterfaceQNameList()) {
             try (PreparedStatement pst = connection.prepareStatement(insertQuery)) {
                 pst.setInt(1, classInfoId);
                 pst.setString(2, interfaceQName);
@@ -287,6 +294,95 @@ public class JarInfoSaveService {
         }
 
         return getLastInsertedId(connection);
+    }
+
+    private void insertedClassCleanup(int jarId) {
+        try (Connection connection = DataSource.getConnection()) {
+            deleteSuperClass(jarId, connection);
+            deleteInnerClass(jarId, connection);
+            deleteField(jarId, connection);
+
+            deleteArgumentTypeDescriptor(jarId, connection);
+            deleteThrownClassName(jarId, connection);
+            deleteMethod(jarId, connection);
+
+            deleteClass(jarId, connection);
+            deleteJar(jarId, connection);
+
+            connection.commit();
+        } catch (SQLException e) {
+            logger.error("Could not clean up", e);
+        }
+    }
+
+    private void deleteSuperClass(int jarId, Connection connection) throws SQLException {
+        String query = "DELETE FROM super_class_relation scr" +
+                " WHERE EXISTS" +
+                " (SELECT 1 FROM class c" +
+                " WHERE scr.child_class_id = c.id AND c.jar_id = ?)";
+
+        executeDelete(jarId, connection, query);
+    }
+
+    private void deleteInnerClass(int jarId, Connection connection) throws SQLException {
+        String query = "DELETE FROM inner_class ic" +
+                " WHERE EXISTS (SELECT 1 FROM class c" +
+                " WHERE ic.parent_class_id = c.id AND c.jar_id = ?)";
+
+        executeDelete(jarId, connection, query);
+    }
+
+    private void deleteField(int jarId, Connection connection) throws SQLException {
+        String query = "DELETE FROM field f" +
+                " WHERE EXISTS (SELECT 1 FROM class c" +
+                " WHERE f.class_id = c.id AND c.jar_id = ?)";
+
+        executeDelete(jarId, connection, query);
+    }
+
+    private void deleteArgumentTypeDescriptor(int jarId, Connection connection) throws SQLException {
+        String query = "DELETE FROM argument_type_descriptor arg" +
+                " WHERE EXISTS (SELECT 1 FROM method m JOIN class c ON (m.class_id = c.id)" +
+                " WHERE arg.method_id = m.id AND c.jar_id = ?)";
+
+        executeDelete(jarId, connection, query);
+    }
+
+    private void deleteThrownClassName(int jarId, Connection connection) throws SQLException {
+        String query = "DELETE FROM thrown_class_name tcn" +
+                " WHERE EXISTS (SELECT 1 FROM method m JOIN class c ON (m.class_id = c.id)" +
+                " WHERE tcn.method_id = m.id AND c.jar_id = ?)";
+
+        executeDelete(jarId, connection, query);
+    }
+
+    private void deleteMethod(int jarId, Connection connection) throws SQLException {
+        String query = "DELETE FROM method m" +
+                " WHERE EXISTS (SELECT 1 FROM class c" +
+                " WHERE m.class_id = c.id AND c.jar_id = ?)";
+
+        executeDelete(jarId, connection, query);
+    }
+
+    private void deleteClass(int jarId, Connection connection) throws SQLException {
+        String query = "DELETE FROM class c" +
+                " WHERE c.jar_id = ?";
+
+        executeDelete(jarId, connection, query);
+    }
+
+    private void deleteJar(int jarId, Connection connection) throws SQLException {
+        String query = "DELETE FROM jar j WHERE j.id = ?";
+
+        executeDelete(jarId, connection, query);
+    }
+
+    private void executeDelete(int jarId, Connection connection, String query) throws SQLException {
+        try (PreparedStatement pst = connection.prepareStatement(query)) {
+            pst.setInt(1, jarId);
+
+            pst.executeUpdate();
+        }
     }
 
     private int getLastInsertedId(Connection connection) throws SQLException {
