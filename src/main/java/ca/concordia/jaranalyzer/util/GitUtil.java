@@ -16,7 +16,8 @@ import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static ca.concordia.jaranalyzer.util.FileUtils.createFolderIfAbsent;
 
@@ -291,16 +291,10 @@ public class GitUtil {
             } else {
                 if (matchingFileNameList.contains(ghTreeEntry.getPath())
                         || matchingFileExtensionList.stream().anyMatch(ext -> ghTreeEntry.getPath().contains(ext))) {
-                    pomFileContentsMap.put(Paths.get(path.concat(ghTreeEntry.getPath())), getPomContent(ghTreeEntry.readAsBlob()));
+                    pomFileContentsMap.put(Paths.get(path.concat(ghTreeEntry.getPath())), FileUtils.getFileContent(ghTreeEntry.readAsBlob()));
                 }
             }
         }
-    }
-
-    private static String getPomContent(InputStream inputStream) {
-        return new BufferedReader(new InputStreamReader(inputStream))
-                .lines()
-                .collect(Collectors.joining("\n"));
     }
 
     private static List<RevCommit> getMergedCommitList(Repository repo) {

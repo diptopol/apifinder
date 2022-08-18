@@ -2,12 +2,16 @@ package ca.concordia.jaranalyzer.util;
 
 import io.vavr.control.Try;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FileUtils {
 
@@ -41,6 +45,12 @@ public class FileUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static String getFileContent(InputStream inputStream) {
+        return new BufferedReader(new InputStreamReader(inputStream))
+                .lines()
+                .collect(Collectors.joining("\n"));
     }
 
 }
