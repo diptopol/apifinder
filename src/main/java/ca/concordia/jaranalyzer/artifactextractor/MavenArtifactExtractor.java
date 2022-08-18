@@ -12,8 +12,8 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
+import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHTree;
 import org.kohsuke.github.GitHub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,15 +154,97 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
             GitHub gitHub = GitUtil.connectGithub();
             String repositoryName = GitUtil.extractRepositoryName(this.cloneUrl);
             GHRepository ghRepository = gitHub.getRepository(repositoryName);
-            GHTree ghTree = ghRepository.getTree(this.commitId);
-            pomFileContentsMap = GitUtil.populateFileContents(ghTree, Collections.singletonList("pom.xml"),
-                    Collections.emptyList(),
-                    Collections.singletonList(".github"));
+            pomFileContentsMap = populatePOMFileContents(ghRepository, this.commitId);
         } catch (IOException e) {
             logger.error("Error occurred", e);
         }
 
         return pomFileContentsMap;
+    }
+
+    public static Map<Path, String> populatePOMFileContents(GHRepository ghRepository, String commitId) {
+        Map<Path, String> pomFileContentsMap = new HashMap<>();
+
+        List<String> buildFilePathList = new ArrayList<>(Arrays.asList("pom.xml"));
+
+        while (!buildFilePathList.isEmpty()) {
+            String buildFilePath = buildFilePathList.get(0);
+            buildFilePathList.remove(0);
+
+            String parentDirectoryPath = buildFilePath.replace("pom.xml", "");
+            try {
+                GHContent ghContent = ghRepository.getFileContent(buildFilePath, commitId);
+                String pomContent = FileUtils.getFileContent(ghContent.read());
+
+                pomFileContentsMap.put(Path.of(buildFilePath), pomContent);
+
+                List<String> subModuleList = getSubModuleList(pomContent);
+
+                for (String subModule: subModuleList) {
+                    String subModuleBuildFilePath = parentDirectoryPath.concat(subModule);
+
+                    if (!subModuleBuildFilePath.endsWith(".xml")) {
+                        subModuleBuildFilePath = subModuleBuildFilePath.concat("/").concat("pom.xml");
+                    }
+
+                    buildFilePathList.add(subModuleBuildFilePath);
+                }
+            } catch (IOException e) {
+                logger.warn("File couldn't be found: {}", buildFilePath);
+            }
+        }
+
+        return pomFileContentsMap;
+    }
+
+    private static List<String> getSubModuleList(String pomContent) {
+        if (Objects.isNull(pomContent)) {
+            return Collections.emptyList();
+        }
+
+        List<String> subModuleList = new ArrayList<>();
+
+        try {
+            SAXBuilder saxBuilder = new SAXBuilder();
+            Document document = saxBuilder.build(new ByteArrayInputStream(pomContent.getBytes(StandardCharsets.UTF_8)));
+
+            Element root = document.getRootElement();
+            List<Element> projectElementList = getProjectElementList(root);
+
+            for (Element project: projectElementList) {
+                Element modulesElement = getChildElement(project, "modules");
+
+                if (Objects.nonNull(modulesElement)) {
+                    List<Element> subModuleElementList = modulesElement.getChildren();
+
+                    for (Element subModuleElement: subModuleElementList) {
+                        subModuleList.add(subModuleElement.getValue());
+                    }
+                }
+
+                Element profilesElement = getChildElement(project, "profiles");
+
+                if (Objects.nonNull(profilesElement)) {
+                    List<Element> profileElementList = profilesElement.getChildren();
+
+                    for (Element profileElement: profileElementList) {
+                        Element profileModulesElement = getChildElement(profileElement, "modules");
+
+                        if (Objects.nonNull(profileModulesElement)) {
+                            List<Element> profileSubModuleElementList = profileModulesElement.getChildren();
+
+                            for (Element profileSubModule: profileSubModuleElementList) {
+                                subModuleList.add(profileSubModule.getValue());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IOException | JDOMException e) {
+            logger.error("Error occurred", e);
+        }
+
+        return subModuleList;
     }
 
     private static String getJavaVersion(String pomContent) {

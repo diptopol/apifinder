@@ -2,18 +2,17 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractor;
 import ca.concordia.jaranalyzer.artifactextractor.ArtifactExtractorResolver;
+import ca.concordia.jaranalyzer.artifactextractor.MavenArtifactExtractor;
 import ca.concordia.jaranalyzer.entity.JarInfo;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.Utility;
 import org.junit.Test;
 import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHTree;
 import org.kohsuke.github.GitHub;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -102,11 +101,9 @@ public class ArtifactExtractorTest {
             String repositoryName = GitUtil.extractRepositoryName(cloneUrl);
             GHRepository ghRepository = gitHub.getRepository(repositoryName);
 
-            GHTree ghTree = ghRepository.getTree(commitId);
-            Map<Path, String> pomFileContentsMap = GitUtil.populateFileContents(ghTree,
-                    Collections.singletonList("pom.xml"), Collections.emptyList(), Collections.singletonList(".github"));
+            Map<Path, String> pomFileContentsMap = MavenArtifactExtractor.populatePOMFileContents(ghRepository, commitId);
 
-            assert 14 == pomFileContentsMap.size();
+            assert 6 == pomFileContentsMap.size();
 
         } catch (IOException e) {
             e.printStackTrace();
