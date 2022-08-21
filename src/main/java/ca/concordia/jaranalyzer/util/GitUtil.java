@@ -121,13 +121,6 @@ public class GitUtil {
         return Objects.nonNull(nearestTagCommitId) ? nearestTagCommitId : commitId;
     }
 
-    private static Date getPreviousDay(Date date) {
-        LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
-        localDateTime = localDateTime.minusDays(1);
-
-        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-    }
-
     public static Optional<RevCommit> findCommit(String SHAId, Repository repo) {
         List<RevCommit> mergeCommits = getMergedCommitList(repo);
 
@@ -139,21 +132,6 @@ public class GitUtil {
                 })
                 .onFailure(e -> e.printStackTrace())
                 .toJavaOptional();
-    }
-
-    public static Map<Path, String> populateFileContents(GHTree ghTree,
-                                                         List<String> matchingFileNameList,
-                                                         List<String> matchingFileExtensionList,
-                                                         List<String> exclusionDirectoryList) {
-        Map<Path, String> pomFileContentsMap = new HashMap<>();
-
-        try {
-            populateFileContents("", ghTree, pomFileContentsMap, matchingFileNameList, matchingFileExtensionList, exclusionDirectoryList);
-        } catch (IOException e) {
-            logger.error("Error occurred", e);
-        }
-
-        return pomFileContentsMap;
     }
 
     public static GitHub connectGithub() throws IOException {
@@ -278,23 +256,11 @@ public class GitUtil {
         return false;
     }
 
-    private static void populateFileContents(String path, GHTree ghTree,
-                                             Map<Path, String> pomFileContentsMap,
-                                             List<String> matchingFileNameList,
-                                             List<String> matchingFileExtensionList,
-                                             List<String> exclusionDirectoryList)
-            throws IOException {
-        for (GHTreeEntry ghTreeEntry : ghTree.getTree()) {
-            if (ghTreeEntry.getType().equals("tree") && !exclusionDirectoryList.contains(ghTreeEntry.getPath())) {
-                populateFileContents(path.concat(ghTreeEntry.getPath()).concat("\\"), ghTreeEntry.asTree(),
-                        pomFileContentsMap, matchingFileNameList, matchingFileExtensionList, exclusionDirectoryList);
-            } else {
-                if (matchingFileNameList.contains(ghTreeEntry.getPath())
-                        || matchingFileExtensionList.stream().anyMatch(ext -> ghTreeEntry.getPath().contains(ext))) {
-                    pomFileContentsMap.put(Paths.get(path.concat(ghTreeEntry.getPath())), FileUtils.getFileContent(ghTreeEntry.readAsBlob()));
-                }
-            }
-        }
+    private static Date getPreviousDay(Date date) {
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        localDateTime = localDateTime.minusDays(1);
+
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 
     private static List<RevCommit> getMergedCommitList(Repository repo) {

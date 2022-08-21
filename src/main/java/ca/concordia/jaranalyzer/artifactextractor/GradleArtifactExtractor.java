@@ -5,6 +5,8 @@ import ca.concordia.jaranalyzer.util.FileUtils;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.PropertyReader;
 import ca.concordia.jaranalyzer.util.Utility;
+import io.vavr.Tuple2;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.Git;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
@@ -15,16 +17,18 @@ import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.GradlePublication;
 import org.gradle.tooling.model.gradle.ProjectPublications;
 import org.gradle.tooling.model.idea.*;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHTree;
-import org.kohsuke.github.GitHub;
+import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static ca.concordia.jaranalyzer.util.FileUtils.deleteDirectory;
 
@@ -93,11 +97,7 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
             GitHub gitHub = GitUtil.connectGithub();
             String repositoryName = GitUtil.extractRepositoryName(this.cloneUrl);
             GHRepository ghRepository = gitHub.getRepository(repositoryName);
-            GHTree ghTree = ghRepository.getTree(this.commitId);
-            gradleFileContentsMap = GitUtil.populateFileContents(ghTree,
-                    new ArrayList<>(Arrays.asList("build.gradle", "settings.gradle")),
-                    new ArrayList<>(Arrays.asList(".gradle", ".header")),
-                    new ArrayList<>(Arrays.asList(".github")));
+            gradleFileContentsMap = populateGradleBuildFileContents(ghRepository, this.commitId);
         } catch (IOException e) {
             logger.error("Error occurred", e);
         }
@@ -123,6 +123,260 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
     @Override
     public Set<Artifact> getDependentArtifactSet() {
         return this.artifactSet;
+    }
+
+    private Map<Path, String> populateGradleBuildFileContents(GHRepository ghRepository, String commitId) {
+        Map<String, String> buildFileContentsMap = new HashMap<>();
+
+        Tuple2<String, String> settingsNameContentTuple = getGradleFileNameContentTuple(ghRepository, commitId, "settings.gradle");
+
+        if (Objects.nonNull(settingsNameContentTuple)) {
+            buildFileContentsMap.put(settingsNameContentTuple._1(), settingsNameContentTuple._2());
+
+            List<String> subModuleList = getSubModuleList(settingsNameContentTuple._2());
+
+            if (!subModuleList.isEmpty()) {
+                String subModulePath = getSubModulePath(subModuleList.get(0), ghRepository, commitId);
+
+                if (Objects.nonNull(subModulePath)) {
+                    for (String subModuleName: subModuleList) {
+                        String subModuleDirectoryPath = subModulePath.concat(subModuleName).concat("/");
+
+                        Tuple2<String, String> subModuleBuildContentTuple =
+                                getGradleFileNameContentTuple(ghRepository, commitId,
+                                        subModuleDirectoryPath.concat(subModuleName).concat(".gradle"));
+
+                        if (Objects.nonNull(subModuleBuildContentTuple)) {
+                            populateBuildRelatedFileList(ghRepository, commitId, buildFileContentsMap, subModuleDirectoryPath, subModuleBuildContentTuple);
+
+                            if (!buildFileContentsMap.containsKey(subModuleBuildContentTuple._1())) {
+                                buildFileContentsMap.put(subModuleBuildContentTuple._1(), subModuleBuildContentTuple._2());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Tuple2<String, String> buildNameContentTuple = getGradleFileNameContentTuple(ghRepository, commitId, "build.gradle");
+
+        if (Objects.nonNull(buildNameContentTuple)) {
+            populateBuildRelatedFileList(ghRepository, commitId, buildFileContentsMap, "", buildNameContentTuple);
+            populateSpotlessFile(ghRepository, commitId, buildFileContentsMap, buildNameContentTuple);
+            buildFileContentsMap.put(buildNameContentTuple._1(), buildNameContentTuple._2());
+        }
+
+        return buildFileContentsMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(e -> Paths.get(e.getKey()), Map.Entry::getValue));
+    }
+
+    private void populateSpotlessFile(GHRepository ghRepository,
+                                      String commitId,
+                                      Map<String, String> buildFileContentsMap,
+                                      Tuple2<String, String> buildContentTuple) {
+
+        List<String> spotlessFilePathList = getSpotlessFileList(buildContentTuple._2());
+
+        for (String spotlessFilePath: spotlessFilePathList) {
+            Tuple2<String, String> spotlessFilePathTuple =
+                    getGradleFileNameContentTuple(ghRepository, commitId, spotlessFilePath);
+
+            if (Objects.nonNull(spotlessFilePathTuple) && !buildFileContentsMap.containsKey(spotlessFilePathTuple._1())) {
+                buildFileContentsMap.put(spotlessFilePathTuple._1(), spotlessFilePathTuple._2());
+            }
+        }
+    }
+
+    private void populateBuildRelatedFileList(GHRepository ghRepository,
+                                              String commitId,
+                                              Map<String, String> buildFileContentsMap,
+                                              String directoryPath,
+                                              Tuple2<String, String> buildContentTuple) {
+        List<String> buildRelatedFilePathList = getBuildRelatedFiles(buildContentTuple._2());
+
+        for (String buildRelatedFilePath: buildRelatedFilePathList) {
+            if (!buildRelatedFilePath.contains("/")) {
+                buildRelatedFilePath = directoryPath.concat(buildRelatedFilePath);
+            }
+
+            Tuple2<String, String> innerBuildRelatedFilePathTuple =
+                    getGradleFileNameContentTuple(ghRepository, commitId, buildRelatedFilePath);
+
+            if (Objects.nonNull(innerBuildRelatedFilePathTuple)) {
+                populateBuildRelatedFileList(ghRepository, commitId, buildFileContentsMap, directoryPath, innerBuildRelatedFilePathTuple);
+
+                if (!buildFileContentsMap.containsKey(innerBuildRelatedFilePathTuple._1())) {
+                    buildFileContentsMap.put(innerBuildRelatedFilePathTuple._1(), innerBuildRelatedFilePathTuple._2());
+                }
+            }
+        }
+    }
+
+    private String getSubModulePath(String subModuleName, GHRepository ghRepository, String commitId) {
+        List<Tuple2<GHTree, String>> subModulePathToVisit = new ArrayList<>();
+
+        try {
+            GHTree ghTree = ghRepository.getTree(commitId);
+            subModulePathToVisit.add(new Tuple2<>(ghTree, ""));
+
+            while (!subModulePathToVisit.isEmpty()) {
+                Tuple2<GHTree, String> pathTuple = subModulePathToVisit.get(0);
+                subModulePathToVisit.remove(0);
+                String path = pathTuple._2();
+
+                for (GHTreeEntry ghTreeEntry: pathTuple._1().getTree()) {
+                    if (ghTreeEntry.getPath().equals(subModuleName.concat(".gradle"))
+                            || ghTreeEntry.getPath().equals(subModuleName.concat(".gradle.kts"))) {
+                        return path.replaceAll(subModuleName.concat("/"), "");
+
+                    } else if (ghTreeEntry.getType().equals("tree") && !ghTreeEntry.getPath().startsWith(".")
+                            && !Arrays.asList("src", "config").contains(ghTreeEntry.getPath())) {
+                        subModulePathToVisit.add(new Tuple2<>(ghTreeEntry.asTree(), path.concat(ghTreeEntry.getPath().concat("/"))));
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            logger.error("Error", e);
+        }
+
+        return null;
+    }
+
+    private List<String> getSpotlessFileList(String buildGradleContent) {
+        List<String> filePathList = new ArrayList<>();
+
+        buildGradleContent = buildGradleContent.replaceAll("\n", " newline ")
+                .replaceAll("\r", "")
+                .replaceAll("spotless(\\s*)\\{", "spotless{");
+
+        if (buildGradleContent.contains("spotless{")) {
+            buildGradleContent = buildGradleContent.substring(buildGradleContent.indexOf("licenseHeaderFile"),
+                    buildGradleContent.indexOf("newline", buildGradleContent.indexOf("licenseHeaderFile")));
+            Pattern licenseHeaderFilePattern = Pattern.compile("(?<=licenseHeaderFile)(.*)(?=[\"'])");
+            Matcher licenseHeaderFileMatcher = licenseHeaderFilePattern.matcher(buildGradleContent);
+
+            while (licenseHeaderFileMatcher.find()) {
+                String matchingText = licenseHeaderFileMatcher.group(1);
+
+                int startIndex = 0;
+                if (matchingText.contains("'")) {
+                    startIndex = matchingText.indexOf("'");
+                } else if (matchingText.contains("\"")) {
+                    startIndex = matchingText.indexOf("\"");
+                }
+
+                String licenseFilePath = matchingText.substring(startIndex + 1);
+
+                if (licenseFilePath.startsWith("$")) {
+                    licenseFilePath = licenseFilePath.substring(licenseFilePath.indexOf("/") + 1);
+                }
+
+                filePathList.add(licenseFilePath);
+            }
+        }
+
+        return filePathList;
+    }
+
+    private List<String> getBuildRelatedFiles(String buildGradleContent) {
+        List<String> filePathList = new ArrayList<>();
+
+        buildGradleContent = buildGradleContent.replaceAll("apply(\\s*)from:(\\s*)", "applyfrom:");
+
+        if (buildGradleContent.contains("applyfrom")) {
+            Pattern applyFromPattern = Pattern.compile("(?<=applyfrom:)(.*)");
+            Matcher applyFromMatcher = applyFromPattern.matcher(buildGradleContent);
+
+            while (applyFromMatcher.find()) {
+                String filePath = applyFromMatcher.group(1)
+                        .replaceAll("'", "")
+                        .replaceAll("\"", "");
+
+                if (filePath.startsWith("$")) {
+                    filePath = filePath.substring(filePath.indexOf("/") + 1);
+                }
+
+                filePathList.add(filePath);
+            }
+        }
+
+        return filePathList;
+    }
+
+    private List<String> getSubModuleList(String settingsContent) {
+        List<String> subModuleList = new ArrayList<>();
+        settingsContent = settingsContent.replaceAll("\n", "").replaceAll("\r", "")
+                .replaceAll("include(\\s*)\\(", "include(");;
+
+        if (settingsContent.contains("include(")) {
+            Pattern subModulePattern = Pattern.compile("(?<=include\\()(.*?)(?=\\))");
+            Matcher subModuleMatcher = subModulePattern.matcher(settingsContent);
+
+            while (subModuleMatcher.find()) {
+                String matchedContent = subModuleMatcher.group(1).replaceAll("\\s", "");
+                List<String> moduleNameList =
+                        getProcessedSubModuleNameList(new ArrayList<>(Arrays.asList(matchedContent.split(","))));
+
+                subModuleList.addAll(moduleNameList);
+            }
+        } else if (settingsContent.contains("include")) {
+            Pattern subModuleMatcher = Pattern.compile("(?<=include)(.*?)(?=(include|=|$))");
+            Matcher matcher = subModuleMatcher.matcher(settingsContent);
+
+            while (matcher.find()) {
+                String matchedContent = matcher.group(1);
+
+                int index = -1;
+
+                if (matchedContent.lastIndexOf("\"") >= 0) {
+                    index = matchedContent.lastIndexOf("\"");
+                } else if (matchedContent.lastIndexOf("'") >= 0) {
+                    index = matchedContent.lastIndexOf("'");
+                }
+
+                if (index >= 0) {
+                    matchedContent = matchedContent.substring(0, index + 1);
+                }
+
+                List<String> moduleNameList =
+                        getProcessedSubModuleNameList(new ArrayList<>(Arrays.asList(matchedContent.split(","))));
+
+                subModuleList.addAll(moduleNameList);
+            }
+        }
+
+        return subModuleList;
+    }
+
+    private List<String> getProcessedSubModuleNameList(List<String> subModuleList) {
+        return subModuleList.stream()
+                .map(StringUtils::trim)
+                .map(m -> m.replaceAll("\"", ""))
+                .map(m -> m.replaceAll("'", ""))
+                .map(m -> m.replaceAll(":", "/"))
+                .collect(Collectors.toList());
+    }
+
+    private Tuple2<String, String> getGradleFileNameContentTuple(GHRepository ghRepository, String commitId, String filePath) {
+        try {
+            GHContent ghContent = ghRepository.getFileContent(filePath, commitId);
+            String content = FileUtils.getFileContent(ghContent.read());
+
+            return new Tuple2<>(filePath, content);
+        } catch (IOException e) {
+            try {
+                filePath = filePath.concat(".kts");
+
+                GHContent ghContent = ghRepository.getFileContent(filePath, commitId);
+                String content = FileUtils.getFileContent(ghContent.read());
+
+                return new Tuple2<>(filePath, content);
+            } catch (IOException e1) {
+                return null;
+            }
+        }
     }
 
     private void populateJavaVersionAndArtifactSet(GradleConnector connector) {
