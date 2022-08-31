@@ -76,7 +76,8 @@ public class ArtifactExtractorResolver {
 
             if (projectDirectory.resolve("pom.xml").toFile().exists()) {
                 return BuildTool.MAVEN;
-            } else if (projectDirectory.resolve("build.gradle").toFile().exists()) {
+            } else if (projectDirectory.resolve("build.gradle").toFile().exists()
+                    || projectDirectory.resolve("build.gradle.kts").toFile().exists()) {
                 return BuildTool.GRADLE;
             }
         } else {
