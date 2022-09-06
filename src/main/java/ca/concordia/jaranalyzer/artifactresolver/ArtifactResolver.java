@@ -253,6 +253,10 @@ public class ArtifactResolver {
         assert mavenCentral != null;
         remoteRepositoryList.add(mavenCentral);
 
+        final RemoteRepository googleMavenCentral = new RemoteRepository.Builder("google", "default", "https://maven.google.com").build();
+        assert googleMavenCentral != null;
+        remoteRepositoryList.add(googleMavenCentral);
+
         remoteRepositoryList = repositorySystem.newResolutionRepositories(repositorySystemSession, remoteRepositoryList);
 
         return remoteRepositoryList;

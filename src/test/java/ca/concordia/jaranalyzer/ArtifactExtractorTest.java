@@ -23,6 +23,20 @@ import java.util.Set;
 public class ArtifactExtractorTest {
 
     @Test
+    public void testGoogleArtifactsRetrieval() {
+        Artifact artifact = new Artifact("com.android.tools.build", "gradle", "7.1.3");
+        Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifact);
+
+        assert jarInfoSet.size() == 1;
+
+        JarInfo jarInfo = jarInfoSet.iterator().next();
+
+        assert "com.android.tools.build".equals(jarInfo.getGroupId())
+                && "gradle".equals(jarInfo.getArtifactId())
+                && "7.1.3".equals(jarInfo.getVersion());
+    }
+
+    @Test
     public void testGetDependentArtifactSetFromEffectivePOM() {
         ArtifactExtractorResolver extractorResolver = new ArtifactExtractorResolver("b6e7262c1c4d0ef6ccafd3ed2a929ce0dbea860c",
                 "RefactoringMinerIssueReproduction",
