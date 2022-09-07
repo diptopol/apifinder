@@ -404,6 +404,12 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
                         if (Objects.nonNull(gradleModuleVersion)) {
                             artifactSet.add(new Artifact(gradleModuleVersion.getGroup(), gradleModuleVersion.getName(),
                                     gradleModuleVersion.getVersion(), getType(ideaSingleEntryLibraryDependency.getFile().getName())));
+
+                            if (gradleModuleVersion.getVersion().endsWith("-SNAPSHOT")) {
+                                artifactSet.add(new Artifact(gradleModuleVersion.getGroup(), gradleModuleVersion.getName(),
+                                        gradleModuleVersion.getVersion().replace("-SNAPSHOT", ""),
+                                        getType(ideaSingleEntryLibraryDependency.getFile().getName())));
+                            }
                         }
                     }
                 }
