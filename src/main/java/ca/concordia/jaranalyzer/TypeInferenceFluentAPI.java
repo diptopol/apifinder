@@ -109,9 +109,17 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
             List<String> classQNameDeclarationOrderList = new ArrayList<>(classQNameSet);
 
+            boolean firstIteration = true;
             while (!classQNameSet.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
                 qualifiedMethodInfoList = getQualifiedMethodInfoList(methodName, criteria.getNumberOfParameters(),
                         jarIdList, classQNameSet, classInfoService, methodInfoService);
+
+                if (firstIteration && Objects.nonNull(criteria.getOwningClassInfo())
+                        && criteria.getOwningClassInfo().getQualifiedClassNameSetInHierarchy().get(0)
+                        .contains(criteria.getInvokerTypeInfo().getQualifiedClassName())) {
+
+                    qualifiedMethodInfoList.forEach(m -> m.setOwningClassAttribute(true));
+                }
 
                 qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList, internalDependencyJarIdList);
 
@@ -129,6 +137,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                             classQNameDeclarationOrderList);
 
                     classQNameSet = getSuperClassQNameSet(classQNameSet, jarIdList, classInfoService);
+                    firstIteration = false;
                 }
             }
 
