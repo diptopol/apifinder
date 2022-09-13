@@ -17,10 +17,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -53,6 +50,7 @@ public class MethodInfoService {
                 populateMethodArgumentTypeInfoList(methodInfo);
                 populateMethodReturnTypeInfo(methodInfo);
                 methodInfo.setClassInfo(classInfoService.getClassInfo(methodInfo.getClassInfoId(), connection));
+                updateFormalTypeParameterBaseType(methodInfo);
             }
 
             connection.commit();
@@ -95,6 +93,7 @@ public class MethodInfoService {
                 populateMethodArgumentTypeInfoList(methodInfo);
                 populateMethodReturnTypeInfo(methodInfo);
                 methodInfo.setClassInfo(classInfoService.getClassInfo(methodInfo.getClassInfoId(), connection));
+                updateFormalTypeParameterBaseType(methodInfo);
             }
 
             connection.commit();
@@ -340,6 +339,39 @@ public class MethodInfoService {
                 methodInfo.setReturnTypeInfo(new VoidTypeInfo());
             } else {
                 methodInfo.setReturnTypeInfo(EntityUtils.getTypeInfo(methodInfo.getReturnType()));
+            }
+        }
+    }
+
+    private void updateFormalTypeParameterBaseType(MethodInfo methodInfo) {
+        if (Objects.nonNull(methodInfo.getClassInfo())) {
+            TypeInfo classTypeInfo = methodInfo.getClassInfo().getTypeInfo();
+
+            if (classTypeInfo.isParameterizedTypeInfo()) {
+                ParameterizedTypeInfo parameterizedClassTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
+                List<TypeInfo> typeArgumentList = parameterizedClassTypeInfo.getTypeArgumentList();
+
+                Map<String, TypeInfo> formalTypeParameterMap = typeArgumentList.stream()
+                        .filter(TypeInfo::isFormalTypeParameterInfo)
+                        .map(t -> (FormalTypeParameterInfo) t)
+                        .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
+                                FormalTypeParameterInfo::getBaseTypeInfo));
+
+                for (TypeInfo argument : methodInfo.getArgumentTypeInfoList()) {
+                    if (argument.isFormalTypeParameterInfo()
+                            && formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) argument).getTypeParameter())) {
+
+                        FormalTypeParameterInfo argumentFormalTypeParameterInfo = (FormalTypeParameterInfo) argument;
+                        argumentFormalTypeParameterInfo.setBaseTypeInfo(formalTypeParameterMap.get(argumentFormalTypeParameterInfo.getTypeParameter()));
+                    }
+                }
+
+                if (methodInfo.getReturnTypeInfo().isFormalTypeParameterInfo()
+                        && formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) methodInfo.getReturnTypeInfo()).getTypeParameter())) {
+
+                    FormalTypeParameterInfo formalReturnTypeParameterInfo = (FormalTypeParameterInfo) methodInfo.getReturnTypeInfo();
+                    formalReturnTypeParameterInfo.setBaseTypeInfo(formalTypeParameterMap.get(formalReturnTypeParameterInfo.getTypeParameter()));
+                }
             }
         }
     }
