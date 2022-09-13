@@ -1058,6 +1058,26 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testPrioritizingAmongTypeWideningTypes() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/needle/PinNeedle.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("pointer.moveTo(midX")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                    assert ("java.awt.geom.Path2D.Float::public synchronized final void moveTo(float, float)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 

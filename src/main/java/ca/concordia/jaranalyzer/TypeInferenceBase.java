@@ -285,7 +285,8 @@ public abstract class TypeInferenceBase {
                 if (InferenceUtility.isPrimitiveType(argumentTypeClassName) && InferenceUtility.isPrimitiveType(methodArgumentTypeClassName)) {
                     if (isWideningPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                         methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
-                                + PRIMITIVE_TYPE_WIDENING_DISTANCE);
+                                + PRIMITIVE_TYPE_WIDENING_DISTANCE
+                                + (0.1 * (PRIMITIVE_TYPE_WIDENING_MAP.get(argumentTypeClassName).indexOf(methodArgumentTypeClassName) + 1)));
                         matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
 
                     } else if (isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
