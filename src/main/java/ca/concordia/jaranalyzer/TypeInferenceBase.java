@@ -1345,6 +1345,10 @@ public abstract class TypeInferenceBase {
         return varArgsTypeClassNameList.stream().allMatch(varArgTypeName -> {
             varArgTypeName = varArgTypeName.replaceAll("\\[]", "");
 
+            if (methodArgumentTypeName.equals(varArgTypeName)) {
+                return true;
+            }
+
             if (InferenceUtility.isPrimitiveType(varArgTypeName)) {
                 varArgTypeName = PRIMITIVE_WRAPPER_CLASS_MAP.get(varArgTypeName);
             }
