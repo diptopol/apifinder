@@ -498,9 +498,9 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         methodInfoList = filterMethodInfoListBasedOnOwningClass(methodInfoList);
 
-        methodInfoList = prioritizeMethodInfoListBasedOnArguments(methodInfoList);
-
         methodInfoList = filteredNonAbstractMethod(methodInfoList);
+
+        methodInfoList = prioritizeMethodInfoListBasedOnArguments(methodInfoList);
 
         return methodInfoList;
     }

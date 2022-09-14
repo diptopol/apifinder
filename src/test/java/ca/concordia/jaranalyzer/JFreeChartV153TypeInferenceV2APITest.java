@@ -1120,6 +1120,27 @@ public class JFreeChartV153TypeInferenceV2APITest {
         });
     }
 
+    @Test
+    public void testPrioritizationOrderOfNonAbstractMethodAboveArgumentDistanceMatching() {
+        String filePath = "testProjectDirectory/jfreechart-1.5.3/jfreechart-1.5.3/src/main/java/org/jfree/chart/urls/StandardXYZURLGenerator.java";
+
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(SuperMethodInvocation superMethodInvocation) {
+                if (superMethodInvocation.toString().contains("super.generateURL(dataset,")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), superMethodInvocation);
+
+                    assert ("org.jfree.chart.urls.StandardXYURLGenerator" +
+                            "::public java.lang.String generateURL(org.jfree.data.xy.XYDataset, int, int)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
     private static void loadTestProjectDirectory(String projectName, String projectUrl, String commitId) {
         Path projectDirectory = Paths.get("testProjectDirectory").resolve(projectName);
 
