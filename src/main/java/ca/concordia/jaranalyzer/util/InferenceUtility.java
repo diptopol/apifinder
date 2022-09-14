@@ -906,29 +906,8 @@ public class InferenceUtility {
             } else {
                 TypeInfo returnTypeInfo = methodInfoList.get(0).getReturnTypeInfo();
 
-                if (returnTypeInfo.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) returnTypeInfo).isParameterized()) {
-                    List<TypeInfo> typeArgumentList = ((ParameterizedTypeInfo) returnTypeInfo).getTypeArgumentList();
-
-                    TypeInfo returnClassTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
-                            importStatementList, returnTypeInfo.getQualifiedClassName(), owningClassInfo);
-
-                    if (Objects.isNull(returnClassTypeInfo)) {
-                        return new NullTypeInfo();
-                    }
-
-                    if (returnClassTypeInfo.isParameterizedTypeInfo()) {
-                        ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) returnClassTypeInfo;
-
-                        if (!typeArgumentList.isEmpty()) {
-                            parameterizedTypeInfo.setTypeArgumentList(typeArgumentList);
-                            parameterizedTypeInfo.setParameterized(true);
-
-                            return returnClassTypeInfo;
-                        }
-                    }
-                }
-
-                return returnTypeInfo;
+                return getParameterizedTypeWithTypeParameter(returnTypeInfo, dependentArtifactSet, javaVersion,
+                        importStatementList, owningClassInfo);
             }
         } else if (expression instanceof SuperMethodInvocation) {
             SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) expression;
@@ -1043,6 +1022,39 @@ public class InferenceUtility {
         } else {
             return new NullTypeInfo();
         }
+    }
+
+    private static TypeInfo getParameterizedTypeWithTypeParameter(TypeInfo typeInfo,
+                                                               Set<Artifact> dependentArtifactSet,
+                                                               String javaVersion,
+                                                               List<String> importStatementList,
+                                                               OwningClassInfo owningClassInfo) {
+        if (typeInfo.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) typeInfo).isParameterized()) {
+            List<TypeInfo> typeArgumentList = ((ParameterizedTypeInfo) typeInfo).getTypeArgumentList();
+
+            List<TypeInfo> updatedTypeArgumentList = new ArrayList<>();
+
+            for (TypeInfo typeArgument: typeArgumentList) {
+                updatedTypeArgumentList.add(getParameterizedTypeWithTypeParameter(typeArgument, dependentArtifactSet, javaVersion,
+                        importStatementList, owningClassInfo));
+            }
+
+            TypeInfo classTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
+                    importStatementList, typeInfo.getQualifiedClassName(), owningClassInfo);
+
+            if (Objects.nonNull(classTypeInfo) && classTypeInfo.isParameterizedTypeInfo()) {
+                ParameterizedTypeInfo parameterizedClassTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
+
+                if (!updatedTypeArgumentList.isEmpty()) {
+                    parameterizedClassTypeInfo.setTypeArgumentList(updatedTypeArgumentList);
+                    parameterizedClassTypeInfo.setParameterized(true);
+
+                    return parameterizedClassTypeInfo;
+                }
+            }
+        }
+
+        return typeInfo;
     }
 
     public static TypeInfo getTypeInfo(Set<Artifact> dependentArtifactSet,
