@@ -351,27 +351,32 @@ public class MethodInfoService {
                 ParameterizedTypeInfo parameterizedClassTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
                 List<TypeInfo> typeArgumentList = parameterizedClassTypeInfo.getTypeArgumentList();
 
-                Map<String, TypeInfo> formalTypeParameterMap = typeArgumentList.stream()
+                Map<String, TypeInfo> baseTypeInfoMap = typeArgumentList.stream()
                         .filter(TypeInfo::isFormalTypeParameterInfo)
                         .map(t -> (FormalTypeParameterInfo) t)
                         .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
                                 FormalTypeParameterInfo::getBaseTypeInfo));
 
                 for (TypeInfo argument : methodInfo.getArgumentTypeInfoList()) {
-                    if (argument.isFormalTypeParameterInfo()
-                            && formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) argument).getTypeParameter())) {
-
-                        FormalTypeParameterInfo argumentFormalTypeParameterInfo = (FormalTypeParameterInfo) argument;
-                        argumentFormalTypeParameterInfo.setBaseTypeInfo(formalTypeParameterMap.get(argumentFormalTypeParameterInfo.getTypeParameter()));
-                    }
+                    populateBaseType(argument, baseTypeInfoMap);
                 }
 
-                if (methodInfo.getReturnTypeInfo().isFormalTypeParameterInfo()
-                        && formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) methodInfo.getReturnTypeInfo()).getTypeParameter())) {
+                populateBaseType(methodInfo.getReturnTypeInfo(), baseTypeInfoMap);
+            }
+        }
+    }
 
-                    FormalTypeParameterInfo formalReturnTypeParameterInfo = (FormalTypeParameterInfo) methodInfo.getReturnTypeInfo();
-                    formalReturnTypeParameterInfo.setBaseTypeInfo(formalTypeParameterMap.get(formalReturnTypeParameterInfo.getTypeParameter()));
-                }
+    private void populateBaseType(TypeInfo typeInfo, Map<String, TypeInfo> baseTypeInfoMap) {
+        if (typeInfo.isFormalTypeParameterInfo()
+                && baseTypeInfoMap.containsKey(((FormalTypeParameterInfo) typeInfo).getTypeParameter())) {
+
+            FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeInfo;
+            formalTypeParameterInfo.setBaseTypeInfo(baseTypeInfoMap.get(formalTypeParameterInfo.getTypeParameter()));
+        } else if (typeInfo.isParameterizedTypeInfo()) {
+            ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
+
+            for (TypeInfo typeArgument: parameterizedTypeInfo.getTypeArgumentList()) {
+                populateBaseType(typeArgument, baseTypeInfoMap);
             }
         }
     }
