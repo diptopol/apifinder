@@ -47,24 +47,7 @@ public class ParameterizedTypeInfo extends TypeInfo {
     }
 
     public void setTypeArgumentList(List<TypeInfo> typeArgumentList) {
-        if (!this.typeArgumentList.isEmpty()) {
-            if (this.typeArgumentList.size() == typeArgumentList.size()) {
-                for (int i = 0; i < this.typeArgumentList.size(); i++) {
-                    TypeInfo thisTypeArgument = this.typeArgumentList.get(i);
-                    TypeInfo otherTypeArgument = typeArgumentList.get(i);
-
-                    if (thisTypeArgument.isFormalTypeParameterInfo()) {
-                        FormalTypeParameterInfo thisFormalTypeArgument = (FormalTypeParameterInfo) thisTypeArgument;
-                        //assuming that otherTypeArgument can only be qualifiedTypeInfo
-                        thisFormalTypeArgument.setBaseTypeInfo(otherTypeArgument);
-
-                        this.typeArgumentList.set(i, thisFormalTypeArgument);
-                    } else {
-                        this.typeArgumentList.set(i, otherTypeArgument);
-                    }
-                }
-            }
-        } else {
+        if (this.typeArgumentList.isEmpty() || this.typeArgumentList.size() == typeArgumentList.size()) {
             this.typeArgumentList = typeArgumentList;
         }
     }

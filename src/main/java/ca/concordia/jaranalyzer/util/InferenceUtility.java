@@ -1288,9 +1288,11 @@ public class InferenceUtility {
                     owningClassInfo, methodInfo);
 
             Map<String, TypeInfo> replacedTypeInfoMap = new HashMap<>();
-            invokerTypeInfo = getOriginalInvoker(invokerTypeInfo, methodInfo, owningClassInfo);
+            invokerTypeInfo = getOriginalInvoker(invokerTypeInfo, methodInfo, owningClassInfo,
+                    dependentArtifactSet, javaVersion, importStatementList);
             Map<String, TypeInfo> formalTypeParameterMap = getInferredFormalTypeParameterMap(invokerTypeInfo,
-                    returnTypeInfo, methodInfo, argumentTypeInfoList, typeArgumentTypeInfoList);
+                    returnTypeInfo, methodInfo, argumentTypeInfoList, typeArgumentTypeInfoList,
+                    dependentArtifactSet, javaVersion, importStatementList, owningClassInfo);
 
             if (Objects.nonNull(owningClassInfo) && Objects.nonNull(invokerTypeInfo)
                     && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(invokerTypeInfo.getQualifiedClassName())) {
@@ -1473,7 +1475,10 @@ public class InferenceUtility {
 
     private static TypeInfo getOriginalInvoker(TypeInfo invokerTypeInfo,
                                                MethodInfo methodInfo,
-                                               OwningClassInfo owningClassInfo) {
+                                               OwningClassInfo owningClassInfo,
+                                               Set<Artifact> dependentArtifactSet,
+                                               String javaVersion,
+                                               List<String> importStatementList) {
 
         if (Objects.isNull(invokerTypeInfo) && Objects.nonNull(owningClassInfo)
                 && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(methodInfo.getQualifiedClassName())) {
@@ -1502,22 +1507,31 @@ public class InferenceUtility {
                 ParameterizedTypeInfo parameterizedUpdatedInvokerTypeInfo = (ParameterizedTypeInfo) updatedInvokerTypeInfo;
                 parameterizedUpdatedInvokerTypeInfo.setParameterized(parameterizedInvokerTypeInfo.isParameterized());
 
-                Map<String, FormalTypeParameterInfo> invokerFormalTypeParameterMap =
-                        parameterizedInvokerTypeInfo.getTypeArgumentList()
-                                .stream()
-                                .filter(TypeInfo::isFormalTypeParameterInfo)
-                                .map(t -> (FormalTypeParameterInfo) t)
-                                .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter, f -> f));
+                Map<String, TypeInfo> invokerFormalTypeParameterMap = new LinkedHashMap<>();
 
+                if (parameterizedInvokerTypeInfo.isParameterized()) {
+                    populateInferredTypeInfoMapForParameterizedTypeInfo(dependentArtifactSet, javaVersion,
+                            importStatementList, owningClassInfo, parameterizedInvokerTypeInfo, invokerFormalTypeParameterMap);
+                } else {
+                    invokerFormalTypeParameterMap =
+                            parameterizedInvokerTypeInfo.getTypeArgumentList()
+                                    .stream()
+                                    .filter(TypeInfo::isFormalTypeParameterInfo)
+                                    .map(t -> (FormalTypeParameterInfo) t)
+                                    .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter, f -> f));
+                }
+
+                int i = 0;
                 for (TypeInfo typeInfo : parameterizedUpdatedInvokerTypeInfo.getTypeArgumentList()) {
                     if (typeInfo.isFormalTypeParameterInfo()
                             && invokerFormalTypeParameterMap.containsKey(((FormalTypeParameterInfo) typeInfo).getTypeParameter())) {
 
                         FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeInfo;
-                        formalTypeParameterInfo.setBaseTypeInfo(invokerFormalTypeParameterMap.get(
-                                        formalTypeParameterInfo.getTypeParameter())
-                                .getBaseTypeInfo());
+                        parameterizedUpdatedInvokerTypeInfo.getTypeArgumentList().set(i, invokerFormalTypeParameterMap.get(
+                                formalTypeParameterInfo.getTypeParameter()));
                     }
+
+                    i++;
                 }
             }
 
@@ -1527,11 +1541,44 @@ public class InferenceUtility {
         return invokerTypeInfo;
     }
 
+    private static void populateInferredTypeInfoMapForParameterizedTypeInfo(Set<Artifact> dependentArtifactSet,
+                                                                            String javaVersion,
+                                                                            List<String> importStatementList,
+                                                                            OwningClassInfo owningClassInfo,
+                                                                            ParameterizedTypeInfo parameterizedTypeInfo,
+                                                                            Map<String, TypeInfo> inferredTypeInfoMap) {
+        TypeInfo classTypeInfo = InferenceUtility.getTypeInfoFromClassName(dependentArtifactSet,
+                javaVersion, importStatementList, parameterizedTypeInfo.getQualifiedClassName(),
+                owningClassInfo);
+
+        if (Objects.nonNull(classTypeInfo) && classTypeInfo.isParameterizedTypeInfo()) {
+            ParameterizedTypeInfo classParameterizedTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
+
+            int i = 0;
+            for (TypeInfo typeArgumentInfo: classParameterizedTypeInfo.getTypeArgumentList()) {
+                if (typeArgumentInfo.isFormalTypeParameterInfo()) {
+                    FormalTypeParameterInfo formalTypeArgParameterInfo = (FormalTypeParameterInfo) typeArgumentInfo;
+
+                    if (!inferredTypeInfoMap.containsKey(formalTypeArgParameterInfo.getTypeParameter())) {
+                        inferredTypeInfoMap.put(formalTypeArgParameterInfo.getTypeParameter(),
+                                parameterizedTypeInfo.getTypeArgumentList().get(i));
+                    }
+                }
+
+                i++;
+            }
+        }
+    }
+
     private static Map<String, TypeInfo> getInferredFormalTypeParameterMap(TypeInfo invokerTypeInfo,
                                                                            TypeInfo returnTypeInfo,
                                                                            MethodInfo methodInfo,
                                                                            List<TypeInfo> argumentTypeInfoList,
-                                                                           List<TypeInfo> typeArgumentTypeInfoList) {
+                                                                           List<TypeInfo> typeArgumentTypeInfoList,
+                                                                           Set<Artifact> dependentArtifactSet,
+                                                                           String javaVersion,
+                                                                           List<String> importStatementList,
+                                                                           OwningClassInfo owningClassInfo) {
         Map<String, TypeInfo> inferredTypeInfoMap = new HashMap<>();
 
         if (Objects.nonNull(invokerTypeInfo)
@@ -1539,14 +1586,18 @@ public class InferenceUtility {
                 && ((ParameterizedTypeInfo) invokerTypeInfo).isParameterized()) {
             ParameterizedTypeInfo invokerParameterizedTypeInfo = (ParameterizedTypeInfo) invokerTypeInfo;
 
-            inferredTypeInfoMap.putAll(
-                    invokerParameterizedTypeInfo.getTypeArgumentList()
-                            .stream()
-                            .filter(TypeInfo::isFormalTypeParameterInfo)
-                            .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
-                            .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter,
-                                    FormalTypeParameterInfo::getBaseTypeInfo))
-            );
+            if (invokerParameterizedTypeInfo.isParameterized()) {
+                populateInferredTypeInfoMapForParameterizedTypeInfo(dependentArtifactSet, javaVersion,
+                        importStatementList, owningClassInfo, invokerParameterizedTypeInfo, inferredTypeInfoMap);
+            } else {
+                inferredTypeInfoMap.putAll(
+                        invokerParameterizedTypeInfo.getTypeArgumentList()
+                                .stream()
+                                .filter(TypeInfo::isFormalTypeParameterInfo)
+                                .map(typeInfo -> (FormalTypeParameterInfo) typeInfo)
+                                .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter, f -> f))
+                );
+            }
         }
 
         if (!typeArgumentTypeInfoList.isEmpty()) {
@@ -1588,15 +1639,8 @@ public class InferenceUtility {
 
                 ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) returnTypeInfo;
 
-                for (TypeInfo typeArgumentInfo : parameterizedTypeInfo.getTypeArgumentList()) {
-                    if (typeArgumentInfo.isFormalTypeParameterInfo()) {
-                        FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeArgumentInfo;
-
-                        if (!inferredTypeInfoMap.containsKey(formalTypeParameterInfo.getTypeParameter())) {
-                            inferredTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo.getBaseTypeInfo());
-                        }
-                    }
-                }
+                populateInferredTypeInfoMapForParameterizedTypeInfo(dependentArtifactSet, javaVersion,
+                        importStatementList, owningClassInfo, parameterizedTypeInfo, inferredTypeInfoMap);
             }
         }
 
