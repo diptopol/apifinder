@@ -174,7 +174,6 @@ public abstract class TypeInferenceBase {
 
     static boolean convertFunctionalTypeInfo(List<TypeInfo> argumentTypeInfoList,
                                              List<TypeInfo> methodArgumentTypeInfoList,
-                                             MethodInfo methodInfo,
                                              List<Integer> jarIdList,
                                              MethodInfoService methodInfoService,
                                              ClassInfoService classInfoService) {
@@ -222,8 +221,6 @@ public abstract class TypeInferenceBase {
                                     && functionDefinition.getArgumentTypeInfoList().get(functionDefinition.getArgumentTypeInfoList().size() - 1).isVarargTypeInfo());
 
                     if (isFunctionDefinitionMatches) {
-                        populateFormalTypeParameterForFunctionalInterfaceArgument(abstractMethodInfo, functionDefinition,
-                                methodInfo.getArgumentTypeInfoList().get(index));
                         argumentTypeInfoList.set(index, methodArgumentTypeInfo);
                         matches = true;
                         break;
@@ -246,8 +243,8 @@ public abstract class TypeInferenceBase {
                                         ClassInfoService classInfoService,
                                         MethodInfo methodInfo) {
 
-        boolean isSuccess = convertFunctionalTypeInfo(argumentTypeInfoList, methodArgumentTypeInfoList, methodInfo,
-                jarIdList, methodInfoService, classInfoService);
+        boolean isSuccess = convertFunctionalTypeInfo(argumentTypeInfoList, methodArgumentTypeInfoList, jarIdList,
+                methodInfoService, classInfoService);
 
         if (!isSuccess) {
             return false;
@@ -1103,61 +1100,6 @@ public abstract class TypeInferenceBase {
                 classQNameDeclarationOrderList.indexOf(m.getQualifiedClassName())));
 
         return new LinkedHashSet<>(orderedDeferredMethodInfoList);
-    }
-
-    private static void populateFormalTypeParameterForFunctionalInterfaceArgument(MethodInfo abstractMethodInfo,
-                                                                                  FunctionTypeInfo.FunctionDefinition functionDefinition,
-                                                                                  TypeInfo functionalInterfaceTypeInfo) {
-        TypeInfo classTypeInfo = abstractMethodInfo.getClassInfo().getTypeInfo();
-
-        if (classTypeInfo.isParameterizedTypeInfo()) {
-            ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
-
-            Map<String, FormalTypeParameterInfo> formalTypeParameterInfoMap = new LinkedHashMap<>();
-            for (TypeInfo typeArgument: parameterizedTypeInfo.getTypeArgumentList()) {
-                if (typeArgument.isFormalTypeParameterInfo()) {
-                    FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeArgument;
-                    formalTypeParameterInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo);
-                }
-            }
-
-            for (int argumentIndex = 0; argumentIndex < abstractMethodInfo.getArgumentTypeInfoList().size(); argumentIndex++) {
-                TypeInfo argument = abstractMethodInfo.getArgumentTypeInfoList().get(argumentIndex);
-
-                if (argument.isFormalTypeParameterInfo()) {
-                    FormalTypeParameterInfo argumentFormalTypeParameterInfo = (FormalTypeParameterInfo) argument;
-
-                    if (formalTypeParameterInfoMap.containsKey(argumentFormalTypeParameterInfo.getTypeParameter())) {
-                        TypeInfo baseTypeInfo = functionDefinition.getArgumentTypeInfoList().get(argumentIndex);
-
-                        FormalTypeParameterInfo formalTypeParameterInfo
-                                = formalTypeParameterInfoMap.get(argumentFormalTypeParameterInfo.getTypeParameter());
-                        formalTypeParameterInfo.setBaseTypeInfo(baseTypeInfo);
-
-                        formalTypeParameterInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo);
-                    }
-                }
-            }
-
-            if (abstractMethodInfo.getReturnTypeInfo().isFormalTypeParameterInfo() && Objects.nonNull(functionDefinition.getReturnTypeInfo())) {
-                FormalTypeParameterInfo returnFormalTypeParameterInfo = (FormalTypeParameterInfo) abstractMethodInfo.getReturnTypeInfo();
-
-                if (formalTypeParameterInfoMap.containsKey(returnFormalTypeParameterInfo.getTypeParameter())) {
-                    TypeInfo baseTypeInfo = functionDefinition.getReturnTypeInfo();
-
-                    FormalTypeParameterInfo formalTypeParameterInfo = formalTypeParameterInfoMap.get(returnFormalTypeParameterInfo.getTypeParameter());
-                    formalTypeParameterInfo.setBaseTypeInfo(baseTypeInfo);
-
-                    formalTypeParameterInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo);
-                }
-            }
-
-            if (functionalInterfaceTypeInfo.isParameterizedTypeInfo()) {
-                ParameterizedTypeInfo funcParameterizedTypeInfo = (ParameterizedTypeInfo) functionalInterfaceTypeInfo;
-                funcParameterizedTypeInfo.getTypeArgumentList().clear();
-                funcParameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(formalTypeParameterInfoMap.values()));
-            }
-        }
     }
 
     private static Set<String> getAllSuperClassSet(Set<String> classSet, List<Integer> jarIdList, ClassInfoService classInfoService) {

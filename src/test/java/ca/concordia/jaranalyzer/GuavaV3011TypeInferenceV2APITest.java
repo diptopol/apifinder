@@ -142,12 +142,12 @@ public class GuavaV3011TypeInferenceV2APITest {
 
                     assert ("[PrimitiveTypeInfo{qualifiedClassName='int'}, PrimitiveTypeInfo{qualifiedClassName='int'}," +
                             " ParameterizedTypeInfo{qualifiedClassName='java.util.function.IntFunction'," +
-                            " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='R'," +
-                            " baseTypeInfo=ParameterizedTypeInfo{qualifiedClassName='java.util.Map.Entry'," +
+                            " isParameterized=true," +
+                            " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.util.Map.Entry'," +
                             " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='K'," +
                             " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
                             " FormalTypeParameterInfo{typeParameter='V'," +
-                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}}]}]")
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}]")
                             .equals(methodInfo.getArgumentTypeInfoList().toString());
                 }
 
