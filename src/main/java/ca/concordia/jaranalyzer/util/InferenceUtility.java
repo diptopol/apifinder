@@ -767,10 +767,14 @@ public class InferenceUtility {
                     || operator.equals(InfixExpression.Operator.OR)) {
 
                 if (operator.equals(InfixExpression.Operator.PLUS)
-                        && ("java.lang.String".equals(leftExpressionTypeInfo.getQualifiedClassName())
-                        || "java.lang.String".equals(rightExpressionTypeInfo.getQualifiedClassName()))) {
+                        && ((Objects.nonNull(leftExpressionTypeInfo) && "java.lang.String".equals(leftExpressionTypeInfo.getQualifiedClassName()))
+                        || (Objects.nonNull(rightExpressionTypeInfo) && "java.lang.String".equals(rightExpressionTypeInfo.getQualifiedClassName())))) {
 
                     return new PrimitiveTypeInfo("java.lang.String");
+                }
+
+                if (Objects.isNull(leftExpressionTypeInfo) || Objects.isNull(rightExpressionTypeInfo)) {
+                    return new NullTypeInfo();
                 }
 
                 List<String> operandPrecedentList = new ArrayList<String>(Arrays.asList("byte", "short", "int", "long", "float", "double"));
