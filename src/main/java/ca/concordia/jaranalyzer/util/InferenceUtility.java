@@ -810,7 +810,7 @@ public class InferenceUtility {
             if (expression instanceof QualifiedName) {
                 String firstPart = name.substring(0, name.indexOf("."));
                 VariableDeclarationDto selected = getVariableDeclarationDtoFromVariableMap(firstPart, expression, variableNameMap);
-                String className = selected != null ? selected.getTypeInfo().getQualifiedClassName() : null;
+                String className = Objects.nonNull(selected) ? selected.getTypeInfo().getQualifiedClassName() : null;
 
                 if (Objects.isNull(className)) {
                     TypeInfo typeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
@@ -824,29 +824,42 @@ public class InferenceUtility {
                 String[] propertyNameList = name.substring(name.indexOf(".") + 1).split("\\.");
 
                 TypeInfo fieldTypeInfo = null;
+                TypeInfo classTypeInfo = null;
+                String propertyNamePath = className;
 
                 for (String property: propertyNameList) {
-                    if (className != null) {
-                        name = className.concat(".").concat(property);
+                    if (propertyNamePath != null) {
+                        propertyNamePath = propertyNamePath.concat(".").concat(property);
 
                         fieldTypeInfo = getTypeInfoFromFieldName(dependentArtifactSet, javaVersion, importStatementList,
-                                name, owningClassInfo);
+                                propertyNamePath, owningClassInfo);
 
                         if (Objects.nonNull(fieldTypeInfo)) {
-                            className = fieldTypeInfo.getQualifiedClassName();
+                            propertyNamePath = fieldTypeInfo.getQualifiedClassName();
+                        } else {
+                            classTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, propertyNamePath,
+                                    owningClassInfo);
+
+                            if (Objects.nonNull(classTypeInfo)) {
+                                propertyNamePath = classTypeInfo.getQualifiedClassName();
+                            }
                         }
                     }
                 }
 
                 if (Objects.nonNull(fieldTypeInfo)) {
                     return fieldTypeInfo;
+                } else if (Objects.nonNull(classTypeInfo)) {
+                    return classTypeInfo;
                 } else {
-                    return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, name,
+                    TypeInfo typeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList, name,
                             owningClassInfo);
+
+                    return Objects.isNull(typeInfo) ? new NullTypeInfo() : typeInfo;
                 }
             } else if (expression instanceof SimpleName) {
                 VariableDeclarationDto selected = getVariableDeclarationDtoFromVariableMap(name, expression, variableNameMap);
-                TypeInfo classTypeInfo = selected != null ? selected.getTypeInfo() : null;
+                TypeInfo classTypeInfo = Objects.nonNull(selected) ? selected.getTypeInfo() : null;
 
                 if (Objects.nonNull(classTypeInfo)) {
                     return classTypeInfo;
@@ -857,8 +870,10 @@ public class InferenceUtility {
                     if (Objects.nonNull(fieldTypeInfo)) {
                         return fieldTypeInfo;
                     } else {
-                        return getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
+                        TypeInfo typeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
                                 name, owningClassInfo);
+
+                        return Objects.isNull(typeInfo) ? new NullTypeInfo() : typeInfo;
                     }
                 }
             } else {
