@@ -1719,12 +1719,20 @@ public class InferenceUtility {
             } else if (methodArgument.isParameterizedTypeInfo() && Objects.nonNull(argument)
                     && argument.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) argument).isParameterized()) {
                 ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) argument;
+                ParameterizedTypeInfo methodArgumentParameterizedTypeInfo = (ParameterizedTypeInfo) methodArgument;
 
-                for (TypeInfo typeArgument : parameterizedArgTypeInfo.getTypeArgumentList()) {
-                    if (typeArgument.isFormalTypeParameterInfo()
-                            && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) typeArgument).getTypeParameter())) {
-                        FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) typeArgument;
-                        formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), formalTypeParameterInfo.getBaseTypeInfo());
+                if (parameterizedArgTypeInfo.getTypeArgumentList().size() == methodArgumentParameterizedTypeInfo.getTypeArgumentList().size()) {
+                    for (int j = 0; j < parameterizedArgTypeInfo.getTypeArgumentList().size(); j++) {
+                        TypeInfo argumentTypeInfo = parameterizedArgTypeInfo.getTypeArgumentList().get(j);
+                        TypeInfo methodArgumentTypeInfo = methodArgumentParameterizedTypeInfo.getTypeArgumentList().get(j);
+
+                        if (methodArgumentTypeInfo.isFormalTypeParameterInfo() && argumentTypeInfo.isFormalTypeParameterInfo()) {
+                            FormalTypeParameterInfo formalMethodArgumentTypeParameterInfo = (FormalTypeParameterInfo) methodArgumentTypeInfo;
+                            FormalTypeParameterInfo formalArgumentTypeParameterInfo = (FormalTypeParameterInfo) argumentTypeInfo;
+
+                            formalTypeInfoMap.put(formalMethodArgumentTypeParameterInfo.getTypeParameter(),
+                                    formalArgumentTypeParameterInfo.getBaseTypeInfo());
+                        }
                     }
                 }
             }
