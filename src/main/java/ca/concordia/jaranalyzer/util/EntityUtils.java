@@ -20,13 +20,13 @@ public class EntityUtils {
             int dimension = type.getDimensions();
             String className = typeClassName.replaceAll("\\[]", "");
 
-            if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(className)) {
+            if (PrimitiveTypeUtils.isPrimitiveType(className)) {
                 return new ArrayTypeInfo(new PrimitiveTypeInfo(className), dimension);
             } else {
                 return new ArrayTypeInfo(new QualifiedTypeInfo(className), dimension);
             }
         } else {
-            if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(typeClassName)) {
+            if (PrimitiveTypeUtils.isPrimitiveType(typeClassName)) {
                 return new PrimitiveTypeInfo(typeClassName);
             } else {
                 return new QualifiedTypeInfo(typeClassName);

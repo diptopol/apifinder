@@ -7,7 +7,7 @@ import ca.concordia.jaranalyzer.models.typeInfo.QualifiedTypeInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.DataSource;
 import ca.concordia.jaranalyzer.util.DbUtils;
-import ca.concordia.jaranalyzer.util.InferenceUtility;
+import ca.concordia.jaranalyzer.util.PrimitiveTypeUtils;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
@@ -441,7 +441,7 @@ public class ClassInfoService {
      * parameterized type.
      */
     private TypeInfo getTypeInfo(Type type) {
-        if (InferenceUtility.PRIMITIVE_TYPE_LIST.contains(type.getClassName())) {
+        if (PrimitiveTypeUtils.isPrimitiveType(type.getClassName())) {
             return new PrimitiveTypeInfo(type.getClassName());
         } else {
             return new QualifiedTypeInfo(type.getClassName());

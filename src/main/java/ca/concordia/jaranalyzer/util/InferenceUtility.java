@@ -28,9 +28,6 @@ import java.util.stream.Collectors;
  */
 public class InferenceUtility {
 
-    public static final List<String> PRIMITIVE_TYPE_LIST =
-            new ArrayList<>(Arrays.asList("byte", "short", "int", "long", "float", "double", "char", "boolean"));
-
     public static List<String> getImportStatementList(CompilationUnit compilationUnit) {
         List<ImportDeclaration> importDeclarationList = compilationUnit.imports();
 
@@ -1288,10 +1285,6 @@ public class InferenceUtility {
         }
     }
 
-    public static boolean isPrimitiveType(String argumentTypeClassName) {
-        return PRIMITIVE_TYPE_LIST.contains(argumentTypeClassName);
-    }
-
     private static void populateVariableNameMap(Map<String, Set<VariableDeclarationDto>> variableNameMap,
                                                 Set<VariableDeclarationDto> variableDeclarationDtoSet) {
 
@@ -1362,7 +1355,7 @@ public class InferenceUtility {
             return null;
         }
 
-        if (PRIMITIVE_TYPE_LIST.contains(className.replaceAll("\\[]", ""))) {
+        if (PrimitiveTypeUtils.isPrimitiveType(className.replaceAll("\\[]", ""))) {
             int dimension = StringUtils.countMatches(className, "[]");
 
             if (dimension > 0) {
@@ -1744,7 +1737,7 @@ public class InferenceUtility {
              * Primitive type cannot be replaced as placeholder of formal type parameter. Replaced with wrapper object.
              */
             if (Objects.nonNull(argument) && argument.isPrimitiveTypeInfo()) {
-                argument = new QualifiedTypeInfo(TypeInferenceAPI.getPrimitiveWrapperClassName(argument.getQualifiedClassName()));
+                argument = new QualifiedTypeInfo(PrimitiveTypeUtils.getPrimitiveWrapperClassQName(argument.getQualifiedClassName()));
             }
 
             if (methodArgument.isFormalTypeParameterInfo()
