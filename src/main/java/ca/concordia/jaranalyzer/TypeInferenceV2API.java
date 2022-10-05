@@ -201,7 +201,8 @@ public class TypeInferenceV2API {
             List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
             InferenceUtility.transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                    owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, null, null);
+                    owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList,
+                    null, null, variableNameMap);
             InferenceUtility.conversionToVarargsMethodArgument(methodInfoList);
 
             return methodInfoList.isEmpty() ? null : methodInfoList.get(0);
@@ -273,7 +274,8 @@ public class TypeInferenceV2API {
             List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
             InferenceUtility.transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                    owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, null, null);
+                    owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList,
+                    null, null, variableNameMap);
             InferenceUtility.conversionToVarargsMethodArgument(methodInfoList);
 
             return methodInfoList.isEmpty() ? null : methodInfoList.get(0);

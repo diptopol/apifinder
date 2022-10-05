@@ -104,7 +104,8 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList, owningClassInfo,
-                methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, invokerClassTypeInfo, returnTypeInfo);
+                methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, invokerClassTypeInfo, returnTypeInfo,
+                variableNameMap);
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -148,7 +149,8 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, null, null);
+                owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, null,
+                null, variableNameMap);
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -193,7 +195,8 @@ public class InferenceUtility {
         List<MethodInfo> methodInfoList = searchCriteria.getMethodList();
 
         InferenceUtility.transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList,
-                owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, null, returnTypeInfo);
+                owningClassInfo, methodInfoList, argumentTypeInfoList, typeArgumentTypeInfoList, null,
+                returnTypeInfo, variableNameMap);
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -244,7 +247,8 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList, owningClassInfo,
-                methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, invokerClassTypeInfo, null);
+                methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, invokerClassTypeInfo, null,
+                variableNameMap);
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -285,7 +289,8 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList, owningClassInfo,
-                methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, null, null);
+                methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, null, null,
+                new LinkedHashMap<>());
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -327,7 +332,8 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList, owningClassInfo,
-                methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, null, null);
+                methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, null, null,
+                new LinkedHashMap<>());
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -372,7 +378,8 @@ public class InferenceUtility {
          * converting last argument array type to vararg.
          */
         transformTypeInfoRepresentation(dependentArtifactSet, javaVersion, importStatementList, owningClassInfo,
-                methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, invokerClassTypeInfo, null);
+                methodInfoList, Collections.emptyList(), typeArgumentTypeInfoList, invokerClassTypeInfo, null,
+                new LinkedHashMap<>());
         conversionToVarargsMethodArgument(methodInfoList);
 
         return methodInfoList;
@@ -966,7 +973,12 @@ public class InferenceUtility {
                 }
             }
 
-            return new FunctionTypeInfo(Collections.singletonList(new FunctionTypeInfo.FunctionDefinition(null, argumentTypeInfoList)));
+            FunctionTypeInfo functionTypeInfo = new FunctionTypeInfo(Collections.singletonList(
+                    new FunctionTypeInfo.FunctionDefinition(null, argumentTypeInfoList)));
+
+            functionTypeInfo.setExpression(lambdaExpression);
+
+            return functionTypeInfo;
 
         } else if (expression instanceof ExpressionMethodReference) {
             ExpressionMethodReference expressionMethodReference = (ExpressionMethodReference) expression;
@@ -995,7 +1007,10 @@ public class InferenceUtility {
                     })
                     .collect(Collectors.toList());
 
-            return new FunctionTypeInfo(functionDefinitionList);
+            FunctionTypeInfo functionTypeInfo = new FunctionTypeInfo(functionDefinitionList);
+            functionTypeInfo.setExpression(expressionMethodReference);
+
+            return functionTypeInfo;
 
         } else if (expression instanceof CreationReference) {
             CreationReference creationReference = (CreationReference) expression;
@@ -1009,7 +1024,10 @@ public class InferenceUtility {
 
             boolean isInnerClassConstructor = !methodInfoList.isEmpty() && methodInfoList.get(0).isInnerClassConstructor();
 
-            return new FunctionTypeInfo(isInnerClassConstructor, functionDefinitionList);
+            FunctionTypeInfo functionTypeInfo = new FunctionTypeInfo(isInnerClassConstructor, functionDefinitionList);
+            functionTypeInfo.setExpression(creationReference);
+
+            return functionTypeInfo;
 
         } else if (expression instanceof SuperMethodReference) {
             SuperMethodReference superMethodReference = (SuperMethodReference) expression;
@@ -1021,7 +1039,10 @@ public class InferenceUtility {
                     .map(m -> new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), m.getArgumentTypeInfoList()))
                     .collect(Collectors.toList());
 
-            return new FunctionTypeInfo(functionDefinitionList);
+            FunctionTypeInfo functionTypeInfo = new FunctionTypeInfo(functionDefinitionList);
+            functionTypeInfo.setExpression(superMethodReference);
+
+            return functionTypeInfo;
 
         } else if (expression instanceof TypeMethodReference) {
             TypeMethodReference typeMethodReference = (TypeMethodReference) expression;
@@ -1033,7 +1054,10 @@ public class InferenceUtility {
                     .map(m -> new FunctionTypeInfo.FunctionDefinition(m.getReturnTypeInfo(), m.getArgumentTypeInfoList()))
                     .collect(Collectors.toList());
 
-            return new FunctionTypeInfo(functionDefinitionList);
+            FunctionTypeInfo functionTypeInfo = new FunctionTypeInfo(functionDefinitionList);
+            functionTypeInfo.setExpression(typeMethodReference);
+
+            return functionTypeInfo;
 
         } else if (expression instanceof Assignment) {
             Assignment assignment = (Assignment) expression;
@@ -1305,7 +1329,8 @@ public class InferenceUtility {
                                                        List<TypeInfo> argumentTypeInfoList,
                                                        List<TypeInfo> typeArgumentTypeInfoList,
                                                        TypeInfo invokerTypeInfo,
-                                                       TypeInfo returnTypeInfo) {
+                                                       TypeInfo returnTypeInfo,
+                                                       Map<String, Set<VariableDeclarationDto>> variableNameMap) {
 
         for (MethodInfo methodInfo : methodInfoList) {
             convertParameterizedTypeIfRequired(dependentArtifactSet, javaVersion, importStatementList,
@@ -1316,7 +1341,7 @@ public class InferenceUtility {
                     dependentArtifactSet, javaVersion, importStatementList);
             Map<String, TypeInfo> formalTypeParameterMap = getInferredFormalTypeParameterMap(invokerTypeInfo,
                     returnTypeInfo, methodInfo, argumentTypeInfoList, typeArgumentTypeInfoList,
-                    dependentArtifactSet, javaVersion, importStatementList, owningClassInfo);
+                    dependentArtifactSet, javaVersion, importStatementList, owningClassInfo, variableNameMap);
 
             if (Objects.nonNull(owningClassInfo) && Objects.nonNull(invokerTypeInfo)
                     && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(invokerTypeInfo.getQualifiedClassName())) {
@@ -1602,7 +1627,8 @@ public class InferenceUtility {
                                                                            Set<Artifact> dependentArtifactSet,
                                                                            String javaVersion,
                                                                            List<String> importStatementList,
-                                                                           OwningClassInfo owningClassInfo) {
+                                                                           OwningClassInfo owningClassInfo,
+                                                                           Map<String, Set<VariableDeclarationDto>> variableNameMap) {
         Map<String, TypeInfo> inferredTypeInfoMap = new HashMap<>();
 
         if (Objects.nonNull(invokerTypeInfo)
@@ -1645,7 +1671,8 @@ public class InferenceUtility {
                                     FormalTypeParameterInfo::getBaseTypeInfo))
             );
         } else if (isFormalTypeInferredAllowed(invokerTypeInfo, methodInfo) && !argumentTypeInfoList.isEmpty()) {
-            populateInferredFormalTypeParameterMapUsingMethodArguments(methodInfo, argumentTypeInfoList, inferredTypeInfoMap);
+            populateInferredFormalTypeParameterMapUsingMethodArguments(methodInfo, argumentTypeInfoList,
+                    inferredTypeInfoMap, dependentArtifactSet, javaVersion, importStatementList, owningClassInfo, variableNameMap);
         }
 
         if (Objects.nonNull(returnTypeInfo)) {
@@ -1696,7 +1723,15 @@ public class InferenceUtility {
 
     private static void populateInferredFormalTypeParameterMapUsingMethodArguments(MethodInfo methodInfo,
                                                                                    List<TypeInfo> argumentTypeInfoList,
-                                                                                   Map<String, TypeInfo> formalTypeInfoMap) {
+                                                                                   Map<String, TypeInfo> formalTypeInfoMap,
+                                                                                   Set<Artifact> dependentArtifactSet,
+                                                                                   String javaVersion,
+                                                                                   List<String> importStatementList,
+                                                                                   OwningClassInfo owningClassInfo,
+                                                                                   Map<String, Set<VariableDeclarationDto>> variableNameMap) {
+
+        JarInfoService jarInfoService = new JarInfoService();
+        ClassInfoService classInfoService = new ClassInfoService();
         List<TypeInfo> methodArgumentTypeInfoList = methodInfo.getArgumentTypeInfoList();
 
         for (int i = 0; i < methodArgumentTypeInfoList.size(); i++) {
@@ -1737,12 +1772,174 @@ public class InferenceUtility {
                     formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), argVararg.getElementTypeInfo());
                 }
 
-            } else if (methodArgument.isParameterizedTypeInfo() && Objects.nonNull(argument)
-                    && argument.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) argument).isParameterized()) {
-                ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) argument;
+            } else if (methodArgument.isParameterizedTypeInfo() && Objects.nonNull(argument)) {
                 ParameterizedTypeInfo methodArgumentParameterizedTypeInfo = (ParameterizedTypeInfo) methodArgument;
 
-                populateFormalTypeParameterFromParameterizedTypeInfo(parameterizedArgTypeInfo, methodArgumentParameterizedTypeInfo, formalTypeInfoMap);
+                if (argument.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) argument).isParameterized()) {
+                    ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) argument;
+
+                    populateFormalTypeParameterFromParameterizedTypeInfo(parameterizedArgTypeInfo, methodArgumentParameterizedTypeInfo, formalTypeInfoMap);
+                } else if (argument.isFunctionTypeInfo() && Objects.nonNull(((FunctionTypeInfo) argument).getExpression())) {
+                    List<TypeInfo> typeArgumentList = new ArrayList<>();
+                    FunctionTypeInfo functionTypeInfo = (FunctionTypeInfo) argument;
+
+                    for (TypeInfo typeInfo: methodArgumentParameterizedTypeInfo.getTypeArgumentList()) {
+                        if (typeInfo.isFormalTypeParameterInfo()
+                                && formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) typeInfo).getTypeParameter())) {
+                            typeArgumentList.add(formalTypeInfoMap.get(((FormalTypeParameterInfo) typeInfo).getTypeParameter()));
+                        } else {
+                            typeArgumentList.add(typeInfo);
+                        }
+                    }
+
+                    ParameterizedTypeInfo parameterizedArgTypeInfo = new ParameterizedTypeInfo(methodArgumentParameterizedTypeInfo.getQualifiedClassName());
+                    parameterizedArgTypeInfo.setParameterized(true);
+                    parameterizedArgTypeInfo.setTypeArgumentList(typeArgumentList);
+
+                    Map<String, TypeInfo> parameterizedTypeArgumentMap
+                            = getTypeArgumentMap(dependentArtifactSet, javaVersion, importStatementList, owningClassInfo, parameterizedArgTypeInfo);
+
+                    TypeInfo returnTypeInfo =
+                            getMethodArgumentAndReturnTypeInfoTuple(dependentArtifactSet, javaVersion, parameterizedTypeArgumentMap,
+                            parameterizedArgTypeInfo.getQualifiedClassName())._2();
+
+                    if (Objects.nonNull(returnTypeInfo) && returnTypeInfo.isFormalTypeParameterInfo()) {
+                        FormalTypeParameterInfo returnFormalTypeParameterInfo = (FormalTypeParameterInfo) returnTypeInfo;
+
+                        if (functionTypeInfo.getExpression() instanceof LambdaExpression) {
+                            LambdaExpression lambdaExpression = (LambdaExpression) functionTypeInfo.getExpression();
+                            ASTNode body = lambdaExpression.getBody();
+
+                            if (body instanceof MethodInvocation) {
+                                MethodInvocation methodInvocation = (MethodInvocation) body;
+
+                                Set<VariableDeclarationDto> variableDeclarationDtoSet =
+                                        getVariableDeclarationDtoSet(dependentArtifactSet, javaVersion, importStatementList,
+                                                owningClassInfo, lambdaExpression, typeArgumentList);
+
+                                populateVariableNameMap(variableNameMap, variableDeclarationDtoSet);
+
+                                List<MethodInfo> methodInfoList =
+                                        getEligibleMethodInfoList(dependentArtifactSet, javaVersion, methodInvocation,
+                                                importStatementList, variableNameMap, owningClassInfo);
+
+                                if (!methodInfoList.isEmpty()) {
+                                    MethodInfo innerLambdaMethodInfo = methodInfoList.get(0);
+                                    formalTypeInfoMap.put(returnFormalTypeParameterInfo.getTypeParameter(), innerLambdaMethodInfo.getReturnTypeInfo());
+                                }
+                            } else if (body instanceof Block) {
+                                Block bodyBlock = (Block) body;
+
+                                List<TypeInfo> lambdaBodyReturnTypeInfoList = new ArrayList<>();
+
+                                bodyBlock.accept(new ASTVisitor() {
+                                    @Override
+                                    public boolean visit(SingleVariableDeclaration singleVariableDeclaration) {
+                                        OwningClassInfo owningClassInfo = getOwningClassInfo(singleVariableDeclaration, dependentArtifactSet, javaVersion,
+                                                importStatementList, jarInfoService, classInfoService);
+
+                                        VariableDeclarationDto variableDeclarationDto =
+                                                getVariableDeclarationDto(dependentArtifactSet, javaVersion, importStatementList,
+                                                        singleVariableDeclaration, owningClassInfo);
+
+                                        populateVariableNameMap(variableNameMap, Collections.singleton(variableDeclarationDto));
+
+                                        return true;
+                                    }
+
+                                    @Override
+                                    public void endVisit(VariableDeclarationExpression variableDeclarationExpression) {
+                                        OwningClassInfo owningClassInfo = getOwningClassInfo(variableDeclarationExpression, dependentArtifactSet,
+                                                javaVersion, importStatementList, jarInfoService, classInfoService);
+
+                                        List<VariableDeclarationFragment> fragmentList = variableDeclarationExpression.fragments();
+
+                                        List<VariableDeclarationDto> variableDeclarationDtoList =
+                                                getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
+                                                        variableDeclarationExpression.getType(), null, fragmentList, owningClassInfo);
+
+                                        populateVariableNameMap(variableNameMap, new HashSet<>(variableDeclarationDtoList));
+                                    }
+
+                                    @Override
+                                    public void endVisit(VariableDeclarationStatement variableDeclarationStatement) {
+                                        OwningClassInfo owningClassInfo = getOwningClassInfo(variableDeclarationStatement, dependentArtifactSet, javaVersion,
+                                                importStatementList, jarInfoService, classInfoService);
+
+                                        List<VariableDeclarationFragment> fragmentList = variableDeclarationStatement.fragments();
+
+                                        List<VariableDeclarationDto> variableDeclarationDtoList =
+                                                getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
+                                                        variableDeclarationStatement.getType(), null, fragmentList, owningClassInfo);
+
+                                        populateVariableNameMap(variableNameMap, new HashSet<>(variableDeclarationDtoList));
+                                    }
+
+                                    @Override
+                                    public boolean visit(ReturnStatement returnStatement) {
+                                        Expression expression = returnStatement.getExpression();
+
+                                        OwningClassInfo owningClassInfo = getOwningClassInfo(expression, dependentArtifactSet, javaVersion,
+                                                importStatementList, jarInfoService, classInfoService);
+
+                                        lambdaBodyReturnTypeInfoList.add(getTypeInfoFromExpression(dependentArtifactSet, javaVersion,
+                                                importStatementList, variableNameMap, expression, owningClassInfo));
+
+                                        return false;
+                                    }
+                                });
+
+                                if (!lambdaBodyReturnTypeInfoList.isEmpty()) {
+                                    formalTypeInfoMap.put(returnFormalTypeParameterInfo.getTypeParameter(), lambdaBodyReturnTypeInfoList.get(0));
+                                }
+                            }
+                        } else if (functionTypeInfo.getExpression() instanceof CreationReference) {
+                            CreationReference creationReference = (CreationReference) functionTypeInfo.getExpression();
+
+                            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                                    creationReference, importStatementList, owningClassInfo);
+
+                            if (!methodInfoList.isEmpty()) {
+                                MethodInfo argumentMethodInfo = methodInfoList.get(0);
+                                formalTypeInfoMap.put(returnFormalTypeParameterInfo.getTypeParameter(),
+                                        argumentMethodInfo.getReturnTypeInfo());
+                            }
+                        } else if (functionTypeInfo.getExpression() instanceof ExpressionMethodReference) {
+                            ExpressionMethodReference expressionMethodReference = (ExpressionMethodReference) functionTypeInfo.getExpression();
+
+                            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                                    expressionMethodReference, importStatementList, variableNameMap, owningClassInfo);
+
+                            if (!methodInfoList.isEmpty()) {
+                                MethodInfo argumentMethodInfo = methodInfoList.get(0);
+                                formalTypeInfoMap.put(returnFormalTypeParameterInfo.getTypeParameter(),
+                                        argumentMethodInfo.getReturnTypeInfo());
+                            }
+                        } else if (functionTypeInfo.getExpression() instanceof SuperMethodReference) {
+                            SuperMethodReference superMethodReference = (SuperMethodReference) functionTypeInfo.getExpression();
+
+                            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                                    superMethodReference, importStatementList, owningClassInfo);
+
+                            if (!methodInfoList.isEmpty()) {
+                                MethodInfo argumentMethodInfo = methodInfoList.get(0);
+                                formalTypeInfoMap.put(returnFormalTypeParameterInfo.getTypeParameter(),
+                                        argumentMethodInfo.getReturnTypeInfo());
+                            }
+                        }  else if (functionTypeInfo.getExpression() instanceof TypeMethodReference) {
+                            TypeMethodReference typeMethodReference = (TypeMethodReference) functionTypeInfo.getExpression();
+
+                            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                                    typeMethodReference, importStatementList, owningClassInfo);
+
+                            if (!methodInfoList.isEmpty()) {
+                                MethodInfo argumentMethodInfo = methodInfoList.get(0);
+                                formalTypeInfoMap.put(returnFormalTypeParameterInfo.getTypeParameter(),
+                                        argumentMethodInfo.getReturnTypeInfo());
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -1965,9 +2162,15 @@ public class InferenceUtility {
         LambdaExpression lambdaExpression = (LambdaExpression) getClosestASTNode(node, LambdaExpression.class);
 
         if (Objects.nonNull(lambdaExpression)) {
+            OwningClassInfo owningClassInfo = getOwningClassInfo(lambdaExpression, dependentArtifactSet, javaVersion,
+                    importStatementList, owningClassInfoMap, jarInfoService, classInfoService);
+
+            List<TypeInfo> argumentTypeInfoList = getArgumentTypeInfoListForLambdaExpression(dependentArtifactSet, javaVersion,
+                    importStatementList, owningClassInfoMap, variableNameMap, lambdaExpression, jarInfoService, classInfoService);
+
             Set<VariableDeclarationDto> variableDeclarationDtoSet =
                     getVariableDeclarationDtoSet(dependentArtifactSet, javaVersion, importStatementList,
-                            owningClassInfoMap, variableNameMap, lambdaExpression, jarInfoService, classInfoService);
+                            owningClassInfo, lambdaExpression, argumentTypeInfoList);
 
             populateVariableNameMap(variableNameMap, variableDeclarationDtoSet);
         }
@@ -2799,16 +3002,14 @@ public class InferenceUtility {
         return owningClassInfo;
     }
 
-    private static Set<VariableDeclarationDto> getVariableDeclarationDtoSet(Set<Artifact> dependentArtifactSet,
-                                                                            String javaVersion,
-                                                                            List<String> importStatementList,
-                                                                            Map<String, OwningClassInfo> owningClassInfoMap,
-                                                                            Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                                            LambdaExpression lambdaExpression,
-                                                                            JarInfoService jarInfoService,
-                                                                            ClassInfoService classInfoService) {
-        Set<VariableDeclarationDto> variableDeclarationDtoSet = new LinkedHashSet<>();
-        List<VariableDeclaration> lambdaArgumentDeclarationList = lambdaExpression.parameters();
+    private static List<TypeInfo> getArgumentTypeInfoListForLambdaExpression(Set<Artifact> dependentArtifactSet,
+                                                                             String javaVersion,
+                                                                             List<String> importStatementList,
+                                                                             Map<String, OwningClassInfo> owningClassInfoMap,
+                                                                             Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                                             LambdaExpression lambdaExpression,
+                                                                             JarInfoService jarInfoService,
+                                                                             ClassInfoService classInfoService) {
         List<TypeInfo> typeInfoList = new ArrayList<>();
 
         OwningClassInfo owningClassInfo = getOwningClassInfo(lambdaExpression, dependentArtifactSet, javaVersion,
@@ -2837,6 +3038,18 @@ public class InferenceUtility {
             }
         }
 
+        return typeInfoList;
+    }
+
+    private static Set<VariableDeclarationDto> getVariableDeclarationDtoSet(Set<Artifact> dependentArtifactSet,
+                                                                            String javaVersion,
+                                                                            List<String> importStatementList,
+                                                                            OwningClassInfo owningClassInfo,
+                                                                            LambdaExpression lambdaExpression,
+                                                                            List<TypeInfo> lambdaArgumentTypeInfoList) {
+        Set<VariableDeclarationDto> variableDeclarationDtoSet = new LinkedHashSet<>();
+        List<VariableDeclaration> lambdaArgumentDeclarationList = lambdaExpression.parameters();
+
         if (!lambdaArgumentDeclarationList.isEmpty() && lambdaArgumentDeclarationList.get(0) instanceof SingleVariableDeclaration) {
             for (VariableDeclaration lambdaArgumentDeclaration : lambdaArgumentDeclarationList) {
                 SingleVariableDeclaration singleVariableDeclaration = (SingleVariableDeclaration) lambdaArgumentDeclaration;
@@ -2851,7 +3064,7 @@ public class InferenceUtility {
             int i = 0;
             for (VariableDeclaration lambdaArgumentDeclaration : lambdaArgumentDeclarationList) {
                 VariableDeclarationFragment variableDeclarationFragment = (VariableDeclarationFragment) lambdaArgumentDeclaration;
-                TypeInfo variableTypeInfo = i < typeInfoList.size() ? typeInfoList.get(i) : new NullTypeInfo();
+                TypeInfo variableTypeInfo = i < lambdaArgumentTypeInfoList.size() ? lambdaArgumentTypeInfoList.get(i) : new NullTypeInfo();
 
                 variableDeclarationDtoSet.add(getVariableDeclarationDto(variableDeclarationFragment,
                         null, variableTypeInfo, null));

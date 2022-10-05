@@ -1,5 +1,7 @@
 package ca.concordia.jaranalyzer.models.typeInfo;
 
+import org.eclipse.jdt.core.dom.Expression;
+
 import java.util.List;
 
 /**
@@ -11,6 +13,8 @@ public class FunctionTypeInfo extends TypeInfo {
     private boolean innerClassConstructor;
 
     private final List<FunctionDefinition> functionDefinitionList;
+
+    private Expression expression;
 
     public FunctionTypeInfo(List<FunctionDefinition> functionDefinitionList) {
         this.functionDefinitionList = functionDefinitionList;
@@ -42,6 +46,14 @@ public class FunctionTypeInfo extends TypeInfo {
     @Override
     public String getName() {
         throw new IllegalStateException();
+    }
+
+    public Expression getExpression() {
+        return expression;
+    }
+
+    public void setExpression(Expression expression) {
+        this.expression = expression;
     }
 
     public static class FunctionDefinition {

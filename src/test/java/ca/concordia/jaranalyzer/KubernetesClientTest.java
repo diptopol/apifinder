@@ -180,6 +180,81 @@ public class KubernetesClientTest {
         }
     }
 
+    @Test
+    public void testFunctionalInterfaceTypeArgumentResolutionFromArg() {
+        String filePath = "kubernetes-model-generator/kubernetes-model-core/src/main/java/io/fabric8/kubernetes/api/model/HasMetadata.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().endsWith(".findFirst()")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("java.util.stream.Stream::public abstract java.util.Optional findFirst()").equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
+    @Test
+    public void testFunctionalInterfaceTypeArgumentResolutionFromArg1() {
+        String filePath = "crd-generator/api/src/main/java/io/fabric8/crd/generator/AbstractJsonSchema.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().endsWith(".orElse(property.getName())")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("java.util.Optional::public java.lang.String orElse(java.lang.String)").equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
+    @Test
+    public void testFunctionalInterfaceTypeArgumentResolutionFromArg2() {
+        String filePath = "kubernetes-client/src/main/java/io/fabric8/kubernetes/client/informers/impl/cache/ProcessorStore.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().equals("items.stream().map(this::updateInternal)")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("ParameterizedTypeInfo{qualifiedClassName='java.util.stream.Stream'," +
+                                " isParameterized=true," +
+                                " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName=" +
+                                "'io.fabric8.kubernetes.client.informers.impl.cache.ProcessorListener.Notification'," +
+                                " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName=" +
+                                "'io.fabric8.kubernetes.api.model.HasMetadata'}}]}]}").equals(methodInfo.getReturnTypeInfo().toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
     private String getFileContentFromRemote(String filePath, String projectUrl, String commitId) {
         try {
             GitHub gitHub = GitUtil.connectGithub();
