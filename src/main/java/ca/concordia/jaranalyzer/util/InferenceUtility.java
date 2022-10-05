@@ -1673,9 +1673,9 @@ public class InferenceUtility {
                     && returnTypeInfo.getQualifiedClassName().equals(methodInfo.getReturnTypeInfo().getQualifiedClassName())) {
 
                 ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) returnTypeInfo;
+                ParameterizedTypeInfo methodParameterizedTypeInfo = (ParameterizedTypeInfo) methodInfo.getReturnTypeInfo();
 
-                populateInferredTypeInfoMapForParameterizedTypeInfo(dependentArtifactSet, javaVersion,
-                        importStatementList, owningClassInfo, parameterizedTypeInfo, inferredTypeInfoMap);
+                populateFormalTypeParameterFromParameterizedTypeInfo(parameterizedTypeInfo, methodParameterizedTypeInfo, inferredTypeInfoMap);
             }
         }
 
@@ -1741,18 +1741,25 @@ public class InferenceUtility {
                 ParameterizedTypeInfo parameterizedArgTypeInfo = (ParameterizedTypeInfo) argument;
                 ParameterizedTypeInfo methodArgumentParameterizedTypeInfo = (ParameterizedTypeInfo) methodArgument;
 
-                if (parameterizedArgTypeInfo.getTypeArgumentList().size() == methodArgumentParameterizedTypeInfo.getTypeArgumentList().size()) {
-                    for (int j = 0; j < parameterizedArgTypeInfo.getTypeArgumentList().size(); j++) {
-                        TypeInfo argumentTypeInfo = parameterizedArgTypeInfo.getTypeArgumentList().get(j);
-                        TypeInfo methodArgumentTypeInfo = methodArgumentParameterizedTypeInfo.getTypeArgumentList().get(j);
+                populateFormalTypeParameterFromParameterizedTypeInfo(parameterizedArgTypeInfo, methodArgumentParameterizedTypeInfo, formalTypeInfoMap);
+            }
+        }
+    }
 
-                        if (methodArgumentTypeInfo.isFormalTypeParameterInfo()) {
-                            FormalTypeParameterInfo formalMethodArgumentTypeParameterInfo = (FormalTypeParameterInfo) methodArgumentTypeInfo;
+    private static void populateFormalTypeParameterFromParameterizedTypeInfo(ParameterizedTypeInfo parameterizedTypeInfo,
+                                                                             ParameterizedTypeInfo methodParameterizedTypeInfo,
+                                                                             Map<String, TypeInfo> formalTypeInfoMap) {
 
-                            if (!formalTypeInfoMap.containsKey(formalMethodArgumentTypeParameterInfo.getTypeParameter())) {
-                                formalTypeInfoMap.put(formalMethodArgumentTypeParameterInfo.getTypeParameter(), argumentTypeInfo);
-                            }
-                        }
+        if (parameterizedTypeInfo.getTypeArgumentList().size() == methodParameterizedTypeInfo.getTypeArgumentList().size()) {
+            for (int j = 0; j < parameterizedTypeInfo.getTypeArgumentList().size(); j++) {
+                TypeInfo argumentTypeInfo = parameterizedTypeInfo.getTypeArgumentList().get(j);
+                TypeInfo methodArgumentTypeInfo = methodParameterizedTypeInfo.getTypeArgumentList().get(j);
+
+                if (methodArgumentTypeInfo.isFormalTypeParameterInfo()) {
+                    FormalTypeParameterInfo formalMethodArgumentTypeParameterInfo = (FormalTypeParameterInfo) methodArgumentTypeInfo;
+
+                    if (!formalTypeInfoMap.containsKey(formalMethodArgumentTypeParameterInfo.getTypeParameter())) {
+                        formalTypeInfoMap.put(formalMethodArgumentTypeParameterInfo.getTypeParameter(), argumentTypeInfo);
                     }
                 }
             }

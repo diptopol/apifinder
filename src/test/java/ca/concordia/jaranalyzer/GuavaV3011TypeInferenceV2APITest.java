@@ -658,6 +658,25 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testFormalTypeResolutionFromReturnStatement() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/graph/AbstractValueGraph.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("AbstractValueGraph.this.adjacentNodes(node)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                    assert ("com.google.common.graph.ValueGraph::public abstract java.util.Set adjacentNodes(N)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testPrioritizationOfNonVarargsOverVarargs() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/CollectPreconditions.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
