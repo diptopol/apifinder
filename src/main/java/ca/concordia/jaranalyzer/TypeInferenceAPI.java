@@ -311,6 +311,22 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                 nonEnclosingQualifiedClassNameList, jarInfoService, classInfoService);
     }
 
+    public static MethodInfo getAbstractMethodInfoOfFunctionalInterface(Set<Artifact> dependentArtifactSet,
+                                                                        String javaVersion,
+                                                                        String classQName) {
+
+        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, null);
+
+        List<MethodInfo> abstractMethodInfoList =
+                getAbstractMethodInfoListForFunctionalInterface(classQName, jarIdList, methodInfoService, classInfoService);
+
+        if (abstractMethodInfoList.size() != 1) {
+            return null;
+        }
+
+        return abstractMethodInfoList.get(0);
+    }
+
     public static List<ClassInfo> getAllTypes(Set<Artifact> dependentArtifactSet,
                                               String javaVersion,
                                               List<String> importList,

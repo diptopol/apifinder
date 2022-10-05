@@ -405,6 +405,9 @@ public class InferenceUtility {
         populateVariableNameMapForStaticBlock(dependentArtifactSet, javaVersion, importStatementList,
                 owningClassInfoMap, methodExpression, variableNameMap, jarInfoService, classInfoService);
 
+        populateVariableNameMapForLambdaExpression(dependentArtifactSet, javaVersion, importStatementList,
+                owningClassInfoMap, methodExpression, variableNameMap, jarInfoService, classInfoService);
+
         return variableNameMap;
     }
 
@@ -1646,6 +1649,18 @@ public class InferenceUtility {
 
                 if (!inferredTypeInfoMap.containsKey(methodReturnFormalTypeParameterInfo.getTypeParameter())) {
                     inferredTypeInfoMap.put(methodReturnFormalTypeParameterInfo.getTypeParameter(), returnTypeInfo);
+                } else {
+                    TypeInfo typeInfo = inferredTypeInfoMap.get(methodReturnFormalTypeParameterInfo.getTypeParameter());
+
+                    if (typeInfo.isParameterizedTypeInfo() && !((ParameterizedTypeInfo) typeInfo).isParameterized()
+                            && returnTypeInfo.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) returnTypeInfo).isParameterized()) {
+
+                        ParameterizedTypeInfo parameterizedReturnTypeInfo = (ParameterizedTypeInfo) returnTypeInfo;
+                        ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) typeInfo;
+
+                        parameterizedTypeInfo.setParameterized(parameterizedReturnTypeInfo.isParameterized());
+                        parameterizedTypeInfo.setTypeArgumentList(parameterizedReturnTypeInfo.getTypeArgumentList());
+                    }
                 }
             } else if ((methodInfo.getReturnTypeInfo().isParameterizedTypeInfo() || methodInfo.isConstructor())
                     && returnTypeInfo.isParameterizedTypeInfo()
@@ -1913,6 +1928,35 @@ public class InferenceUtility {
                             initializer.getBody(), owningClassInfoMap, jarInfoService, classInfoService);
 
             populateVariableNameMap(variableNameMap, localVariableDeclarationList);
+        }
+    }
+
+    private static void populateVariableNameMapForLambdaExpression(Set<Artifact> dependentArtifactSet,
+                                                                   String javaVersion,
+                                                                   List<String> importStatementList,
+                                                                   Map<String, OwningClassInfo> owningClassInfoMap,
+                                                                   ASTNode node,
+                                                                   Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                                   JarInfoService jarInfoService,
+                                                                   ClassInfoService classInfoService) {
+
+        LambdaExpression lambdaExpression = (LambdaExpression) getClosestASTNode(node, LambdaExpression.class);
+
+        if (Objects.nonNull(lambdaExpression)) {
+            Set<VariableDeclarationDto> variableDeclarationDtoSet =
+                    getVariableDeclarationDtoSet(dependentArtifactSet, javaVersion, importStatementList,
+                            owningClassInfoMap, variableNameMap, lambdaExpression, jarInfoService, classInfoService);
+
+            for (VariableDeclarationDto variableDeclarationDto: variableDeclarationDtoSet) {
+                if (variableNameMap.containsKey(variableDeclarationDto.getName())) {
+                    Set<VariableDeclarationDto> variableDeclarationSet = variableNameMap.get(variableDeclarationDto.getName());
+                    variableDeclarationSet.add(variableDeclarationDto);
+
+                    variableNameMap.put(variableDeclarationDto.getName(), variableDeclarationSet);
+                } else {
+                    variableNameMap.put(variableDeclarationDto.getName(), new HashSet<>(Arrays.asList(variableDeclarationDto)));
+                }
+            }
         }
     }
 
@@ -2186,21 +2230,27 @@ public class InferenceUtility {
         TypeInfo declarationTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
                 declarationType, owningClassInfo);
 
-        return fragmentList.stream().map(fragment -> {
-            ASTNode scopedNode = getVariableDeclarationScopedNode(fragment);
-            String name = fragment.getName().getFullyQualifiedName();
+        return fragmentList.stream().map(fragment ->
+                getVariableDeclarationDto(fragment, fieldVariableStartOffset, declarationTypeInfo, declarationType))
+                .collect(Collectors.toList());
+    }
 
-            int startOffset = Objects.nonNull(fieldVariableStartOffset)
-                    ? fieldVariableStartOffset
-                    : fragment.getStartPosition();
+    private static VariableDeclarationDto getVariableDeclarationDto(VariableDeclarationFragment fragment,
+                                                                    Integer fieldVariableStartOffset,
+                                                                    TypeInfo declarationTypeInfo,
+                                                                    Type declarationType) {
+        ASTNode scopedNode = getVariableDeclarationScopedNode(fragment);
+        String name = fragment.getName().getFullyQualifiedName();
 
-            int endOffSet = startOffset + (scopedNode != null ? scopedNode.getLength() : 0);
+        int startOffset = Objects.nonNull(fieldVariableStartOffset)
+                ? fieldVariableStartOffset
+                : fragment.getStartPosition();
 
-            return new VariableDeclarationDto(name,
-                    Objects.nonNull(declarationTypeInfo) ? declarationTypeInfo : new NullTypeInfo(),
-                    new VariableScope(startOffset, endOffSet), declarationType);
+        int endOffSet = startOffset + (scopedNode != null ? scopedNode.getLength() : 0);
 
-        }).collect(Collectors.toList());
+        return new VariableDeclarationDto(name,
+                Objects.nonNull(declarationTypeInfo) ? declarationTypeInfo : new NullTypeInfo(),
+                new VariableScope(startOffset, endOffSet), declarationType);
     }
 
     private static ASTNode getVariableDeclarationScopedNode(VariableDeclaration variableDeclaration) {
@@ -2610,6 +2660,181 @@ public class InferenceUtility {
                 importStatementList, type, owningClassInfo);
 
         return Objects.nonNull(classTypeInfo) ? classTypeInfo.getQualifiedClassName() : null;
+    }
+
+    private static Integer getArgumentIndexFromMethod(MethodInvocation methodInvocation, Expression argumentExpression) {
+        List<Expression> argumentList = methodInvocation.arguments();
+
+        Integer argumentIndex = null;
+        for (int i = 0; i < argumentList.size(); i++) {
+            if (argumentList.get(i).equals(argumentExpression)) {
+                argumentIndex = i;
+            }
+        }
+
+        return argumentIndex;
+    }
+
+    private static TypeInfo getLambdaArgumentTypeInfo(Set<Artifact> dependentArtifactSet,
+                                                      String javaVersion,
+                                                      List<String> importStatementList,
+                                                      OwningClassInfo owningClassInfo,
+                                                      Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                      MethodInvocation methodInvocation,
+                                                      LambdaExpression lambdaExpression) {
+        Integer argumentIndex = getArgumentIndexFromMethod(methodInvocation, lambdaExpression);
+
+        List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                methodInvocation, importStatementList, variableNameMap, owningClassInfo);
+
+        if (!methodInfoList.isEmpty() && Objects.nonNull(argumentIndex)) {
+            return methodInfoList.get(0).getArgumentTypeInfoList().get(argumentIndex);
+        }
+
+        return null;
+    }
+
+    private static Map<String, TypeInfo> getTypeArgumentMap(Set<Artifact> dependentArtifactSet,
+                                                            String javaVersion,
+                                                            List<String> importStatementList,
+                                                            OwningClassInfo owningClassInfo,
+                                                            ParameterizedTypeInfo parameterizedTypeInfo) {
+
+        if (parameterizedTypeInfo.getTypeArgumentList().isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, TypeInfo> typeArgumentMap = new LinkedHashMap<>();
+
+        List<TypeInfo> typeArgumentList = parameterizedTypeInfo.getTypeArgumentList();
+        TypeInfo classTypeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
+                importStatementList, parameterizedTypeInfo.getQualifiedClassName(), owningClassInfo);
+
+        if (Objects.nonNull(classTypeInfo) && classTypeInfo.isParameterizedTypeInfo()) {
+            ParameterizedTypeInfo classParameterizedTypeInfo = (ParameterizedTypeInfo) classTypeInfo;
+
+            int i = 0;
+            for (TypeInfo classTypeArgument: classParameterizedTypeInfo.getTypeArgumentList()) {
+                if (classTypeArgument.isFormalTypeParameterInfo()) {
+                    typeArgumentMap.put(((FormalTypeParameterInfo) classTypeArgument).getTypeParameter(), typeArgumentList.get(i));
+                    i++;
+                }
+            }
+        }
+
+        return typeArgumentMap;
+    }
+
+    private static List<TypeInfo> getArgumentTypeInfoList(Set<Artifact> dependentArtifactSet,
+                                                          String javaVersion,
+                                                          Map<String, TypeInfo> argumentTypeInfoMap,
+                                                          String functionalInterfaceClassQName) {
+
+        List<TypeInfo> typeArgumentInfoList = new ArrayList<>();
+
+        if (!argumentTypeInfoMap.isEmpty()) {
+            MethodInfo abstractMethod =
+                    TypeInferenceAPI.getAbstractMethodInfoOfFunctionalInterface(dependentArtifactSet,
+                            javaVersion, functionalInterfaceClassQName);
+
+            if (Objects.nonNull(abstractMethod)) {
+                for (TypeInfo argumentTypeInfo : abstractMethod.getArgumentTypeInfoList()) {
+                    if (argumentTypeInfo.isFormalTypeParameterInfo()) {
+                        typeArgumentInfoList.add(argumentTypeInfoMap.get(((FormalTypeParameterInfo) argumentTypeInfo).getTypeParameter()));
+                    }
+                }
+            }
+        }
+
+        return typeArgumentInfoList;
+    }
+
+    private static OwningClassInfo getOwningClassInfo(ASTNode astNode,
+                                                      Set<Artifact> dependentArtifactSet,
+                                                      String javaVersion,
+                                                      List<String> importStatementList,
+                                                      Map<String, OwningClassInfo> owningClassInfoMap,
+                                                      JarInfoService jarInfoService,
+                                                      ClassInfoService classInfoService) {
+
+        String firstEnclosingClassQName = getFirstEnclosingClassQName(astNode,
+                dependentArtifactSet, javaVersion, importStatementList, jarInfoService, classInfoService);
+
+        OwningClassInfo owningClassInfo;
+
+        if (owningClassInfoMap.containsKey(firstEnclosingClassQName)) {
+            owningClassInfo = owningClassInfoMap.get(firstEnclosingClassQName);
+        } else {
+            owningClassInfo = getOwningClassInfo(astNode, dependentArtifactSet, javaVersion,
+                    importStatementList, jarInfoService, classInfoService);
+
+            owningClassInfoMap.put(firstEnclosingClassQName, owningClassInfo);
+        }
+
+        return owningClassInfo;
+    }
+
+    private static Set<VariableDeclarationDto> getVariableDeclarationDtoSet(Set<Artifact> dependentArtifactSet,
+                                                                            String javaVersion,
+                                                                            List<String> importStatementList,
+                                                                            Map<String, OwningClassInfo> owningClassInfoMap,
+                                                                            Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                                            LambdaExpression lambdaExpression,
+                                                                            JarInfoService jarInfoService,
+                                                                            ClassInfoService classInfoService) {
+        Set<VariableDeclarationDto> variableDeclarationDtoSet = new LinkedHashSet<>();
+        List<VariableDeclaration> lambdaArgumentDeclarationList = lambdaExpression.parameters();
+        List<TypeInfo> typeInfoList = new ArrayList<>();
+
+        OwningClassInfo owningClassInfo = getOwningClassInfo(lambdaExpression, dependentArtifactSet, javaVersion,
+                importStatementList, owningClassInfoMap, jarInfoService, classInfoService);
+
+        if (Objects.nonNull(lambdaExpression.getParent())) {
+            if (lambdaExpression.getParent() instanceof MethodInvocation) {
+                MethodInvocation methodInvocation = (MethodInvocation) lambdaExpression.getParent();
+
+                populateVariableNameMapForLambdaExpression(dependentArtifactSet, javaVersion, importStatementList,
+                        owningClassInfoMap, methodInvocation, variableNameMap, jarInfoService, classInfoService);
+
+                TypeInfo funcInterfaceTypeInfo = getLambdaArgumentTypeInfo(dependentArtifactSet, javaVersion,
+                        importStatementList, owningClassInfo, variableNameMap, methodInvocation, lambdaExpression);
+
+                if (Objects.nonNull(funcInterfaceTypeInfo) && funcInterfaceTypeInfo.isParameterizedTypeInfo()) {
+                    ParameterizedTypeInfo parameterizedTypeInfo = (ParameterizedTypeInfo) funcInterfaceTypeInfo;
+
+                    Map<String, TypeInfo> typeArgumentMap =
+                            getTypeArgumentMap(dependentArtifactSet, javaVersion, importStatementList,
+                                    owningClassInfo, parameterizedTypeInfo);
+
+                    typeInfoList = getArgumentTypeInfoList(dependentArtifactSet, javaVersion, typeArgumentMap,
+                            funcInterfaceTypeInfo.getQualifiedClassName());
+                }
+            }
+        }
+
+        if (!lambdaArgumentDeclarationList.isEmpty() && lambdaArgumentDeclarationList.get(0) instanceof SingleVariableDeclaration) {
+            for (VariableDeclaration lambdaArgumentDeclaration : lambdaArgumentDeclarationList) {
+                SingleVariableDeclaration singleVariableDeclaration = (SingleVariableDeclaration) lambdaArgumentDeclaration;
+
+                VariableDeclarationDto variableDeclarationDto =
+                        getVariableDeclarationDto(dependentArtifactSet, javaVersion, importStatementList,
+                                singleVariableDeclaration, owningClassInfo);
+
+                variableDeclarationDtoSet.add(variableDeclarationDto);
+            }
+        } else {
+            int i = 0;
+            for (VariableDeclaration lambdaArgumentDeclaration : lambdaArgumentDeclarationList) {
+                VariableDeclarationFragment variableDeclarationFragment = (VariableDeclarationFragment) lambdaArgumentDeclaration;
+                TypeInfo variableTypeInfo = i < typeInfoList.size() ? typeInfoList.get(i) : new NullTypeInfo();
+
+                variableDeclarationDtoSet.add(getVariableDeclarationDto(variableDeclarationFragment,
+                        null, variableTypeInfo, null));
+                i++;
+            }
+        }
+
+        return variableDeclarationDtoSet;
     }
 
 }

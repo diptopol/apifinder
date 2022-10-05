@@ -115,6 +115,71 @@ public class KubernetesClientTest {
         }
     }
 
+    @Test
+    public void testFormalTypeParameterPopulation() {
+        String filePath = "httpclient-jetty/src/main/java/io/fabric8/kubernetes/client/jetty/JettyHttpResponse.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().startsWith("response.getHeaders().stream().reduce(")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.HashMap', isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}," +
+                                " ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}]}]}," +
+                                " ParameterizedTypeInfo{qualifiedClassName='java.util.function.BiFunction', isParameterized=true," +
+                                " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.util.HashMap', isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}," +
+                                " ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}]}]}," +
+                                " QualifiedTypeInfo{qualifiedClassName='org.eclipse.jetty.http.HttpField'}," +
+                                " ParameterizedTypeInfo{qualifiedClassName='java.util.HashMap', isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}," +
+                                " ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}]}]}]}," +
+                                " ParameterizedTypeInfo{qualifiedClassName='java.util.function.BinaryOperator', isParameterized=true," +
+                                " typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.util.HashMap', isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}," +
+                                " ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='java.lang.String'}]}]}]}]")
+                                .equals(methodInfo.getArgumentTypeInfoList().toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
+    @Test
+    public void testMethodInvocationInsideNestedLambdaExpression() {
+        String filePath = "httpclient-jetty/src/main/java/io/fabric8/kubernetes/client/jetty/JettyHttpResponse.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().startsWith("e.getValue()")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("org.eclipse.jetty.http.HttpField::public java.lang.String getValue()").equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
     private String getFileContentFromRemote(String filePath, String projectUrl, String commitId) {
         try {
             GitHub gitHub = GitUtil.connectGithub();
