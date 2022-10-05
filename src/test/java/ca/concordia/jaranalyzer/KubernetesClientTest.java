@@ -255,6 +255,29 @@ public class KubernetesClientTest {
         }
     }
 
+    @Test
+    public void testFormalTypeParameterResolutionWithFormalTypeVarargArgument() {
+        String filePath = "kubernetes-model-generator/kubernetes-model-common/src/main/java/io/fabric8/kubernetes/model/jackson/JsonUnwrappedDeserializer.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().equals("Arrays.asList(prop.getConstructorParameter(),prop.getMutator(),prop.getField())")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("java.util.Arrays::public static java.util.List asList(com.fasterxml.jackson.databind.introspect.AnnotatedMember[])").equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
     private String getFileContentFromRemote(String filePath, String projectUrl, String commitId) {
         try {
             GitHub gitHub = GitUtil.connectGithub();

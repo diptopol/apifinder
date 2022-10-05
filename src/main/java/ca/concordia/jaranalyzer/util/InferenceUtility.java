@@ -1746,25 +1746,75 @@ public class InferenceUtility {
                 FormalTypeParameterInfo formalTypeParameterMethodArgInfo = (FormalTypeParameterInfo) methodArgument;
                 formalTypeInfoMap.put(formalTypeParameterMethodArgInfo.getTypeParameter(), argument);
 
-            } else if (methodArgument.isArrayTypeInfo() && Objects.nonNull(argument) && argument.isArrayTypeInfo()) {
-                ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
-                ArrayTypeInfo argArray = (ArrayTypeInfo) argument;
+            } else if (methodArgument.isArrayTypeInfo() && Objects.nonNull(argument)) {
+                if (argument.isArrayTypeInfo()) {
+                    ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
+                    ArrayTypeInfo argArray = (ArrayTypeInfo) argument;
 
-                if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()
-                        && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgArray.getElementTypeInfo()).getTypeParameter())) {
-                    FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
-                    formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), argArray.getElementTypeInfo());
+                    if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()
+                            && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgArray.getElementTypeInfo()).getTypeParameter())) {
+                        FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
+                        formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), argArray.getElementTypeInfo());
+                    }
+                } else if (argument.isVarargTypeInfo()) {
+                    ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
+                    VarargTypeInfo argVararg = (VarargTypeInfo) argument;
+
+                    if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()
+                            && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgArray.getElementTypeInfo()).getTypeParameter())) {
+                        FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
+                        formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), argVararg.getElementTypeInfo());
+                    }
+                    //todo: ParameterizedTypeInfo, FormalTypeParameter, functionTypeInfo
+                } else if (argument.isQualifiedTypeInfo() || argument.isPrimitiveTypeInfo()) {
+                    ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
+
+                    if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()
+                            && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgArray.getElementTypeInfo()).getTypeParameter())) {
+
+                        List<Set<String>> classHierarchyList = new ArrayList<>();
+
+                        for (int j = i; j < argumentTypeInfoList.size(); j++) {
+                            Set<String> classQNameHierarchySet = new LinkedHashSet<>();
+
+                            List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, null);
+                            String classQName = argumentTypeInfoList.get(j).getQualifiedClassName();
+
+                            if (argumentTypeInfoList.get(j).isPrimitiveTypeInfo()) {
+                                classQName = PrimitiveTypeUtils.getPrimitiveWrapperClassQName(argumentTypeInfoList.get(j).getQualifiedClassName());
+                            }
+
+                            Set<String> classNameSet = Collections.singleton(classQName);
+                            classQNameHierarchySet.add(classQName);
+
+                            while (!classNameSet.isEmpty()) {
+                                classNameSet = classInfoService.getSuperClassQNameSet(classNameSet, jarIdList, null);
+
+                                classQNameHierarchySet.addAll(classNameSet);
+                            }
+
+                            classHierarchyList.add(classQNameHierarchySet);
+                        }
+
+                        List<String> commonClassQNameList = new ArrayList<>(classHierarchyList.get(0));
+                        for (int j = 1; j < classHierarchyList.size(); j++) {
+                            commonClassQNameList.retainAll(classHierarchyList.get(j));
+                        }
+
+                        if (!commonClassQNameList.isEmpty()) {
+                            FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
+
+                            TypeInfo typeInfo = new NullTypeInfo();
+                            if (argument.isPrimitiveTypeInfo()) {
+                                typeInfo = new PrimitiveTypeInfo(commonClassQNameList.get(0));
+                            } else if (argument.isQualifiedTypeInfo()) {
+                                typeInfo = new QualifiedTypeInfo(commonClassQNameList.get(0));
+                            }
+
+                            formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), typeInfo);
+                        }
+                    }
                 }
-            } else if (methodArgument.isArrayTypeInfo() && Objects.nonNull(argument) && argument.isVarargTypeInfo()) {
-                ArrayTypeInfo methodArgArray = (ArrayTypeInfo) methodArgument;
-                VarargTypeInfo argVararg = (VarargTypeInfo) argument;
-
-                if (methodArgArray.getElementTypeInfo().isFormalTypeParameterInfo()
-                        && !formalTypeInfoMap.containsKey(((FormalTypeParameterInfo) methodArgArray.getElementTypeInfo()).getTypeParameter())) {
-                    FormalTypeParameterInfo formalTypeParameterInfo = (FormalTypeParameterInfo) methodArgArray.getElementTypeInfo();
-                    formalTypeInfoMap.put(formalTypeParameterInfo.getTypeParameter(), argVararg.getElementTypeInfo());
-                }
-
             } else if (methodArgument.isParameterizedTypeInfo() && Objects.nonNull(argument)) {
                 ParameterizedTypeInfo methodArgumentParameterizedTypeInfo = (ParameterizedTypeInfo) methodArgument;
 
