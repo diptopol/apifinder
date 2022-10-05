@@ -1147,8 +1147,14 @@ public class InferenceUtility {
                 return new ArrayTypeInfo(new PrimitiveTypeInfo(elementType.toString()), arrayType.getDimensions());
             }
         } else if (type instanceof SimpleType) {
-            return getTypeInfoFromSimpleType(dependentArtifactSet, javaVersion, importStatementList,
+            TypeInfo typeInfo = getTypeInfoFromSimpleType(dependentArtifactSet, javaVersion, importStatementList,
                     (SimpleType) type, owningClassInfo);
+
+            if (Objects.isNull(typeInfo)) {
+                return new NullTypeInfo();
+            }
+
+            return typeInfo;
 
         } else if (type instanceof QualifiedType) {
             TypeInfo typeInfo = getTypeInfoFromQualifiedType(dependentArtifactSet, javaVersion, importStatementList,
@@ -1866,7 +1872,8 @@ public class InferenceUtility {
     }
 
     private static void transformTypeRepresentation(MethodInfo methodInfo, Map<String, TypeInfo> formalTypeParameterMap) {
-        if (!formalTypeParameterMap.isEmpty() && Objects.nonNull(methodInfo.getSignature())) {
+        if (!formalTypeParameterMap.isEmpty() && Objects.nonNull(methodInfo.getSignature())
+                && formalTypeParameterMap.values().stream().noneMatch(TypeInfo::isNullTypeInfo)) {
             GenericTypeResolutionAdapter genericTypeResolutionAdapter =
                     new GenericTypeResolutionAdapter(formalTypeParameterMap);
             SignatureReader reader = new SignatureReader(methodInfo.getSignature());
