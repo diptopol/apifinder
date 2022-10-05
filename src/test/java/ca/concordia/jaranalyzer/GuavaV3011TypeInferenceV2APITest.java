@@ -895,6 +895,34 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testFormalTypeResolutionFromParameterizedTypeArgument() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/hash/BloomFilter.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("strategy.mightContain(object,")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                    assert ("com.google.common.hash.BloomFilter.Strategy" +
+                            "::public abstract boolean mightContain(T, com.google.common.hash.Funnel," +
+                            " int, com.google.common.hash.BloomFilterStrategies.LockFreeBitArray)").equals(methodInfo.toString());
+
+                    assert ("[FormalTypeParameterInfo{typeParameter='T'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                            " ParameterizedTypeInfo{qualifiedClassName='com.google.common.hash.Funnel'," +
+                            " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='T'," +
+                            " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
+                            " PrimitiveTypeInfo{qualifiedClassName='int'}," +
+                            " QualifiedTypeInfo{qualifiedClassName='com.google.common.hash.BloomFilterStrategies.LockFreeBitArray'}]").equals(methodInfo.getArgumentTypeInfoList().toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testNestedFieldNameResolution() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/hash/BloomFilter.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
@@ -1045,7 +1073,6 @@ public class GuavaV3011TypeInferenceV2APITest {
             }
         });
     }
-
 
     @Test
     public void testArrayCreation() {

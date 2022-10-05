@@ -608,8 +608,7 @@ public class InferenceUtility {
 
             ParameterizedTypeInfo parameterizedClassTypeInfo = new ParameterizedTypeInfo("java.lang.Class");
             parameterizedClassTypeInfo.setParameterized(true);
-            parameterizedClassTypeInfo.setTypeArgumentList(Collections.singletonList(
-                    new FormalTypeParameterInfo("T", argumentTypeInfo)));
+            parameterizedClassTypeInfo.setTypeArgumentList(Collections.singletonList(argumentTypeInfo));
 
             return parameterizedClassTypeInfo;
         } else if (expression instanceof ParenthesizedExpression) {
@@ -1747,12 +1746,12 @@ public class InferenceUtility {
                         TypeInfo argumentTypeInfo = parameterizedArgTypeInfo.getTypeArgumentList().get(j);
                         TypeInfo methodArgumentTypeInfo = methodArgumentParameterizedTypeInfo.getTypeArgumentList().get(j);
 
-                        if (methodArgumentTypeInfo.isFormalTypeParameterInfo() && argumentTypeInfo.isFormalTypeParameterInfo()) {
+                        if (methodArgumentTypeInfo.isFormalTypeParameterInfo()) {
                             FormalTypeParameterInfo formalMethodArgumentTypeParameterInfo = (FormalTypeParameterInfo) methodArgumentTypeInfo;
-                            FormalTypeParameterInfo formalArgumentTypeParameterInfo = (FormalTypeParameterInfo) argumentTypeInfo;
 
-                            formalTypeInfoMap.put(formalMethodArgumentTypeParameterInfo.getTypeParameter(),
-                                    formalArgumentTypeParameterInfo.getBaseTypeInfo());
+                            if (!formalTypeInfoMap.containsKey(formalMethodArgumentTypeParameterInfo.getTypeParameter())) {
+                                formalTypeInfoMap.put(formalMethodArgumentTypeParameterInfo.getTypeParameter(), argumentTypeInfo);
+                            }
                         }
                     }
                 }
