@@ -90,7 +90,7 @@ public class JarAnalyzer {
     }
 
     public void loadJar(Artifact artifact) {
-        storeArtifactSet(Collections.singleton(artifact));
+        storeArtifactSet(new HashSet<>(Arrays.asList(artifact)));
     }
 
     public void saveJavaPackages(Integer majorJavaVersion) {
@@ -140,14 +140,18 @@ public class JarAnalyzer {
     }
 
     private void storeArtifactSet(Set<Artifact> artifactSet) {
-        artifactSet = artifactSet.stream()
-                .filter(artifact -> !jarInfoService.isJarExists(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion()))
-                .collect(Collectors.toSet());
-
         Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifactSet);
+
         for (JarInfo jarInfo: jarInfoSet) {
+            Artifact artifact = new Artifact(jarInfo.getGroupId(), jarInfo.getArtifactId(), jarInfo.getVersion());
+            //add only if not present already
+            artifactSet.add(artifact);
+
             if (!jarInfoService.isJarExists(jarInfo.getGroupId(), jarInfo.getArtifactId(), jarInfo.getVersion())) {
-                jarInfoSaveService.saveJarInfo(jarInfo);
+                JarInfo jarInfoWithLoadedClassInfo =
+                        JarInfoExtractor.getJarInfo(jarInfo.getGroupId(), jarInfo.getArtifactId(),
+                                jarInfo.getVersion(), jarInfo.getJarFile());
+                jarInfoSaveService.saveJarInfo(jarInfoWithLoadedClassInfo);
             }
         }
     }

@@ -32,7 +32,7 @@ public class InMemoryDatabaseTest {
 
         Tuple2<String, Set<Artifact>> dependencyTuple = loadExternalJars(projectName, projectUrl, commitId);
 
-        assert dependencyTuple._2().size() == 55;
+        assert dependencyTuple._2().size() == 203;
     }
 
     @Test
@@ -43,7 +43,7 @@ public class InMemoryDatabaseTest {
 
         Tuple2<String, Set<Artifact>> dependencyTuple = loadExternalJars(projectName, projectUrl, commitId);
 
-        assert dependencyTuple._2().size() == 250;
+        assert dependencyTuple._2().size() == 427;
     }
 
     @Test

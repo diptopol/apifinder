@@ -36,20 +36,7 @@ public class Utility {
         ArtifactResolver artifactResolver = ArtifactResolverFactory.getArtifactResolver();
         Set<org.eclipse.aether.artifact.Artifact> artifactSet = artifactResolver.resolveArtifact(artifact);
 
-        /*
-         * Currently, we are only interested in the artifact (if the type is Jar), otherwise we should fetch all
-         * the dependent jars as well.
-         */
-        if (Artifact.JAR_TYPE.equals(artifact.getType())) {
-            artifactSet = filterOutDependencyArtifact(artifactSet, Collections.singleton(artifact));
-        }
-
         return convertToJarInfoSet(artifactSet);
-    }
-
-    public static String getJarName(String url) {
-        url = url.replace('\\', '/');
-        return url.substring(url.lastIndexOf('/') + 1);
     }
 
     public static List<String> getFiles(String directory, String type) {
@@ -124,19 +111,6 @@ public class Utility {
         return null;
     }
 
-    private static Set<org.eclipse.aether.artifact.Artifact> filterOutDependencyArtifact(Set<org.eclipse.aether.artifact.Artifact> artifactSet,
-                                                                                         Set<Artifact> artifactDtoSet) {
-
-        Set<String> artifactNameList = artifactDtoSet.stream()
-                .map(artifactDto -> String.join(":", artifactDto.getGroupId(), artifactDto.getArtifactId(),
-                        artifactDto.getVersion()))
-                .collect(Collectors.toSet());
-
-        return artifactSet.stream().filter(artifact -> artifactNameList.contains(String.join(":",
-                        artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion())))
-                .collect(Collectors.toSet());
-    }
-
     private static Set<JarInfo> convertToJarInfoSet(Set<org.eclipse.aether.artifact.Artifact> artifactSet) {
         Set<JarInfo> jarInfoSet = new HashSet<>();
 
@@ -144,8 +118,7 @@ public class Utility {
             JarFile jarFile = getJarFile(artifact.getFile());
 
             if (Objects.nonNull(jarFile)) {
-                JarInfo jarInfo =
-                        JarInfoExtractor.getJarInfo(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), jarFile);
+                JarInfo jarInfo = new JarInfo(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), jarFile);
                 jarInfoSet.add(jarInfo);
             }
         }

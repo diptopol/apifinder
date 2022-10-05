@@ -2,6 +2,7 @@ package ca.concordia.jaranalyzer.entity;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.jar.JarFile;
 
 /**
  * @author Diptopol
@@ -12,6 +13,8 @@ public class JarInfo {
     private String groupId;
     private String artifactId;
     private String version;
+
+    private JarFile jarFile;
 
     //during save
     private List<ClassInfo> classInfoList;
@@ -27,6 +30,11 @@ public class JarInfo {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
+    }
+
+    public JarInfo(String groupId, String artifactId, String version, JarFile jarFile) {
+        this(groupId, artifactId, version);
+        this.jarFile = jarFile;
     }
 
     public int getId() {
@@ -59,6 +67,10 @@ public class JarInfo {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public JarFile getJarFile() {
+        return jarFile;
     }
 
     public List<ClassInfo> getClassInfoList() {

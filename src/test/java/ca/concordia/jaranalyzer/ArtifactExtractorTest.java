@@ -27,13 +27,12 @@ public class ArtifactExtractorTest {
         Artifact artifact = new Artifact("com.android.tools.build", "gradle", "7.1.3");
         Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifact);
 
-        assert jarInfoSet.size() == 1;
+        assert jarInfoSet.size() == 135;
 
-        JarInfo jarInfo = jarInfoSet.iterator().next();
-
-        assert "com.android.tools.build".equals(jarInfo.getGroupId())
+        assert jarInfoSet.stream().anyMatch(jarInfo ->
+                "com.android.tools.build".equals(jarInfo.getGroupId())
                 && "gradle".equals(jarInfo.getArtifactId())
-                && "7.1.3".equals(jarInfo.getVersion());
+                && "7.1.3".equals(jarInfo.getVersion()));
     }
 
     @Test
@@ -68,13 +67,12 @@ public class ArtifactExtractorTest {
 
         Set<JarInfo> jarInfoSet = Utility.getJarInfoSet(artifact);
 
-        assert jarInfoSet.size() == 1;
+        assert jarInfoSet.size() == 31;
 
-        JarInfo jarInfo = jarInfoSet.iterator().next();
-
-        assert "com.github.tsantalis".equals(jarInfo.getGroupId())
-                && "refactoring-miner".equals(jarInfo.getArtifactId())
-                && "2.0.2".equals(jarInfo.getVersion());
+        assert jarInfoSet.stream().anyMatch(jarInfo ->
+                "com.github.tsantalis".equals(jarInfo.getGroupId())
+                        && "refactoring-miner".equals(jarInfo.getArtifactId())
+                        && "2.0.2".equals(jarInfo.getVersion()));
     }
 
     @Test
