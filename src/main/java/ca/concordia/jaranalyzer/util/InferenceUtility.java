@@ -1901,7 +1901,7 @@ public class InferenceUtility {
 
         MethodDeclaration methodDeclaration = (MethodDeclaration) getClosestASTNode(node, MethodDeclaration.class);
 
-        if (methodDeclaration != null) {
+        if (Objects.nonNull(methodDeclaration)) {
             Set<VariableDeclarationDto> methodParameterVariableDeclarationSet =
                     getMethodParameterVariableDeclarationDtoList(dependentArtifactSet, javaVersion,
                             importStatementList, methodDeclaration, owningClassInfoMap, jarInfoService, classInfoService);
@@ -1920,6 +1920,14 @@ public class InferenceUtility {
             if (Objects.nonNull(anonymousClassDeclaration)) {
                 populateVariableNameMapForMethod(dependentArtifactSet, javaVersion, importStatementList,
                         owningClassInfoMap, anonymousClassDeclaration, variableNameMap, jarInfoService, classInfoService);
+            }
+
+            TypeDeclaration typeDeclaration =
+                    (TypeDeclaration) getClosestASTNode(methodDeclaration, TypeDeclaration.class);
+
+            if (Objects.nonNull(typeDeclaration)) {
+                populateVariableNameMapForMethod(dependentArtifactSet, javaVersion, importStatementList,
+                        owningClassInfoMap, typeDeclaration, variableNameMap, jarInfoService, classInfoService);
             }
         }
     }

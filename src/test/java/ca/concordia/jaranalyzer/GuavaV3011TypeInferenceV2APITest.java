@@ -677,6 +677,25 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testEnclosingMethodDeclarationSurroundingMethodDeclaration() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/CollectSpliterators.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().startsWith("predicate.test(holder)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                    assert ("java.util.function.Predicate::public abstract boolean test(T)").equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testPrioritizationOfNonVarargsOverVarargs() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/CollectPreconditions.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
