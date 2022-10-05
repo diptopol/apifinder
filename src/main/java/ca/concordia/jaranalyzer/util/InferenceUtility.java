@@ -13,6 +13,7 @@ import ca.concordia.jaranalyzer.service.JarInfoService;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.FieldSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.GenericTypeResolutionAdapter;
+import io.vavr.Tuple2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jdt.core.dom.*;
@@ -1268,16 +1269,16 @@ public class InferenceUtility {
     }
 
     private static void populateVariableNameMap(Map<String, Set<VariableDeclarationDto>> variableNameMap,
-                                                Set<VariableDeclarationDto> variableDeclarationDtoList) {
+                                                Set<VariableDeclarationDto> variableDeclarationDtoSet) {
 
-        for (VariableDeclarationDto declarationDto : variableDeclarationDtoList) {
-            if (variableNameMap.containsKey(declarationDto.getName())) {
-                Set<VariableDeclarationDto> variableDeclarationSet = variableNameMap.get(declarationDto.getName());
-                variableDeclarationSet.add(declarationDto);
+        for (VariableDeclarationDto variableDeclarationDto : variableDeclarationDtoSet) {
+            if (variableNameMap.containsKey(variableDeclarationDto.getName())) {
+                Set<VariableDeclarationDto> variableDeclarationSet = variableNameMap.get(variableDeclarationDto.getName());
+                variableDeclarationSet.add(variableDeclarationDto);
 
-                variableNameMap.put(declarationDto.getName(), variableDeclarationSet);
+                variableNameMap.put(variableDeclarationDto.getName(), variableDeclarationSet);
             } else {
-                variableNameMap.put(declarationDto.getName(), new HashSet<>(Arrays.asList(declarationDto)));
+                variableNameMap.put(variableDeclarationDto.getName(), new HashSet<>(Arrays.asList(variableDeclarationDto)));
             }
         }
     }
@@ -1968,16 +1969,7 @@ public class InferenceUtility {
                     getVariableDeclarationDtoSet(dependentArtifactSet, javaVersion, importStatementList,
                             owningClassInfoMap, variableNameMap, lambdaExpression, jarInfoService, classInfoService);
 
-            for (VariableDeclarationDto variableDeclarationDto: variableDeclarationDtoSet) {
-                if (variableNameMap.containsKey(variableDeclarationDto.getName())) {
-                    Set<VariableDeclarationDto> variableDeclarationSet = variableNameMap.get(variableDeclarationDto.getName());
-                    variableDeclarationSet.add(variableDeclarationDto);
-
-                    variableNameMap.put(variableDeclarationDto.getName(), variableDeclarationSet);
-                } else {
-                    variableNameMap.put(variableDeclarationDto.getName(), new HashSet<>(Arrays.asList(variableDeclarationDto)));
-                }
-            }
+            populateVariableNameMap(variableNameMap, variableDeclarationDtoSet);
         }
     }
 
@@ -2746,12 +2738,13 @@ public class InferenceUtility {
         return typeArgumentMap;
     }
 
-    private static List<TypeInfo> getArgumentTypeInfoList(Set<Artifact> dependentArtifactSet,
-                                                          String javaVersion,
-                                                          Map<String, TypeInfo> argumentTypeInfoMap,
-                                                          String functionalInterfaceClassQName) {
+    private static Tuple2<List<TypeInfo>, TypeInfo> getMethodArgumentAndReturnTypeInfoTuple(Set<Artifact> dependentArtifactSet,
+                                                                                            String javaVersion,
+                                                                                            Map<String, TypeInfo> argumentTypeInfoMap,
+                                                                                            String functionalInterfaceClassQName) {
 
-        List<TypeInfo> typeArgumentInfoList = new ArrayList<>();
+        List<TypeInfo> argumentInfoList = new ArrayList<>();
+        TypeInfo returnTypeInfo = new NullTypeInfo();
 
         if (!argumentTypeInfoMap.isEmpty()) {
             MethodInfo abstractMethod =
@@ -2761,13 +2754,24 @@ public class InferenceUtility {
             if (Objects.nonNull(abstractMethod)) {
                 for (TypeInfo argumentTypeInfo : abstractMethod.getArgumentTypeInfoList()) {
                     if (argumentTypeInfo.isFormalTypeParameterInfo()) {
-                        typeArgumentInfoList.add(argumentTypeInfoMap.get(((FormalTypeParameterInfo) argumentTypeInfo).getTypeParameter()));
+                        argumentInfoList.add(argumentTypeInfoMap.get(((FormalTypeParameterInfo) argumentTypeInfo).getTypeParameter()));
+                    } else {
+                        argumentInfoList.add(argumentTypeInfo);
+                    }
+                }
+
+
+                if (Objects.nonNull(abstractMethod.getReturnTypeInfo())) {
+                    if (abstractMethod.getReturnTypeInfo().isFormalTypeParameterInfo()) {
+                        returnTypeInfo = argumentTypeInfoMap.get(((FormalTypeParameterInfo) abstractMethod.getReturnTypeInfo()).getTypeParameter());
+                    } else {
+                        returnTypeInfo = abstractMethod.getReturnTypeInfo();
                     }
                 }
             }
         }
 
-        return typeArgumentInfoList;
+        return new Tuple2<>(argumentInfoList, returnTypeInfo);
     }
 
     private static OwningClassInfo getOwningClassInfo(ASTNode astNode,
@@ -2827,8 +2831,8 @@ public class InferenceUtility {
                             getTypeArgumentMap(dependentArtifactSet, javaVersion, importStatementList,
                                     owningClassInfo, parameterizedTypeInfo);
 
-                    typeInfoList = getArgumentTypeInfoList(dependentArtifactSet, javaVersion, typeArgumentMap,
-                            funcInterfaceTypeInfo.getQualifiedClassName());
+                    typeInfoList = getMethodArgumentAndReturnTypeInfoTuple(dependentArtifactSet, javaVersion, typeArgumentMap,
+                            funcInterfaceTypeInfo.getQualifiedClassName())._1();
                 }
             }
         }
