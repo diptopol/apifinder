@@ -8,10 +8,7 @@ import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -204,6 +201,95 @@ public class GenericTypeConversionTest {
 
         assert "[FormalTypeParameterInfo{typeParameter='K', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Comparable'}}]"
                 .equals(classSignatureFormalTypeParameterExtractor.getTypeArgumentList().toString());
+    }
+
+    @Test
+    public void testSuperClassTypeInfoExtractor() {
+        String classSignature = "<E:Ljava/lang/Object;>Ljava/util/AbstractList<TE;>;Ljava/util/List<TE;>;Ljava/util/RandomAccess;Ljava/lang/Cloneable;Ljava/io/Serializable;";
+
+        SignatureReader signatureReader = new SignatureReader(classSignature);
+
+        List<TypeInfo> typeArgumentList = new ArrayList<>();
+        typeArgumentList.add(new FormalTypeParameterInfo("E", new QualifiedTypeInfo("java.lang.Object")));
+
+        ParameterizedSuperClassTypeInfoExtractor parameterizedSuperClassTypeInfoExtractor =
+                new ParameterizedSuperClassTypeInfoExtractor(typeArgumentList);
+
+        signatureReader.accept(parameterizedSuperClassTypeInfoExtractor);
+
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.AbstractList', isParameterized=true," +
+                " typeArgumentList=[FormalTypeParameterInfo{typeParameter='E'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}," +
+                " ParameterizedTypeInfo{qualifiedClassName='java.util.List', isParameterized=true," +
+                " typeArgumentList=[FormalTypeParameterInfo{typeParameter='E'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
+                .equals(parameterizedSuperClassTypeInfoExtractor.getSuperClassTypeInfoList().toString());
+    }
+
+    @Test
+    public void testSuperClassTypeInfoWithNestedTypeArgument() {
+        String classSignature = "<E:Ljava/lang/Object;>Lcom/google/common/collect/AbstractIterator<Ljava/util/List<TE;>;>;";
+
+        SignatureReader signatureReader = new SignatureReader(classSignature);
+
+        List<TypeInfo> typeArgumentList = new ArrayList<>();
+        typeArgumentList.add(new FormalTypeParameterInfo("E", new QualifiedTypeInfo("java.lang.Object")));
+
+        ParameterizedSuperClassTypeInfoExtractor parameterizedSuperClassTypeInfoExtractor =
+                new ParameterizedSuperClassTypeInfoExtractor(typeArgumentList);
+
+        signatureReader.accept(parameterizedSuperClassTypeInfoExtractor);
+
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='com.google.common.collect.AbstractIterator'," +
+                " isParameterized=true, typeArgumentList=[ParameterizedTypeInfo{qualifiedClassName='java.util.List'," +
+                " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='E'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]}]")
+                .equals(parameterizedSuperClassTypeInfoExtractor.getSuperClassTypeInfoList().toString());
+    }
+
+    @Test
+    public void testSuperClassTypeInfoWithNestedTypeArgument2() {
+        String classSignature = "<K:Ljava/lang/Object;V:Ljava/lang/Object;>Lcom/google/common/collect/ImmutableMap$Builder<TK;TV;>;";
+
+        SignatureReader signatureReader = new SignatureReader(classSignature);
+
+        List<TypeInfo> typeArgumentList = new ArrayList<>();
+        typeArgumentList.add(new FormalTypeParameterInfo("E", new QualifiedTypeInfo("java.lang.Object")));
+
+        ParameterizedSuperClassTypeInfoExtractor parameterizedSuperClassTypeInfoExtractor =
+                new ParameterizedSuperClassTypeInfoExtractor(typeArgumentList);
+
+        signatureReader.accept(parameterizedSuperClassTypeInfoExtractor);
+
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='com.google.common.collect.ImmutableMap.Builder'," +
+                " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='K'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='V', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}]}]")
+                .equals(parameterizedSuperClassTypeInfoExtractor.getSuperClassTypeInfoList().toString());
+    }
+
+
+    @Test
+    public void testSuperClassTypeInfoWithNestedTypeArgument3() {
+        String classSignature = "<InElementT:Ljava/lang/Object;>Lcom/google/common/collect/CollectSpliterators$FlatMapSpliteratorOfPrimitive<TInElementT;Ljava/lang/Integer;Ljava/util/function/IntConsumer;Ljava/util/Spliterator$OfInt;>;Ljava/util/Spliterator$OfInt;";
+
+        SignatureReader signatureReader = new SignatureReader(classSignature);
+
+        List<TypeInfo> typeArgumentList = new ArrayList<>();
+        typeArgumentList.add(new FormalTypeParameterInfo("InElementT", new QualifiedTypeInfo("java.lang.Object")));
+
+        ParameterizedSuperClassTypeInfoExtractor parameterizedSuperClassTypeInfoExtractor =
+                new ParameterizedSuperClassTypeInfoExtractor(typeArgumentList);
+
+        signatureReader.accept(parameterizedSuperClassTypeInfoExtractor);
+
+        assert ("[ParameterizedTypeInfo{qualifiedClassName='com.google.common.collect.CollectSpliterators.FlatMapSpliteratorOfPrimitive'," +
+                " isParameterized=true, typeArgumentList=[FormalTypeParameterInfo{typeParameter='InElementT'," +
+                " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " QualifiedTypeInfo{qualifiedClassName='java.lang.Integer'}," +
+                " QualifiedTypeInfo{qualifiedClassName='java.util.function.IntConsumer'}," +
+                " QualifiedTypeInfo{qualifiedClassName='java.util.Spliterator.OfInt'}]}]")
+                .equals(parameterizedSuperClassTypeInfoExtractor.getSuperClassTypeInfoList().toString());
     }
 
     @Test
