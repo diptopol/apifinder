@@ -7,6 +7,7 @@ import ca.concordia.jaranalyzer.models.typeInfo.QualifiedTypeInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.DataSource;
 import ca.concordia.jaranalyzer.util.DbUtils;
+import ca.concordia.jaranalyzer.util.EntityUtils;
 import ca.concordia.jaranalyzer.util.PrimitiveTypeUtils;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
 import org.objectweb.asm.Type;
@@ -417,7 +418,7 @@ public class ClassInfoService {
 
     private TypeInfo getClassTypeInfo(Type type, String qualifiedName, String signature) {
         if (Objects.isNull(signature)) {
-            return getTypeInfo(type);
+            return EntityUtils.getTypeInfo(type);
         } else {
             ClassSignatureFormalTypeParameterExtractor extractor = new ClassSignatureFormalTypeParameterExtractor();
 
@@ -433,18 +434,6 @@ public class ClassInfoService {
 
                 return parameterizedTypeInfo;
             }
-        }
-    }
-
-    /*
-     * The current assumption is that type of classInfo can only be a primitive type, or qualified if it is not
-     * parameterized type.
-     */
-    private TypeInfo getTypeInfo(Type type) {
-        if (PrimitiveTypeUtils.isPrimitiveType(type.getClassName())) {
-            return new PrimitiveTypeInfo(type.getClassName());
-        } else {
-            return new QualifiedTypeInfo(type.getClassName());
         }
     }
 

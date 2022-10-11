@@ -2674,56 +2674,14 @@ public class InferenceUtility {
     }
 
     public static TypeInfo getTypeInfoFromClassInfo(String className, ClassInfo classInfo) {
-        /*
-         * When we are constructing typeinfo from classname, if we find signature not null, we will construct a
-         *  parameterized type info. Parameterized type info has list of type arguments.
-         *  All the types will be formalTypeParameter.
-         */
-        if (StringUtils.isNotEmpty(classInfo.getSignature())) {
-            ClassSignatureFormalTypeParameterExtractor extractor = new ClassSignatureFormalTypeParameterExtractor();
+        TypeInfo classTypeInfo = classInfo.getTypeInfo();
 
-            SignatureReader signatureReader = new SignatureReader(classInfo.getSignature());
-            signatureReader.accept(extractor);
+        if (className.contains("[]")) {
+            int numberOfDimension = StringUtils.countMatches(className, "[]");
+            return new ArrayTypeInfo(classTypeInfo, numberOfDimension);
 
-            String qualifiedClassName = classInfo.getQualifiedName();
-
-            if (extractor.getTypeArgumentList().isEmpty()) {
-                QualifiedTypeInfo qualifiedTypeInfo = new QualifiedTypeInfo(qualifiedClassName);
-
-                //if className is array populate array dimension
-                if (className.contains("[]")) {
-                    int numberOfDimension = StringUtils.countMatches(className, "[]");
-
-                    return new ArrayTypeInfo(qualifiedTypeInfo, numberOfDimension);
-                }
-
-                return qualifiedTypeInfo;
-            } else {
-                ParameterizedTypeInfo parameterizedTypeInfo = new ParameterizedTypeInfo(qualifiedClassName);
-                parameterizedTypeInfo.setTypeArgumentList(new ArrayList<>(extractor.getTypeArgumentList()));
-
-                //if className is array populate array dimension
-                if (className.contains("[]")) {
-                    int numberOfDimension = StringUtils.countMatches(className, "[]");
-
-                    return new ArrayTypeInfo(parameterizedTypeInfo, numberOfDimension);
-                }
-
-                return parameterizedTypeInfo;
-            }
         } else {
-            String qualifiedClassName = classInfo.getQualifiedName();
-
-            //if className is array populate array dimension
-            if (className.contains("[]")) {
-                int numberOfDimension = StringUtils.countMatches(className, "[]");
-
-                QualifiedTypeInfo qualifiedTypeInfo = new QualifiedTypeInfo(qualifiedClassName);
-                return new ArrayTypeInfo(qualifiedTypeInfo, numberOfDimension);
-
-            } else {
-                return new QualifiedTypeInfo(qualifiedClassName);
-            }
+            return classTypeInfo;
         }
     }
 
