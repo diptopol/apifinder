@@ -11,17 +11,28 @@ public class VariableDeclarationDto {
 
     private final String name;
 
-    private final Type type;
+    private Type type;
 
-    private final TypeInfo typeInfo;
+    private TypeInfo typeInfo;
 
     private final VariableScope scope;
 
-    public VariableDeclarationDto(String name, TypeInfo typeInfo, VariableScope scope, Type type) {
+    private OwningClassInfo owningClassInfo;
+
+    private boolean isVarargs;
+
+    public VariableDeclarationDto(String name, TypeInfo typeInfo, VariableScope scope) {
         this.name = name;
         this.typeInfo = typeInfo;
         this.scope = scope;
+    }
+
+    public VariableDeclarationDto(String name, VariableScope scope, Type type, OwningClassInfo owningClassInfo, boolean isVarargs) {
+        this.name = name;
+        this.scope = scope;
         this.type = type;
+        this.owningClassInfo = owningClassInfo;
+        this.isVarargs = isVarargs;
     }
 
     public String getName() {
@@ -38,6 +49,14 @@ public class VariableDeclarationDto {
 
     public Type getType() {
         return this.type;
+    }
+
+    public OwningClassInfo getOwningClassInfo() {
+        return owningClassInfo;
+    }
+
+    public boolean isVarargs() {
+        return isVarargs;
     }
 
     @Override

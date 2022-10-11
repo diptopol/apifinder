@@ -473,8 +473,8 @@ public class InferenceUtility {
                     String firstEnclosingClassName = getFirstEnclosingClassQName(fieldDeclaration, dependentArtifactSet,
                             javaVersion, importStatementList, jarInfoService, classInfoService);
 
-                    return getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                            fieldDeclaration.getType(), fieldDeclaration.getParent().getStartPosition(), fragmentList,
+                    return getVariableDeclarationDtoList(fieldDeclaration.getType(),
+                            fieldDeclaration.getParent().getStartPosition(), fragmentList,
                             owningClassInfoMap.get(firstEnclosingClassName));
                 }).flatMap(Collection::stream)
                 .collect(Collectors.toSet());
@@ -818,7 +818,9 @@ public class InferenceUtility {
             if (expression instanceof QualifiedName) {
                 String firstPart = name.substring(0, name.indexOf("."));
                 VariableDeclarationDto selected = getVariableDeclarationDtoFromVariableMap(firstPart, expression, variableNameMap);
-                String className = Objects.nonNull(selected) ? selected.getTypeInfo().getQualifiedClassName() : null;
+                String className = Objects.nonNull(selected)
+                        ? getTypeInfoFromVariableDeclarationDto(dependentArtifactSet, javaVersion, importStatementList, selected).getQualifiedClassName()
+                        : null;
 
                 if (Objects.isNull(className)) {
                     TypeInfo typeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
@@ -867,7 +869,9 @@ public class InferenceUtility {
                 }
             } else if (expression instanceof SimpleName) {
                 VariableDeclarationDto selected = getVariableDeclarationDtoFromVariableMap(name, expression, variableNameMap);
-                TypeInfo classTypeInfo = Objects.nonNull(selected) ? selected.getTypeInfo() : null;
+                TypeInfo classTypeInfo = Objects.nonNull(selected)
+                        ? getTypeInfoFromVariableDeclarationDto(dependentArtifactSet, javaVersion, importStatementList, selected)
+                        : null;
 
                 if (Objects.nonNull(classTypeInfo)) {
                     return classTypeInfo;
@@ -1464,7 +1468,7 @@ public class InferenceUtility {
                     getVariableDeclarationDtoFromVariableMap(variableName, variableDeclarationFragment.getStartPosition(), variableNameMap);
 
             if (Objects.nonNull(variableDeclarationDto)) {
-                return variableDeclarationDto.getTypeInfo();
+                return getTypeInfoFromVariableDeclarationDto(dependentArtifactSet, javaVersion, importStatementList, variableDeclarationDto);
             }
         }
 
@@ -1947,8 +1951,7 @@ public class InferenceUtility {
                                                 importStatementList, jarInfoService, classInfoService);
 
                                         VariableDeclarationDto variableDeclarationDto =
-                                                getVariableDeclarationDto(dependentArtifactSet, javaVersion, importStatementList,
-                                                        singleVariableDeclaration, owningClassInfo);
+                                                getVariableDeclarationDto(singleVariableDeclaration, owningClassInfo);
 
                                         populateVariableNameMap(variableNameMap, Collections.singleton(variableDeclarationDto));
 
@@ -1963,8 +1966,8 @@ public class InferenceUtility {
                                         List<VariableDeclarationFragment> fragmentList = variableDeclarationExpression.fragments();
 
                                         List<VariableDeclarationDto> variableDeclarationDtoList =
-                                                getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                                                        variableDeclarationExpression.getType(), null, fragmentList, owningClassInfo);
+                                                getVariableDeclarationDtoList(variableDeclarationExpression.getType(),
+                                                        null, fragmentList, owningClassInfo);
 
                                         populateVariableNameMap(variableNameMap, new HashSet<>(variableDeclarationDtoList));
                                     }
@@ -1977,8 +1980,8 @@ public class InferenceUtility {
                                         List<VariableDeclarationFragment> fragmentList = variableDeclarationStatement.fragments();
 
                                         List<VariableDeclarationDto> variableDeclarationDtoList =
-                                                getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                                                        variableDeclarationStatement.getType(), null, fragmentList, owningClassInfo);
+                                                getVariableDeclarationDtoList(variableDeclarationStatement.getType(),
+                                                        null, fragmentList, owningClassInfo);
 
                                         populateVariableNameMap(variableNameMap, new HashSet<>(variableDeclarationDtoList));
                                     }
@@ -2325,8 +2328,7 @@ public class InferenceUtility {
             }
 
             return declarationList.stream()
-                    .map(declaration -> getVariableDeclarationDto(dependentArtifactSet, javaVersion,
-                            importStatementList, declaration, owningClassInfo))
+                    .map(declaration -> getVariableDeclarationDto(declaration, owningClassInfo))
                     .filter(Objects::nonNull).collect(Collectors.toSet());
         } else {
             return Collections.emptySet();
@@ -2367,8 +2369,7 @@ public class InferenceUtility {
                 }
 
                 VariableDeclarationDto variableDeclarationDto =
-                        getVariableDeclarationDto(dependentArtifactSet, javaVersion, importStatementList,
-                                singleVariableDeclaration, owningClassInfo);
+                        getVariableDeclarationDto(singleVariableDeclaration, owningClassInfo);
 
                 localVariableDtoSet.add(variableDeclarationDto);
 
@@ -2394,8 +2395,8 @@ public class InferenceUtility {
                 List<VariableDeclarationFragment> fragmentList = variableDeclarationExpression.fragments();
 
                 List<VariableDeclarationDto> variableDeclarationDtoList =
-                        getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                                variableDeclarationExpression.getType(), null, fragmentList, owningClassInfo);
+                        getVariableDeclarationDtoList(variableDeclarationExpression.getType(),
+                                null, fragmentList, owningClassInfo);
 
                 localVariableDtoSet.addAll(variableDeclarationDtoList);
             }
@@ -2419,8 +2420,8 @@ public class InferenceUtility {
                 List<VariableDeclarationFragment> fragmentList = variableDeclarationStatement.fragments();
 
                 List<VariableDeclarationDto> variableDeclarationDtoList =
-                        getVariableDeclarationDtoList(dependentArtifactSet, javaVersion, importStatementList,
-                                variableDeclarationStatement.getType(), null, fragmentList, owningClassInfo);
+                        getVariableDeclarationDtoList(variableDeclarationStatement.getType(), null,
+                                fragmentList, owningClassInfo);
 
                 localVariableDtoSet.addAll(variableDeclarationDtoList);
             }
@@ -2429,36 +2430,26 @@ public class InferenceUtility {
         return localVariableDtoSet;
     }
 
-    private static TypeInfo convertVarargsIfRequired(SingleVariableDeclaration singleVariableDeclaration,
-                                                     TypeInfo typeInfo) {
-        if (Objects.nonNull(typeInfo) && singleVariableDeclaration.isVarargs()) {
+    private static TypeInfo convertVarargsIfRequired(TypeInfo typeInfo, boolean isVarargs) {
+        if (Objects.nonNull(typeInfo) && isVarargs) {
             return new VarargTypeInfo(typeInfo);
         } else {
             return typeInfo;
         }
     }
 
-    private static VariableDeclarationDto getVariableDeclarationDto(Set<Artifact> dependentArtifactSet,
-                                                                    String javaVersion,
-                                                                    List<String> importStatementList,
-                                                                    SingleVariableDeclaration declaration,
+    private static VariableDeclarationDto getVariableDeclarationDto(SingleVariableDeclaration declaration,
                                                                     OwningClassInfo owningClassInfo) {
         String name = declaration.getName().getFullyQualifiedName();
         Type declarationType = declaration.getType();
-        TypeInfo declarationTypeInfo = convertVarargsIfRequired(declaration,
-                getTypeInfo(dependentArtifactSet, javaVersion, importStatementList, declarationType, owningClassInfo));
-
-        if (Objects.isNull(declarationTypeInfo)) {
-            declarationTypeInfo = new NullTypeInfo();
-        }
-
         ASTNode scopedNode = getVariableDeclarationScopedNode(declaration);
 
         if (scopedNode != null) {
             int startOffset = scopedNode.getStartPosition();
             int endOffSet = startOffset + scopedNode.getLength();
 
-            return new VariableDeclarationDto(name, declarationTypeInfo, new VariableScope(startOffset, endOffSet), declarationType);
+            return new VariableDeclarationDto(name, new VariableScope(startOffset, endOffSet), declarationType,
+                    owningClassInfo, declaration.isVarargs());
 
         } else {
             return null;
@@ -2543,26 +2534,20 @@ public class InferenceUtility {
         return anonymousClassVisitor.getAnonymousClassDeclarationList();
     }
 
-    private static List<VariableDeclarationDto> getVariableDeclarationDtoList(Set<Artifact> dependentArtifactSet,
-                                                                              String javaVersion,
-                                                                              List<String> importStatementList,
-                                                                              Type declarationType,
+    private static List<VariableDeclarationDto> getVariableDeclarationDtoList(Type declarationType,
                                                                               Integer fieldVariableStartOffset,
                                                                               List<VariableDeclarationFragment> fragmentList,
                                                                               OwningClassInfo owningClassInfo) {
-
-        TypeInfo declarationTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
-                declarationType, owningClassInfo);
-
         return fragmentList.stream().map(fragment ->
-                getVariableDeclarationDto(fragment, fieldVariableStartOffset, declarationTypeInfo, declarationType))
+                getVariableDeclarationDto(fragment, fieldVariableStartOffset, null, declarationType, owningClassInfo))
                 .collect(Collectors.toList());
     }
 
     private static VariableDeclarationDto getVariableDeclarationDto(VariableDeclarationFragment fragment,
                                                                     Integer fieldVariableStartOffset,
                                                                     TypeInfo declarationTypeInfo,
-                                                                    Type declarationType) {
+                                                                    Type declarationType,
+                                                                    OwningClassInfo owningClassInfo) {
         ASTNode scopedNode = getVariableDeclarationScopedNode(fragment);
         String name = fragment.getName().getFullyQualifiedName();
 
@@ -2572,9 +2557,13 @@ public class InferenceUtility {
 
         int endOffSet = startOffset + (scopedNode != null ? scopedNode.getLength() : 0);
 
-        return new VariableDeclarationDto(name,
-                Objects.nonNull(declarationTypeInfo) ? declarationTypeInfo : new NullTypeInfo(),
-                new VariableScope(startOffset, endOffSet), declarationType);
+        if (Objects.nonNull(declarationTypeInfo)) {
+            return new VariableDeclarationDto(name, declarationTypeInfo, new VariableScope(startOffset, endOffSet));
+
+        } else {
+            return new VariableDeclarationDto(name, new VariableScope(startOffset, endOffSet), declarationType,
+                    owningClassInfo, false);
+        }
     }
 
     private static ASTNode getVariableDeclarationScopedNode(VariableDeclaration variableDeclaration) {
@@ -3121,8 +3110,7 @@ public class InferenceUtility {
                 SingleVariableDeclaration singleVariableDeclaration = (SingleVariableDeclaration) lambdaArgumentDeclaration;
 
                 VariableDeclarationDto variableDeclarationDto =
-                        getVariableDeclarationDto(dependentArtifactSet, javaVersion, importStatementList,
-                                singleVariableDeclaration, owningClassInfo);
+                        getVariableDeclarationDto(singleVariableDeclaration, owningClassInfo);
 
                 variableDeclarationDtoSet.add(variableDeclarationDto);
             }
@@ -3133,12 +3121,30 @@ public class InferenceUtility {
                 TypeInfo variableTypeInfo = i < lambdaArgumentTypeInfoList.size() ? lambdaArgumentTypeInfoList.get(i) : new NullTypeInfo();
 
                 variableDeclarationDtoSet.add(getVariableDeclarationDto(variableDeclarationFragment,
-                        null, variableTypeInfo, null));
+                        null, variableTypeInfo, null, null));
                 i++;
             }
         }
 
         return variableDeclarationDtoSet;
+    }
+
+    private static TypeInfo getTypeInfoFromVariableDeclarationDto(Set<Artifact> dependentArtifactSet,
+                                                                  String javaVersion,
+                                                                  List<String> importStatementList,
+                                                                  VariableDeclarationDto variableDeclarationDto) {
+        if (Objects.isNull(variableDeclarationDto.getTypeInfo())) {
+            TypeInfo typeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importStatementList,
+                    variableDeclarationDto.getType(), variableDeclarationDto.getOwningClassInfo());
+
+            if (Objects.isNull(typeInfo)) {
+                typeInfo = new NullTypeInfo();
+            }
+
+            return convertVarargsIfRequired(typeInfo, variableDeclarationDto.isVarargs());
+        }
+
+        return variableDeclarationDto.getTypeInfo();
     }
 
 }

@@ -145,7 +145,7 @@ public class InferenceUtilityTest {
 
                     List<Expression> argumentList = methodInvocation.arguments();
 
-                    List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(Collections.emptySet(),
+                    List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependencyTuple._2(),
                             dependencyTuple._1(), importStatementList, variableNameMap, argumentList, null);
 
                     List<String> argumentTypeClassNameList = argumentTypeInfoList.stream()
