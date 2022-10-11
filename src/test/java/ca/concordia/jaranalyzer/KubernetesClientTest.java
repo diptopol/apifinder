@@ -278,6 +278,82 @@ public class KubernetesClientTest {
         }
     }
 
+    @Test
+    public void testFormalTypeParameterResolutionForSuperClass2() {
+        String filePath = "java-generator/core/src/main/java/io/fabric8/java/generator/nodes/JObject.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().equals("clz.addMember(ed.get())")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("com.github.javaparser.ast.body.TypeDeclaration" +
+                                "::public com.github.javaparser.ast.body.ClassOrInterfaceDeclaration addMember(com.github.javaparser.ast.body.BodyDeclaration)").equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
+    @Test
+    public void testTypeArgumentResolutionThroughSuperClassPropagation() {
+        String filePath = "kubernetes-client/src/main/java/io/fabric8/kubernetes/client/informers/impl/cache/ProcessorListener.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().equals("getOldObject()")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("io.fabric8.kubernetes.client.informers.impl.cache.ProcessorListener.Notification" +
+                                "::public T getOldObject()").equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
+    @Test
+    public void testFormalTypeParameterResolutionForSuperClass() {
+        String filePath = "crd-generator/api/src/main/java/io/fabric8/crd/generator/AbstractJsonSchema.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().startsWith("propertyOrAccessors.forEach(")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("java.lang.Iterable::public void forEach(java.util.function.Consumer)").equals(methodInfo.toString());
+
+                        assert ("[ParameterizedTypeInfo{qualifiedClassName='java.util.function.Consumer'," +
+                                " isParameterized=true," +
+                                " typeArgumentList=[QualifiedTypeInfo{qualifiedClassName='io.fabric8.crd.generator.AbstractJsonSchema.PropertyOrAccessor'}]}]")
+                                .equals(methodInfo.getArgumentTypeInfoList().toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
     private String getFileContentFromRemote(String filePath, String projectUrl, String commitId) {
         try {
             GitHub gitHub = GitUtil.connectGithub();

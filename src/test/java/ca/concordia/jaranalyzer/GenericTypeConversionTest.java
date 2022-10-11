@@ -74,10 +74,10 @@ public class GenericTypeConversionTest {
         MethodArgumentExtractor methodArgumentExtractor = new MethodArgumentExtractor();
         signatureReader.accept(methodArgumentExtractor);
 
-        assert ("[FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
-                " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
-                " FormalTypeParameterInfo{typeParameter='T', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
-                " ArrayTypeInfo{elementTypeInfo=FormalTypeParameterInfo{typeParameter='T'," +
+        assert ("[FormalTypeParameterInfo{typeParameter='E', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='E', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " FormalTypeParameterInfo{typeParameter='E', baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}," +
+                " ArrayTypeInfo{elementTypeInfo=FormalTypeParameterInfo{typeParameter='E'," +
                 " baseTypeInfo=QualifiedTypeInfo{qualifiedClassName='java.lang.Object'}}, dimension=1}]")
                 .equals(methodArgumentExtractor.getArgumentList().toString());
     }

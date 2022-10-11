@@ -90,21 +90,22 @@ public class GenericTypeResolutionAdapter extends SignatureVisitor {
         }
 
         if (argumentStack == 0 && isFormalTypeParameterTraversalCompleted) {
-            String typeParameterName = name;
-            if (formalTypeParameterConversionMap.containsKey(name)) {
-                typeParameterName = formalTypeParameterConversionMap.get(typeParameterName);
-            }
-
             /*
              * Sometimes, formalType parameter map may not contain all the formal type parameters that required for the
              * method. In that case, we are treating as type parameter as it is without resolving class name.
              */
-            if (formalParameterMap.containsKey(typeParameterName)) {
-                String className = formalParameterMap.get(typeParameterName).getName().replaceAll("\\.", "/");
+            if (formalParameterMap.containsKey(name)) {
+                String className = formalParameterMap.get(name).getName().replaceAll("\\.", "/");
+                signatureWriter.visitClassType(className);
+
+            } else if (formalTypeParameterConversionMap.containsKey(name)
+                    && formalParameterMap.containsKey(formalTypeParameterConversionMap.get(name))) {
+
+                String className = formalParameterMap.get(formalTypeParameterConversionMap.get(name)).getName().replaceAll("\\.", "/");
                 signatureWriter.visitClassType(className);
 
             } else {
-                signatureWriter.visitClassType(typeParameterName);
+                signatureWriter.visitClassType(name);
             }
 
             signatureWriter.visitEnd();

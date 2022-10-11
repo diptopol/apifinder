@@ -34,6 +34,10 @@ public class OwningClassInfo {
         return this.enclosingClassNameList.get(this.enclosingClassNameList.size() - 1);
     }
 
+    public String getInnerMostClassName() {
+        return this.enclosingClassNameList.get(0);
+    }
+
     public List<Set<String>> getQualifiedClassNameSetInHierarchy() {
         return qualifiedClassNameSetInHierarchy;
     }
