@@ -444,28 +444,32 @@ public class InferenceUtility {
                                                                                  Map<String, OwningClassInfo> owningClassInfoMap,
                                                                                  JarInfoService jarInfoService,
                                                                                  ClassInfoService classInfoService) {
-
         AbstractTypeDeclaration abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(node);
+
         List<FieldDeclaration> fieldDeclarationList = new ArrayList<>();
 
-        abstractTypeDeclaration.accept(new ASTVisitor() {
-            @Override
-            public boolean visit(FieldDeclaration fieldDeclaration) {
-                String firstEnclosingClassName = getFirstEnclosingClassQName(fieldDeclaration, dependentArtifactSet,
-                        javaVersion, importStatementList, jarInfoService, classInfoService);
-
-                if (!owningClassInfoMap.containsKey(firstEnclosingClassName)) {
-                    OwningClassInfo owningClassInfo = getOwningClassInfo(fieldDeclaration, dependentArtifactSet,
+        while (Objects.nonNull(abstractTypeDeclaration)) {
+            abstractTypeDeclaration.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(FieldDeclaration fieldDeclaration) {
+                    String firstEnclosingClassName = getFirstEnclosingClassQName(fieldDeclaration, dependentArtifactSet,
                             javaVersion, importStatementList, jarInfoService, classInfoService);
 
-                    owningClassInfoMap.put(firstEnclosingClassName, owningClassInfo);
+                    if (!owningClassInfoMap.containsKey(firstEnclosingClassName)) {
+                        OwningClassInfo owningClassInfo = getOwningClassInfo(fieldDeclaration, dependentArtifactSet,
+                                javaVersion, importStatementList, jarInfoService, classInfoService);
+
+                        owningClassInfoMap.put(firstEnclosingClassName, owningClassInfo);
+                    }
+
+                    fieldDeclarationList.add(fieldDeclaration);
+
+                    return true;
                 }
+            });
 
-                fieldDeclarationList.add(fieldDeclaration);
-
-                return true;
-            }
-        });
+            abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(abstractTypeDeclaration.getParent());
+        }
 
         return fieldDeclarationList.stream().map(fieldDeclaration -> {
                     List<VariableDeclarationFragment> fragmentList = fieldDeclaration.fragments();
@@ -876,16 +880,16 @@ public class InferenceUtility {
                 if (Objects.nonNull(classTypeInfo)) {
                     return classTypeInfo;
                 } else {
-                    TypeInfo fieldTypeInfo = getTypeInfoFromFieldName(dependentArtifactSet, javaVersion,
-                            importStatementList, name, owningClassInfo);
+                    TypeInfo typeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
+                            name, owningClassInfo);
 
-                    if (Objects.nonNull(fieldTypeInfo)) {
-                        return fieldTypeInfo;
+                    if (Objects.nonNull(typeInfo)) {
+                        return typeInfo;
                     } else {
-                        TypeInfo typeInfo = getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importStatementList,
-                                name, owningClassInfo);
+                        TypeInfo fieldTypeInfo = getTypeInfoFromFieldName(dependentArtifactSet, javaVersion,
+                                importStatementList, name, owningClassInfo);
 
-                        return Objects.isNull(typeInfo) ? new NullTypeInfo() : typeInfo;
+                        return Objects.isNull(fieldTypeInfo) ? new NullTypeInfo() : fieldTypeInfo;
                     }
                 }
             } else {
