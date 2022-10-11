@@ -354,6 +354,31 @@ public class KubernetesClientTest {
         }
     }
 
+    @Test
+    public void testInnerClassNameCheck() {
+        String filePath = "java-generator/core/src/main/java/io/fabric8/java/generator/nodes/JObject.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().equals("field.getValue()")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("java.util.Map.Entry" +
+                                "::public abstract io.fabric8.kubernetes.api.model.apiextensions.v1.JSONSchemaProps getValue()")
+                                .equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
     private String getFileContentFromRemote(String filePath, String projectUrl, String commitId) {
         try {
             GitHub gitHub = GitUtil.connectGithub();

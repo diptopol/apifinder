@@ -409,7 +409,8 @@ public abstract class TypeInferenceBase {
 
                     boolean classNameCheck;
                     if (postProcessedTypeClassName.contains("$")) {
-                        classNameCheck = classInfo.getName().endsWith(postProcessedTypeClassName);
+                        classNameCheck = classInfo.getName().equals(postProcessedTypeClassName)
+                                || classInfo.getName().endsWith("$".concat(postProcessedTypeClassName));
                     } else {
                         classNameCheck = classInfo.getName().endsWith("$" + postProcessedTypeClassName);
                     }
