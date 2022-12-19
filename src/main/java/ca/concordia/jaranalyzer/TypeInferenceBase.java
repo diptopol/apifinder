@@ -786,7 +786,7 @@ public abstract class TypeInferenceBase {
     }
 
     static void modifyMethodInfoForArray(List<MethodInfo> methodInfoList, TypeInfo invokerTypeInfo) {
-        if (Objects.nonNull(invokerTypeInfo)) {
+        if (Objects.nonNull(invokerTypeInfo) && methodInfoList.stream().allMatch(m -> m.getName().equals("clone"))) {
             if (invokerTypeInfo.isArrayTypeInfo()) {
                 ArrayTypeInfo arrayTypeInfo = (ArrayTypeInfo) invokerTypeInfo;
 
