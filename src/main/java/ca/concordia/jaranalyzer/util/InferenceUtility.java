@@ -1699,16 +1699,6 @@ public class InferenceUtility {
             if (invokerParameterizedTypeInfo.isParameterized()) {
                 populateInferredTypeInfoMapForParameterizedTypeInfo(dependentArtifactSet, javaVersion,
                         importStatementList, owningClassInfo, invokerParameterizedTypeInfo, inferredTypeInfoMap);
-            } else {
-                if (Objects.nonNull(owningClassInfo)
-                        && owningClassInfo.getQualifiedClassNameSetInHierarchy().get(0).contains(invokerTypeInfo.getQualifiedClassName())) {
-
-                    inferredTypeInfoMap.putAll(invokerParameterizedTypeInfo.getTypeArgumentList()
-                            .stream()
-                            .filter(TypeInfo::isFormalTypeParameterInfo)
-                            .map(t -> (FormalTypeParameterInfo) t)
-                            .collect(Collectors.toMap(FormalTypeParameterInfo::getTypeParameter, f -> f)));
-                }
             }
         }
 
