@@ -235,15 +235,51 @@ public abstract class TypeInferenceBase {
                                 + (0.1 *
                                 (PrimitiveTypeUtils.getPrimitiveWideningClassNameList(argumentTypeClassName).indexOf(methodArgumentTypeClassName) + 1)));
                         matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        continue;
 
                     } else if (PrimitiveTypeUtils.isNarrowingPrimitiveConversion(argumentTypeClassName, methodArgumentTypeClassName)) {
                         methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance()
                                 + PRIMITIVE_TYPE_NARROWING_DISTANCE);
                         matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        continue;
 
                     } else {
                         return false;
                     }
+                }
+
+                if (PrimitiveTypeUtils.isPrimitiveType(argumentTypeClassName)) {
+                    if (PrimitiveTypeUtils.getPrimitiveWrapperClassQName(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_WRAPPING_DISTANCE);
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        continue;
+
+                    }
+                }
+
+                if (PrimitiveTypeUtils.isPrimitiveUnWrapperClass(methodArgumentTypeClassName, argumentTypeClassName)) {
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_UNWRAPPING_DISTANCE);
+                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                    continue;
+                }
+
+                if (PrimitiveTypeUtils.isPrimitiveType(argumentTypeClassName)) {
+                    if ("java.lang.Comparable".equals(methodArgumentTypeClassName)) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_COMPARABLE_DISTANCE);
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        continue;
+                    } else if ("java.lang.Object".equals(methodArgumentTypeClassName)) {
+                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_OBJECT_DISTANCE);
+                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                        continue;
+                    }
+                }
+
+                if (PrimitiveTypeUtils.isPrimitiveNumericType(argumentTypeClassName)
+                        && methodArgumentTypeClassName.equals("java.lang.Number")) {
+                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_NUMBER_DISTANCE);
+                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                    continue;
                 }
 
                 if (isNullType(argumentTypeClassName) && !PrimitiveTypeUtils.isPrimitiveType(methodArgumentTypeClassName)) {
@@ -273,23 +309,6 @@ public abstract class TypeInferenceBase {
                     return false;
                 }
 
-                if (PrimitiveTypeUtils.isPrimitiveType(argumentTypeClassName)) {
-                    if (PrimitiveTypeUtils.getPrimitiveWrapperClassQName(argumentTypeClassName).equals(methodArgumentTypeClassName)) {
-                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_WRAPPING_DISTANCE);
-                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
-
-                    } else if ("java.lang.Comparable".equals(methodArgumentTypeClassName)) {
-                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_COMPARABLE_DISTANCE);
-                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
-                    }
-                }
-
-                if (PrimitiveTypeUtils.isPrimitiveUnWrapperClass(methodArgumentTypeClassName, argumentTypeClassName)) {
-                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_UNWRAPPING_DISTANCE);
-                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
-                    continue;
-                }
-
                 /*
                  * Trimmed down array dimension before searching for super classes.
                  */
@@ -307,25 +326,13 @@ public abstract class TypeInferenceBase {
                 }
 
                 if (methodArgumentTypeClassName.equals("java.lang.Object")) {
-                    if (PrimitiveTypeUtils.isPrimitiveType(argumentTypeClassName)) {
-                        methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_OBJECT_DISTANCE);
-                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
-                        continue;
-                    } else if (argumentTypeClassName.equals("java.lang.Object")) {
+                    if (argumentTypeClassName.equals("java.lang.Object")) {
                         if (isArgumentArray) {
                             methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + OBJECT_ARRAY_TO_OBJECT_DISTANCE);
+                            matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
+                            continue;
                         }
-
-                        matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
-                        continue;
                     }
-                }
-
-                if (methodArgumentTypeClassName.equals("java.lang.Number")
-                        && PrimitiveTypeUtils.isPrimitiveNumericType(argumentTypeClassName)) {
-                    methodInfo.setArgumentMatchingDistance(methodInfo.getArgumentMatchingDistance() + PRIMITIVE_TYPE_NUMBER_DISTANCE);
-                    matchedMethodArgumentTypeInfoList.add(methodArgumentTypeInfo);
-                    continue;
                 }
 
                 Set<String> classNameSet = new HashSet<>();
