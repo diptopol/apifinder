@@ -376,6 +376,13 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
 
                 projectArtifactSet.add(projectArtifact);
 
+                if (Objects.nonNull(projectArtifact.getVersion()) && projectArtifact.getVersion().endsWith("-SNAPSHOT")) {
+                    projectArtifactSet.add(new Artifact(projectArtifact.getGroupId(),
+                            projectArtifact.getArtifactId(),
+                            projectArtifact.getVersion().replace("-SNAPSHOT", ""),
+                            projectArtifact.getVersion()));
+                }
+
                 Element dependenciesElement = getDependenciesElement(project);
 
                 if (Objects.nonNull(dependenciesElement)) {
@@ -396,8 +403,10 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
                             dependentArtifactType = "jar";
                         }
 
-                        dependentArtifactSet.add(new Artifact(dependentArtifactGroupId, dependentArtifactArtifactId,
-                                dependentArtifactVersion, dependentArtifactType));
+                        if (Objects.nonNull(dependentArtifactVersion)) {
+                            dependentArtifactSet.add(new Artifact(dependentArtifactGroupId, dependentArtifactArtifactId,
+                                    dependentArtifactVersion, dependentArtifactType));
+                        }
                     }
                 }
             }
