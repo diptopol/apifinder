@@ -68,6 +68,30 @@ public class KubernetesClientJavaTest {
         }
     }
 
+    @Test
+    public void testDePrioritizingPrimitiveUnWrapping() {
+        String filePath = "fluent/src/main/java/io/kubernetes/client/openapi/models/V1SecretProjectionFluentImpl.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().startsWith("sb.append(optional)")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("java.lang.StringBuilder" +
+                                "::public java.lang.StringBuilder append(java.lang.Object)").equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
     private String getFileContentFromRemote(String filePath, String projectUrl, String commitId) {
         try {
             GitHub gitHub = GitUtil.connectGithub();

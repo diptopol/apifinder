@@ -38,7 +38,7 @@ public abstract class TypeInferenceBase {
     private static final int OBJECT_ARRAY_TO_OBJECT_DISTANCE = 1;
 
     /*Increased the distance of matching the wrapped objects to primitives*/
-    private static final double PRIMITIVE_TYPE_UNWRAPPING_DISTANCE = 1.5;
+    private static final double PRIMITIVE_TYPE_UNWRAPPING_DISTANCE = MAX_SUPER_CLASS_DISTANCE * 1.5;
     private static final int PRIMITIVE_TYPE_NUMBER_DISTANCE = 1;
 
     public static final int VARARGS_DISTANCE = 10001;
