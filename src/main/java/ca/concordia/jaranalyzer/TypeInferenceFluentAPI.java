@@ -106,7 +106,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         if (Objects.nonNull(criteria.getInvokerTypeInfo()) && !criteria.getInvokerTypeInfo().isNullTypeInfo()) {
             Set<String> classQNameSet = new LinkedHashSet<>(Arrays.asList(criteria.getInvokerTypeInfo().getQualifiedClassName()));
 
-            Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+            Set<MethodInfo> deferredQualifiedMethodInfoSet = new LinkedHashSet<>();
             List<String> classQNameDeclarationOrderList = new ArrayList<>(classQNameSet);
             List<Tuple2<String, String>> parentClassPairList = new ArrayList<>();
 
@@ -161,7 +161,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
           STEP 1
          */
         if (Objects.isNull(criteria.getInvokerTypeInfo()) && Objects.nonNull(criteria.getOwningClassInfo())) {
-            Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+            Set<MethodInfo> deferredQualifiedMethodInfoSet = new LinkedHashSet<>();
 
             for (int i = 0; i < criteria.getOwningClassInfo().getQualifiedClassNameSetInHierarchy().size(); i++) {
                 if (i == 0 && criteria.isSuperInvoker()) {
@@ -213,7 +213,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
         modifyMethodInfoList(qualifiedMethodInfoList, criteria, jarIdList, internalDependencyJarIdList);
         qualifiedMethodInfoList = filterProcess(qualifiedMethodInfoList, criteria, jarIdList);
 
-        Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
+        Set<MethodInfo> deferredQualifiedMethodInfoSet = new LinkedHashSet<>();
 
         if (!qualifiedMethodInfoList.isEmpty()
                 && qualifiedMethodInfoList.stream().allMatch(MethodInfo::hasDeferredCriteria)) {
