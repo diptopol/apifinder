@@ -1,10 +1,12 @@
 package ca.concordia.jaranalyzer.models.typeInfo;
 
+import java.io.Serializable;
+
 /**
  * @author Diptopol
  * @since 1/30/2022 3:39 PM
  */
-public abstract class TypeInfo {
+public abstract class TypeInfo implements Serializable {
 
     public abstract String getQualifiedClassName();
 

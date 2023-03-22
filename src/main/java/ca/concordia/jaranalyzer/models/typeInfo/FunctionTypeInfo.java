@@ -10,6 +10,8 @@ import java.util.List;
  */
 public class FunctionTypeInfo extends TypeInfo {
 
+    private static final long serialVersionUID = 1L;
+
     private boolean innerClassConstructor;
 
     private final List<FunctionDefinition> functionDefinitionList;

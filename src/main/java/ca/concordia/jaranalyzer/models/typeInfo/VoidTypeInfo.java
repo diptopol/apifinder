@@ -6,6 +6,8 @@ package ca.concordia.jaranalyzer.models.typeInfo;
  */
 public class VoidTypeInfo extends TypeInfo {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public String getQualifiedClassName() {
         return "void";

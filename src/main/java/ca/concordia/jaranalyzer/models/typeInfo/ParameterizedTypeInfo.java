@@ -9,6 +9,8 @@ import java.util.List;
  */
 public class ParameterizedTypeInfo extends TypeInfo {
 
+    private static final long serialVersionUID = 1L;
+
     private String qualifiedClassName;
 
     private boolean isParameterized;

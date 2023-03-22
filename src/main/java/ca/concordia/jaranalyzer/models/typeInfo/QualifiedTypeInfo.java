@@ -6,6 +6,8 @@ package ca.concordia.jaranalyzer.models.typeInfo;
  */
 public class QualifiedTypeInfo extends TypeInfo {
 
+    private static final long serialVersionUID = 1L;
+
     private String qualifiedClassName;
 
     public QualifiedTypeInfo(String qualifiedClassName) {

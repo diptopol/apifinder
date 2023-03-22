@@ -10,17 +10,20 @@ import ca.concordia.jaranalyzer.models.*;
 import ca.concordia.jaranalyzer.models.typeInfo.*;
 import ca.concordia.jaranalyzer.service.ClassInfoService;
 import ca.concordia.jaranalyzer.service.JarInfoService;
-import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.FieldSignatureFormalTypeParameterExtractor;
 import ca.concordia.jaranalyzer.util.signaturevisitor.GenericTypeResolutionAdapter;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ParameterizedSuperClassTypeInfoExtractor;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.vavr.Tuple2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jdt.core.dom.*;
 import org.objectweb.asm.signature.SignatureReader;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +31,18 @@ import java.util.stream.Collectors;
  * @since 9/19/2021 12:17 PM
  */
 public class InferenceUtility {
+
+    private static Cache<ASTNode, MethodInfo> methodInfoLoaderCacheFromASTNode;
+
+    static {
+        if (Objects.isNull(methodInfoLoaderCacheFromASTNode)) {
+            methodInfoLoaderCacheFromASTNode  = Caffeine.newBuilder()
+                    .expireAfterAccess(10, TimeUnit.MINUTES)
+                    .maximumSize(100)
+                    .build();
+        }
+    }
+
 
     public static List<String> getImportStatementList(CompilationUnit compilationUnit) {
         List<ImportDeclaration> importDeclarationList = compilationUnit.imports();
@@ -160,6 +175,8 @@ public class InferenceUtility {
                                                              List<String> importStatementList,
                                                              Map<String, Set<VariableDeclarationDto>> variableNameMap,
                                                              OwningClassInfo owningClassInfo) {
+
+
 
         String methodName = classInstanceCreation.getType().toString();
         int numberOfParameters = classInstanceCreation.arguments().size();
@@ -501,6 +518,14 @@ public class InferenceUtility {
                             owningClassInfoMap.get(firstEnclosingClassName));
                 }).flatMap(Collection::stream)
                 .collect(Collectors.toSet());
+    }
+
+    public static MethodInfo getCachedMethodInfo(MethodInvocation methodInvocation) {
+        return methodInfoLoaderCacheFromASTNode.getIfPresent(methodInvocation);
+    }
+
+    public static MethodInfo getCachedMethodInfo(SuperMethodInvocation superMethodInvocation) {
+        return methodInfoLoaderCacheFromASTNode.getIfPresent(superMethodInvocation);
     }
 
     public static OwningClassInfo getOwningClassInfo(ASTNode astNode,
@@ -951,14 +976,24 @@ public class InferenceUtility {
         } else if (expression instanceof MethodInvocation) {
             MethodInvocation methodInvocation = (MethodInvocation) expression;
 
-            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                    methodInvocation, importStatementList, variableNameMap, owningClassInfo);
+            MethodInfo methodInfo = methodInfoLoaderCacheFromASTNode.getIfPresent(methodInvocation);
+
+            if (Objects.isNull(methodInfo)) {
+                List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                        methodInvocation, importStatementList, variableNameMap, owningClassInfo);
+
+                methodInfo = methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+
+                if (Objects.nonNull(methodInfo)) {
+                    methodInfoLoaderCacheFromASTNode.put(methodInvocation, methodInfo);
+                }
+            }
 
             // if the getAllMethods returns empty, the method can be a private construct.
-            if (methodInfoList.isEmpty()) {
+            if (Objects.isNull(methodInfo)) {
                 return new NullTypeInfo();
             } else {
-                TypeInfo returnTypeInfo = methodInfoList.get(0).getReturnTypeInfo();
+                TypeInfo returnTypeInfo = SerializationUtils.clone(methodInfo.getReturnTypeInfo());
 
                 return getParameterizedTypeWithTypeParameter(returnTypeInfo, dependentArtifactSet, javaVersion,
                         importStatementList, owningClassInfo);
@@ -966,14 +1001,24 @@ public class InferenceUtility {
         } else if (expression instanceof SuperMethodInvocation) {
             SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) expression;
 
-            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                    superMethodInvocation, importStatementList, variableNameMap, owningClassInfo);
+            MethodInfo methodInfo = methodInfoLoaderCacheFromASTNode.getIfPresent(superMethodInvocation);
+
+            if (Objects.isNull(methodInfo)) {
+                List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                        superMethodInvocation, importStatementList, variableNameMap, owningClassInfo);
+
+                methodInfo = methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+
+                if (Objects.nonNull(methodInfo)) {
+                    methodInfoLoaderCacheFromASTNode.put(superMethodInvocation, methodInfo);
+                }
+            }
 
             // if the getAllMethods returns empty, the method can be a private construct.
-            if (methodInfoList.isEmpty()) {
+            if (Objects.isNull(methodInfo)) {
                 return new NullTypeInfo();
             } else {
-                return methodInfoList.get(0).getReturnTypeInfo();
+                return SerializationUtils.clone(methodInfo.getReturnTypeInfo());
             }
         } else if (expression instanceof LambdaExpression) {
             LambdaExpression lambdaExpression = (LambdaExpression) expression;

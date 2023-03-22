@@ -8,6 +8,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class VarargTypeInfo extends TypeInfo {
 
+    private static final long serialVersionUID = 1L;
+
     private TypeInfo elementTypeInfo;
 
     public VarargTypeInfo(TypeInfo elementTypeInfo) {

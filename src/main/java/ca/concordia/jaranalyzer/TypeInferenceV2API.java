@@ -35,6 +35,12 @@ public class TypeInferenceV2API {
                                            MethodInvocation methodInvocation) {
 
         try {
+            MethodInfo cachedMethodInfo = InferenceUtility.getCachedMethodInfo(methodInvocation);
+
+            if (Objects.nonNull(cachedMethodInfo)) {
+                return cachedMethodInfo;
+            }
+
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(methodInvocation);
 
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
@@ -70,6 +76,12 @@ public class TypeInferenceV2API {
                                            SuperMethodInvocation superMethodInvocation) {
 
         try {
+            MethodInfo cachedMethodInfo = InferenceUtility.getCachedMethodInfo(superMethodInvocation);
+
+            if (Objects.nonNull(cachedMethodInfo)) {
+                return cachedMethodInfo;
+            }
+
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superMethodInvocation);
 
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);

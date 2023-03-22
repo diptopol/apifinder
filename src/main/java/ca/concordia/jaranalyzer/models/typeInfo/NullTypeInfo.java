@@ -6,6 +6,8 @@ package ca.concordia.jaranalyzer.models.typeInfo;
  */
 public class NullTypeInfo extends TypeInfo {
 
+    private static final long serialVersionUID = 1L;
+
     public NullTypeInfo() {
     }
 
