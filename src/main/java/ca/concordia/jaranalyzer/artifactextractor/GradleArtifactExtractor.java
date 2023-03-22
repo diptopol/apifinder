@@ -394,10 +394,14 @@ public class GradleArtifactExtractor extends ArtifactExtractor {
                     artifactSet.add(moduleArtifact);
 
                     if (moduleArtifact.getVersion().endsWith("-SNAPSHOT")) {
-                        artifactSet.add(new Artifact(moduleArtifact.getGroupId(),
+                        Artifact artifact = new Artifact(moduleArtifact.getGroupId(),
                                 moduleArtifact.getArtifactId(),
                                 moduleArtifact.getVersion().replace("-SNAPSHOT", ""),
-                                moduleArtifact.getType()));
+                                moduleArtifact.getType());
+
+                        artifact.setInternalDependency(true);
+
+                        artifactSet.add(artifact);
                     }
                 }
 

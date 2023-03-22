@@ -377,10 +377,14 @@ public class MavenArtifactExtractor extends ArtifactExtractor {
                 projectArtifactSet.add(projectArtifact);
 
                 if (Objects.nonNull(projectArtifact.getVersion()) && projectArtifact.getVersion().endsWith("-SNAPSHOT")) {
-                    projectArtifactSet.add(new Artifact(projectArtifact.getGroupId(),
+                    Artifact artifact = new Artifact(projectArtifact.getGroupId(),
                             projectArtifact.getArtifactId(),
                             projectArtifact.getVersion().replace("-SNAPSHOT", ""),
-                            projectArtifact.getVersion()));
+                            projectArtifact.getVersion());
+
+                    artifact.setInternalDependency(true);
+
+                    projectArtifactSet.add(artifact);
                 }
 
                 Element dependenciesElement = getDependenciesElement(project);
