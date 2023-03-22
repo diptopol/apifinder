@@ -1618,7 +1618,7 @@ public class InferenceUtility {
                 ParameterizedTypeInfo parameterizedUpdatedInvokerTypeInfo = (ParameterizedTypeInfo) updatedInvokerTypeInfo;
 
                 updateTypeArgumentForSuperClass(dependentArtifactSet, javaVersion, importStatementList, owningClassInfo,
-                        invokerTypeInfo, parameterizedUpdatedInvokerTypeInfo);
+                        invokerTypeInfo, parameterizedUpdatedInvokerTypeInfo, auditInfo);
             }
 
             invokerTypeInfo = updatedInvokerTypeInfo;
@@ -1632,10 +1632,15 @@ public class InferenceUtility {
                                                         List<String> importStatementList,
                                                         OwningClassInfo owningClassInfo,
                                                         TypeInfo invokerTypeInfo,
-                                                        ParameterizedTypeInfo updatedInvokerParameterizedTypeInfo) {
+                                                        ParameterizedTypeInfo updatedInvokerParameterizedTypeInfo,
+                                                        AuditInfo auditInfo) {
 
+        JarInfoService jarInfoService = new JarInfoService();
+        ClassInfoService classInfoService = new ClassInfoService();
         List<TypeInfo> visitedInvokerTypeInfoList = new ArrayList<>();
         visitedInvokerTypeInfoList.add(invokerTypeInfo);
+
+        List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, null);
 
         while (!visitedInvokerTypeInfoList.isEmpty()) {
             TypeInfo currentInvokerTypeInfo = visitedInvokerTypeInfoList.get(0);
@@ -1645,7 +1650,7 @@ public class InferenceUtility {
                     && currentInvokerTypeInfo.isParameterizedTypeInfo()) {
                 ParameterizedTypeInfo parameterizedCurrentTypeInfo = (ParameterizedTypeInfo) currentInvokerTypeInfo;
 
-                updatedInvokerParameterizedTypeInfo.setParameterized(true);
+                updatedInvokerParameterizedTypeInfo.setParameterized(parameterizedCurrentTypeInfo.isParameterized());
                 updatedInvokerParameterizedTypeInfo.setTypeArgumentList(parameterizedCurrentTypeInfo.getTypeArgumentList());
                 break;
             }
@@ -1660,51 +1665,61 @@ public class InferenceUtility {
                 List<TypeInfo> typeArgumentList = new ArrayList<>();
 
                 if (Objects.isNull(classInfo.getSignature())) {
-                    continue;
-                }
+                    Set<String> classNameSet = classInfoService
+                            .getSuperClassQNameSetUsingMemCache(Collections.singleton(classInfo.getQualifiedName()),
+                                    jarIdList, null);
 
-                if (classTypeInfo.isParameterizedTypeInfo()
-                        && !((ParameterizedTypeInfo) classTypeInfo).isParameterized()) {
-                    typeArgumentList = ((ParameterizedTypeInfo) classTypeInfo).getTypeArgumentList();
-                }
+                    List<TypeInfo> superClassTypeInfoList = new ArrayList<>();
 
-                ParameterizedSuperClassTypeInfoExtractor parameterizedSuperClassTypeInfoExtractor =
-                        new ParameterizedSuperClassTypeInfoExtractor(typeArgumentList);
+                    for (String className: classNameSet) {
+                        superClassTypeInfoList.add(getTypeInfoFromClassName(dependentArtifactSet, javaVersion,
+                                importStatementList, className, owningClassInfo, auditInfo));
+                    }
 
-                SignatureReader signatureReader = new SignatureReader(classInfo.getSignature());
-                signatureReader.accept(parameterizedSuperClassTypeInfoExtractor);
+                    visitedInvokerTypeInfoList.addAll(superClassTypeInfoList);
+                } else {
+                    if (classTypeInfo.isParameterizedTypeInfo()
+                            && !((ParameterizedTypeInfo) classTypeInfo).isParameterized()) {
+                        typeArgumentList = ((ParameterizedTypeInfo) classTypeInfo).getTypeArgumentList();
+                    }
 
-                List<ParameterizedTypeInfo> superClassTypeInfoList = parameterizedSuperClassTypeInfoExtractor.getSuperClassTypeInfoList()
-                        .stream()
-                        .filter(TypeInfo::isParameterizedTypeInfo)
-                        .map(t -> (ParameterizedTypeInfo) t).
-                        collect(Collectors.toList());
+                    ParameterizedSuperClassTypeInfoExtractor parameterizedSuperClassTypeInfoExtractor =
+                            new ParameterizedSuperClassTypeInfoExtractor(typeArgumentList);
 
-                if (currentInvokerTypeInfo.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) currentInvokerTypeInfo).isParameterized()) {
-                    Map<String, TypeInfo> formalTypeParameterMap = new LinkedHashMap<>();
+                    SignatureReader signatureReader = new SignatureReader(classInfo.getSignature());
+                    signatureReader.accept(parameterizedSuperClassTypeInfoExtractor);
 
-                    populateFormalTypeParameterMapForParameterizedTypeInfo((ParameterizedTypeInfo) currentInvokerTypeInfo,
-                            (ParameterizedTypeInfo) classTypeInfo, formalTypeParameterMap);
+                    List<ParameterizedTypeInfo> parameterizedSuperClassTypeInfoList = parameterizedSuperClassTypeInfoExtractor.getSuperClassTypeInfoList()
+                            .stream()
+                            .filter(TypeInfo::isParameterizedTypeInfo)
+                            .map(t -> (ParameterizedTypeInfo) t).
+                            collect(Collectors.toList());
 
-                    for (ParameterizedTypeInfo superClassParameterizedTypeInfo: superClassTypeInfoList) {
-                        for (int i = 0; i < superClassParameterizedTypeInfo.getTypeArgumentList().size(); i++) {
-                            TypeInfo typeArgumentInfo = superClassParameterizedTypeInfo.getTypeArgumentList().get(i);
-                            TypeInfo updatedTypeArgumentInfo;
+                    if (currentInvokerTypeInfo.isParameterizedTypeInfo() && ((ParameterizedTypeInfo) currentInvokerTypeInfo).isParameterized()) {
+                        Map<String, TypeInfo> formalTypeParameterMap = new LinkedHashMap<>();
 
-                            if (typeArgumentInfo.isFormalTypeParameterInfo()
-                                    && formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) typeArgumentInfo).getTypeParameter())) {
-                                updatedTypeArgumentInfo = formalTypeParameterMap.get(((FormalTypeParameterInfo) typeArgumentInfo).getTypeParameter());
-                            } else {
-                                updatedTypeArgumentInfo =typeArgumentInfo;
+                        populateFormalTypeParameterMapForParameterizedTypeInfo((ParameterizedTypeInfo) currentInvokerTypeInfo,
+                                (ParameterizedTypeInfo) classTypeInfo, formalTypeParameterMap);
+
+                        for (ParameterizedTypeInfo superClassParameterizedTypeInfo: parameterizedSuperClassTypeInfoList) {
+                            for (int i = 0; i < superClassParameterizedTypeInfo.getTypeArgumentList().size(); i++) {
+                                TypeInfo typeArgumentInfo = superClassParameterizedTypeInfo.getTypeArgumentList().get(i);
+                                TypeInfo updatedTypeArgumentInfo;
+
+                                if (typeArgumentInfo.isFormalTypeParameterInfo()
+                                        && formalTypeParameterMap.containsKey(((FormalTypeParameterInfo) typeArgumentInfo).getTypeParameter())) {
+                                    updatedTypeArgumentInfo = formalTypeParameterMap.get(((FormalTypeParameterInfo) typeArgumentInfo).getTypeParameter());
+                                } else {
+                                    updatedTypeArgumentInfo =typeArgumentInfo;
+                                }
+
+                                superClassParameterizedTypeInfo.getTypeArgumentList().set(i, updatedTypeArgumentInfo);
                             }
-
-                            superClassParameterizedTypeInfo.getTypeArgumentList().set(i, updatedTypeArgumentInfo);
                         }
                     }
+
+                    visitedInvokerTypeInfoList.addAll(parameterizedSuperClassTypeInfoExtractor.getSuperClassTypeInfoList());
                 }
-
-                visitedInvokerTypeInfoList.addAll(superClassTypeInfoList);
-
             }
         }
     }

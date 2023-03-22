@@ -43,6 +43,31 @@ public class KubernetesClientJavaTest {
         dependencyTuple = TypeInferenceFluentAPI.getInstance().loadJavaAndExternalJars(commitId, projectName, projectUrl);
     }
 
+
+    @Test
+    public void testPropagationOfTypeArgsThroughNonGenericSuperClass() {
+        String filePath = "proto/src/main/java/io/kubernetes/client/proto/V1beta1Rbac.java";
+        String sourceContent = getFileContentFromRemote(filePath, projectUrl, commitId);
+
+        if (Objects.nonNull(sourceContent)) {
+            CompilationUnit compilationUnit = TestUtils.getCompilationUnit(sourceContent);
+
+            compilationUnit.accept(new ASTVisitor() {
+                @Override
+                public boolean visit(MethodInvocation methodInvocation) {
+                    if (methodInvocation.toString().startsWith("verbs_.set(index,value)")) {
+                        MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                        assert ("java.util.List" +
+                                "::public abstract java.lang.String set(int, java.lang.String)").equals(methodInfo.toString());
+                    }
+
+                    return true;
+                }
+            });
+        }
+    }
+
     @Test
     public void testOrderOfDeferredMethodInfoList() {
         String filePath = "fluent/src/main/java/io/kubernetes/client/openapi/models/V1beta1FSGroupStrategyOptionsFluentImpl.java";
