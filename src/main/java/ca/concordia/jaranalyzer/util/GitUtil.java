@@ -75,6 +75,32 @@ public class GitUtil {
         return Objects.nonNull(nearestTagCommitId) ? nearestTagCommitId : SHAId;
     }
 
+    public static String getCommitIdFromGitHubRemote(String cloneUrl, String branchOrTagName) {
+        try {
+            GitHub gitHub = GitUtil.connectGithub();
+            String repositoryName = GitUtil.extractRepositoryName(cloneUrl);
+            GHRepository ghRepository = gitHub.getRepository(repositoryName);
+
+            PagedIterable<GHRef> branchRefList = ghRepository.listRefs("refs/heads");
+            for(GHRef ghRef: branchRefList) {
+                if (ghRef.getRef().endsWith(branchOrTagName)) {
+                    return ghRef.getObject().getSha();
+                }
+            }
+
+            PagedIterable<GHRef> tagRefList = ghRepository.listRefs("refs/tags");
+            for(GHRef ghRef: tagRefList) {
+                if (ghRef.getRef().endsWith(branchOrTagName)) {
+                    return ghRef.getObject().getSha();
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error occurred", e);
+        }
+
+        return null;
+    }
+
     public static String getNearestTagCommitId(String cloneUrl, String commitId) {
         String nearestTagCommitId = null;
 
