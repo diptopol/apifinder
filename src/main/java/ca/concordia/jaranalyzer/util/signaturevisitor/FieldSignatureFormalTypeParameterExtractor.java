@@ -30,7 +30,8 @@ public class FieldSignatureFormalTypeParameterExtractor extends SignatureVisitor
     public void visitClassType(final String name) {
         argumentStack *= 2;
         this.typeArgumentStack.push(
-                convertToArrayTypeIfRequired(new QualifiedTypeInfo(name.replaceAll("/", "."))));
+                convertToArrayTypeIfRequired(new QualifiedTypeInfo(name.replaceAll("/", ".")
+                        .replaceAll("\\$", "."))));
     }
 
     @Override

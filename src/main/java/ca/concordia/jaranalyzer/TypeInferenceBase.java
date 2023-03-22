@@ -403,7 +403,7 @@ public abstract class TypeInferenceBase {
                 importedClassQNameSetForSelection.addAll(owningClassInfo.getAvailableQualifiedClassNameSet());
             }
 
-            List<ClassInfo> qualifiedClassInfoList = classInfoService.getClassInfoList(jarIdList, postProcessedTypeClassName);
+            List<ClassInfo> qualifiedClassInfoList = classInfoService.getClassInfoListUsingInMemoryCache(jarIdList, postProcessedTypeClassName);
 
             qualifiedClassInfoList = qualifiedClassInfoList.stream().filter(classInfo -> {
                 if (classInfo.isInnerClass()) {

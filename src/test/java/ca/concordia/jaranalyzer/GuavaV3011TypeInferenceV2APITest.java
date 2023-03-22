@@ -578,6 +578,25 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testFormalTypeParameterResolutionForClassInstanceCreation2() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/cache/LocalCache.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation classInstanceCreation) {
+                if (classInstanceCreation.toString().startsWith("localCache.getAllPresent(keys)")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), classInstanceCreation);
+
+                    System.out.println(methodInfo);
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testFormalTypeParameterResolutionForClassInstanceCreation() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ImmutableSortedMap.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);

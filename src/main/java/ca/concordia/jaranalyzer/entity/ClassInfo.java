@@ -48,6 +48,29 @@ public class ClassInfo {
         this.innerClassQNameList = new ArrayList<>();
     }
 
+    public ClassInfo(ClassInfo otherClassInfo, TypeInfo otherClassTypeInfo) {
+        this();
+
+        this.name = otherClassInfo.getName();
+        this.qualifiedName = otherClassInfo.getQualifiedName();
+        this.packageName = otherClassInfo.getPackageName();
+
+        this.isAbstract = otherClassInfo.isAbstract();
+        this.isInterface = otherClassInfo.isInterface();
+        this.isEnum = otherClassInfo.isEnum();
+        this.isPublic = otherClassInfo.isPublic();
+        this.isPrivate = otherClassInfo.isPrivate();
+        this.isProtected = otherClassInfo.isProtected();
+        this.isInnerClass = otherClassInfo.isInnerClass();
+        this.isAnonymousInnerClass = otherClassInfo.isAnonymousInnerClass();
+
+        this.type = otherClassInfo.getType();
+        this.signature = otherClassInfo.getSignature();
+        this.jarId = otherClassInfo.getJarId();
+
+        this.typeInfo = otherClassTypeInfo;
+    }
+
     public int getId() {
         return id;
     }

@@ -2,14 +2,14 @@ package ca.concordia.jaranalyzer.service;
 
 import ca.concordia.jaranalyzer.entity.ClassInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.ParameterizedTypeInfo;
-import ca.concordia.jaranalyzer.models.typeInfo.PrimitiveTypeInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.QualifiedTypeInfo;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.util.DataSource;
 import ca.concordia.jaranalyzer.util.DbUtils;
 import ca.concordia.jaranalyzer.util.EntityUtils;
-import ca.concordia.jaranalyzer.util.PrimitiveTypeUtils;
 import ca.concordia.jaranalyzer.util.signaturevisitor.ClassSignatureFormalTypeParameterExtractor;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 import org.slf4j.Logger;
@@ -20,6 +20,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Diptopol
@@ -28,6 +29,26 @@ import java.util.*;
 public class ClassInfoService {
 
     private static final Logger logger = LoggerFactory.getLogger(ClassInfoService.class);
+
+    private static Cache<String, List<ClassInfo>> classLoaderCacheFromJarIdList;
+
+    private static Cache<Integer, ClassInfo> classLoaderCacheFromId;
+
+    public ClassInfoService() {
+        if (Objects.isNull(classLoaderCacheFromJarIdList)) {
+            classLoaderCacheFromJarIdList  = Caffeine.newBuilder()
+                    .expireAfterAccess(30, TimeUnit.MINUTES)
+                    .maximumSize(100)
+                    .build();
+        }
+
+        if (Objects.isNull(classLoaderCacheFromId)) {
+            classLoaderCacheFromId = Caffeine.newBuilder()
+                    .expireAfterAccess(30, TimeUnit.MINUTES)
+                    .maximumSize(100)
+                    .build();
+        }
+    }
 
     public Map<String, Integer> getClientIdMap(List<Integer> jarIdList, Set<String> qualifiedClassNameSet) {
         Map<String, Integer> clientIdMap = new LinkedHashMap<>();
@@ -194,6 +215,23 @@ public class ClassInfoService {
         return classInfoIdList;
     }
 
+    public List<ClassInfo> getClassInfoListUsingInMemoryCache(List<Integer> jarIdList, String className) {
+
+        String classCacheKey = className.concat(":")
+                .concat(String.join(",", jarIdList.stream().sorted().map(String::valueOf).toArray(String[]::new)));
+
+
+        List<ClassInfo> classInfoList = classLoaderCacheFromJarIdList.getIfPresent(classCacheKey);
+
+        if (Objects.isNull(classInfoList)) {
+            classInfoList = getClassInfoList(jarIdList, className);
+
+            classLoaderCacheFromJarIdList.put(classCacheKey, classInfoList);
+        }
+
+        return getCopiedClassInfoList(classInfoList);
+    }
+
     public List<ClassInfo> getClassInfoList(List<Integer> jarIdList, String className) {
         List<ClassInfo> classInfoList = new ArrayList<>();
 
@@ -227,6 +265,20 @@ public class ClassInfoService {
         }
 
         return classInfoList;
+    }
+
+    public ClassInfo getClassInfoUsingMemoryCache(int classInfoId, Connection connection) throws SQLException {
+        ClassInfo classInfo = classLoaderCacheFromId.getIfPresent(classInfoId);
+
+        if (Objects.isNull(classInfo)) {
+            classInfo = getClassInfo(classInfoId, connection);
+
+            if (Objects.nonNull(classInfo)) {
+                classLoaderCacheFromId.put(classInfoId, classInfo);
+            }
+        }
+
+        return getCopiedClassInfo(classInfo);
     }
 
     public ClassInfo getClassInfo(int classInfoId, Connection connection) throws SQLException {
@@ -415,6 +467,26 @@ public class ClassInfoService {
         return classInfo;
     }
 
+    private List<ClassInfo> getCopiedClassInfoList(List<ClassInfo> classInfoList) {
+        List<ClassInfo> copiedCLassInfoList = new ArrayList<>();
+
+        for (ClassInfo classInfo : classInfoList) {
+            copiedCLassInfoList.add(getCopiedClassInfo(classInfo));
+        }
+
+        return copiedCLassInfoList;
+    }
+
+    private ClassInfo getCopiedClassInfo(ClassInfo classInfo) {
+        if (Objects.isNull(classInfo)) {
+            return null;
+        }
+
+        TypeInfo newClassTypeInfo = getClassTypeInfo(classInfo.getType(), classInfo.getQualifiedName(),
+                classInfo.getSignature());
+
+        return new ClassInfo(classInfo, newClassTypeInfo);
+    }
 
     private TypeInfo getClassTypeInfo(Type type, String qualifiedName, String signature) {
         if (Objects.isNull(signature)) {

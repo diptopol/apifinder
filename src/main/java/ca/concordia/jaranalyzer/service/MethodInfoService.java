@@ -49,7 +49,7 @@ public class MethodInfoService {
             for (MethodInfo methodInfo: methodInfoList) {
                 populateMethodArgumentTypeInfoList(methodInfo);
                 populateMethodReturnTypeInfo(methodInfo);
-                methodInfo.setClassInfo(classInfoService.getClassInfo(methodInfo.getClassInfoId(), connection));
+                methodInfo.setClassInfo(classInfoService.getClassInfoUsingMemoryCache(methodInfo.getClassInfoId(), connection));
                 updateFormalTypeParameterBaseType(methodInfo);
             }
 
@@ -92,51 +92,13 @@ public class MethodInfoService {
             for (MethodInfo methodInfo: methodInfoList) {
                 populateMethodArgumentTypeInfoList(methodInfo);
                 populateMethodReturnTypeInfo(methodInfo);
-                methodInfo.setClassInfo(classInfoService.getClassInfo(methodInfo.getClassInfoId(), connection));
+                methodInfo.setClassInfo(classInfoService.getClassInfoUsingMemoryCache(methodInfo.getClassInfoId(), connection));
                 updateFormalTypeParameterBaseType(methodInfo);
             }
 
             connection.commit();
         } catch (SQLException e) {
             logger.error("Error", e);
-        }
-
-        return methodInfoList;
-    }
-
-    private List<MethodInfo> fetchMethodInfoCoreForPackageName(List<String> packageNameList,
-                                                               List<Integer> jarIdList,
-                                                               Connection connection) throws SQLException {
-        List<MethodInfo> methodInfoList = new ArrayList<>();
-
-        PreparedStatement pst = null;
-        ResultSet resultSet = null;
-
-        String query = "SELECT m.* FROM method m JOIN class c ON (m.class_id = c.id)" +
-                " WHERE c.jar_id IN (" + DbUtils.getInClausePlaceHolder(jarIdList.size()) + ")" +
-                " AND c.package_name IN (" + DbUtils.getInClausePlaceHolder(packageNameList.size()) + ")";
-
-        try {
-            pst = connection.prepareStatement(query);
-
-            int index = 1;
-            for (Integer jarId : jarIdList) {
-                pst.setInt(index++, jarId);
-            }
-
-            for (String packageName : packageNameList) {
-                pst.setString(index++, packageName);
-            }
-
-            resultSet = pst.executeQuery();
-
-            while (resultSet.next()) {
-                MethodInfo methodInfo = getMethodInfo(resultSet);
-                methodInfoList.add(methodInfo);
-            }
-
-        } finally {
-            DbUtils.closeResources(pst, resultSet);
         }
 
         return methodInfoList;

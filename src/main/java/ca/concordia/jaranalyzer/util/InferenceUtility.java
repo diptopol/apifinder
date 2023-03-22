@@ -449,9 +449,10 @@ public class InferenceUtility {
         List<FieldDeclaration> fieldDeclarationList = new ArrayList<>();
 
         while (Objects.nonNull(abstractTypeDeclaration)) {
-            abstractTypeDeclaration.accept(new ASTVisitor() {
-                @Override
-                public boolean visit(FieldDeclaration fieldDeclaration) {
+            if (abstractTypeDeclaration instanceof TypeDeclaration) {
+                TypeDeclaration typeDeclaration = (TypeDeclaration) abstractTypeDeclaration;
+
+                for (FieldDeclaration fieldDeclaration: typeDeclaration.getFields()) {
                     String firstEnclosingClassName = getFirstEnclosingClassQName(fieldDeclaration, dependentArtifactSet,
                             javaVersion, importStatementList, jarInfoService, classInfoService);
 
@@ -463,10 +464,28 @@ public class InferenceUtility {
                     }
 
                     fieldDeclarationList.add(fieldDeclaration);
-
-                    return true;
                 }
-            });
+
+            } else if (abstractTypeDeclaration instanceof AnnotationTypeDeclaration || abstractTypeDeclaration instanceof EnumDeclaration) {
+                abstractTypeDeclaration.accept(new ASTVisitor() {
+                    @Override
+                    public boolean visit(FieldDeclaration fieldDeclaration) {
+                        String firstEnclosingClassName = getFirstEnclosingClassQName(fieldDeclaration, dependentArtifactSet,
+                                javaVersion, importStatementList, jarInfoService, classInfoService);
+
+                        if (!owningClassInfoMap.containsKey(firstEnclosingClassName)) {
+                            OwningClassInfo owningClassInfo = getOwningClassInfo(fieldDeclaration, dependentArtifactSet,
+                                    javaVersion, importStatementList, jarInfoService, classInfoService);
+
+                            owningClassInfoMap.put(firstEnclosingClassName, owningClassInfo);
+                        }
+
+                        fieldDeclarationList.add(fieldDeclaration);
+
+                        return true;
+                    }
+                });
+            }
 
             abstractTypeDeclaration = (AbstractTypeDeclaration) getAbstractTypeDeclaration(abstractTypeDeclaration.getParent());
         }

@@ -41,7 +41,7 @@ public class FieldInfoService {
             fieldInfoList = fetchCoreFieldInfo(qualifiedClassNameSet, jarIdList, fieldName, connection);
 
             for (FieldInfo fieldInfo: fieldInfoList) {
-                fieldInfo.setClassInfo(classInfoService.getClassInfo(fieldInfo.getClassInfoId(), connection));
+                fieldInfo.setClassInfo(classInfoService.getClassInfoUsingMemoryCache(fieldInfo.getClassInfoId(), connection));
             }
 
             connection.commit();
