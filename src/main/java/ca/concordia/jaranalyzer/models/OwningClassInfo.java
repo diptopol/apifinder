@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.models;
 
 import ca.concordia.jaranalyzer.models.typeInfo.FormalTypeParameterInfo;
+import io.vavr.Tuple2;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,18 +17,21 @@ public class OwningClassInfo {
     private final List<String> enclosingClassNameList;
     private final List<Set<String>> qualifiedClassNameSetInHierarchy;
     private final List<String> classQNameDeclarationOrderList;
+    private final List<Tuple2<String, String>> parentClassPairList;
 
     private List<FormalTypeParameterInfo> accessibleFormalTypeParameterList;
 
     public OwningClassInfo(List<String> enclosingClassNameList,
                            List<Set<String>> qualifiedClassNameSetInHierarchy,
-                           List<String> classQNameDeclarationOrderList) {
+                           List<String> classQNameDeclarationOrderList,
+                           List<Tuple2<String, String>> parentClassPairList) {
 
         assert enclosingClassNameList.size() > 0;
 
         this.enclosingClassNameList = enclosingClassNameList;
         this.qualifiedClassNameSetInHierarchy = qualifiedClassNameSetInHierarchy;
         this.classQNameDeclarationOrderList = classQNameDeclarationOrderList;
+        this.parentClassPairList = parentClassPairList;
     }
 
     public String getOuterMostClassName() {
@@ -44,6 +48,10 @@ public class OwningClassInfo {
 
     public List<String> getClassQNameDeclarationOrderList() {
         return classQNameDeclarationOrderList;
+    }
+
+    public List<Tuple2<String, String>> getParentClassPairList() {
+        return parentClassPairList;
     }
 
     public List<FormalTypeParameterInfo> getAccessibleFormalTypeParameterList() {

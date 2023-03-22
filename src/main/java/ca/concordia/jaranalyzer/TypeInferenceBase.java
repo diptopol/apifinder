@@ -4,13 +4,17 @@ import ca.concordia.jaranalyzer.entity.ClassInfo;
 import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.models.Artifact;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
-import ca.concordia.jaranalyzer.models.typeInfo.*;
+import ca.concordia.jaranalyzer.models.typeInfo.ArrayTypeInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.FunctionTypeInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.models.typeInfo.VarargTypeInfo;
 import ca.concordia.jaranalyzer.service.ClassInfoService;
 import ca.concordia.jaranalyzer.service.JarInfoService;
 import ca.concordia.jaranalyzer.service.MethodInfoService;
 import ca.concordia.jaranalyzer.util.EntityUtils;
 import ca.concordia.jaranalyzer.util.PrimitiveTypeUtils;
 import ca.concordia.jaranalyzer.util.Utility;
+import io.vavr.Tuple2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Type;
@@ -554,7 +558,7 @@ public abstract class TypeInferenceBase {
         int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(methodInfoSet);
 
         if (methodInfoSet.size() > 1
-                && ((!methodInfoSet.stream().allMatch(MethodInfo::isAbstract)) || methodInfoSet.stream().allMatch(MethodInfo::isAbstract))
+                && (!methodInfoSet.stream().allMatch(MethodInfo::isAbstract))
                 && !methodInfoSet.stream().allMatch(m -> m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)) {
             Set<MethodInfo> filteredMethodInfoSet = new LinkedHashSet<>();
 
@@ -990,6 +994,7 @@ public abstract class TypeInferenceBase {
         }
 
         List<String> classQNameDeclarationOrderList = new ArrayList<>(enclosingQualifiedClassNameList);
+        List<Tuple2<String, String>> parentClassPairList = new ArrayList<>();
 
         qClassNameSetInHierarchy.add(new LinkedHashSet<>(accessibleQClassNameList));
 
@@ -1000,7 +1005,7 @@ public abstract class TypeInferenceBase {
                     getSuperClassQNameMapPerClass(classQNameSet, jarIdList, classInfoService);
 
             insertSuperClassQNamePreservingDeclarationOrder(superClassQNameMap, classQNameSet,
-                    classQNameDeclarationOrderList);
+                    classQNameDeclarationOrderList, parentClassPairList);
 
             classQNameSet = getOrderedSuperClassQNameSet(superClassQNameMap, classQNameSet);
 
@@ -1015,7 +1020,7 @@ public abstract class TypeInferenceBase {
         }
 
         return new OwningClassInfo(enclosingQualifiedClassNameList, qClassNameSetInHierarchy,
-                classQNameDeclarationOrderList);
+                classQNameDeclarationOrderList, parentClassPairList);
     }
 
     static List<String> getUniqueClassQNameList(List<String> classQNameList) {
@@ -1024,7 +1029,8 @@ public abstract class TypeInferenceBase {
 
     static void insertSuperClassQNamePreservingDeclarationOrder(Map<String, List<String>> superClassQNameMap,
                                                                 Set<String> classQNameSet,
-                                                                List<String> classQNameDeclarationOrderList) {
+                                                                List<String> classQNameDeclarationOrderList,
+                                                                List<Tuple2<String, String>> parentClassPairList) {
 
         assert classQNameSet instanceof LinkedHashSet;
 
@@ -1034,6 +1040,10 @@ public abstract class TypeInferenceBase {
 
                 List<String> superClassQNameList = superClassQNameMap.get(classQName);
                 int insertionIndex = classQNameDeclarationOrderList.indexOf(classQName) + 1;
+
+                for (String superClassQName: superClassQNameList) {
+                    parentClassPairList.add(new Tuple2<>(superClassQName, classQName));
+                }
 
                 if (insertionIndex < classQNameDeclarationOrderList.size()) {
                     for (String superClassQName: superClassQNameList) {
@@ -1049,10 +1059,44 @@ public abstract class TypeInferenceBase {
     }
 
     static Set<MethodInfo> getOrderedDeferredMethodInfoSetBasedOnDeclarationOrder(Set<MethodInfo> deferredQualifiedMethodInfoSet,
-                                                                                  List<String> classQNameDeclarationOrderList) {
+                                                                                  List<String> classQNameDeclarationOrderList,
+                                                                                  List<Tuple2<String, String>> parentClassPairList) {
         List<MethodInfo> orderedDeferredMethodInfoList = new ArrayList<>(deferredQualifiedMethodInfoSet);
         orderedDeferredMethodInfoList.sort(Comparator.comparingInt(m ->
                 classQNameDeclarationOrderList.indexOf(m.getQualifiedClassName())));
+
+        if (orderedDeferredMethodInfoList.size() > 1
+                && (orderedDeferredMethodInfoList.stream().allMatch(MethodInfo::isAbstract))) {
+
+            Set<String> qualifiedClassNameSet =
+                    new LinkedHashSet<>(Collections.singletonList(orderedDeferredMethodInfoList.get(0).getQualifiedClassName()));
+
+            while (!qualifiedClassNameSet.isEmpty()) {
+                List<String> childClassQNameList = new ArrayList<>();
+
+                for (Tuple2<String, String> parentClassPair: parentClassPairList) {
+                    if (qualifiedClassNameSet.contains(parentClassPair._1())) {
+                        childClassQNameList.add(parentClassPair._2());
+                    }
+                }
+
+                List<MethodInfo> childClassMethodInfoList = orderedDeferredMethodInfoList.stream()
+                        .filter(m -> childClassQNameList.contains(m.getQualifiedClassName()))
+                        .collect(Collectors.toList());
+
+                if (!childClassMethodInfoList.isEmpty()) {
+                    List<MethodInfo> methodInfoListAfterChildClassExtraction = orderedDeferredMethodInfoList.stream()
+                            .filter(m -> !childClassMethodInfoList.contains(m))
+                            .collect(Collectors.toList());
+
+                    orderedDeferredMethodInfoList = new ArrayList<>();
+                    orderedDeferredMethodInfoList.addAll(childClassMethodInfoList);
+                    orderedDeferredMethodInfoList.addAll(methodInfoListAfterChildClassExtraction);
+                }
+
+                qualifiedClassNameSet = new LinkedHashSet<>(childClassQNameList);
+            }
+        }
 
         return new LinkedHashSet<>(orderedDeferredMethodInfoList);
     }

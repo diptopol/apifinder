@@ -108,6 +108,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
             Set<MethodInfo> deferredQualifiedMethodInfoSet = new HashSet<>();
             List<String> classQNameDeclarationOrderList = new ArrayList<>(classQNameSet);
+            List<Tuple2<String, String>> parentClassPairList = new ArrayList<>();
 
             boolean firstIteration = true;
             while (!classQNameSet.isEmpty() && qualifiedMethodInfoList.isEmpty()) {
@@ -135,7 +136,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                             getSuperClassQNameMapPerClass(classQNameSet, jarIdList, classInfoService);
 
                     insertSuperClassQNamePreservingDeclarationOrder(superClassQNameMap, classQNameSet,
-                            classQNameDeclarationOrderList);
+                            classQNameDeclarationOrderList, parentClassPairList);
 
                     classQNameSet = getSuperClassQNameSet(classQNameSet, jarIdList, classInfoService);
                     firstIteration = false;
@@ -146,7 +147,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                 classQNameDeclarationOrderList = getUniqueClassQNameList(classQNameDeclarationOrderList);
                 deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(
                         getOrderedDeferredMethodInfoSetBasedOnDeclarationOrder(deferredQualifiedMethodInfoSet,
-                                classQNameDeclarationOrderList));
+                                classQNameDeclarationOrderList, parentClassPairList));
 
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
@@ -193,7 +194,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             if (!deferredQualifiedMethodInfoSet.isEmpty()) {
                 deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(
                         getOrderedDeferredMethodInfoSetBasedOnDeclarationOrder(deferredQualifiedMethodInfoSet,
-                                criteria.getOwningClassInfo().getClassQNameDeclarationOrderList()));
+                                criteria.getOwningClassInfo().getClassQNameDeclarationOrderList(),
+                                criteria.getOwningClassInfo().getParentClassPairList()));
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
             }
 

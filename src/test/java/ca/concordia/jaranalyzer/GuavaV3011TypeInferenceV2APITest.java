@@ -1151,6 +1151,24 @@ public class GuavaV3011TypeInferenceV2APITest {
     }
 
     @Test
+    public void testSuperClassAbstractMethodPrioritization() {
+        String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/ArrayTable.java";
+        CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
+        compilationUnit.accept(new ASTVisitor() {
+            @Override
+            public boolean visit(MethodInvocation methodInvocation) {
+                if (methodInvocation.toString().equals("rowList.size()")) {
+                    MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
+
+                    assert "java.util.AbstractCollection::public abstract int size()".equals(methodInfo.toString());
+                }
+
+                return true;
+            }
+        });
+    }
+
+    @Test
     public void testOrderOfReturnStatement() {
         String filePath = "testProjectDirectory/guava/guava/guava/src/com/google/common/collect/Multimaps.java";
         CompilationUnit compilationUnit = TestUtils.getCompilationUnitFromFile(filePath);
