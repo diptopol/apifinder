@@ -104,6 +104,7 @@ public class InferenceUtility {
                 importStatementList, methodName, numberOfParameters)
                 .setInvokerTypeInfo(invokerClassTypeInfo)
                 .setOwningClassInfo(owningClassInfo)
+                .setClassInstantiation(false)
                 .setAuditInfo(auditInfo);
 
         for (int i = 0; i < argumentTypeInfoList.size(); i++) {

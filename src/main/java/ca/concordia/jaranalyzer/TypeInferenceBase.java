@@ -924,10 +924,19 @@ public abstract class TypeInferenceBase {
         }
     }
 
-    public static List<MethodInfo> filterBasedOnClassInstantiation(List<MethodInfo> methodInfoList) {
-        return methodInfoList.stream()
-                .filter(MethodInfo::isConstructor)
-                .collect(Collectors.toList());
+    public static List<MethodInfo> filterBasedOnClassInstantiation(List<MethodInfo> methodInfoList,
+                                                                   boolean isClassInstanceCreation) {
+
+        if (isClassInstanceCreation) {
+            return methodInfoList.stream()
+                    .filter(MethodInfo::isConstructor)
+                    .collect(Collectors.toList());
+        } else {
+            return methodInfoList.stream()
+                    .filter(m -> !m.isConstructor())
+                    .collect(Collectors.toList());
+        }
+
     }
 
     public static List<MethodInfo> filterMethodInfoListBasedOnOwningClass(List<MethodInfo> methodInfoList) {

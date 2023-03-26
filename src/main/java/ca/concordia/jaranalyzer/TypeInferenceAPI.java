@@ -102,7 +102,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                                  boolean isSuperInvoker,
                                                  List<String> enclosingQualifiedClassNameList,
                                                  List<String> nonClosingQualifiedClassNameList,
-                                                 boolean isClassInstantiation,
+                                                 Boolean isClassInstantiation,
                                                  String... argumentTypes) {
         List<Integer> internalDependencyJarIdList = new ArrayList<>();
         List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, internalDependencyJarIdList);
@@ -482,7 +482,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
     private static List<MethodInfo> filterProcess(List<MethodInfo> methodInfoList,
                                                   TypeInfo invokerTypeInfo,
                                                   boolean isSuperInvoker,
-                                                  boolean isClassInstantiation,
+                                                  Boolean isClassInstantiation,
                                                   List<TypeInfo> argumentTypeInfoList,
                                                   int numberOfParameters,
                                                   List<Integer> jarIdList,
@@ -502,8 +502,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         reduceArgumentForInnerClassConstructorIfRequired(methodInfoList, firstArgumentQualifiedClassName,
                 numberOfParameters, jarIdList, classInfoService);
 
-        if (isClassInstantiation) {
-            methodInfoList = filterBasedOnClassInstantiation(methodInfoList);
+        if (Objects.nonNull(isClassInstantiation)) {
+            methodInfoList = filterBasedOnClassInstantiation(methodInfoList, isClassInstantiation);
         }
 
         methodInfoList = filterByMethodInvoker(methodInfoList, invokerTypeInfo, isSuperInvoker, jarIdList, classInfoService);
