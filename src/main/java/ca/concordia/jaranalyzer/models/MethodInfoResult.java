@@ -13,9 +13,16 @@ public class MethodInfoResult {
 
     private AuditInfo auditInfo;
 
+    private Exception exception;
+
     public MethodInfoResult(MethodInfo methodInfo, AuditInfo auditInfo) {
         this.methodInfo = methodInfo;
         this.auditInfo = auditInfo;
+    }
+
+    public MethodInfoResult(AuditInfo auditInfo, Exception exception) {
+        this.auditInfo = auditInfo;
+        this.exception = exception;
     }
 
     public MethodInfo getMethodInfo() {
@@ -25,4 +32,9 @@ public class MethodInfoResult {
     public AuditInfo getAuditInfo() {
         return auditInfo;
     }
+
+    public Exception getException() {
+        return exception;
+    }
+
 }

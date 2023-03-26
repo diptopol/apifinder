@@ -44,6 +44,7 @@ public class TypeInferenceV2API {
     public static MethodInfoResult getMethodInfoResult(Set<Artifact> dependentArtifactSet,
                                                        String javaVersion,
                                                        MethodInvocation methodInvocation) {
+        AuditInfo auditInfo = new AuditInfo();
 
         try {
             MethodInfoResult cachedMethodInfoResult = InferenceUtility.getCachedMethodInfo(methodInvocation);
@@ -56,8 +57,6 @@ public class TypeInferenceV2API {
 
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
-
-            AuditInfo auditInfo = new AuditInfo();
 
             List<String> enclosingQualifiedClassNameList =
                     InferenceUtility.getAllEnclosingClassList(methodInvocation, dependentArtifactSet, javaVersion,
@@ -79,11 +78,9 @@ public class TypeInferenceV2API {
                     ? new MethodInfoResult(null, auditInfo)
                     : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
-        } catch (Exception | AssertionError e) {
-            logger.error("Exception occurred", e);
+        } catch (Exception e) {
+            return new MethodInfoResult(auditInfo, e);
         }
-
-        return null;
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
@@ -99,6 +96,8 @@ public class TypeInferenceV2API {
                                            String javaVersion,
                                            SuperMethodInvocation superMethodInvocation) {
 
+        AuditInfo auditInfo = new AuditInfo();
+
         try {
             MethodInfoResult cachedMethodInfoResult = InferenceUtility.getCachedMethodInfo(superMethodInvocation);
 
@@ -110,8 +109,6 @@ public class TypeInferenceV2API {
 
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
-
-            AuditInfo auditInfo = new AuditInfo();
 
             List<String> enclosingClassQNameList = InferenceUtility.getAllEnclosingClassList(superMethodInvocation,
                     dependentArtifactSet, javaVersion, importStatementList, jarInfoService, classInfoService, auditInfo);
@@ -132,11 +129,9 @@ public class TypeInferenceV2API {
                     ? new MethodInfoResult(null, auditInfo)
                     : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
-        } catch (Exception | AssertionError e) {
-            logger.error("Exception occurred", e);
+        } catch (Exception e) {
+            return new MethodInfoResult(auditInfo, e);
         }
-
-        return null;
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
@@ -152,13 +147,13 @@ public class TypeInferenceV2API {
                                                        String javaVersion,
                                                        ClassInstanceCreation classInstanceCreation) {
 
+        AuditInfo auditInfo = new AuditInfo();
+
         try {
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(classInstanceCreation);
 
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
-
-            AuditInfo auditInfo = new AuditInfo();
 
             List<String> enclosingClassQNameList =
                     InferenceUtility.getAllEnclosingClassList(classInstanceCreation, dependentArtifactSet, javaVersion,
@@ -184,11 +179,9 @@ public class TypeInferenceV2API {
                     ? new MethodInfoResult(null, auditInfo)
                     : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
-        } catch (Exception | AssertionError e) {
-            logger.error("Exception occurred", e);
+        } catch (Exception e) {
+            return new MethodInfoResult(auditInfo, e);
         }
-
-        return null;
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
@@ -204,13 +197,14 @@ public class TypeInferenceV2API {
                                                        String javaVersion,
                                                        ConstructorInvocation constructorInvocation) {
 
+        AuditInfo auditInfo = new AuditInfo();
+
         try {
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(constructorInvocation);
 
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-            AuditInfo auditInfo = new AuditInfo();
             auditInfo.incrementMethodCount();
 
             List<String> enclosingClassQNameList = InferenceUtility.getAllEnclosingClassList(constructorInvocation,
@@ -275,11 +269,9 @@ public class TypeInferenceV2API {
                     ? new MethodInfoResult(null, auditInfo)
                     : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
-        } catch (Exception | AssertionError e) {
-            logger.error("Exception occurred", e);
+        } catch (Exception e) {
+            return new MethodInfoResult(auditInfo, e);
         }
-
-        return null;
     }
 
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
@@ -295,13 +287,14 @@ public class TypeInferenceV2API {
                                                        String javaVersion,
                                                        SuperConstructorInvocation superConstructorInvocation) {
 
+        AuditInfo auditInfo = new AuditInfo();
+
         try {
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superConstructorInvocation);
 
             List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
             InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
-            AuditInfo auditInfo = new AuditInfo();
             auditInfo.incrementMethodCount();
 
             List<String> enclosingClassQNameList = InferenceUtility.getAllEnclosingClassList(superConstructorInvocation,
@@ -363,11 +356,9 @@ public class TypeInferenceV2API {
                     ? new MethodInfoResult(null, auditInfo)
                     : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
-        } catch (Exception | AssertionError e) {
-            logger.error("Exception occurred", e);
+        } catch (Exception e) {
+            return new MethodInfoResult(auditInfo, e);
         }
-
-        return null;
     }
 
 }
