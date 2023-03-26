@@ -12,7 +12,7 @@ public class AuditInfo {
 
     private int numberOfResolvedFieldCount;
 
-    private int numberOfResolvedMethodReference;
+    private int numberOfResolvedMethodReferenceCount;
 
     public AuditInfo() {
     }
@@ -29,8 +29,8 @@ public class AuditInfo {
         return numberOfResolvedFieldCount;
     }
 
-    public int getNumberOfResolvedMethodReference() {
-        return numberOfResolvedMethodReference;
+    public int getNumberOfResolvedMethodReferenceCount() {
+        return numberOfResolvedMethodReferenceCount;
     }
 
     public void incrementMethodCount() {
@@ -46,7 +46,23 @@ public class AuditInfo {
     }
 
     public void incrementMethodReferenceCount() {
-        this.numberOfResolvedMethodReference++;
+        this.numberOfResolvedMethodReferenceCount++;
     }
 
+    public void aggregateOtherAuditInfo(AuditInfo otherAuditInfo) {
+        this.numberOfResolvedMethodCount += otherAuditInfo.getNumberOfResolvedMethodCount();
+        this.numberOfResolvedClassCount += otherAuditInfo.getNumberOfResolvedClassCount();
+        this.numberOfResolvedFieldCount += otherAuditInfo.getNumberOfResolvedFieldCount();
+        this.numberOfResolvedMethodReferenceCount += otherAuditInfo.getNumberOfResolvedMethodReferenceCount();
+    }
+
+    @Override
+    public String toString() {
+        return "AuditInfo{" +
+                "numberOfResolvedMethodCount=" + numberOfResolvedMethodCount +
+                ", numberOfResolvedClassCount=" + numberOfResolvedClassCount +
+                ", numberOfResolvedFieldCount=" + numberOfResolvedFieldCount +
+                ", numberOfResolvedMethodReferenceCount=" + numberOfResolvedMethodReferenceCount +
+                '}';
+    }
 }

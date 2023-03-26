@@ -32,13 +32,13 @@ import java.util.stream.Collectors;
  */
 public class InferenceUtility {
 
-    private static Cache<ASTNode, MethodInfo> methodInfoLoaderCacheFromASTNode;
+    private static Cache<ASTNode, MethodInfoResult> methodInfoLoaderCacheFromASTNode;
 
     static {
         if (Objects.isNull(methodInfoLoaderCacheFromASTNode)) {
             methodInfoLoaderCacheFromASTNode  = Caffeine.newBuilder()
-                    .expireAfterAccess(10, TimeUnit.MINUTES)
-                    .maximumSize(100)
+                    .expireAfterAccess(1, TimeUnit.MINUTES)
+                    .maximumSize(500)
                     .build();
         }
     }
@@ -543,11 +543,11 @@ public class InferenceUtility {
                 .collect(Collectors.toSet());
     }
 
-    public static MethodInfo getCachedMethodInfo(MethodInvocation methodInvocation) {
+    public static MethodInfoResult getCachedMethodInfo(MethodInvocation methodInvocation) {
         return methodInfoLoaderCacheFromASTNode.getIfPresent(methodInvocation);
     }
 
-    public static MethodInfo getCachedMethodInfo(SuperMethodInvocation superMethodInvocation) {
+    public static MethodInfoResult getCachedMethodInfo(SuperMethodInvocation superMethodInvocation) {
         return methodInfoLoaderCacheFromASTNode.getIfPresent(superMethodInvocation);
     }
 
@@ -1006,18 +1006,8 @@ public class InferenceUtility {
         } else if (expression instanceof MethodInvocation) {
             MethodInvocation methodInvocation = (MethodInvocation) expression;
 
-            MethodInfo methodInfo = methodInfoLoaderCacheFromASTNode.getIfPresent(methodInvocation);
-
-            if (Objects.isNull(methodInfo)) {
-                List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                        methodInvocation, importStatementList, variableNameMap, owningClassInfo, auditInfo);
-
-                methodInfo = methodInfoList.isEmpty() ? null : methodInfoList.get(0);
-
-                if (Objects.nonNull(methodInfo)) {
-                    methodInfoLoaderCacheFromASTNode.put(methodInvocation, methodInfo);
-                }
-            }
+            MethodInfo methodInfo = getMethodInfoUsingMemCache(dependentArtifactSet, javaVersion, importStatementList,
+                    variableNameMap, owningClassInfo, auditInfo, methodInvocation);
 
             // if the getAllMethods returns empty, the method can be a private construct.
             if (Objects.isNull(methodInfo)) {
@@ -1031,16 +1021,21 @@ public class InferenceUtility {
         } else if (expression instanceof SuperMethodInvocation) {
             SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) expression;
 
-            MethodInfo methodInfo = methodInfoLoaderCacheFromASTNode.getIfPresent(superMethodInvocation);
+            MethodInfoResult methodInfoResult = methodInfoLoaderCacheFromASTNode.getIfPresent(superMethodInvocation);
+            MethodInfo methodInfo = Objects.nonNull(methodInfoResult) ? methodInfoResult.getMethodInfo() : null;
 
-            if (Objects.isNull(methodInfo)) {
+            if (Objects.isNull(methodInfoResult)) {
+                AuditInfo internalAuditInfo = new AuditInfo();
+
                 List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                        superMethodInvocation, importStatementList, variableNameMap, owningClassInfo, auditInfo);
+                        superMethodInvocation, importStatementList, variableNameMap, owningClassInfo, internalAuditInfo);
+
+                auditInfo.aggregateOtherAuditInfo(internalAuditInfo);
 
                 methodInfo = methodInfoList.isEmpty() ? null : methodInfoList.get(0);
 
                 if (Objects.nonNull(methodInfo)) {
-                    methodInfoLoaderCacheFromASTNode.put(superMethodInvocation, methodInfo);
+                    methodInfoLoaderCacheFromASTNode.put(superMethodInvocation, new MethodInfoResult(methodInfo, internalAuditInfo));
                 }
             }
 
@@ -1168,6 +1163,32 @@ public class InferenceUtility {
         } else {
             return new NullTypeInfo();
         }
+    }
+
+    private static MethodInfo getMethodInfoUsingMemCache(Set<Artifact> dependentArtifactSet, String javaVersion,
+                                                         List<String> importStatementList,
+                                                         Map<String, Set<VariableDeclarationDto>> variableNameMap,
+                                                         OwningClassInfo owningClassInfo,
+                                                         AuditInfo auditInfo,
+                                                         MethodInvocation methodInvocation) {
+        MethodInfoResult methodInfoResult = methodInfoLoaderCacheFromASTNode.getIfPresent(methodInvocation);
+        MethodInfo methodInfo = Objects.nonNull(methodInfoResult) ? methodInfoResult.getMethodInfo() : null;
+
+        if (Objects.isNull(methodInfoResult)) {
+            AuditInfo internalAuditInfo = new AuditInfo();
+            List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
+                    methodInvocation, importStatementList, variableNameMap, owningClassInfo, internalAuditInfo);
+
+            auditInfo.aggregateOtherAuditInfo(internalAuditInfo);
+
+            methodInfo = methodInfoList.isEmpty() ? null : methodInfoList.get(0);
+
+            if (Objects.nonNull(methodInfo)) {
+                methodInfoLoaderCacheFromASTNode.put(methodInvocation, new MethodInfoResult(methodInfo, internalAuditInfo));
+            }
+        }
+
+        return methodInfo;
     }
 
     private static TypeInfo getParameterizedTypeWithTypeParameter(TypeInfo typeInfo,
@@ -1972,7 +1993,7 @@ public class InferenceUtility {
                             classQNameHierarchySet.add(classQName);
 
                             while (!classNameSet.isEmpty()) {
-                                classNameSet = classInfoService.getSuperClassQNameSet(classNameSet, jarIdList, null);
+                                classNameSet = classInfoService.getSuperClassQNameSetUsingMemCache(classNameSet, jarIdList, null);
 
                                 classQNameHierarchySet.addAll(classNameSet);
                             }
@@ -2051,13 +2072,13 @@ public class InferenceUtility {
 
                                 populateVariableNameMap(variableNameMap, variableDeclarationDtoSet);
 
-                                List<MethodInfo> methodInfoList =
-                                        getEligibleMethodInfoList(dependentArtifactSet, javaVersion, methodInvocation,
-                                                importStatementList, variableNameMap, owningClassInfo, auditInfo);
+                                MethodInfo innerLambdaMethodInfo = getMethodInfoUsingMemCache(dependentArtifactSet,
+                                        javaVersion, importStatementList, variableNameMap, owningClassInfo,
+                                        auditInfo, methodInvocation);
 
-                                if (!methodInfoList.isEmpty()) {
-                                    MethodInfo innerLambdaMethodInfo = methodInfoList.get(0);
-                                    formalTypeInfoMap.put(returnFormalTypeParameterInfo.getTypeParameter(), innerLambdaMethodInfo.getReturnTypeInfo());
+                                if (Objects.nonNull(innerLambdaMethodInfo)) {
+                                    formalTypeInfoMap.put(returnFormalTypeParameterInfo.getTypeParameter(),
+                                            innerLambdaMethodInfo.getReturnTypeInfo());
                                 }
                             } else if (body instanceof Block) {
                                 Block bodyBlock = (Block) body;
@@ -3096,11 +3117,11 @@ public class InferenceUtility {
                                                       AuditInfo auditInfo) {
         Integer argumentIndex = getArgumentIndexFromMethod(methodInvocation, lambdaExpression);
 
-        List<MethodInfo> methodInfoList = getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
-                methodInvocation, importStatementList, variableNameMap, owningClassInfo, auditInfo);
+        MethodInfo methodInfo = getMethodInfoUsingMemCache(dependentArtifactSet, javaVersion, importStatementList,
+                variableNameMap, owningClassInfo, auditInfo, methodInvocation);
 
-        if (!methodInfoList.isEmpty() && Objects.nonNull(argumentIndex)) {
-            return methodInfoList.get(0).getArgumentTypeInfoList().get(argumentIndex);
+        if (Objects.nonNull(methodInfo) && Objects.nonNull(argumentIndex)) {
+            return methodInfo.getArgumentTypeInfoList().get(argumentIndex);
         }
 
         return null;

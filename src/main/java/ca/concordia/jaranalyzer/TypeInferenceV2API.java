@@ -2,6 +2,7 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.models.Artifact;
+import ca.concordia.jaranalyzer.models.MethodInfoResult;
 import ca.concordia.jaranalyzer.models.OwningClassInfo;
 import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
@@ -35,11 +36,20 @@ public class TypeInferenceV2API {
                                            String javaVersion,
                                            MethodInvocation methodInvocation) {
 
-        try {
-            MethodInfo cachedMethodInfo = InferenceUtility.getCachedMethodInfo(methodInvocation);
+        MethodInfoResult methodInfoResult = getMethodInfoResult(dependentArtifactSet, javaVersion, methodInvocation);
 
-            if (Objects.nonNull(cachedMethodInfo)) {
-                return cachedMethodInfo;
+        return Objects.nonNull(methodInfoResult) ? methodInfoResult.getMethodInfo() : null;
+    }
+
+    public static MethodInfoResult getMethodInfoResult(Set<Artifact> dependentArtifactSet,
+                                                       String javaVersion,
+                                                       MethodInvocation methodInvocation) {
+
+        try {
+            MethodInfoResult cachedMethodInfoResult = InferenceUtility.getCachedMethodInfo(methodInvocation);
+
+            if (Objects.nonNull(cachedMethodInfoResult)) {
+                return cachedMethodInfoResult;
             }
 
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(methodInvocation);
@@ -65,14 +75,9 @@ public class TypeInferenceV2API {
             List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
                     methodInvocation, importStatementList, variableNameMap, owningClassInfo, auditInfo);
 
-            if (methodInfoList.isEmpty()) {
-                return null;
-            } else {
-                MethodInfo methodInfo = methodInfoList.get(0);
-                methodInfo.setAuditInfo(auditInfo);
-
-                return methodInfo;
-            }
+            return methodInfoList.isEmpty()
+                    ? new MethodInfoResult(null, auditInfo)
+                    : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
         } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
@@ -85,11 +90,20 @@ public class TypeInferenceV2API {
                                            String javaVersion,
                                            SuperMethodInvocation superMethodInvocation) {
 
-        try {
-            MethodInfo cachedMethodInfo = InferenceUtility.getCachedMethodInfo(superMethodInvocation);
+        MethodInfoResult methodInfoResult = getMethodInfoResult(dependentArtifactSet, javaVersion, superMethodInvocation);
 
-            if (Objects.nonNull(cachedMethodInfo)) {
-                return cachedMethodInfo;
+        return Objects.nonNull(methodInfoResult) ? methodInfoResult.getMethodInfo() : null;
+    }
+
+    public static MethodInfoResult getMethodInfoResult(Set<Artifact> dependentArtifactSet,
+                                           String javaVersion,
+                                           SuperMethodInvocation superMethodInvocation) {
+
+        try {
+            MethodInfoResult cachedMethodInfoResult = InferenceUtility.getCachedMethodInfo(superMethodInvocation);
+
+            if (Objects.nonNull(cachedMethodInfoResult)) {
+                return cachedMethodInfoResult;
             }
 
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superMethodInvocation);
@@ -114,14 +128,9 @@ public class TypeInferenceV2API {
             List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
                     superMethodInvocation, importStatementList, variableNameMap, owningClassInfo, auditInfo);
 
-            if (methodInfoList.isEmpty()) {
-                return null;
-            } else {
-                MethodInfo methodInfo = methodInfoList.get(0);
-                methodInfo.setAuditInfo(auditInfo);
-
-                return methodInfo;
-            }
+            return methodInfoList.isEmpty()
+                    ? new MethodInfoResult(null, auditInfo)
+                    : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
         } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
@@ -133,6 +142,15 @@ public class TypeInferenceV2API {
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            ClassInstanceCreation classInstanceCreation) {
+
+        MethodInfoResult methodInfoResult = getMethodInfoResult(dependentArtifactSet, javaVersion, classInstanceCreation);
+
+        return Objects.nonNull(methodInfoResult) ? methodInfoResult.getMethodInfo() : null;
+    }
+
+    public static MethodInfoResult getMethodInfoResult(Set<Artifact> dependentArtifactSet,
+                                                       String javaVersion,
+                                                       ClassInstanceCreation classInstanceCreation) {
 
         try {
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(classInstanceCreation);
@@ -162,14 +180,9 @@ public class TypeInferenceV2API {
             List<MethodInfo> methodInfoList = InferenceUtility.getEligibleMethodInfoList(dependentArtifactSet, javaVersion,
                     classInstanceCreation, importStatementList, variableNameMap, owningClassInfo, auditInfo);
 
-            if (methodInfoList.isEmpty()) {
-                return null;
-            } else {
-                MethodInfo methodInfo = methodInfoList.get(0);
-                methodInfo.setAuditInfo(auditInfo);
-
-                return methodInfo;
-            }
+            return methodInfoList.isEmpty()
+                    ? new MethodInfoResult(null, auditInfo)
+                    : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
         } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
@@ -181,6 +194,15 @@ public class TypeInferenceV2API {
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            ConstructorInvocation constructorInvocation) {
+
+        MethodInfoResult methodInfoResult = getMethodInfoResult(dependentArtifactSet, javaVersion, constructorInvocation);
+
+        return Objects.nonNull(methodInfoResult) ? methodInfoResult.getMethodInfo() : null;
+    }
+
+    public static MethodInfoResult getMethodInfoResult(Set<Artifact> dependentArtifactSet,
+                                                       String javaVersion,
+                                                       ConstructorInvocation constructorInvocation) {
 
         try {
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(constructorInvocation);
@@ -249,14 +271,9 @@ public class TypeInferenceV2API {
                     null, null, variableNameMap, auditInfo);
             InferenceUtility.conversionToVarargsMethodArgument(methodInfoList);
 
-            if (methodInfoList.isEmpty()) {
-                return null;
-            } else {
-                MethodInfo methodInfo = methodInfoList.get(0);
-                methodInfo.setAuditInfo(auditInfo);
-
-                return methodInfo;
-            }
+            return methodInfoList.isEmpty()
+                    ? new MethodInfoResult(null, auditInfo)
+                    : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
         } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);
@@ -268,6 +285,15 @@ public class TypeInferenceV2API {
     public static MethodInfo getMethodInfo(Set<Artifact> dependentArtifactSet,
                                            String javaVersion,
                                            SuperConstructorInvocation superConstructorInvocation) {
+
+        MethodInfoResult methodInfoResult = getMethodInfoResult(dependentArtifactSet, javaVersion, superConstructorInvocation);
+
+        return Objects.nonNull(methodInfoResult) ? methodInfoResult.getMethodInfo() : null;
+    }
+
+    public static MethodInfoResult getMethodInfoResult(Set<Artifact> dependentArtifactSet,
+                                                       String javaVersion,
+                                                       SuperConstructorInvocation superConstructorInvocation) {
 
         try {
             CompilationUnit compilationUnit = (CompilationUnit) InferenceUtility.getCompilationUnit(superConstructorInvocation);
@@ -333,14 +359,9 @@ public class TypeInferenceV2API {
                     null, null, variableNameMap, auditInfo);
             InferenceUtility.conversionToVarargsMethodArgument(methodInfoList);
 
-            if (methodInfoList.isEmpty()) {
-                return null;
-            } else {
-                MethodInfo methodInfo = methodInfoList.get(0);
-                methodInfo.setAuditInfo(auditInfo);
-
-                return methodInfo;
-            }
+            return methodInfoList.isEmpty()
+                    ? new MethodInfoResult(null, auditInfo)
+                    : new MethodInfoResult(methodInfoList.get(0), auditInfo);
 
         } catch (Exception | AssertionError e) {
             logger.error("Exception occurred", e);

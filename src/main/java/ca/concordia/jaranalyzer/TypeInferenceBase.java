@@ -86,7 +86,7 @@ public abstract class TypeInferenceBase {
                 int distance = 0;
 
                 while (!classNameSet.isEmpty()) {
-                    classNameSet = classInfoService.getSuperClassQNameSet(classNameSet, jarIdList, type);
+                    classNameSet = classInfoService.getSuperClassQNameSetUsingMemCache(classNameSet, jarIdList, type);
 
                     distance++;
 
@@ -345,7 +345,7 @@ public abstract class TypeInferenceBase {
                 int distance = 0;
 
                 while (!classNameSet.isEmpty()) {
-                    classNameSet = classInfoService.getSuperClassQNameSet(classNameSet, jarIdList, null);
+                    classNameSet = classInfoService.getSuperClassQNameSetUsingMemCache(classNameSet, jarIdList, null);
 
                     distance++;
 
@@ -667,7 +667,7 @@ public abstract class TypeInferenceBase {
                 return methodInfoList;
             }
 
-            classQNameSet = classInfoService.getSuperClassQNameSet(classQNameSet, jarIdList, "INTERFACE");
+            classQNameSet = classInfoService.getSuperClassQNameSetUsingMemCache(classQNameSet, jarIdList, "INTERFACE");
         }
 
         return Collections.emptyList();
@@ -1290,7 +1290,7 @@ public abstract class TypeInferenceBase {
             boolean matched = false;
 
             while (!classNameSet.isEmpty()) {
-                classNameSet = classInfoService.getSuperClassQNameSet(classNameSet, jarIdList, null);
+                classNameSet = classInfoService.getSuperClassQNameSetUsingMemCache(classNameSet, jarIdList, null);
 
                 if (classNameSet.contains(methodArgumentTypeName)) {
                     matched = true;

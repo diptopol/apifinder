@@ -32,20 +32,29 @@ public class ClassInfoService {
 
     private static Cache<String, List<ClassInfo>> classLoaderCacheFromJarIdList;
 
+    private static Cache<String, Set<String>> superClassLoaderCache;
+
     private static Cache<Integer, ClassInfo> classLoaderCacheFromId;
 
     public ClassInfoService() {
         if (Objects.isNull(classLoaderCacheFromJarIdList)) {
             classLoaderCacheFromJarIdList  = Caffeine.newBuilder()
-                    .expireAfterAccess(30, TimeUnit.MINUTES)
-                    .maximumSize(100)
+                    .expireAfterAccess(5, TimeUnit.MINUTES)
+                    .maximumSize(500)
                     .build();
         }
 
         if (Objects.isNull(classLoaderCacheFromId)) {
             classLoaderCacheFromId = Caffeine.newBuilder()
-                    .expireAfterAccess(30, TimeUnit.MINUTES)
-                    .maximumSize(100)
+                    .expireAfterAccess(5, TimeUnit.MINUTES)
+                    .maximumSize(500)
+                    .build();
+        }
+
+        if (Objects.isNull(superClassLoaderCache)) {
+            superClassLoaderCache = Caffeine.newBuilder()
+                    .expireAfterAccess(5, TimeUnit.MINUTES)
+                    .maximumSize(500)
                     .build();
         }
     }
@@ -389,6 +398,26 @@ public class ClassInfoService {
         }
 
         return superClassQNameList;
+    }
+
+    public Set<String> getSuperClassQNameSetUsingMemCache(Set<String> classQualifiedNameSet, List<Integer> jarIdList, String type) {
+        String classQNameKey = String.join(",", classQualifiedNameSet.stream().sorted().toArray(String[]::new));
+        classQNameKey = classQNameKey.concat(":")
+                .concat(String.join(",", jarIdList.stream().sorted().map(String::valueOf).toArray(String[]::new)));
+
+        if (Objects.nonNull(type)) {
+            classQNameKey = classQNameKey.concat(":").concat(type);
+        }
+
+        Set<String> superClassSet = superClassLoaderCache.getIfPresent(classQNameKey);
+
+        if (Objects.isNull(superClassSet)) {
+            superClassSet = getSuperClassQNameSet(classQualifiedNameSet, jarIdList, type);
+
+            superClassLoaderCache.put(classQNameKey, superClassSet);
+        }
+
+        return new LinkedHashSet<>(superClassSet);
     }
 
     public Set<String> getSuperClassQNameSet(Set<String> classQualifiedNameSet, List<Integer> jarIdList, String type) {

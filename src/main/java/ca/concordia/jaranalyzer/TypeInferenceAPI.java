@@ -453,7 +453,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         Set<String> classQNameSet = new HashSet<>(importedClassQNameSet);
 
         while (!classQNameSet.isEmpty() && qualifiedFieldList.isEmpty()) {
-            classQNameSet = classInfoService.getSuperClassQNameSet(classQNameSet, jarIdList, null);
+            classQNameSet = classInfoService.getSuperClassQNameSetUsingMemCache(classQNameSet, jarIdList, null);
 
             if (!classQNameSet.isEmpty()) {
                 qualifiedFieldList = getQualifiedFieldInfoList(fieldName, jarIdList, classQNameSet);
