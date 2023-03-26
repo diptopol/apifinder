@@ -5,6 +5,7 @@ import ca.concordia.jaranalyzer.models.VariableDeclarationDto;
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.service.ClassInfoService;
 import ca.concordia.jaranalyzer.service.JarInfoService;
+import ca.concordia.jaranalyzer.util.AuditInfo;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import io.vavr.Tuple2;
@@ -88,9 +89,11 @@ public class InferenceUtilityTest {
                     List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
                     InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
+                    AuditInfo auditInfo = new AuditInfo();
+
                     Set<VariableDeclarationDto> fieldVariableDeclarationDtoList
                             = InferenceUtility.getFieldVariableDeclarationDtoList(dependencyTuple._2(), dependencyTuple._1(),
-                            importStatementList, methodInvocation, new HashMap<>(), jarInfoService, classInfoService);
+                            importStatementList, methodInvocation, new HashMap<>(), jarInfoService, classInfoService, auditInfo);
 
                     assert "[altKey, ctrlKey, enabled, id, metaKey, shiftKey]"
                             .equals(fieldVariableDeclarationDtoList.stream()
@@ -139,14 +142,16 @@ public class InferenceUtilityTest {
                     List<String> importStatementList = InferenceUtility.getImportStatementList(compilationUnit);
                     InferenceUtility.addSpecialImportStatements(importStatementList, compilationUnit);
 
+                    AuditInfo auditInfo = new AuditInfo();
+
                     Map<String, Set<VariableDeclarationDto>> variableNameMap =
                             InferenceUtility.getVariableNameMap(dependencyTuple._2(), dependencyTuple._1(),
-                                    importStatementList, methodInvocation, jarInfoService, classInfoService);
+                                    importStatementList, methodInvocation, jarInfoService, classInfoService, auditInfo);
 
                     List<Expression> argumentList = methodInvocation.arguments();
 
                     List<TypeInfo> argumentTypeInfoList = InferenceUtility.getArgumentTypeInfoList(dependencyTuple._2(),
-                            dependencyTuple._1(), importStatementList, variableNameMap, argumentList, null);
+                            dependencyTuple._1(), importStatementList, variableNameMap, argumentList, null, auditInfo);
 
                     List<String> argumentTypeClassNameList = argumentTypeInfoList.stream()
                             .map(TypeInfo::getQualifiedClassName)

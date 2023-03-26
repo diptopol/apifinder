@@ -9,6 +9,7 @@ import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
 import ca.concordia.jaranalyzer.service.ClassInfoService;
 import ca.concordia.jaranalyzer.service.JarInfoService;
 import ca.concordia.jaranalyzer.service.MethodInfoService;
+import ca.concordia.jaranalyzer.util.AuditInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import io.vavr.Tuple2;
 import org.eclipse.jgit.api.Git;
@@ -431,7 +432,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             } else {
                 invokerTypeInfo = InferenceUtility.getTypeInfoFromClassName(criteria.getDependentArtifactSet(),
                         criteria.getJavaVersion(), criteria.getImportList(), simpleTypeInfo.getClassName(),
-                        criteria.getOwningClassInfo());
+                        criteria.getOwningClassInfo(), criteria.getAuditInfo());
             }
 
             criteria.setInvokerTypeInfo(invokerTypeInfo);
@@ -454,7 +455,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                             } else {
                                 argumentTypeInfo = InferenceUtility.getTypeInfoFromClassName(criteria.getDependentArtifactSet(),
                                         criteria.getJavaVersion(), criteria.getImportList(), simpleTypeInfo.getClassName(),
-                                        criteria.getOwningClassInfo());
+                                        criteria.getOwningClassInfo(), criteria.getAuditInfo());
                             }
                         }
 
@@ -482,6 +483,8 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
          */
         private boolean isSuperInvoker;
         private Map<Integer, TypeInfo> argumentTypeInfoMap;
+
+        private AuditInfo auditInfo;
 
         private Set<Artifact> getDependentArtifactSet() {
             return dependentArtifactSet;
@@ -519,6 +522,10 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             return isSuperInvoker;
         }
 
+        public AuditInfo getAuditInfo() {
+            return auditInfo;
+        }
+
         public List<Tuple2<Integer, TypeInfo>> getArgumentTypeInfoWithIndexList() {
             if (argumentTypeInfoMap.isEmpty()) {
                 return Collections.emptyList();
@@ -548,6 +555,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             this.methodName = methodName;
             this.numberOfParameters = numberOfParameters;
             this.argumentTypeInfoMap = new HashMap<>();
+            this.auditInfo = new AuditInfo();
         }
 
         public Criteria(Set<Artifact> dependentArtifactSet,
@@ -561,6 +569,7 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
             this.methodName = methodName;
 
             this.argumentTypeInfoMap = new HashMap<>();
+            this.auditInfo = new AuditInfo();
         }
 
         public Criteria setInvokerClassName(String invokerClassName) {
@@ -604,6 +613,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
 
         public Criteria setArgumentTypeInfo(int argumentIndex, TypeInfo argumentTypeInfo) {
             this.argumentTypeInfoMap.put(argumentIndex, argumentTypeInfo);
+
+            return this;
+        }
+
+        public Criteria setAuditInfo(AuditInfo auditInfo) {
+            this.auditInfo = auditInfo;
 
             return this;
         }

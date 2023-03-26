@@ -11,6 +11,7 @@ import ca.concordia.jaranalyzer.service.ClassInfoService;
 import ca.concordia.jaranalyzer.service.FieldInfoService;
 import ca.concordia.jaranalyzer.service.JarInfoService;
 import ca.concordia.jaranalyzer.service.MethodInfoService;
+import ca.concordia.jaranalyzer.util.AuditInfo;
 import ca.concordia.jaranalyzer.util.InferenceUtility;
 import io.vavr.Tuple2;
 import org.apache.commons.lang3.StringUtils;
@@ -106,6 +107,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         List<Integer> internalDependencyJarIdList = new ArrayList<>();
         List<Integer> jarIdList = jarInfoService.getJarIdList(dependentArtifactSet, javaVersion, internalDependencyJarIdList);
 
+        AuditInfo auditInfo = new AuditInfo();
+
         Set<String> importedClassQNameSet = getImportedQNameSet(importList);
         List<String> packageNameList = getPackageNameList(importList);
 
@@ -114,13 +117,14 @@ public class TypeInferenceAPI extends TypeInferenceBase {
 
         List<MethodInfo> qualifiedMethodInfoList = new ArrayList<>();
 
-        TypeInfo invokerTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importList, invokerClassName, owningClassInfo);
+        TypeInfo invokerTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importList, invokerClassName,
+                owningClassInfo, auditInfo);
 
         List<TypeInfo> argumentTypeInfoList = new ArrayList<>();
 
         for (String argumentType: argumentTypes) {
             TypeInfo argumentTypeInfo = getTypeInfo(dependentArtifactSet, javaVersion, importList,
-                    argumentType, owningClassInfo);
+                    argumentType, owningClassInfo, auditInfo);
 
             argumentTypeInfoList.add(argumentTypeInfo);
         }
@@ -525,7 +529,8 @@ public class TypeInferenceAPI extends TypeInferenceBase {
                                         String javaVersion,
                                         List<String> importList,
                                         String className,
-                                        OwningClassInfo owningClassInfo) {
+                                        OwningClassInfo owningClassInfo,
+                                        AuditInfo auditInfo) {
 
         if (Objects.isNull(className)) {
             return null;
@@ -536,7 +541,7 @@ public class TypeInferenceAPI extends TypeInferenceBase {
         }
 
         return InferenceUtility.getTypeInfoFromClassName(dependentArtifactSet, javaVersion, importList,
-                className, owningClassInfo);
+                className, owningClassInfo, auditInfo);
     }
 
 }

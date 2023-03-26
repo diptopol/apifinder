@@ -1,6 +1,7 @@
 package ca.concordia.jaranalyzer.entity;
 
 import ca.concordia.jaranalyzer.models.typeInfo.TypeInfo;
+import ca.concordia.jaranalyzer.util.AuditInfo;
 import org.objectweb.asm.Type;
 
 import java.util.Arrays;
@@ -46,6 +47,8 @@ public class MethodInfo {
     private double argumentMatchingDistance;
 
     private boolean owningClassAttribute;
+
+    private AuditInfo auditInfo;
 
     public MethodInfo() {
     }
@@ -248,6 +251,14 @@ public class MethodInfo {
 
     public void setOwningClassAttribute(boolean owningClassAttribute) {
         this.owningClassAttribute = owningClassAttribute;
+    }
+
+    public AuditInfo getAuditInfo() {
+        return auditInfo;
+    }
+
+    public void setAuditInfo(AuditInfo auditInfo) {
+        this.auditInfo = auditInfo;
     }
 
     public boolean hasDeferredCriteria() {
