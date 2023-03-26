@@ -151,6 +151,12 @@ public class TypeInferenceFluentAPI extends TypeInferenceBase {
                                 classQNameDeclarationOrderList, parentClassPairList));
 
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
+            } else if (!qualifiedMethodInfoList.isEmpty() && qualifiedMethodInfoList.size() > 1) {
+                int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(qualifiedMethodInfoList);
+
+                qualifiedMethodInfoList = qualifiedMethodInfoList.stream()
+                        .filter(m -> m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)
+                        .collect(Collectors.toList());
             }
 
             if (!qualifiedMethodInfoList.isEmpty()) {

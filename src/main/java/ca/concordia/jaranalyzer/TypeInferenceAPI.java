@@ -160,6 +160,12 @@ public class TypeInferenceAPI extends TypeInferenceBase {
             if (qualifiedMethodInfoList.isEmpty() && !deferredQualifiedMethodInfoSet.isEmpty()) {
                 deferredQualifiedMethodInfoSet = prioritizeDeferredMethodInfoSet(deferredQualifiedMethodInfoSet);
                 qualifiedMethodInfoList.addAll(deferredQualifiedMethodInfoSet);
+            } else if (!qualifiedMethodInfoList.isEmpty() && qualifiedMethodInfoList.size() > 1) {
+                int minimumInvokerClassMatchingDistance = getMinimumInvokerClassMatchingDistance(qualifiedMethodInfoList);
+
+                qualifiedMethodInfoList = qualifiedMethodInfoList.stream()
+                        .filter(m -> m.getInvokerClassMatchingDistance() == minimumInvokerClassMatchingDistance)
+                        .collect(Collectors.toList());
             }
 
             if (!qualifiedMethodInfoList.isEmpty()) {
