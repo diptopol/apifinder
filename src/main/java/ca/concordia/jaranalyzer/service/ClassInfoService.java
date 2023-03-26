@@ -178,7 +178,7 @@ public class ClassInfoService {
             return Collections.emptyList();
         }
 
-        Map<String, Integer> classInfoNameMap = new HashMap<>();
+        Map<String, List<Integer>> classInfoNameMap = new HashMap<>();
 
         PreparedStatement pst = null;
         ResultSet resultSet = null;
@@ -203,7 +203,13 @@ public class ClassInfoService {
 
             while (resultSet.next()) {
                 if (!classInfoNameMap.containsKey(resultSet.getString("q_name"))) {
-                    classInfoNameMap.put(resultSet.getString("q_name"), resultSet.getInt("id"));
+                    classInfoNameMap.put(resultSet.getString("q_name"),
+                            new ArrayList<>(Arrays.asList(resultSet.getInt("id"))));
+                } else {
+                    List<Integer> classIdList = classInfoNameMap.get(resultSet.getString("q_name"));
+                    classIdList.add(resultSet.getInt("id"));
+
+                    classInfoNameMap.put(resultSet.getString("q_name"), classIdList);
                 }
             }
 
@@ -217,7 +223,7 @@ public class ClassInfoService {
         List<Integer> classInfoIdList = new ArrayList<>();
         for (String qName: qualifiedClassNameSet) {
             if (classInfoNameMap.containsKey(qName)) {
-                classInfoIdList.add(classInfoNameMap.get(qName));
+                classInfoIdList.addAll(classInfoNameMap.get(qName));
             }
         }
 
