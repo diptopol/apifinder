@@ -2,7 +2,6 @@ package ca.concordia.jaranalyzer;
 
 import ca.concordia.jaranalyzer.entity.MethodInfo;
 import ca.concordia.jaranalyzer.models.Artifact;
-import ca.concordia.jaranalyzer.util.FileUtils;
 import ca.concordia.jaranalyzer.util.GitUtil;
 import io.vavr.Tuple2;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -12,16 +11,11 @@ import org.eclipse.jgit.api.Git;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GitHub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -70,7 +64,10 @@ public class RxJavaTest {
                 if (methodInvocation.toString().startsWith("active.compareAndSet(inner,")) {
                     MethodInfo methodInfo = TypeInferenceV2API.getMethodInfo(dependencyTuple._2(), dependencyTuple._1(), methodInvocation);
 
-                    System.out.println(methodInfo);
+                    assert ("java.util.concurrent.atomic.AtomicReference" +
+                            "::public final boolean compareAndSet" +
+                            "(io.reactivex.rxjava3.internal.operators.observable.ObservableSwitchMap.SwitchMapInnerObserver," +
+                            " io.reactivex.rxjava3.internal.operators.observable.ObservableSwitchMap.SwitchMapInnerObserver)").equals(methodInfo.toString());
                 }
 
                 return true;
